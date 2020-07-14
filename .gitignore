@@ -1,0 +1,10 @@
+﻿################################################################################
+# 이 .gitignore 파일은 Microsoft(R) Visual Studio에서 자동으로 만들어졌습니다.
+################################################################################
+
+/.vs/slnx.sqlite
+/.vs/ProjectSettings.json
+/.vs/eswContest/v16/Browse.VC.opendb
+/.vs/eswContest/v16/Browse.VC.db
+/.vs/eswContest/v16
+/.vs

@@ -32,6 +32,7 @@ extern "C" {
 void CarControlInit(void);
 //test 0715
 void CarLight_Write(char status);
+//test 0715
 void Alarm_Write(char status);
 void Winker_Write(char status);
 char SpeedControlOnOff_Read(void);

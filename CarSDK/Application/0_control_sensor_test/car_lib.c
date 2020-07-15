@@ -195,6 +195,7 @@ void Winker_Write(char status)
     write(uart_fd, &buf[0], 5);
 }
 
+
 char SpeedControlOnOff_Read(void)
 {
     unsigned char buf[8];
@@ -488,6 +489,7 @@ void EncoderCounter_Write(signed int position)
     //printf("EncoderCounter_Write(void) = %d\n", position);
     write(uart_fd, &buf[0], 8);
 }
+
 
 signed short SteeringServoControl_Read(void)
 {

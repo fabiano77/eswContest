@@ -63,9 +63,9 @@ void main(void)
 	while (1)
 	{
 		char key;
-		printf("input :");
+		printf("\ninput :");
 		scanf("%c", &key);
-		rewind(stdin);
+		getchar();
 
 		switch (key)
 		{
@@ -85,6 +85,7 @@ void main(void)
 
 		case 's':	//stop
 			DesireSpeed_Write(0);
+			printf("DC motor stop\n");
 			break;
 
 		case 'w':	//go forward

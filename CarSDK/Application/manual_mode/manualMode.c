@@ -69,86 +69,103 @@ void main(void)
 		switch (key)
 		{
 		case 'a':	//steering left
-			angle_steering -= 20;
+			angle_steering -= 50;
 			SteeringServoControl_Write(angle_steering);
 			printf("angle_steering = %d", angle_steering);
 			printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read());    //default = 1500, 0x5dc
 			break;
+
 		case 'd':	//steering right
-			angle_steering += 20;
+			angle_steering += 50;
 			SteeringServoControl_Write(angle_steering);
 			printf("angle_steering = %d", angle_steering);
 			printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read());    //default = 1500, 0x5dc
 			break;
+
 		case 's':	//stop
 			DesireSpeed_Write(0);
 			break;
+
 		case 'w':	//go forward
 			DesireSpeed_Write(speed);
+			usleep(1000000);	//1 000 000 us
 			printf("DesireSpeed_Read() = %d\n", DesireSpeed_Read());
 			break;
+
 		case 'x':	//go backward
 			DesireSpeed_Write(0 - speed);
+			usleep(1000000);	//1 000 000 us
 			printf("DesireSpeed_Read() = %d\n", DesireSpeed_Read());
 			break;
+
 		case 'j':	//cam left
-			angle_cameraX -= 20;
+			angle_cameraX -= 50;
 			CameraXServoControl_Write(angle_cameraX);
 			printf("angle_cameraX = %d", angle_cameraX);
 			printf("CameraXServoControl_Read() = %d\n", CameraXServoControl_Read());    //default = 1500, 0x5dc
 			break;
+
 		case 'l':	//cam right
-			angle_cameraX += 20;
+			angle_cameraX += 50;
 			CameraXServoControl_Write(angle_cameraX);
 			printf("angle_cameraX = %d", angle_cameraX);
 			printf("CameraXServoControl_Read() = %d\n", CameraXServoControl_Read());    //default = 1500, 0x5dc
 			break;
+
 		case 'i':	//cam up
-			angle_cameraY -= 20;
+			angle_cameraY -= 50;
 			CameraYServoControl_Write(angle_cameraY);
 			printf("angle_cameraY = %d", angle_cameraY);
 			printf("CameraYServoControl_Read() = %d\n", CameraYServoControl_Read());    //default = 1500, 0x5dc
 			break;
+
 		case 'k':	//cam down
-			angle_cameraY += 20;
+			angle_cameraY += 50;
 			CameraYServoControl_Write(angle_cameraY);
 			printf("angle_cameraY = %d", angle_cameraY);
 			printf("CameraYServoControl_Read() = %d\n", CameraYServoControl_Read());    //default = 1500, 0x5dc
 			break;
+
 		case '1':	//speed up
-			speed += 10;
+			speed += 20;
 			printf("speed = %d\n", speed);
 			break;
+
 		case '2':	//speed down
-			speed -= 10;
+			speed -= 20;
 			printf("speed = %d\n", speed);
 			break;
+
 		case 'q':	//Flashing left winker 3 times 
 			for (i = 0; i < 3; i++)
 			{
 				Winker_Write(LEFT_ON);
-				usleep(300000);		// 300 000 us
+				usleep(600000);		// 300 000 us
 				Winker_Write(ALL_OFF);
-				usleep(300000);
+				usleep(600000);
 			}
 			break;
+
 		case 'e':	//Flashing right winker 3 times 
 			for (i = 0; i < 3; i++)
 			{
 				Winker_Write(RIGHT_ON);
-				usleep(300000);		// 300 000 us
+				usleep(600000);		// 300 000 us
 				Winker_Write(ALL_OFF);
-				usleep(300000);
+				usleep(600000);
 			}
 			break;
+
 		case 'z':	//front lamp on/off
 			lightFlag = lightFlag ^ 0x01;	// 00000000 ^ 00000001 (XOR)연산 : 0번비트와 XOR연산한다.
 			CarLight_Write(lightFlag);
 			break;
+
 		case 'c':	//rear lamp on/off
 			lightFlag = lightFlag ^ 0x02;	// 00000000 ^ 00000010 (XOR)연산 : 1번비트와 XOR연산한다.
 			CarLight_Write(lightFlag);
 			break;
+
 		case ' ':	//alarm 
 			for (i = 0; i < 2; i++)
 			{
@@ -158,6 +175,7 @@ void main(void)
 				usleep(200000);
 			}
 			break;
+
 		default:
 			printf("wrong key input.");
 			break;

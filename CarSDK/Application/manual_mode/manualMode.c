@@ -63,8 +63,9 @@ void main(void)
 	while (1)
 	{
 		char key;
-		printf("\ninput :");
+		printf("input :");
 		scanf("%c", &key);
+		rewind(stdin);
 
 		switch (key)
 		{

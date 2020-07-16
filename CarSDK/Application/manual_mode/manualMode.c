@@ -63,20 +63,20 @@ void main(void)
 	unsigned short lightFlag = 0x00;
 	while (1)
 	{
-		printf("input :");
+		printf("\ninput :");
 		scanf("%c", &key);
 
 		switch (key)
 		{
 		case 'a':	//steering left
-			angle_steering -= 50;
+			angle_steering += 50;
 			SteeringServoControl_Write(angle_steering);
 			printf("angle_steering = %d", angle_steering);
 			printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read());    //default = 1500, 0x5dc
 			break;
 
 		case 'd':	//steering right
-			angle_steering += 50;
+			angle_steering -= 50;
 			SteeringServoControl_Write(angle_steering);
 			printf("angle_steering = %d", angle_steering);
 			printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read());    //default = 1500, 0x5dc
@@ -88,25 +88,25 @@ void main(void)
 
 		case 'w':	//go forward
 			DesireSpeed_Write(speed);
-			usleep(1000000);	//1 000 000 us
+			usleep(100000);	//1 000 000 us
 			printf("DesireSpeed_Read() = %d\n", DesireSpeed_Read());
 			break;
 
 		case 'x':	//go backward
 			DesireSpeed_Write(0 - speed);
-			usleep(1000000);	//1 000 000 us
+			usleep(100000);	//1 000 000 us
 			printf("DesireSpeed_Read() = %d\n", DesireSpeed_Read());
 			break;
 
 		case 'j':	//cam left
-			angle_cameraX -= 50;
+			angle_cameraX += 50;
 			CameraXServoControl_Write(angle_cameraX);
 			printf("angle_cameraX = %d", angle_cameraX);
 			printf("CameraXServoControl_Read() = %d\n", CameraXServoControl_Read());    //default = 1500, 0x5dc
 			break;
 
 		case 'l':	//cam right
-			angle_cameraX += 50;
+			angle_cameraX -= 50;
 			CameraXServoControl_Write(angle_cameraX);
 			printf("angle_cameraX = %d", angle_cameraX);
 			printf("CameraXServoControl_Read() = %d\n", CameraXServoControl_Read());    //default = 1500, 0x5dc
@@ -157,12 +157,12 @@ void main(void)
 			break;
 
 		case 'z':	//front lamp on/off
-			lightFlag = lightFlag ^ 0x01;	// 00000000 ^ 00000001 (XOR)¿¬»ê : 0¹øºñÆ®¿Í XOR¿¬»êÇÑ´Ù.
+			lightFlag = lightFlag ^ 0x01;	// 00000000 ^ 00000001 (XOR)ï¿½ï¿½ï¿½ï¿½ : 0ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ XORï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 			CarLight_Write(lightFlag);
 			break;
 
 		case 'c':	//rear lamp on/off
-			lightFlag = lightFlag ^ 0x02;	// 00000000 ^ 00000010 (XOR)¿¬»ê : 1¹øºñÆ®¿Í XOR¿¬»êÇÑ´Ù.
+			lightFlag = lightFlag ^ 0x02;	// 00000000 ^ 00000010 (XOR)ï¿½ï¿½ï¿½ï¿½ : 1ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ XORï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 			CarLight_Write(lightFlag);
 			break;
 
@@ -174,6 +174,9 @@ void main(void)
 				Alarm_Write(OFF);
 				usleep(200000);
 			}
+			break;
+
+		case '\n':
 			break;
 
 		default:

@@ -10,3 +10,5 @@
 /CarSDK/CrossCompiler
 /.vs
 .vscode/settings.json
+CarSDK/Application/manual_mode/manualMode
+CarSDK/Application/manual_mode/manualMode.o

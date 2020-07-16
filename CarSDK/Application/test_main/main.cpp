@@ -4,6 +4,7 @@
  */
 #include <stdio.h>
 #include "car_lib.h"
+using namespace std;
 
  /*******************************************************************************
   *  Defines
@@ -20,7 +21,7 @@
    *  Functions
    *******************************************************************************
    */
-void main(void)
+int main(void)
 {
 	unsigned char status;
 	short speed;
@@ -227,6 +228,7 @@ void main(void)
 		}
 	}
 #endif
+	return 0;
 }
 
 

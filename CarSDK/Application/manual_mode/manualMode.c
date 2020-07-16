@@ -60,7 +60,6 @@ void main(void)
 	DesireSpeed_Write(speed);
 
 	char key;
-	int i;
 	unsigned short lightFlag = 0x00;
 	while (1)
 	{

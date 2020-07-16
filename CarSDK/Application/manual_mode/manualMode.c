@@ -49,7 +49,7 @@ void main(void)
 	printf("----------------------------------------------------	\n");
 	printf("	space bar = Alarm									\n");
 	printf("----------------------------------------------------	\n");
-
+	printf("(테스트)")
 	//jobs to be done beforehand;
 	PositionControlOnOff_Write(UNCONTROL); // position controller must be OFF !!!
 	//control on
@@ -63,7 +63,7 @@ void main(void)
 	while (1)
 	{
 		char key;
-		printf("\ninput :");
+		printf("input :");
 		scanf("%c", &key);
 		getchar();
 
@@ -72,14 +72,14 @@ void main(void)
 		case 'a':	//steering left
 			angle_steering += 50;
 			SteeringServoControl_Write(angle_steering);
-			printf("angle_steering = %d", angle_steering);
+			printf("angle_steering = %d\n", angle_steering);
 			printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read());    //default = 1500, 0x5dc
 			break;
 
 		case 'd':	//steering right
 			angle_steering -= 50;
 			SteeringServoControl_Write(angle_steering);
-			printf("angle_steering = %d", angle_steering);
+			printf("angle_steering = %d\n", angle_steering);
 			printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read());    //default = 1500, 0x5dc
 			break;
 
@@ -103,28 +103,28 @@ void main(void)
 		case 'j':	//cam left
 			angle_cameraX += 50;
 			CameraXServoControl_Write(angle_cameraX);
-			printf("angle_cameraX = %d", angle_cameraX);
+			printf("angle_cameraX = %d\n", angle_cameraX);
 			printf("CameraXServoControl_Read() = %d\n", CameraXServoControl_Read());    //default = 1500, 0x5dc
 			break;
 
 		case 'l':	//cam right
 			angle_cameraX -= 50;
 			CameraXServoControl_Write(angle_cameraX);
-			printf("angle_cameraX = %d", angle_cameraX);
+			printf("angle_cameraX = %d\n", angle_cameraX);
 			printf("CameraXServoControl_Read() = %d\n", CameraXServoControl_Read());    //default = 1500, 0x5dc
 			break;
 
 		case 'i':	//cam up
 			angle_cameraY -= 50;
 			CameraYServoControl_Write(angle_cameraY);
-			printf("angle_cameraY = %d", angle_cameraY);
+			printf("angle_cameraY = %d\n", angle_cameraY);
 			printf("CameraYServoControl_Read() = %d\n", CameraYServoControl_Read());    //default = 1500, 0x5dc
 			break;
 
 		case 'k':	//cam down
 			angle_cameraY += 50;
 			CameraYServoControl_Write(angle_cameraY);
-			printf("angle_cameraY = %d", angle_cameraY);
+			printf("angle_cameraY = %d\n", angle_cameraY);
 			printf("CameraYServoControl_Read() = %d\n", CameraYServoControl_Read());    //default = 1500, 0x5dc
 			break;
 
@@ -182,7 +182,7 @@ void main(void)
 			break;
 
 		default:
-			printf("wrong key input.");
+			printf("wrong key input.\n");
 			break;
 		}
 

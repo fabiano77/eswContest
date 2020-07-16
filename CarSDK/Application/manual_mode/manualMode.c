@@ -59,10 +59,10 @@ void main(void)
 	speed = 0; // speed set     --> speed must be set when using position controller
 	DesireSpeed_Write(speed);
 
-	char key;
 	unsigned short lightFlag = 0x00;
 	while (1)
 	{
+		char key;
 		printf("\ninput :");
 		scanf("%c", &key);
 

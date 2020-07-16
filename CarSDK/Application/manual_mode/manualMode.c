@@ -25,7 +25,7 @@ void main(void)
 
 	CarControlInit();
 
-	angle = 1500;
+	int angle = 1500;
 	SteeringServoControl_Write(angle);
 	CameraXServoControl_Write(angle);
 	CameraYServoControl_Write(angle);
@@ -45,7 +45,7 @@ void main(void)
 	printf("----------------------------------------------------	\n");
 	printf("	1 = speed up, 2 = speed down						\n");
 	printf("----------------------------------------------------	\n");
-	printf("	z, x = winker || c, v = front, rear lamp			\n");
+	printf("	q, e = winker || z, c = front, rear lamp			\n");
 	printf("----------------------------------------------------	\n");
 	printf("	space bar = Alarm									\n");
 	printf("----------------------------------------------------	\n");
@@ -60,8 +60,9 @@ void main(void)
 	DesireSpeed_Write(speed);
 
 	char key;
+	int i;
 	unsigned short lightFlag = 0x00;
-	while (true)
+	while (1)
 	{
 		printf("input :");
 		scanf("%c", &key);
@@ -123,8 +124,8 @@ void main(void)
 			speed -= 10;
 			printf("speed = %d\n", speed);
 			break;
-		case 'z':	//Flashing left winker 3 times 
-			for (int i = 0; i < 3; i++)
+		case 'q':	//Flashing left winker 3 times 
+			for (i = 0; i < 3; i++)
 			{
 				Winker_Write(LEFT_ON);
 				usleep(300000);		// 300 000 us
@@ -132,8 +133,8 @@ void main(void)
 				usleep(300000);
 			}
 			break;
-		case 'x':	//Flashing right winker 3 times 
-			for (int i = 0; i < 3; i++)
+		case 'e':	//Flashing right winker 3 times 
+			for (i = 0; i < 3; i++)
 			{
 				Winker_Write(RIGHT_ON);
 				usleep(300000);		// 300 000 us
@@ -141,16 +142,16 @@ void main(void)
 				usleep(300000);
 			}
 			break;
-		case 'c':	//front lamp on/off
+		case 'z':	//front lamp on/off
 			lightFlag = lightFlag ^ 0x01;	// 00000000 ^ 00000001 (XOR)연산 : 0번비트와 XOR연산한다.
 			CarLight_Write(lightFlag);
 			break;
-		case 'v':	//rear lamp on/off
+		case 'c':	//rear lamp on/off
 			lightFlag = lightFlag ^ 0x02;	// 00000000 ^ 00000010 (XOR)연산 : 1번비트와 XOR연산한다.
 			CarLight_Write(lightFlag);
 			break;
 		case ' ':	//alarm 
-			for (int i = 0; i < 2; i++)
+			for (i = 0; i < 2; i++)
 			{
 				Alarm_Write(ON);
 				usleep(200000);
@@ -159,7 +160,7 @@ void main(void)
 			}
 			break;
 		default:
-			cout << "wrong key input." << endl;
+			printf("wrong key input.");
 			break;
 		}
 

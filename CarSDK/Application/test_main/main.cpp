@@ -3,6 +3,8 @@
  *******************************************************************************
  */
 #include <stdio.h>
+#include <unistd.h>
+#include <cmath>
 #include "car_lib.h"
 using namespace std;
 

@@ -9,3 +9,4 @@
 /.vs/eswContest/v16
 /CarSDK/CrossCompiler
 /.vs
+.vscode/settings.json

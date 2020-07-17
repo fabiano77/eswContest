@@ -69,14 +69,14 @@ void main(void)
 
 		switch (key)
 		{
-		case 'a':	//steering left
+		case 'a':	//steering left		: servo 조향값 (2000(좌) ~ 1500(중) ~ 1000(우)
 			angle_steering += 50;
 			SteeringServoControl_Write(angle_steering);
 			printf("angle_steering = %d\n", angle_steering);
 			printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read());    //default = 1500, 0x5dc
 			break;
 
-		case 'd':	//steering right
+		case 'd':	//steering right	: servo 조향값 (2000(좌) ~ 1500(중) ~ 1000(우)
 			angle_steering -= 50;
 			SteeringServoControl_Write(angle_steering);
 			printf("angle_steering = %d\n", angle_steering);
@@ -94,7 +94,7 @@ void main(void)
 			printf("DesireSpeed_Read() = %d\n", DesireSpeed_Read());
 			break;
 
-		case 'x':	//go backward
+		case 'x':	//go backward	speed 음수 인가하면 후진.
 			DesireSpeed_Write(0 - speed);
 			usleep(100000);	//1 000 000 us
 			printf("DesireSpeed_Read() = %d\n", DesireSpeed_Read());
@@ -128,7 +128,7 @@ void main(void)
 			printf("CameraYServoControl_Read() = %d\n", CameraYServoControl_Read());    //default = 1500, 0x5dc
 			break;
 
-		case '1':	//speed up
+		case '1':	//speed up		최대 스피드 500
 			speed += 20;
 			printf("speed = %d\n", speed);
 			break;

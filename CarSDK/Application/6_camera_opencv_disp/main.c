@@ -129,6 +129,11 @@ static void free_input_buffers(struct buffer **buffer, uint32_t n, bool bmultipl
                   time : operate time (ms)
   * @retval none
   */
+
+// characteristic : 연산에 소요된 시간을 이미지에 출력한다.
+// precondition : none
+// postcondition : 연산에 소요된 시간을 disp에 표시한다.
+
 static void draw_operatingtime(struct display *disp, uint32_t time)
 {
     FrameBuffer tmpFrame;
@@ -154,14 +159,20 @@ static void draw_operatingtime(struct display *disp, uint32_t time)
                  cambuf: vpe output buffer that converted capture image
   * @retval none
   */
+
+// characteristic : cambuf를 입력으로 하여 houghLine을 검출하고 검출된 직선을 영상에 그린다. hough_transform에 소요된 시간을 이미지에 출력한다.
+// postcondition : 검출된 직선과 소요 시간이 이미지에 표시된다.
+// precondition : vpe output buffer image가 존재해야한다.
 static void hough_transform(struct display *disp, struct buffer *cambuf)
 {
     unsigned char srcbuf[VPE_OUTPUT_W*VPE_OUTPUT_H*3];
+    // 이미지를 나타내는 배열
     uint32_t optime;
     struct timeval st, et;
 
     unsigned char* cam_pbuf[4];
     if(get_framebuf(cambuf, cam_pbuf) == 0) {
+        // cam_pbuf에 
         memcpy(srcbuf, cam_pbuf[0], VPE_OUTPUT_W*VPE_OUTPUT_H*3);
 
         gettimeofday(&st, NULL);
@@ -179,6 +190,10 @@ static void hough_transform(struct display *disp, struct buffer *cambuf)
   * @param  arg: pointer to parameter of thr_data
   * @retval none
   */
+
+// characteristic : Thread 함수로 동작한다. capture된 이미지를 대상으로 허프 변환을 실시하고 변환 결과와 소요 시간을 이미지에 적용하여 출력한다.
+// precondition : 버퍼 이미지가 존재해야 한다.
+// postcondition : none
 void * capture_thread(void *arg)
 {
     struct thr_data *data = (struct thr_data *)arg;
@@ -191,32 +206,38 @@ void * capture_thread(void *arg)
     int i;
 
     v4l2_reqbufs(v4l2, NUMBUF);
+    // 영상을 저장할 큐 버퍼 만큼의 메모리를 할당
 
-    // init vpe input
     vpe_input_init(vpe);
+    // vpe 입력을 초기화한다.
 
-    // allocate vpe input buffer
     allocate_input_buffers(data);
+    // vpe input buffer를 할당해준다.
 
     if(vpe->dst.coplanar)
         vpe->disp->multiplanar = true;
     else
         vpe->disp->multiplanar = false;
     printf("disp multiplanar:%d \n", vpe->disp->multiplanar);
+    // pass
 
-    // init /allocate vpe output
-    vpe_output_init(vpe);
+
+    vpe_output_init(vpe);  
     vpe_output_fullscreen(vpe, data->bfull_screen);
+    // vpe 출력을 초기화하고 할당한다.
 
     for (i = 0; i < NUMBUF; i++)
         v4l2_qbuf(v4l2,vpe->input_buf_dmafd[i], i);
 
     for (i = 0; i < NUMBUF; i++)
         vpe_output_qbuf(vpe, i);
+    // vpe 버퍼에 존재하는 영상을 vpe 가공 후에 큐에 저장한다.
 
     v4l2_streamon(v4l2);
     vpe_stream_on(vpe->fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
-
+    // 영상 캡쳐를 시작하고 vpe 하드웨어의 출력 stream을 on 상태로 한다.
+    // 여기까지의 과정이 영상 입출력 버퍼 초기화, vpe 초기화 과정이다.
+    
     vpe->field = V4L2_FIELD_ANY;
 
     while(1) {
@@ -232,14 +253,19 @@ void * capture_thread(void *arg)
 
         index = vpe_output_dqbuf(vpe);
         capt = vpe->disp_bufs[index];
+        // driver에서 application으로 소유권을 넘겨준다.
 
         hough_transform(vpe->disp, capt);
+        // capt 영상에 허프 변환을 실시한다.
 
         if (disp_post_vid_buffer(vpe->disp, capt, 0, 0, vpe->dst.width, vpe->dst.height)) {
             ERROR("Post buffer failed");
             return NULL;
         }
+        // 영상 출력 버퍼(disp)로 영상(capt)을 보내준다.
+        
         update_overlay_disp(vpe->disp); 
+        // overlay된 영상(hough_transform된 이미지와 수행 시간)을 병합하여 출력한다.
 
         if(data->dump_state == DUMP_READY) {
             DumpMsg dumpmsg;
@@ -262,6 +288,7 @@ void * capture_thread(void *arg)
             } else {
                 MSG("dump capture buf fail !");
             }
+            // 이미지 포맷에 따라서 이미지를 YUYV 포맷으로 변환한다.
 
             dumpmsg.type = DUMP_MSGQ_MSG_TYPE;
             dumpmsg.state_msg = DUMP_WRITE_TO_FILE;
@@ -274,7 +301,7 @@ void * capture_thread(void *arg)
         vpe_output_qbuf(vpe, index);
         index = vpe_input_dqbuf(vpe);
         v4l2_qbuf(v4l2, vpe->input_buf_dmafd[index], index);
-
+        // application으로 이전되었던 소유권을 다시 driver로 돌려준다.
     }
 
     MSG("Ok!");
@@ -286,6 +313,10 @@ void * capture_thread(void *arg)
   * @param  arg: pointer to parameter of thr_data
   * @retval none
   */
+
+// characteristic : hough transform을 수행한 캡쳐된 이미지 덤프를 파일로 저장한다.
+// precondition : none
+// postcondition : File로 이미지가 저장된다.
 void * capture_dump_thread(void *arg)
 {
     struct thr_data *data = (struct thr_data *)arg;
@@ -331,6 +362,15 @@ void * capture_dump_thread(void *arg)
   * @param  arg: pointer to parameter of thr_data
   * @retval none
   */
+
+// characteristic : console에서 키 입력을 대기하는 함수이다.
+// 키 입력시:
+// 1. thread간 공유 데이터 수정 (dump_state = DUMP_CMD)
+// 2. msgsnd로 capture_dump_thread 호출 (DUMP_CMD)
+// 3. Dump 완료시 까지 대기: thread간 공유 데이터값 확읶(dump_state = DUMP_DONE)
+// precondition : none
+// postcondition : File로 이미지가 저장된다.
+
 void * input_thread(void *arg)
 {
     struct thr_data *data = (struct thr_data *)arg;
@@ -415,28 +455,33 @@ int main(int argc, char **argv)
     struct vpe *vpe;
     struct thr_data tdata;
     int disp_argc = 3;
-    char* disp_argv[] = {"dummy", "-s", "4:480x272", "\0"}; // ���� ���� ���� Ȯ�� �� ó��..
+    char* disp_argv[] = {"dummy", "-s", "4:480x272", "\0"}; // 추후 변경 여부 확인 후 처리..
     int ret = 0;
 
     printf("-- 6_camera_opencv_disp example Start --\n");
 
     tdata.dump_state = DUMP_NONE;
+    // Dump State를 키 입력 대기 상태로 초기화
     memset(tdata.dump_img_data, 0, sizeof(tdata.dump_img_data));
+    // dump_img_data에 Dump 이미지 공간 할당 (1280x720x2)
 
     // open vpe
     vpe = vpe_open();
     if(!vpe) {
         return 1;
     }
+    // vpe 구조체 생성 및 초기화
     // vpe input (v4l cameradata)
     vpe->src.width  = CAPTURE_IMG_W;
     vpe->src.height = CAPTURE_IMG_H;
     describeFormat(CAPTURE_IMG_FORMAT, &vpe->src);
+    // 입력 이미지에 대한 파라미터(사이즈 및 포맷)를 vpe 입력 이미지 멤버에 할당한다.
 
     // vpe output (disp data)
     vpe->dst.width  = VPE_OUTPUT_W;
     vpe->dst.height = VPE_OUTPUT_H;
     describeFormat (VPE_OUTPUT_FORMAT, &vpe->dst);
+    // 출력 이미지에 대한 파라미터(사이즈 및 포맷)를 vpe 출력 이미지 멤버에 할당한다.
 
     vpe->disp = disp_open(disp_argc, disp_argv);
     if (!vpe->disp) {
@@ -444,11 +489,13 @@ int main(int argc, char **argv)
         vpe_close(vpe);
         return 1;
     }
+    // 영상 출력을 위해 vpe의 display 멤버 구조체 초기화
 
     set_z_order(vpe->disp, vpe->disp->overlay_p.id);
     set_global_alpha(vpe->disp, vpe->disp->overlay_p.id);
     set_pre_multiplied_alpha(vpe->disp, vpe->disp->overlay_p.id);
     alloc_overlay_plane(vpe->disp, OVERLAY_DISP_FORCC, 0, 0, OVERLAY_DISP_W, OVERLAY_DISP_H);
+    // z-order, alpha, multiplied-alpha 설정 (overlay를 위한 plane 값 설정)
 
     //vpe->deint = 0;
     vpe->translen = 1;
@@ -456,6 +503,9 @@ int main(int argc, char **argv)
     MSG ("Input(Camera) = %d x %d (%.4s)\nOutput(LCD) = %d x %d (%.4s)",
         vpe->src.width, vpe->src.height, (char*)&vpe->src.fourcc,
         vpe->dst.width, vpe->dst.height, (char*)&vpe->dst.fourcc);
+    // 입출력 이미지의 크기 및 포맷정보 출력
+    // 입력 이미지 : 1280x720, Format = UYUV422
+    // 출력 이미지 : 320x180. Format = BGR24
 
     if (    vpe->src.height < 0 || vpe->src.width < 0 || vpe->src.fourcc < 0 || \
         vpe->dst.height < 0 || vpe->dst.width < 0 || vpe->dst.fourcc < 0) {
@@ -463,6 +513,8 @@ int main(int argc, char **argv)
     }
    
     v4l2 = v4l2_open(vpe->src.fourcc, vpe->src.width, vpe->src.height);
+    // 이미지 캡쳐를 위해 vpe 구조체를 바탕으로 v412 구조체 초기화
+    
     if (!v4l2) {
         ERROR("v4l2 open error!");
         disp_close(vpe->disp);
@@ -484,21 +536,36 @@ int main(int argc, char **argv)
     pexam_data = &tdata;
 
     ret = pthread_create(&tdata.threads[0], NULL, capture_thread, &tdata);
+    // 새로운 Thread를 생성한다.
+    // capture_thread 함수가 Thread 함수로 동작한다.
+    // capture_thread 함수에서 이미지 관련 프로세싱이 진행된다.
+    
     if(ret) {
         MSG("Failed creating capture thread");
     }
+    // Thread가 생성되지 않았을 때
     pthread_detach(tdata.threads[0]);
 
     ret = pthread_create(&tdata.threads[1], NULL, capture_dump_thread, &tdata);
+    // 새로운 Thread를 생성한다.
+    // capture_dump_thread 함수가 Thread 함수로 동작한다.
+    // capture_dump_thread 함수에서 이미지 덤프 관련 프로세싱이 진행된다.
+    
     if(ret) {
         MSG("Failed creating capture dump thread");
     }
+    // Thread가 생성되지 않았을 때
     pthread_detach(tdata.threads[1]);
 
     ret = pthread_create(&tdata.threads[2], NULL, input_thread, &tdata);
+    // 새로운 Thread를 생성한다.
+    // input_thread 함수가 Thread 함수로 동작한다.
+    // input_thread 함수에서 키 입력을 대기하는 프로세싱이 진행된다.
+    
     if(ret) {
         MSG("Failed creating input thread");
     }
+    // Thread가 생성되지 않았을 때
     pthread_detach(tdata.threads[2]);
 
     /* register signal handler for <CTRL>+C in order to clean up */
@@ -507,6 +574,7 @@ int main(int argc, char **argv)
         closelog();
         exit(EXIT_FAILURE);
     }
+    // signal error 검출
 
     pause();
 

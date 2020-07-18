@@ -13,7 +13,7 @@
 
 void clrscr(void)
 {
-    write (1, "\033[1;1H\033[2J", 10);
+	write(1, "\033[1;1H\033[2J", 10);
 }
 
 void main(void)
@@ -60,15 +60,13 @@ void main(void)
 	printf("(테스트)");
 	//jobs to be done beforehand;
 	PositionControlOnOff_Write(UNCONTROL); // position controller must be OFF !!!
-	//control on
-	SpeedControlOnOff_Write(CONTROL);
 	//jobs to be done beforehand;
 	SpeedControlOnOff_Write(CONTROL);   // speed controller must be also ON !!!
 	speed = 0; // speed set     --> speed must be set when using position controller
 	DesireSpeed_Write(speed);
 
 	unsigned short lightFlag = 0x00;
-	while (1)
+	while (0)
 	{
 		char key;
 		printf("input :");
@@ -205,116 +203,39 @@ void main(void)
 	printf("Please enter any key\n");
 	scanf("%d", &a);
 
-	int minArrivalTime[3] = { 3000000, 3000000 ,3000000 }; // 3초
-	int bestPgain[3] = {0,};
-	int bestIgain[3] = {0,};
-	int bestDgain[3] = {0,};
-	int overCnt[3] = {0,};
-	int underCnt[3] = {0,};
-	int time_tmp, Pgain, Igain, Dgain, overTemp, underTemp;
 	int currentSpeed;
+	int PID_val;
+	int err_P = 0;
+	int err_I = 0;
+	int err_D = 0;
+	int err_B = 0;
+	int goal;
 
-	for (Pgain = 50; Pgain >= 30; Pgain-=5)
+	while (1)
 	{
-		for (Igain = 50; Igain >= 30; Igain-=5)
+		struct timeval st, et;
+
+		printf("goal : ");
+		scanf("%d", &goal);
+		PID_val = goal;
+		DesireSpeed_Write(goal);
+
+		gettimeofday(&st, NULL);
+		while (1)
 		{
-			for (Dgain = 50; Dgain >= 30; Dgain-=5)
-			{
-				SpeedPIDProportional_Write(Pgain);
-				SpeedPIDIntegral_Write(Igain);
-				SpeedPIDProportional_Write(Dgain);
+			currentSpeed = DesireSpeed_Read();
+			print("currentSpeed = %d, writeVal = %d\n", currentSpeed, PID_val);
+			err_P = currentSpeed - goal;
+			err_I += err_P;
+			err_D = err_B;
+			err_B = err_P;
 
-				struct timeval st, et;
-				gettimeofday(&st, NULL);
-
-
-				DesireSpeed_Write(80);
-				a = 200; //2s
-				int accumPass = 0;
-				overTemp = 0;
-				underTemp = 0;
-				while (a--)	//2초가 지나거나 0.5초이상 안정
-				{
-					clrscr();
-					currentSpeed = DesireSpeed_Read();
-					printf("PID gain = %d, %d, %d\n", Pgain, Igain, Dgain);
-					printf("currentSpeed = %d \n", currentSpeed);
-					for(i = 0; i < 3; i++)
-					{
-						printf("%d등. P I D = %d, %d, %d \n time = %d\n overCnt = %d, underCnt = %d\n",i+1 , bestPgain[i], bestIgain[i], bestDgain[i], minArrivalTime[i], overCnt[i], underCnt[i]);
-					}
-
-					if (currentSpeed > 70 && currentSpeed < 90) accumPass++;
-					else if(currentSpeed > 90) overTemp++;
-					else underTemp++;
-					if(accumPass == 10) break;
-					usleep(10000); //0.01s
-				}
-				gettimeofday(&et, NULL);
-				time_tmp = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
-
-				DesireSpeed_Write(0);
-				usleep(200000); //0.2s
-
-				if (time_tmp < minArrivalTime[2])				
-				{
-					minArrivalTime[2] = time_tmp;
-					bestPgain[2] = Pgain;
-					bestIgain[2] = Igain;
-					bestDgain[2] = Dgain;
-					overCnt[2] = overTemp;
-					underCnt[2] = underTemp;
-
-					if (minArrivalTime[2] < minArrivalTime[1])
-					{
-						int temp;
-						temp = minArrivalTime[2];
-						minArrivalTime[2] = minArrivalTime[1];
-						minArrivalTime[1] = temp;
-						temp = bestPgain[2];
-						bestPgain[2] = bestPgain[1];
-						bestPgain[1] = temp;
-						temp = bestIgain[2];
-						bestIgain[2] = bestIgain[1];
-						bestIgain[1] = temp;
-						temp = bestDgain[2];
-						bestDgain[2] = bestDgain[1];
-						bestDgain[1] = temp;
-						temp = overCnt[2];
-						overCnt[2] = overCnt[1];
-						overCnt[1] = temp;
-						temp = underCnt[2];
-						underCnt[2] = underCnt[1];
-						underCnt[1] = temp;
-						if (minArrivalTime[1] < minArrivalTime[0])
-						{
-							int temp;
-							temp = minArrivalTime[1];
-							minArrivalTime[1] = minArrivalTime[0];
-							minArrivalTime[0] = temp;
-							temp = bestPgain[1];
-							bestPgain[1] = bestPgain[0];
-							bestPgain[0] = temp;
-							temp = bestIgain[1];
-							bestIgain[1] = bestIgain[0];
-							bestIgain[0] = temp;
-							temp = bestDgain[1];
-							bestDgain[1] = bestDgain[0];
-							bestDgain[0] = temp;
-							temp = overCnt[1];
-							overCnt[1] = overCnt[0];
-							overCnt[0] = temp;
-							temp = underCnt[1];
-							underCnt[1] = underCnt[0];
-							underCnt[0] = temp;
-						}
-					}
-				}
-				for(i = 0; i < 3; i++)
-				{
-					printf("%d등. P I D = %d, %d, %d \n time = %d\n",i+1 , bestPgain[i], bestIgain[i], bestDgain[i], minArrivalTime[i] );
-				}
-			}
+			PID_val = err_P * 1 + err_I * 1 + err_D * 1;
+			DesireEncoderCount_Write(PID_val);
+			gettimeofday(&et, NULL);
+			int time_tmp = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
+			if (time_tmp > 5000) break; // 5000ms
+			usleep(100000); //100ms
 		}
 	}
 

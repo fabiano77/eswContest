@@ -165,24 +165,26 @@ static void draw_operatingtime(struct display* disp, uint32_t time)
   // postcondition : 검출된 직선과 소요 시간이 이미지에 표시된다.
   // precondition : vpe output buffer image가 존재해야한다.
 static void hough_transform(struct display* disp, struct buffer* cambuf)
-unsigned char srcbuf[VPE_OUTPUT_W * VPE_OUTPUT_H * 3];
-// 이미지를 나타내는 배열
-uint32_t optime;
-struct timeval st, et;
+{
+	unsigned char srcbuf[VPE_OUTPUT_W * VPE_OUTPUT_H * 3];
+	// 이미지를 나타내는 배열
+	uint32_t optime;
+	struct timeval st, et;
 
-unsigned char* cam_pbuf[4];
-if (get_framebuf(cambuf, cam_pbuf) == 0) {
-	// cam_pbuf에 
-	memcpy(srcbuf, cam_pbuf[0], VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
+	unsigned char* cam_pbuf[4];
+	if (get_framebuf(cambuf, cam_pbuf) == 0)
+	{
+		// cam_pbuf에 
+		memcpy(srcbuf, cam_pbuf[0], VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
 
-	gettimeofday(&st, NULL);
+		gettimeofday(&st, NULL);
 
-	OpenCV_hough_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, cam_pbuf[0], VPE_OUTPUT_W, VPE_OUTPUT_H);
+		OpenCV_hough_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, cam_pbuf[0], VPE_OUTPUT_W, VPE_OUTPUT_H);
 
-	gettimeofday(&et, NULL);
-	optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
-	draw_operatingtime(disp, optime);
-}
+		gettimeofday(&et, NULL);
+		optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
+		draw_operatingtime(disp, optime);
+	}
 }
 
 /**

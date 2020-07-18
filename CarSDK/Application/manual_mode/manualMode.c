@@ -199,45 +199,48 @@ void main(void)
 
 	}
 
-	int a;
-	printf("Please enter any key\n");
-	scanf("%d", &a);
 
-	int currentSpeed;
-	int PID_val;
-	int err_P = 0;
-	int err_I = 0;
-	int err_D = 0;
-	int err_B = 0;
-	int goal;
+		struct timeval st, et;
+		int currentSpeed;
+		double err_P = 0;
+		double err_I = 0;
+		double err_D = 0;
+		double err_B = 0;
+		int goal;
 
 	while (1)
 	{
-		struct timeval st, et;
+
+		SpeedPIDProportional_Write(20);
+		SpeedPIDIntegral_Write(20);
+		SpeedPIDProportional_Write(20);
 
 		printf("goal : ");
 		scanf("%d", &goal);
-		PID_val = goal;
 		DesireSpeed_Write(goal);
+		usleep(100000);
 
 		gettimeofday(&st, NULL);
 		while (1)
 		{
 			currentSpeed = DesireSpeed_Read();
-			print("currentSpeed = %d, writeVal = %d\n", currentSpeed, PID_val);
+			if(currentSpeed<-500 || currentSpeed>500) continue;
 			err_P = currentSpeed - goal;
 			err_I += err_P;
-			err_D = err_B;
+			err_D = err_B - err_P;
 			err_B = err_P;
 
-			PID_val = err_P * 1 + err_I * 1 + err_D * 1;
-			DesireEncoderCount_Write(PID_val);
+			int writeVal = goal - (err_P*0.2 + err_I*0.15 + err_D*0.1);
+			printf("currentSpeed = %d, writeVal = %d\n", currentSpeed, writeVal);
+			printf("errP = %4.1f, errI = %4.1f, errD = %4.1f\n\n",err_P, err_I, err_D);
+			DesireSpeed_Write(writeVal);
 			gettimeofday(&et, NULL);
 			int time_tmp = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
-			if (time_tmp > 5000) break; // 5000ms
-			usleep(100000); //100ms
+			if (time_tmp > 4000) break; // 4s
+			usleep(10000); //10ms
 		}
 	}
+
 
 
 }

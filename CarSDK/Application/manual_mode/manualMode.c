@@ -49,7 +49,7 @@ void main(void)
 	printf("----------------------------------------------------	\n");
 	printf("	space bar = Alarm									\n");
 	printf("----------------------------------------------------	\n");
-	printf("(테스트)")
+	printf("(테스트)");
 	//jobs to be done beforehand;
 	PositionControlOnOff_Write(UNCONTROL); // position controller must be OFF !!!
 	//control on

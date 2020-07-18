@@ -3,6 +3,7 @@
  *******************************************************************************
  */
 #include <stdio.h>
+#include <sys/time.h>
 #include "car_lib.h"
 
  /*******************************************************************************
@@ -60,7 +61,7 @@ void main(void)
 	DesireSpeed_Write(speed);
 
 	unsigned short lightFlag = 0x00;
-	while (1)
+	while (0)
 	{
 		char key;
 		printf("input :");
@@ -192,6 +193,86 @@ void main(void)
 		}
 
 	}
+
+	int minArrivalTime[3] = { 100000000, 100000000 ,100000000 }; // 100초
+	int bestPgain[3];
+	int bestIgain[3];
+	int bestDgain[3];
+	int time_tmp, Pgain, Igain, Dgain;
+	int currentSpeed;
+
+	for (Pgain = 5; Pgain <= 40; Pgain++)
+	{
+		for (Igain = 5; Igain <= 40; Igain++)
+		{
+			for (Dgain = 5; Dgain <= 40; Dgain++)
+			{
+				SpeedPIDProportional_Write(Pgain);
+				SpeedPIDIntegral_Write(Igain);
+				SpeedPIDProportional_Write(Dgain);
+
+				struct timeval st, et;
+				gettimeofday(&st, NULL);
+
+				DesireSpeed_Write(80);
+
+				while (1)
+				{
+					currentSpeed = DesireSpeed_Read();
+					printf("currentSpeed = ", currentSpeed);
+					if (currentSpeed > 76 && currentSpeed < 84) break;
+				}
+
+				gettimeofday(&et, NULL);
+				time_tmp = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
+
+				printf("PID gain = %d, %d, %d\n", Pgain, Igain, Dgain);
+				printf("time = %d ms", time_tmp);
+
+				if (time_temp < minArrivalTime[2])
+				{
+					minArrivalTime[2] = time_tmp;
+					bestPgain[2] = Pgain;
+					bestIgain[2] = Igain;
+					bestDgain[2] = Dgain;
+
+					if (minArrivalTime[2] < minArrivalTime[1])
+					{
+						int temp;
+						temp = minArrivalTime[2];
+						minArrivalTime[2] = minArrivalTime[1];
+						minArrivalTime[1] = temp;
+						temp = bestPgain[2];
+						bestPgain[2] = bestPgain[1];
+						bestPgain[1] = temp;
+						temp = bestIgain[2];
+						bestIgain[2] = bestIgain[1];
+						bestIgain[1] = temp;
+						temp = bestDgain[2];
+						bestDgain[2] = bestDgain[1];
+						bestDgain[1] = temp;
+						if (minArrivalTime[1] < minArrivalTime[0])
+						{
+							int temp;
+							temp = minArrivalTime[1];
+							minArrivalTime[1] = minArrivalTime[0];
+							minArrivalTime[0] = temp;
+							temp = bestPgain[1];
+							bestPgain[1] = bestPgain[0];
+							bestPgain[0] = temp;
+							temp = bestIgain[1];
+							bestIgain[1] = bestIgain[0];
+							bestIgain[0] = temp;
+							temp = bestDgain[1];
+							bestDgain[1] = bestDgain[0];
+							bestDgain[0] = temp;
+						}
+					}
+				}
+			}
+		}
+	}
+
 
 }
 

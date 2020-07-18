@@ -178,6 +178,11 @@ void main(void)
 			}
 			break;
 
+		case '0':
+			SpeedPIDProportional_Write(20);
+			SpeedPIDIntegral_Write(20);
+			SpeedPIDProportional_Write(20);
+			break;
 		case '\n':
 			break;
 

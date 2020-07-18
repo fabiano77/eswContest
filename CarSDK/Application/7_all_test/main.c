@@ -447,23 +447,23 @@ void* control_thread(void* arg)
 {
 	struct thr_data* data = (struct thr_data*)arg;
 
-	unsigned char status;
-	short speed;
-	unsigned char gain;
-	int position, posInit, posDes, posRead;
-	short angle;
-	int channel;
-	int data;
-	char sensor;
-	int i, j;
-	int tol;
-	char byte = 0x80;
+	//unsigned char status;
+	//short speed;
+	//unsigned char gain;
+	//int position, posInit, posDes, posRead;
+	//short angle;
+	//int channel;
+	//int data;
+	//char sensor;
+	int i;// j;
+	//int tol;
+	//char byte = 0x80;
 
 	CarControlInit();
 
 	while (1)
 	{
-		for (int i = 0; i < 2; i++)
+		for (i = 0; i < 2; i++)
 		{
 			Alarm_Write(ON);
 			usleep(200000);

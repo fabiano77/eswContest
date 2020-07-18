@@ -10,6 +10,12 @@
   *  Functions
   *******************************************************************************
   */
+
+void clrscr(void)
+{
+    write (1, "\033[1;1H\033[2J", 10);
+}
+
 void main(void)
 {
 	unsigned char status;
@@ -38,6 +44,7 @@ void main(void)
 	angle_cameraY = CameraYServoControl_Read();
 	printf("CameraYServoControl_Read() = %d\n", angle_cameraY);    //default = 1500, 0x5dc
 
+	clrscr();
 	printf("---------------------[control key]------------------	\n");
 	printf("    w      : forward          |   i      : up			\n");
 	printf("  a s d    : left, stop ,right| j   l    : left, right	\n");
@@ -61,7 +68,7 @@ void main(void)
 	DesireSpeed_Write(speed);
 
 	unsigned short lightFlag = 0x00;
-	while (0)
+	while (1)
 	{
 		char key;
 		printf("input :");
@@ -180,9 +187,9 @@ void main(void)
 			break;
 
 		case '0':
-			SpeedPIDProportional_Write(20);
-			SpeedPIDIntegral_Write(20);
-			SpeedPIDProportional_Write(20);
+			SpeedPIDProportional_Write(40);
+			SpeedPIDIntegral_Write(40);
+			SpeedPIDProportional_Write(40);
 			break;
 		case '\n':
 			break;
@@ -194,18 +201,24 @@ void main(void)
 
 	}
 
-	int minArrivalTime[3] = { 100000000, 100000000 ,100000000 }; // 100초
-	int bestPgain[3];
-	int bestIgain[3];
-	int bestDgain[3];
-	int time_tmp, Pgain, Igain, Dgain;
+	int a;
+	printf("Please enter any key\n");
+	scanf("%d", &a);
+
+	int minArrivalTime[3] = { 3000000, 3000000 ,3000000 }; // 3초
+	int bestPgain[3] = {0,};
+	int bestIgain[3] = {0,};
+	int bestDgain[3] = {0,};
+	int overCnt[3] = {0,};
+	int underCnt[3] = {0,};
+	int time_tmp, Pgain, Igain, Dgain, overTemp, underTemp;
 	int currentSpeed;
 
-	for (Pgain = 5; Pgain <= 40; Pgain++)
+	for (Pgain = 50; Pgain >= 30; Pgain-=5)
 	{
-		for (Igain = 5; Igain <= 40; Igain++)
+		for (Igain = 50; Igain >= 30; Igain-=5)
 		{
-			for (Dgain = 5; Dgain <= 40; Dgain++)
+			for (Dgain = 50; Dgain >= 30; Dgain-=5)
 			{
 				SpeedPIDProportional_Write(Pgain);
 				SpeedPIDIntegral_Write(Igain);
@@ -214,27 +227,43 @@ void main(void)
 				struct timeval st, et;
 				gettimeofday(&st, NULL);
 
+
 				DesireSpeed_Write(80);
-
-				while (1)
+				a = 200; //2s
+				int accumPass = 0;
+				overTemp = 0;
+				underTemp = 0;
+				while (a--)	//2초가 지나거나 0.5초이상 안정
 				{
+					clrscr();
 					currentSpeed = DesireSpeed_Read();
-					printf("currentSpeed = ", currentSpeed);
-					if (currentSpeed > 76 && currentSpeed < 84) break;
-				}
+					printf("PID gain = %d, %d, %d\n", Pgain, Igain, Dgain);
+					printf("currentSpeed = %d \n", currentSpeed);
+					for(i = 0; i < 3; i++)
+					{
+						printf("%d등. P I D = %d, %d, %d \n time = %d\n overCnt = %d, underCnt = %d\n",i+1 , bestPgain[i], bestIgain[i], bestDgain[i], minArrivalTime[i], overCnt[i], underCnt[i]);
+					}
 
+					if (currentSpeed > 70 && currentSpeed < 90) accumPass++;
+					else if(currentSpeed > 90) overTemp++;
+					else underTemp++;
+					if(accumPass == 10) break;
+					usleep(10000); //0.01s
+				}
 				gettimeofday(&et, NULL);
 				time_tmp = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
 
-				printf("PID gain = %d, %d, %d\n", Pgain, Igain, Dgain);
-				printf("time = %d ms", time_tmp);
+				DesireSpeed_Write(0);
+				usleep(200000); //0.2s
 
-				if (time_temp < minArrivalTime[2])
+				if (time_tmp < minArrivalTime[2])				
 				{
 					minArrivalTime[2] = time_tmp;
 					bestPgain[2] = Pgain;
 					bestIgain[2] = Igain;
 					bestDgain[2] = Dgain;
+					overCnt[2] = overTemp;
+					underCnt[2] = underTemp;
 
 					if (minArrivalTime[2] < minArrivalTime[1])
 					{
@@ -251,6 +280,12 @@ void main(void)
 						temp = bestDgain[2];
 						bestDgain[2] = bestDgain[1];
 						bestDgain[1] = temp;
+						temp = overCnt[2];
+						overCnt[2] = overCnt[1];
+						overCnt[1] = temp;
+						temp = underCnt[2];
+						underCnt[2] = underCnt[1];
+						underCnt[1] = temp;
 						if (minArrivalTime[1] < minArrivalTime[0])
 						{
 							int temp;
@@ -266,8 +301,18 @@ void main(void)
 							temp = bestDgain[1];
 							bestDgain[1] = bestDgain[0];
 							bestDgain[0] = temp;
+							temp = overCnt[1];
+							overCnt[1] = overCnt[0];
+							overCnt[0] = temp;
+							temp = underCnt[1];
+							underCnt[1] = underCnt[0];
+							underCnt[0] = temp;
 						}
 					}
+				}
+				for(i = 0; i < 3; i++)
+				{
+					printf("%d등. P I D = %d, %d, %d \n time = %d\n",i+1 , bestPgain[i], bestIgain[i], bestDgain[i], minArrivalTime[i] );
 				}
 			}
 		}

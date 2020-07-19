@@ -193,7 +193,7 @@ static void draw_operatingtime(struct display* disp, uint32_t time)
 
 
 	//우리가 자체 제작할 영상처리 알고리즘
-static void img_process(struct display* disp, struct buffer* cambuf)
+static void img_process(struct display* disp, struct buffer* cambuf, signed char map1, signed char map2)
 {
 	unsigned char srcbuf[VPE_OUTPUT_W * VPE_OUTPUT_H * 3];
 	// 이미지를 나타내는 배열
@@ -225,7 +225,7 @@ static void img_process(struct display* disp, struct buffer* cambuf)
 
 		**********************
 		*/
-		OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, cam_pbuf[0]);
+		OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, cam_pbuf[0], map1, map2);
 		//OpenCV_hough_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, cam_pbuf[0], VPE_OUTPUT_W, VPE_OUTPUT_H);
 
 
@@ -312,7 +312,7 @@ void* image_process_thread(void* arg)
 		//{
 		//	usleep(5 * 1000);
 		//}
-		img_process(vpe->disp, capt);
+		img_process(vpe->disp, capt, map1, map2);
 		// 우리가 짠 알고리즘.
 
 

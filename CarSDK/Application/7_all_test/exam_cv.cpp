@@ -355,5 +355,17 @@ void OpenCV_merge_image(unsigned char* src1, unsigned char* src2, unsigned char*
     memcpy(dst, src1AR32.data, w*h*4);
 }
 
+	void OpenCV_remap(unsigned char* inBuf, int w, int h, unsigned char* outBuf, signed char* map1, signed char* map2)
+	{
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		Mat dstRGB(h, w, CV_8UC3, outBuf);
+		Mat map1_Mat(h, w, CV_8UC3, map1);
+		Mat map2_Mat(h, w, CV_8UC3, map2);
+
+
+
+		remap(srcRGB, dstRGB, map1_Mat, map2_Mat, INTER_LINEAR);
+	}
+
 }
 

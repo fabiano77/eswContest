@@ -217,7 +217,6 @@ void main(void)
 
 		printf("goal : ");
 		scanf("%d", &goal);
-		DesireSpeed_Write(goal);
 		usleep(100000);
 
 		gettimeofday(&st, NULL);
@@ -230,7 +229,7 @@ void main(void)
 			err_D = err_B - err_P;
 			err_B = err_P;
 
-			int writeVal = goal - (err_P*0.2 + err_I*0.15 + err_D*0.1);
+			int writeVal = goal - (err_P*0.11 + err_I*0.08 + err_D*0.15);
 			printf("currentSpeed = %d, writeVal = %d\n", currentSpeed, writeVal);
 			printf("errP = %4.1f, errI = %4.1f, errD = %4.1f\n\n",err_P, err_I, err_D);
 			DesireSpeed_Write(writeVal);

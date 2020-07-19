@@ -37,6 +37,20 @@ void OpenCV_load_file(char* file, unsigned char* outBuf, int nw, int nh)
     cv::resize(srcRGB, dstRGB, cv::Size(nw, nh), 0, 0, CV_INTER_LINEAR);
 }
 
+void OpenCV_calibration(char* map1, char* map2) {
+    // DoCalib와 initUndistortRectifyMap 함수를 이용해서 
+    Size videoSize = Size(320, 180);
+    Mat Mat_map1(320, 180, CV_8S, map1);
+    Mat Mat_map2(320, 180, CV_8S, map2);
+    Mat disCoeffs;
+    Mat cameraMatrix = Mat(3, 3, CV_32FC1);
+    int numBoards = 5;
+    DoCalib(disCoeffs, cameraMatrix, numBoards);
+    // disCoeffs와 cameraMatrix에 정보가 담긴다.
+    initUndistortRectifyMat(cameraMatrix, distCoeffs, Mat(), cameraMatrix, videoSize, CV_32FC1, Mat_map1, Mat_map2);
+    // Mat_map2의 정보를 map2에 복사한다.
+}
+
 /**
   * @brief  To convert format from BGR to RGB.
   * @param  inBuf: buffer pointer of BGR image

@@ -56,16 +56,46 @@ typedef enum {
 	DUMP_DONE
 }DumpState;
 
+typedef enum {
+	NONE,
+	VERTICAL,
+	HORIZONTAL
+}ParkingState;
+
+typedef enum {
+	NONE,
+	RED,
+	YELLOW,
+	GREEN_LEFT,
+	GREEN_RIGHT
+}SignalLight;
+
 typedef struct _DumpMsg {
 	long type;
 	int  state_msg;
 }DumpMsg;
+
+struct ControlData {
+	SignalLight signal;
+	bool stopFlag;
+	int steerVal;
+	int desireSpeedVal;
+	int currentSpeedVal;
+};
+
+struct SensorData {
+	ParkingState parkingState;
+	int distance[6];
+	int lineSensor[7];
+};
 
 struct thr_data {
 	struct display* disp;
 	struct v4l2* v4l2;
 	struct vpe* vpe;
 	struct buffer** input_bufs;
+	struct ControlData controlData;
+	struct SensorData sensorData;
 
 	DumpState dump_state;
 	unsigned char dump_img_data[VPE_OUTPUT_IMG_SIZE];
@@ -161,10 +191,9 @@ static void draw_operatingtime(struct display* disp, uint32_t time)
   * @retval none
   */
 
-  // characteristic : cambuf를 입력으로 하여 houghLine을 검출하고 검출된 직선을 영상에 그린다. hough_transform에 소요된 시간을 이미지에 출력한다.
-  // postcondition : 검출된 직선과 소요 시간이 이미지에 표시된다.
-  // precondition : vpe output buffer image가 존재해야한다.
-static void hough_transform(struct display* disp, struct buffer* cambuf)
+
+	//우리가 자체 제작할 영상처리 알고리즘
+static void img_process(struct display* disp, struct buffer* cambuf)
 {
 	unsigned char srcbuf[VPE_OUTPUT_W * VPE_OUTPUT_H * 3];
 	// 이미지를 나타내는 배열
@@ -174,12 +203,32 @@ static void hough_transform(struct display* disp, struct buffer* cambuf)
 	unsigned char* cam_pbuf[4];
 	if (get_framebuf(cambuf, cam_pbuf) == 0)
 	{
-		// cam_pbuf에 
 		memcpy(srcbuf, cam_pbuf[0], VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
-
+		//scrbuf 에 입력영상을 복사한다.
+		//cam_pbuf는 img_process_thread에서 매개변수로 전달한 영상과 동기화된다.
 		gettimeofday(&st, NULL);
 
+		/*******************************************************
+		* 우리가 만든 알고리즘 함수를 넣는 부분.
+		********************************************************/
+
+		/*****pseudo code*****
+		
+		캘리브레이션func();
+
+		stop = 우선정지검출func();
+		if( stop ) stopFlag = 1;
+		else
+		{
+			steer = 조향값검출func();
+		}
+
+		**********************
+		*/
+
 		OpenCV_hough_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, cam_pbuf[0], VPE_OUTPUT_W, VPE_OUTPUT_H);
+
+
 
 		gettimeofday(&et, NULL);
 		optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
@@ -195,7 +244,7 @@ static void hough_transform(struct display* disp, struct buffer* cambuf)
   // characteristic : Thread 함수로 동작한다. capture된 이미지를 대상으로 허프 변환을 실시하고 변환 결과와 소요 시간을 이미지에 적용하여 출력한다.
   // precondition : 버퍼 이미지가 존재해야 한다.
   // postcondition : none
-void* capture_thread(void* arg)
+void* image_process_thread(void* arg)
 {
 	struct thr_data* data = (struct thr_data*)arg;
 	struct v4l2* v4l2 = data->v4l2;
@@ -208,32 +257,24 @@ void* capture_thread(void* arg)
 
 	v4l2_reqbufs(v4l2, NUMBUF);
 	// 영상을 저장할 큐 버퍼 만큼의 메모리를 할당
-
 	vpe_input_init(vpe);
 	// vpe 입력을 초기화한다.
-
 	allocate_input_buffers(data);
 	// vpe input buffer를 할당해준다.
-
 	if (vpe->dst.coplanar)
 		vpe->disp->multiplanar = true;
 	else
 		vpe->disp->multiplanar = false;
 	printf("disp multiplanar:%d \n", vpe->disp->multiplanar);
 	// pass
-
-
 	vpe_output_init(vpe);
 	vpe_output_fullscreen(vpe, data->bfull_screen);
 	// vpe 출력을 초기화하고 할당한다.
-
 	for (i = 0; i < NUMBUF; i++)
 		v4l2_qbuf(v4l2, vpe->input_buf_dmafd[i], i);
-
 	for (i = 0; i < NUMBUF; i++)
 		vpe_output_qbuf(vpe, i);
 	// vpe 버퍼에 존재하는 영상을 vpe 가공 후에 큐에 저장한다.
-
 	v4l2_streamon(v4l2);
 	vpe_stream_on(vpe->fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
 	// 영상 캡쳐를 시작하고 vpe 하드웨어의 출력 stream을 on 상태로 한다.
@@ -241,10 +282,10 @@ void* capture_thread(void* arg)
 
 	vpe->field = V4L2_FIELD_ANY;
 
-	while (1) {
+	while (1) 
+	{
 		index = v4l2_dqbuf(v4l2, &vpe->field);
 		vpe_input_qbuf(vpe, index);
-
 		if (isFirst)
 		{
 			vpe_stream_on(vpe->fd, V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE);
@@ -252,13 +293,24 @@ void* capture_thread(void* arg)
 			MSG("streaming started...");
 			data->bstream_start = true;
 		}
-
 		index = vpe_output_dqbuf(vpe);
 		capt = vpe->disp_bufs[index];
 		// driver에서 application으로 소유권을 넘겨준다.
 
-		hough_transform(vpe->disp, capt);
-		// capt 영상에 허프 변환을 실시한다.
+
+		/*******************************************************
+		* 영상처리 코드를 진행되는 부분.
+		* img_process에서 steer나 stop flag등 영상처리로 얻을 수 있는 정보를
+		* thr_data의 멤버 변수로 저장하여 control_thread로 전달한다.
+		********************************************************/
+		
+		//while(event)
+		//{
+		//	usleep(5 * 1000);
+		//}
+		img_process(vpe->disp, capt);
+		// 우리가 짠 알고리즘.
+
 
 		if (disp_post_vid_buffer(vpe->disp, capt, 0, 0, vpe->dst.width, vpe->dst.height))
 		{
@@ -266,7 +318,6 @@ void* capture_thread(void* arg)
 			return NULL;
 		}
 		// 영상 출력 버퍼(disp)로 영상(capt)을 보내준다.
-
 		update_overlay_disp(vpe->disp);
 		// overlay된 영상(hough_transform된 이미지와 수행 시간)을 병합하여 출력한다.
 
@@ -306,7 +357,6 @@ void* capture_thread(void* arg)
 				MSG("state:%d, msg send fail\n", dumpmsg.state_msg);
 			}
 		}
-
 		vpe_output_qbuf(vpe, index);
 		index = vpe_input_dqbuf(vpe);
 		v4l2_qbuf(v4l2, vpe->input_buf_dmafd[index], index);
@@ -325,51 +375,51 @@ void* capture_thread(void* arg)
   // characteristic : hough transform을 수행한 캡쳐된 이미지 덤프를 파일로 저장한다.
   // precondition : none
   // postcondition : File로 이미지가 저장된다.
-void* capture_dump_thread(void* arg)
-{
-	struct thr_data* data = (struct thr_data*)arg;
-	FILE* fp;
-	char file[50];
-	struct timeval timestamp;
-	struct tm* today;
-	DumpMsg dumpmsg;
-
-	while (1)
-	{
-		if (msgrcv(data->msgq_id, &dumpmsg, sizeof(DumpMsg) - sizeof(long), DUMP_MSGQ_MSG_TYPE, 0) >= 0)
-		{
-			switch (dumpmsg.state_msg)
-			{
-			case DUMP_CMD:
-				gettimeofday(&timestamp, NULL);
-				today = localtime(&timestamp.tv_sec);
-				sprintf(file, "dump_%04d%02d%02d_%02d%02d%02d.%s", today->tm_year + 1900, today->tm_mon + 1, today->tm_mday, today->tm_hour, today->tm_min, today->tm_sec, VPE_OUTPUT_FORMAT);
-				data->dump_state = DUMP_READY;
-				MSG("file name:%s", file);
-				break;
-
-			case DUMP_WRITE_TO_FILE:
-				if ((fp = fopen(file, "w+")) == NULL)
-				{
-					ERROR("Fail to fopen");
-				}
-				else
-				{
-					fwrite(data->dump_img_data, VPE_OUTPUT_IMG_SIZE, 1, fp);
-				}
-				fclose(fp);
-				data->dump_state = DUMP_DONE;
-				break;
-
-			default:
-				MSG("dump msg wrong (%d)", dumpmsg.state_msg);
-				break;
-			}
-		}
-	}
-
-	return NULL;
-}
+//void* capture_dump_thread(void* arg)
+//{
+//	struct thr_data* data = (struct thr_data*)arg;
+//	FILE* fp;
+//	char file[50];
+//	struct timeval timestamp;
+//	struct tm* today;
+//	DumpMsg dumpmsg;
+//
+//	while (1)
+//	{
+//		if (msgrcv(data->msgq_id, &dumpmsg, sizeof(DumpMsg) - sizeof(long), DUMP_MSGQ_MSG_TYPE, 0) >= 0)
+//		{
+//			switch (dumpmsg.state_msg)
+//			{
+//			case DUMP_CMD:
+//				gettimeofday(&timestamp, NULL);
+//				today = localtime(&timestamp.tv_sec);
+//				sprintf(file, "dump_%04d%02d%02d_%02d%02d%02d.%s", today->tm_year + 1900, today->tm_mon + 1, today->tm_mday, today->tm_hour, today->tm_min, today->tm_sec, VPE_OUTPUT_FORMAT);
+//				data->dump_state = DUMP_READY;
+//				MSG("file name:%s", file);
+//				break;
+//
+//			case DUMP_WRITE_TO_FILE:
+//				if ((fp = fopen(file, "w+")) == NULL)
+//				{
+//					ERROR("Fail to fopen");
+//				}
+//				else
+//				{
+//					fwrite(data->dump_img_data, VPE_OUTPUT_IMG_SIZE, 1, fp);
+//				}
+//				fclose(fp);
+//				data->dump_state = DUMP_DONE;
+//				break;
+//
+//			default:
+//				MSG("dump msg wrong (%d)", dumpmsg.state_msg);
+//				break;
+//			}
+//		}
+//	}
+//
+//	return NULL;
+//}
 
 /**
   * @brief  handling an input command
@@ -446,23 +496,14 @@ void* input_thread(void* arg)
 void* control_thread(void* arg)
 {
 	struct thr_data* data = (struct thr_data*)arg;
-
-	//unsigned char status;
-	//short speed;
-	//unsigned char gain;
-	//int position, posInit, posDes, posRead;
-	//short angle;
-	//int channel;
-	//int data;
-	//char sensor;
-	int i;// j;
-	//int tol;
-	//char byte = 0x80;
-
 	CarControlInit();
 
+	int i;
 	while (1)
 	{
+		SteeringServoControl_Write(data->controlData.steerVal);
+		DesireSpeed_Write(data->controlData.desireSpeedVal);
+
 		for (i = 0; i < 2; i++)
 		{
 			Alarm_Write(ON);
@@ -594,7 +635,7 @@ int main(int argc, char** argv)
 
 	pexam_data = &tdata;
 
-	ret = pthread_create(&tdata.threads[0], NULL, capture_thread, &tdata);
+	ret = pthread_create(&tdata.threads[0], NULL, image_process_thread, &tdata);
 	if (ret) {
 		MSG("Failed creating capture thread");
 	}

@@ -5,6 +5,7 @@
 #include <sstream>
 //#include <sys/time.h>
 
+#include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -43,50 +44,50 @@ void OpenCV_load_file(char* file, unsigned char* outBuf, int nw, int nh)
 
 
 void OpenCV_calibration(char* map1, char* map2) {
-    // DoCalib¿Í initUndistortRectifyMap ÇÔ¼ö¸¦ ÀÌ¿ëÇØ¼­ 
+    // DoCalibï¿½ï¿½ initUndistortRectifyMap ï¿½Ô¼ï¿½ï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½Ø¼ï¿½ 
     Size videoSize = Size(320, 180);
     Mat Mat_map1(320, 180, CV_8S, map1);
     Mat Mat_map2(320, 180, CV_8S, map2);
     Mat disCoeffs;
     Mat cameraMatrix = Mat(3, 3, CV_32FC1);
-    int numBoards = 5;
+    int numBoards = 4;
 
-    //ÀÌÇÏ DoCalib() ÇÔ¼ö Àü¹®.
+    //ï¿½ï¿½ï¿½ï¿½ DoCalib() ï¿½Ô¼ï¿½ ï¿½ï¿½ï¿½ï¿½.
 
-    int numCornerHor = 7; // ¼öÆò Á¡ÀÇ °³¼ö
-    int numCornerVer = 7; // ¼öÁ÷ Á¡ÀÇ °³¼ö
-    int numSquare = numCornerHor * numCornerVer; // »ç°¢ÇüÀÇ °³¼ö
+    int numCornerHor = 7; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+    int numCornerVer = 7; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+    int numSquare = numCornerHor * numCornerVer; // ï¿½ç°¢ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
     Size board_sz = Size(numCornerHor, numCornerVer);
 
-    vector<vector<Point3f>> object_point; // ½ÇÁ¦ 3D Â÷¿øÀ» ÀÇ¹ÌÇÏ´Â °´Ã¤
-    vector<vector<Point2f>> image_point; // Ã¼½º ÆÇÀ» XYÆò¸é¿¡ À§Ä¡½ÃÅ² »óÅÂ¸¦ ÀÇ¹ÌÇÏ´Â °´Ã¤
+    vector <vector <Point3f> > object_point; // ï¿½ï¿½ï¿½ï¿½ 3D ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç¹ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½Ã¤
+    vector <vector <Point2f> > image_point; // Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ XYï¿½ï¿½é¿¡ ï¿½ï¿½Ä¡ï¿½ï¿½Å² ï¿½ï¿½ï¿½Â¸ï¿½ ï¿½Ç¹ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½Ã¤
 
-    vector<Point2f> corners;
-    int successes = 0; // ÇÏ³ªÀÇ ÀÌ¹ÌÁö¿¡ ´ëÇØ CalibÀ» ¼öÇàÇÒ ¶§ »ç¿ëµÇ´Â Ä«¿îÅÍ
-                       // Ã¼½º ÆÇÀÇ ÀÌ¹ÌÁö ¼ö ¸¸Å­ ¼öÇàµÇ¾î¾ß ÇÑ´Ù.
+    vector <Point2f> corners;
+    int successes = 0; // ï¿½Ï³ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Calibï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½Ç´ï¿½ Ä«ï¿½ï¿½ï¿½ï¿½
+                       // Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½Å­ ï¿½ï¿½ï¿½ï¿½Ç¾ï¿½ï¿½ ï¿½Ñ´ï¿½.
 
-    Mat image; // Ã¼½º ÆÇÀÇ ÀÌ¹ÌÁö¸¦ ÀúÀåÇÒ Mat °´Ã¤
+    Mat image; // Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Mat ï¿½ï¿½Ã¤
     Mat gray_image;
 
-    vector<Point3f> obj;
+    vector <Point3f> obj;
     for (int i = 0; i < numSquare; i++) {
         obj.push_back(Point3f(i / numCornerHor, i % numCornerHor, 0.0f));
-        //Ã¼½º ÆÇ¿¡ ´ëÇØ XYÃà¿¡ °íÁ¤µÈ »óÅÂ·Î °¡Á¤ÇÑ´Ù.
-        //ÁÂÇ¥¿¡ ´ëÇÑ ·£´ýÇÑ ½Ã½ºÅÛÀ» À§ÇÏ¿© obj º¤ÅÍ¿¡ Ã¼½º ÆÇÀÇ °¡´ÉÇÑ ÁÂÇ¥¸¦ ¸ðµÎ ÀúÀåÇÑ´Ù.
-       // (0~numCornerVer, 0~numCornerHor, 0.0f) ¹üÀ§
+        //Ã¼ï¿½ï¿½ ï¿½Ç¿ï¿½ ï¿½ï¿½ï¿½ï¿½ XYï¿½à¿¡ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+        //ï¿½ï¿½Ç¥ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ã½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï¿ï¿½ obj ï¿½ï¿½ï¿½Í¿ï¿½ Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+       // (0~numCornerVer, 0~numCornerHor, 0.0f) ï¿½ï¿½ï¿½ï¿½
     }
 
-    ostringstream osstream; // imread¸¦ À§ÇÑ sstream
+    ostringstream osstream; // imreadï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ sstream
 
-    while (successes < numBoards) { // ¸ðµç Ã¼½º ÆÇÀÇ »çÁøÀ» Ã³¸® ÇÒ ¶§ ±îÁö loop¸¦ ½ÇÇàÇÑ´Ù.
+    while (successes < numBoards) { // ï¿½ï¿½ï¿½ Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ loopï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 
         osstream.str("");
-        osstream << "CarSDK/Calib_img/frame_" << successes << ".png"; // »çÁøÀÇ Á¦¸ñ Ã³¸®
+        osstream << "CarSDK/Calib_img/frame_" << successes << ".png"; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
 
-        image = imread(osstream.str(), IMREAD_COLOR); // Ã¹ ¹øÂ° »çÁøºÎÅÍ image°´Ã¤¿¡ read½ÃÅ²´Ù.
+        image = imread(osstream.str(), IMREAD_COLOR); // Ã¹ ï¿½ï¿½Â° ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ imageï¿½ï¿½Ã¤ï¿½ï¿½ readï¿½ï¿½Å²ï¿½ï¿½.
 
-        if (image.empty()) { // image °´Ã¤¿¡ ´ëÇÑ ¿À·ù °ËÃâ
+        if (image.empty()) { // image ï¿½ï¿½Ã¤ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             cout << "IMAGE IS EMPTY!" << endl;
             return;
         }
@@ -94,9 +95,9 @@ void OpenCV_calibration(char* map1, char* map2) {
         cvtColor(image, gray_image, COLOR_BGR2GRAY);
 
         bool found = findChessboardCorners(image, board_sz, corners, CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_FILTER_QUADS);
-        //Ã¹ ¹øÂ° ÀÎÀÚ´Â 3-Ã¤³Î color ÀÌ¹ÌÁöÀÎ InputOutputArray°¡ µé¾î¿Í¾ßÇÑ´Ù.
-        //µÎ ¹øÂ° ÀÎÀÚ´Â Ã¼½º ÆÇÀÇ ¸ð¼­¸®ÀÇ SizeÀÌ´Ù. Ä­ÀÇ ¼ö°¡ ¾Æ´Ñ ¸ð¼­¸®ÀÇ ¼ö·Î ¼¾´Ù.
-        //¼¼ ¹øÂ° ÀÎÀÚ´Â °ËÃâµÈ ¸ð¼­¸®ÀÇ ÁÂÇ¥°¡ ÀÔ·ÂµÈ´Ù.
+        //Ã¹ ï¿½ï¿½Â° ï¿½ï¿½ï¿½Ú´ï¿½ 3-Ã¤ï¿½ï¿½ color ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ InputOutputArrayï¿½ï¿½ ï¿½ï¿½ï¿½Í¾ï¿½ï¿½Ñ´ï¿½.
+        //ï¿½ï¿½ ï¿½ï¿½Â° ï¿½ï¿½ï¿½Ú´ï¿½ Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ð¼­¸ï¿½ï¿½ï¿½ Sizeï¿½Ì´ï¿½. Ä­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Æ´ï¿½ ï¿½ð¼­¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
+        //ï¿½ï¿½ ï¿½ï¿½Â° ï¿½ï¿½ï¿½Ú´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ð¼­¸ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥ï¿½ï¿½ ï¿½Ô·ÂµÈ´ï¿½.
 
         if (found) {
             //cornerSubPix(gray_image, corners, Size(11, 11), Size(-1, -1), TermCriteria(TermCriteria::EPS | TermCriteria::MAX_ITER), 30, 0.1);
@@ -106,38 +107,38 @@ void OpenCV_calibration(char* map1, char* map2) {
         //imshow("GRAY", gray_image);
         //waitKey(10);
 
-        //if (key == 27) // esc ÀÔ·Â ½Ã Á¾·á
+        //if (key == 27) // esc ï¿½Ô·ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         //	return 0;
 
-        //if (key == ' ' && found != 0) { // space bar ÀÔ·Â ½Ã ÁÂÇ¥ °ªÀÌ °´Ã¤·Î ÀúÀåµÊ
+        //if (key == ' ' && found != 0) { // space bar ï¿½Ô·ï¿½ ï¿½ï¿½ ï¿½ï¿½Ç¥ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¤ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
 
         image_point.push_back(corners);
         object_point.push_back(obj);
 
-        cout << successes + 1 << "th snap stored!" << endl; // ConsoleÃ¢¿¡ Ãâ·Â
+        cout << successes + 1 << "th snap stored!" << endl; // ConsoleÃ¢ï¿½ï¿½ ï¿½ï¿½ï¿½
 
-        successes++; // ´ÙÀ½ »çÁø¿¡ ´ëÇØ loop ½ÇÇà
+        successes++; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ loop ï¿½ï¿½ï¿½ï¿½
 
-        osstream.clear(); // Á¦¸ñÀ» ´ãÀ» osstream ÃÊ±âÈ­
+        osstream.clear(); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ osstream ï¿½Ê±ï¿½È­
 
-        if (successes >= numBoards) // ¸ðµç »çÁø¿¡ ´ëÇØ °è»êÀÌ ¿Ï·áµÇ¸é loop Å»Ãâ
+        if (successes >= numBoards) // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½Ç¸ï¿½ loop Å»ï¿½ï¿½
             break;
         /*}*/
 
     }
 
-    vector<Mat> rvecs;
-    vector<Mat> tvecs;
+    vector <Mat> rvecs;
+    vector <Mat> tvecs;
 
-    intrinsic.ptr<float>(0)[0] = 1;
-    intrinsic.ptr<float>(0)[0] = 1;
+    cameraMatrix.ptr<float>(0)[0] = 1;
+    cameraMatrix.ptr<float>(0)[0] = 1;
 
-    calibrateCamera(object_point, image_point, image.size(), intrinsic, distCoeffs, rvecs, tvecs);
-    //¿©±â±îÁö DoCalib()ÇÔ¼ö.
+    calibrateCamera(object_point, image_point, image.size(), cameraMatrix, disCoeffs, rvecs, tvecs);
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ DoCalib()ï¿½Ô¼ï¿½.
 
-    // disCoeffs¿Í cameraMatrix¿¡ Á¤º¸°¡ ´ã±ä´Ù.
-    initUndistortRectifyMat(cameraMatrix, distCoeffs, Mat(), cameraMatrix, videoSize, CV_32FC1, Mat_map1, Mat_map2);
-    // Mat_map2ÀÇ Á¤º¸¸¦ map2¿¡ º¹»çÇÑ´Ù.
+    // disCoeffsï¿½ï¿½ cameraMatrixï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
+    initUndistortRectifyMap(cameraMatrix, disCoeffs, Mat(), cameraMatrix, videoSize, CV_32FC1, Mat_map1, Mat_map2);
+    // Mat_map2ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ map2ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 }
 
 /**
@@ -244,17 +245,17 @@ void OpenCV_canny_edge_image(char* file, unsigned char* outBuf, int nw, int nh)
     Mat dstRGB(nh, nw, CV_8UC3, outBuf);
 
     cvtColor(srcRGB, srcGRAY, CV_BGR2GRAY);
-     // ÄÉ´Ï ¾Ë°í¸®Áò Àû¿ë
+     // ï¿½É´ï¿½ ï¿½Ë°ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     cv::Mat contours;
-    cv::Canny(srcGRAY, // ±×·¹ÀÌ·¹º§ ¿µ»ó
-        contours, // °á°ú ¿Ü°û¼±
-        125,  // ³·Àº °æ°è°ª
-        350);  // ³ôÀº °æ°è°ª
+    cv::Canny(srcGRAY, // ï¿½×·ï¿½ï¿½Ì·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        contours, // ï¿½ï¿½ï¿½ ï¿½Ü°ï¿½ï¿½ï¿½
+        125,  // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½è°ª
+        350);  // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½è°ª
 
-    // ³ÍÁ¦·Î È­¼Ò·Î ¿Ü°û¼±À» Ç¥ÇöÇÏ¹Ç·Î Èæ¹é °ªÀ» ¹ÝÀü
-    //cv::Mat contoursInv; // ¹ÝÀü ¿µ»ó
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È­ï¿½Ò·ï¿½ ï¿½Ü°ï¿½ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½ï¿½Ï¹Ç·ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+    //cv::Mat contoursInv; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     //cv::threshold(contours, contoursInv, 128, 255, cv::THRESH_BINARY_INV);
-    // ¹à±â °ªÀÌ 128º¸´Ù ÀÛÀ¸¸é 255°¡ µÇµµ·Ï ¼³Á¤
+    // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 128ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 255ï¿½ï¿½ ï¿½Çµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
  
     cvtColor(contours, contours, CV_GRAY2BGR);
     
@@ -281,40 +282,40 @@ void OpenCV_hough_transform(unsigned char* srcBuf, int iw, int ih, unsigned char
     Mat resRGB(ih, iw, CV_8UC3);
     //cvtColor(srcRGB, srcRGB, CV_BGR2BGRA);
 
-    // Ä³´Ï ¾Ë°í¸®Áò Àû¿ë
+    // Ä³ï¿½ï¿½ ï¿½Ë°ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     cv::Mat contours;
     cv::Canny(srcRGB, contours, 125, 350);
     
-    // ¼± °¨Áö À§ÇÑ ÇãÇÁ º¯È¯
+    // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯
     std::vector<cv::Vec2f> lines;
-    cv::HoughLines(contours, lines, 1, PI/180, // ´Ü°èº° Å©±â (1°ú ¥ð/180¿¡¼­ ´Ü°èº°·Î °¡´ÉÇÑ ¸ðµç °¢µµ·Î ¹ÝÁö¸§ÀÇ ¼±À» Ã£À½)
-        80);  // ÅõÇ¥(vote) ÃÖ´ë °³¼ö
+    cv::HoughLines(contours, lines, 1, PI/180, // ï¿½Ü°èº° Å©ï¿½ï¿½ (1ï¿½ï¿½ ï¿½ï¿½/180ï¿½ï¿½ï¿½ï¿½ ï¿½Ü°èº°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½)
+        80);  // ï¿½ï¿½Ç¥(vote) ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½
     
-    // ¼± ±×¸®±â
+    // ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½
     cv::Mat result(contours.rows, contours.cols, CV_8UC3, lineColor);
     //printf("Lines detected: %d\n", lines.size());
 
-    // ¼± º¤ÅÍ¸¦ ¹Ýº¹ÇØ ¼± ±×¸®±â
+    // ï¿½ï¿½ ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½Ýºï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½
     std::vector<cv::Vec2f>::const_iterator it= lines.begin();
     while (it!=lines.end()) 
     {
-        float rho = (*it)[0];   // Ã¹ ¹øÂ° ¿ä¼Ò´Â rho °Å¸®
-        float theta = (*it)[1]; // µÎ ¹øÂ° ¿ä¼Ò´Â µ¨Å¸ °¢µµ
+        float rho = (*it)[0];   // Ã¹ ï¿½ï¿½Â° ï¿½ï¿½Ò´ï¿½ rho ï¿½Å¸ï¿½
+        float theta = (*it)[1]; // ï¿½ï¿½ ï¿½ï¿½Â° ï¿½ï¿½Ò´ï¿½ ï¿½ï¿½Å¸ ï¿½ï¿½ï¿½ï¿½
         
-        if (theta < PI/4. || theta > 3.*PI/4.) // ¼öÁ÷ Çà
+        if (theta < PI/4. || theta > 3.*PI/4.) // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
         {
-            cv::Point pt1(rho/cos(theta), 0); // Ã¹ Çà¿¡¼­ ÇØ´ç ¼±ÀÇ ±³Â÷Á¡   
+            cv::Point pt1(rho/cos(theta), 0); // Ã¹ ï¿½à¿¡ï¿½ï¿½ ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½   
             cv::Point pt2((rho-result.rows*sin(theta))/cos(theta), result.rows);
-            // ¸¶Áö¸· Çà¿¡¼­ ÇØ´ç ¼±ÀÇ ±³Â÷Á¡
-            cv::line(srcRGB, pt1, pt2, lineColor, 1); // ÇÏ¾á ¼±À¸·Î ±×¸®±â
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½à¿¡ï¿½ï¿½ ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            cv::line(srcRGB, pt1, pt2, lineColor, 1); // ï¿½Ï¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½
 
         } 
-        else // ¼öÆò Çà
+        else // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
         { 
-            cv::Point pt1(0,rho/sin(theta)); // Ã¹ ¹øÂ° ¿­¿¡¼­ ÇØ´ç ¼±ÀÇ ±³Â÷Á¡  
+            cv::Point pt1(0,rho/sin(theta)); // Ã¹ ï¿½ï¿½Â° ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½  
             cv::Point pt2(result.cols,(rho-result.cols*cos(theta))/sin(theta));
-            // ¸¶Áö¸· ¿­¿¡¼­ ÇØ´ç ¼±ÀÇ ±³Â÷Á¡
-            cv::line(srcRGB, pt1, pt2, lineColor, 1); // ÇÏ¾á ¼±À¸·Î ±×¸®±â
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            cv::line(srcRGB, pt1, pt2, lineColor, 1); // ï¿½Ï¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½
         }
         //printf("line: rho=%f, theta=%f\n", rho, theta);
         ++it;

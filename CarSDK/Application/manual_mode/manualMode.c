@@ -66,7 +66,7 @@ void main(void)
 	DesireSpeed_Write(speed);
 
 	unsigned short lightFlag = 0x00;
-	while (0)
+	while (1)
 	{
 		char key;
 		printf("input :");

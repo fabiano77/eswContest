@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 void OpenCV_load_file(char* file, unsigned char* outBuf, int nw, int nh);
+void OpenCV_calibration(char* map1, char* map2);
 void OpenCV_Bgr2RgbConvert(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
 void OpenCV_face_detection(char* file, unsigned char* outBuf, int nw, int nh);
 void OpenCV_binding_image(char* file1, char* file2, unsigned char* outBuf, int nw, int nh);

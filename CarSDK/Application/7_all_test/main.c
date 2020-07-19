@@ -56,46 +56,46 @@ typedef enum {
 	DUMP_DONE
 }DumpState;
 
-typedef enum {
-	NONE,
-	VERTICAL,
-	HORIZONTAL
-}ParkingState;
+// typedef enum {
+// 	NONE,
+// 	VERTICAL,
+// 	HORIZONTAL
+// }ParkingState;
 
-typedef enum {
-	NONE,
-	RED,
-	YELLOW,
-	GREEN_LEFT,
-	GREEN_RIGHT
-}SignalLight;
+// typedef enum {
+// 	NONE,
+// 	RED,
+// 	YELLOW,
+// 	GREEN_LEFT,
+// 	GREEN_RIGHT
+// }SignalLight;
 
 typedef struct _DumpMsg {
 	long type;
 	int  state_msg;
 }DumpMsg;
 
-struct ControlData {
-	SignalLight signal;
-	bool stopFlag;
-	int steerVal;
-	int desireSpeedVal;
-	int currentSpeedVal;
-};
+// struct ControlData {
+// 	SignalLight signal;
+// 	bool stopFlag;
+// 	int steerVal;
+// 	int desireSpeedVal;
+// 	int currentSpeedVal;
+// };
 
-struct SensorData {
-	ParkingState parkingState;
-	int distance[6];
-	int lineSensor[7];
-};
+// struct SensorData {
+// 	ParkingState parkingState;
+// 	int distance[6];
+// 	int lineSensor[7];
+// };
 
 struct thr_data {
 	struct display* disp;
 	struct v4l2* v4l2;
 	struct vpe* vpe;
 	struct buffer** input_bufs;
-	struct ControlData controlData;
-	struct SensorData sensorData;
+	// struct ControlData controlData;
+	// struct SensorData sensorData;
 
 	DumpState dump_state;
 	unsigned char dump_img_data[VPE_OUTPUT_IMG_SIZE];
@@ -505,8 +505,8 @@ void* control_thread(void* arg)
 	int i;
 	while (1)
 	{
-		SteeringServoControl_Write(data->controlData.steerVal);
-		DesireSpeed_Write(data->controlData.desireSpeedVal);
+		// SteeringServoControl_Write(data->controlData.steerVal);
+		// DesireSpeed_Write(data->controlData.desireSpeedVal);
 
 		for (i = 0; i < 2; i++)
 		{
@@ -515,7 +515,7 @@ void* control_thread(void* arg)
 			Alarm_Write(OFF);
 			usleep(200000);
 		}
-		usleep(1000000);
+		usleep(3000000);
 	}
 
 	return NULL;

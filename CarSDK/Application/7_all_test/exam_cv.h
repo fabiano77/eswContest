@@ -15,6 +15,7 @@ void OpenCV_hough_transform(unsigned char* srcBuf, int iw, int ih, unsigned char
 void OpenCV_merge_image(unsigned char* src1, unsigned char* src2, unsigned char* dst, int w, int h);
 void OpenCV_remap(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
 
+
 #ifdef __cplusplus
 }
 #endif

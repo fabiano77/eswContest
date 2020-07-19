@@ -193,7 +193,7 @@ static void draw_operatingtime(struct display* disp, uint32_t time)
 
 
 	//우리가 자체 제작할 영상처리 알고리즘
-static void img_process(struct display* disp, struct buffer* cambuf, signed char map1, signed char map2)
+static void img_process(struct display* disp, struct buffer* cambuf, signed char* map1, signed char* map2)
 {
 	unsigned char srcbuf[VPE_OUTPUT_W * VPE_OUTPUT_H * 3];
 	// 이미지를 나타내는 배열
@@ -257,7 +257,7 @@ void* image_process_thread(void* arg)
 	signed char map1[VPE_OUTPUT_W * VPE_OUTPUT_H];
 	signed char map2[VPE_OUTPUT_W * VPE_OUTPUT_H];
 
-	OpenCV_calibration(map1, map2);
+	OpenCV_calibration(&map1, &map2);
 
 	v4l2_reqbufs(v4l2, NUMBUF);
 	// 영상을 저장할 큐 버퍼 만큼의 메모리를 할당
@@ -312,7 +312,7 @@ void* image_process_thread(void* arg)
 		//{
 		//	usleep(5 * 1000);
 		//}
-		img_process(vpe->disp, capt, map1, map2);
+		img_process(vpe->disp, capt, &map1, &map2);
 		// 우리가 짠 알고리즘.
 
 

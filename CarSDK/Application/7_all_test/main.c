@@ -225,8 +225,8 @@ static void img_process(struct display* disp, struct buffer* cambuf)
 
 		**********************
 		*/
-
-		OpenCV_hough_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, cam_pbuf[0], VPE_OUTPUT_W, VPE_OUTPUT_H);
+		OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, cam_pbuf[0]);
+		//OpenCV_hough_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, cam_pbuf[0], VPE_OUTPUT_W, VPE_OUTPUT_H);
 
 
 
@@ -254,6 +254,10 @@ void* image_process_thread(void* arg)
 	int index;
 	int count = 0;
 	int i;
+	signed char map1[VPE_OUTPUT_W * VPE_OUTPUT_H];
+	signed char map2[VPE_OUTPUT_W * VPE_OUTPUT_H];
+
+	OpenCV_calibration(map1, map2);
 
 	v4l2_reqbufs(v4l2, NUMBUF);
 	// 영상을 저장할 큐 버퍼 만큼의 메모리를 할당
@@ -375,51 +379,51 @@ void* image_process_thread(void* arg)
   // characteristic : hough transform을 수행한 캡쳐된 이미지 덤프를 파일로 저장한다.
   // precondition : none
   // postcondition : File로 이미지가 저장된다.
-//void* capture_dump_thread(void* arg)
-//{
-//	struct thr_data* data = (struct thr_data*)arg;
-//	FILE* fp;
-//	char file[50];
-//	struct timeval timestamp;
-//	struct tm* today;
-//	DumpMsg dumpmsg;
-//
-//	while (1)
-//	{
-//		if (msgrcv(data->msgq_id, &dumpmsg, sizeof(DumpMsg) - sizeof(long), DUMP_MSGQ_MSG_TYPE, 0) >= 0)
-//		{
-//			switch (dumpmsg.state_msg)
-//			{
-//			case DUMP_CMD:
-//				gettimeofday(&timestamp, NULL);
-//				today = localtime(&timestamp.tv_sec);
-//				sprintf(file, "dump_%04d%02d%02d_%02d%02d%02d.%s", today->tm_year + 1900, today->tm_mon + 1, today->tm_mday, today->tm_hour, today->tm_min, today->tm_sec, VPE_OUTPUT_FORMAT);
-//				data->dump_state = DUMP_READY;
-//				MSG("file name:%s", file);
-//				break;
-//
-//			case DUMP_WRITE_TO_FILE:
-//				if ((fp = fopen(file, "w+")) == NULL)
-//				{
-//					ERROR("Fail to fopen");
-//				}
-//				else
-//				{
-//					fwrite(data->dump_img_data, VPE_OUTPUT_IMG_SIZE, 1, fp);
-//				}
-//				fclose(fp);
-//				data->dump_state = DUMP_DONE;
-//				break;
-//
-//			default:
-//				MSG("dump msg wrong (%d)", dumpmsg.state_msg);
-//				break;
-//			}
-//		}
-//	}
-//
-//	return NULL;
-//}
+void* capture_dump_thread(void* arg)
+{
+	struct thr_data* data = (struct thr_data*)arg;
+	FILE* fp;
+	char file[50];
+	struct timeval timestamp;
+	struct tm* today;
+	DumpMsg dumpmsg;
+
+	while (1)
+	{
+		if (msgrcv(data->msgq_id, &dumpmsg, sizeof(DumpMsg) - sizeof(long), DUMP_MSGQ_MSG_TYPE, 0) >= 0)
+		{
+			switch (dumpmsg.state_msg)
+			{
+			case DUMP_CMD:
+				gettimeofday(&timestamp, NULL);
+				today = localtime(&timestamp.tv_sec);
+				sprintf(file, "dump_%04d%02d%02d_%02d%02d%02d.%s", today->tm_year + 1900, today->tm_mon + 1, today->tm_mday, today->tm_hour, today->tm_min, today->tm_sec, VPE_OUTPUT_FORMAT);
+				data->dump_state = DUMP_READY;
+				MSG("file name:%s", file);
+				break;
+
+			case DUMP_WRITE_TO_FILE:
+				if ((fp = fopen(file, "w+")) == NULL)
+				{
+					ERROR("Fail to fopen");
+				}
+				else
+				{
+					fwrite(data->dump_img_data, VPE_OUTPUT_IMG_SIZE, 1, fp);
+				}
+				fclose(fp);
+				data->dump_state = DUMP_DONE;
+				break;
+
+			default:
+				MSG("dump msg wrong (%d)", dumpmsg.state_msg);
+				break;
+			}
+		}
+	}
+
+	return NULL;
+}
 
 /**
   * @brief  handling an input command
@@ -641,7 +645,13 @@ int main(int argc, char** argv)
 	}
 	pthread_detach(tdata.threads[0]);
 
-	ret = pthread_create(&tdata.threads[1], NULL, control_thread, &tdata);
+	//ret = pthread_create(&tdata.threads[1], NULL, control_thread, &tdata);
+	//if (ret) {
+	//	MSG("Failed creating capture dump thread");
+	//}
+	//pthread_detach(tdata.threads[1]);
+
+	ret = pthread_create(&tdata.threads[1], NULL, capture_dump_thread, &tdata);
 	if (ret) {
 		MSG("Failed creating capture dump thread");
 	}

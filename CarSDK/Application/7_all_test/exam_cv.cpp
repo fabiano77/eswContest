@@ -381,19 +381,18 @@ extern "C" {
 
 
 		Point2f Hp[4] = {	//변환전 좌표
-			Point2f(170, 210),
-			Point2f(470, 210),
-			Point2f(590, 300),
-			Point2f(50, 300) };
+			Point2f(170*(w/640.0), 210*(h/360.0)),
+			Point2f(470*(w/640.0), 210*(h/360.0)),
+			Point2f(590*(w/640.0), 300*(h/360.0)),
+			Point2f(50*(w/640.0), 300*(h/360.0)) };
+
 		Point2f p[4] = {	//변환후 좌표
-			Point2f(90, 10),
-			Point2f(550, 10),
-			Point2f(550, 380),
-			Point2f(90, 380) };
+			Point2f(90*(w/640.0), 10*(h/360.0)),
+			Point2f(550*(w/640.0), 10*(h/360.0)),
+			Point2f(550*(w/640.0), 380*(h/360.0)),
+			Point2f(90*(w/640.0), 380*(h/360.0)) };
 
 		Mat Hmatrix = getPerspectiveTransform(Hp, p);
-		cout << "Hmatrix size" << Hmatrix.size() << endl;
-		cout << "Hmatrix type" << Hmatrix.type() << Hmatrix.
 		Size topviewSize(w, h);	//변환후 사이즈
 		warpPerspective(srcRGB, dstRGB, Hmatrix, topviewSize);
 

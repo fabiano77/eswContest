@@ -19,8 +19,10 @@
 #define CAPTURE_IMG_SIZE    (CAPTURE_IMG_W*CAPTURE_IMG_H*2) // YUYU : 16bpp
 #define CAPTURE_IMG_FORMAT  "uyvy"
 
-#define VPE_OUTPUT_W            320
-#define VPE_OUTPUT_H            180
+#define VPE_OUTPUT_W            640
+#define VPE_OUTPUT_H            360
+// #define VPE_OUTPUT_W            320
+// #define VPE_OUTPUT_H            180
 
 // display output & dump  format: NV12, w:320, h:180
 #define VPE_OUTPUT_IMG_SIZE    (VPE_OUTPUT_W*VPE_OUTPUT_H*3)// NV12 : 12bpp
@@ -56,8 +58,8 @@ struct thr_data {
 	unsigned char dump_img_data[VPE_OUTPUT_IMG_SIZE]; // dump image size
 
 	int msgq_id;
-	bool bfull_screen; // true : 480x272 disp È­¸é¿¡ ¸Â°Ô scale ±×·¸Áö ¾ÊÀ» °æ¿ì false.
-	bool bstream_start; // camera stream start ¿©ºÎ
+	bool bfull_screen; // true : 480x272 disp È­ï¿½é¿¡ ï¿½Â°ï¿½ scale ï¿½×·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ false.
+	bool bstream_start; // camera stream start ï¿½ï¿½ï¿½ï¿½
 	pthread_t threads[3];
 };
 

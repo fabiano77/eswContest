@@ -23,8 +23,11 @@
 #define CAPTURE_IMG_SIZE    (CAPTURE_IMG_W*CAPTURE_IMG_H*2) // YUYU : 16bpp
 #define CAPTURE_IMG_FORMAT  "uyvy"
 
-#define VPE_OUTPUT_W        320
-#define VPE_OUTPUT_H        180
+//해상도를 바꾸려면 이부분만 변경하면 됨. 현재 calib지원 해상도는, 1280x720, 640x360, 320x180
+#define VPE_OUTPUT_W        640
+#define VPE_OUTPUT_H        360
+// #define VPE_OUTPUT_W        1280
+// #define VPE_OUTPUT_H        720
 
 // display output & dump  format: NV12, w:320, h:180
 //#define VPE_OUTPUT_IMG_SIZE    (VPE_OUTPUT_W*VPE_OUTPUT_H*3/2) // NV12 : 12bpp
@@ -44,6 +47,10 @@
 #define TIME_TEXT_X             385 //320
 #define TIME_TEXT_Y             260 //240
 #define TIME_TEXT_COLOR         0xffffffff //while
+
+#define FPS_TEXT_X             40 //320
+#define FPS_TEXT_Y             260 //240
+#define FPS_TEXT_COLOR         0xffffffff //while
 
 #define DUMP_MSGQ_KEY           1020
 #define DUMP_MSGQ_MSG_TYPE      0x02
@@ -101,9 +108,10 @@ struct thr_data {
 	unsigned char dump_img_data[VPE_OUTPUT_IMG_SIZE];
 
 	int msgq_id;
+	bool bcalibration;
 	bool bfull_screen;
 	bool bstream_start;
-	pthread_t threads[3];
+	pthread_t threads[4];
 };
 
 /**
@@ -170,10 +178,14 @@ static void draw_operatingtime(struct display* disp, uint32_t time)
 	FrameBuffer tmpFrame;
 	unsigned char* pbuf[4];
 	char strtime[128];
+	char strfps[128];
 
 	memset(strtime, 0, sizeof(strtime));
+	memset(strfps, 0, sizeof(strtime));
 
 	sprintf(strtime, "%03d(ms)", time);
+	sprintf(strfps, "%4d(fps)", 1000/time);
+
 
 	if (get_framebuf(disp->overlay_p_bo, pbuf) == 0) {
 		tmpFrame.buf = pbuf[0];
@@ -181,6 +193,8 @@ static void draw_operatingtime(struct display* disp, uint32_t time)
 		tmpFrame.stride = disp->overlay_p_bo->pitches[0];//tmpFrame.width*3;
 
 		drawString(&tmpFrame, strtime, TIME_TEXT_X, TIME_TEXT_Y, 0, TIME_TEXT_COLOR);
+		drawString(&tmpFrame, strfps, FPS_TEXT_X, FPS_TEXT_Y, 0, FPS_TEXT_COLOR);
+
 	}
 }
 
@@ -193,7 +207,7 @@ static void draw_operatingtime(struct display* disp, uint32_t time)
 
 
 	//우리가 자체 제작할 영상처리 알고리즘
-static void img_process(struct display* disp, struct buffer* cambuf, signed char* map1, signed char* map2)
+static void img_process(struct display* disp, struct buffer* cambuf, float* map1, float* map2)
 {
 	unsigned char srcbuf[VPE_OUTPUT_W * VPE_OUTPUT_H * 3];
 	// 이미지를 나타내는 배열
@@ -222,7 +236,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, signed char
 		{
 			steer = 조향값검출func();
 		}
-
+		
 		**********************
 		*/
 		OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, cam_pbuf[0], map1, map2);
@@ -252,12 +266,15 @@ void* image_process_thread(void* arg)
 	struct buffer* capt;
 	bool isFirst = true;
 	int index;
-	int count = 0;
 	int i;
-	signed char map1[VPE_OUTPUT_W * VPE_OUTPUT_H];
-	signed char map2[VPE_OUTPUT_W * VPE_OUTPUT_H];
+	float map1[VPE_OUTPUT_W * VPE_OUTPUT_H] = {0, };
+	float map2[VPE_OUTPUT_W * VPE_OUTPUT_H] = {0, };
+	memset(map1, 0, VPE_OUTPUT_W * VPE_OUTPUT_H);
+	memset(map2, 0, VPE_OUTPUT_W * VPE_OUTPUT_H);
 
-	OpenCV_calibration(&map1, &map2);
+
+
+	OpenCV_calibration(map1, map2, VPE_OUTPUT_W, VPE_OUTPUT_H);
 
 	v4l2_reqbufs(v4l2, NUMBUF);
 	// 영상을 저장할 큐 버퍼 만큼의 메모리를 할당
@@ -312,8 +329,10 @@ void* image_process_thread(void* arg)
 		//{
 		//	usleep(5 * 1000);
 		//}
-		img_process(vpe->disp, capt, &map1, &map2);
-		// 우리가 짠 알고리즘.
+		if(data->bcalibration == true){
+		img_process(vpe->disp, capt, map1, map2);
+		}
+		// calibration 함수.
 
 
 		if (disp_post_vid_buffer(vpe->disp, capt, 0, 0, vpe->dst.width, vpe->dst.height))
@@ -451,6 +470,7 @@ void* input_thread(void* arg)
 
 	MSG("\n\nInput command:");
 	MSG("\t dump  : display image(%s, %dx%d) dump", VPE_OUTPUT_FORMAT, VPE_OUTPUT_W, VPE_OUTPUT_H);
+	MSG("\t calib : calibration ON/OFF");
 	MSG("\n");
 
 	while (1)
@@ -481,6 +501,12 @@ void* input_thread(void* arg)
 				data->dump_state = DUMP_NONE;
 				MSG("image dump done");
 			}
+			else if(0 == strncmp(cmd_input, "calib", 5))
+			{
+				data->bcalibration = !data->bcalibration;
+				if(data->bcalibration) printf("\t calibration ON\n");
+				else printf("\t calibration OFF\n");
+			}
 			else
 			{
 				printf("cmd_input:%s \n", cmd_input);
@@ -507,13 +533,14 @@ void* control_thread(void* arg)
 	{
 		// SteeringServoControl_Write(data->controlData.steerVal);
 		// DesireSpeed_Write(data->controlData.desireSpeedVal);
+		CameraYServoControl_Write(1630);
 
 		for (i = 0; i < 2; i++)
 		{
-			Alarm_Write(ON);
-			usleep(200000);
-			Alarm_Write(OFF);
-			usleep(200000);
+			// Alarm_Write(ON);
+			// usleep(200000);
+			// Alarm_Write(OFF);
+			// usleep(200000);
 		}
 		usleep(3000000);
 	}
@@ -534,6 +561,8 @@ void signal_handler(int sig)
 		pthread_cancel(pexam_data->threads[0]);
 		pthread_cancel(pexam_data->threads[1]);
 		pthread_cancel(pexam_data->threads[2]);
+		pthread_cancel(pexam_data->threads[3]);
+
 
 		msgctl(pexam_data->msgq_id, IPC_RMID, 0);
 
@@ -563,7 +592,8 @@ int main(int argc, char** argv)
 	int ret = 0;
 
 	printf("-- 7_all_test Start --\n");
-
+	tdata.bcalibration = true;
+	//캘리브레이션 활성화 상태로 동작.
 	tdata.dump_state = DUMP_NONE;
 	// Dump State를 키 입력 대기 상태로 초기화
 	memset(tdata.dump_img_data, 0, sizeof(tdata.dump_img_data));
@@ -645,12 +675,6 @@ int main(int argc, char** argv)
 	}
 	pthread_detach(tdata.threads[0]);
 
-	//ret = pthread_create(&tdata.threads[1], NULL, control_thread, &tdata);
-	//if (ret) {
-	//	MSG("Failed creating capture dump thread");
-	//}
-	//pthread_detach(tdata.threads[1]);
-
 	ret = pthread_create(&tdata.threads[1], NULL, capture_dump_thread, &tdata);
 	if (ret) {
 		MSG("Failed creating capture dump thread");
@@ -662,6 +686,12 @@ int main(int argc, char** argv)
 		MSG("Failed creating input thread");
 	}
 	pthread_detach(tdata.threads[2]);
+
+	ret = pthread_create(&tdata.threads[3], NULL, control_thread, &tdata);
+	if (ret) {
+		MSG("Failed creating capture dump thread");
+	}
+	pthread_detach(tdata.threads[3]);
 
 	/* register signal handler for <CTRL>+C in order to clean up */
 	if (signal(SIGINT, signal_handler) == SIG_ERR) {

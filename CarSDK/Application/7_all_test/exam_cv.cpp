@@ -43,15 +43,17 @@ void OpenCV_load_file(char* file, unsigned char* outBuf, int nw, int nh)
 
 
 
-void OpenCV_calibration(char* map1, char* map2) {
+void OpenCV_calibration(float* map1, float* map2, int w, int h) {
     // DoCalib�� initUndistortRectifyMap �Լ��� �̿��ؼ� 
-    Size videoSize = Size(320, 180);
-    Mat Mat_map1(320, 180, CV_8S, map1);
-    Mat Mat_map2(320, 180, CV_8S, map2);
+    Size videoSize = Size(w, h);
+    Mat Mat_map1(h, w, CV_32FC1, map1);
+    Mat Mat_map2(h, w, CV_32FC1, map2);
+
+
+
     Mat disCoeffs;
     Mat cameraMatrix = Mat(3, 3, CV_32FC1);
     int numBoards = 4;
-
     //���� DoCalib() �Լ� ����.
 
     int numCornerHor = 7; // ���� ���� ����
@@ -83,9 +85,12 @@ void OpenCV_calibration(char* map1, char* map2) {
     while (successes < numBoards) { // ��� ü�� ���� ������ ó�� �� �� ���� loop�� �����Ѵ�.
 
         osstream.str("");
-        osstream << "CarSDK/Calib_img/frame_" << successes << ".png"; // ������ ���� ó��
+        osstream << "./Calib_img/frame_"<< 1280 << "_" << successes << ".png"; // ������ ���� ó��
 
         image = imread(osstream.str(), IMREAD_COLOR); // ù ��° �������� image��ä�� read��Ų��.
+
+        cout << osstream.str() << ", size = "<< image.size()<< endl;
+        resize(image, image, Size(w, h), 0, 0, CV_INTER_LINEAR); // 사이즈변환.
 
         if (image.empty()) { // image ��ä�� ���� ���� ����
             cout << "IMAGE IS EMPTY!" << endl;
@@ -117,6 +122,7 @@ void OpenCV_calibration(char* map1, char* map2) {
 
         cout << successes + 1 << "th snap stored!" << endl; // Consoleâ�� ���
 
+
         successes++; // ���� ������ ���� loop ����
 
         osstream.clear(); // ������ ���� osstream �ʱ�ȭ
@@ -138,6 +144,7 @@ void OpenCV_calibration(char* map1, char* map2) {
 
     // disCoeffs�� cameraMatrix�� ������ ����.
     initUndistortRectifyMap(cameraMatrix, disCoeffs, Mat(), cameraMatrix, videoSize, CV_32FC1, Mat_map1, Mat_map2);
+
     // Mat_map2�� ������ map2�� �����Ѵ�.
 }
 
@@ -355,14 +362,13 @@ void OpenCV_merge_image(unsigned char* src1, unsigned char* src2, unsigned char*
     memcpy(dst, src1AR32.data, w*h*4);
 }
 
-	void OpenCV_remap(unsigned char* inBuf, int w, int h, unsigned char* outBuf, signed char* map1, signed char* map2)
+	void OpenCV_remap(unsigned char* inBuf, int w, int h, unsigned char* outBuf, float* map1, float* map2)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
-		Mat map1_Mat(h, w, CV_8UC3, map1);
-		Mat map2_Mat(h, w, CV_8UC3, map2);
 
-
+		Mat map1_Mat(h, w, CV_32FC1, map1);
+		Mat map2_Mat(h, w, CV_32FC1, map2);
 
 		remap(srcRGB, dstRGB, map1_Mat, map2_Mat, INTER_LINEAR);
 	}

@@ -386,14 +386,14 @@ extern "C" {
 			Point2f(590, 300),
 			Point2f(50, 300) };
 		Point2f p[4] = {	//변환후 좌표
-			Point2f(50, 50),
-			Point2f(590, 50),
-			Point2f(590, 310),
-			Point2f(50, 310) };
+			Point2f(90, 10),
+			Point2f(550, 10),
+			Point2f(550, 380),
+			Point2f(90, 380) };
 
 		Mat Hmatrix = getPerspectiveTransform(Hp, p);
 		Size topviewSize(w, h);	//변환후 사이즈
-		warpPerspective(src, dst, Hmatrix, topviewSize);
+		warpPerspective(srcRGB, dstRGB, Hmatrix, topviewSize);
 
 	}
 

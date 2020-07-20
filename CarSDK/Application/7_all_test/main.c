@@ -109,6 +109,7 @@ struct thr_data {
 
 	int msgq_id;
 	bool bcalibration;
+	bool btopview;
 	bool bfull_screen;
 	bool bstream_start;
 	pthread_t threads[4];
@@ -184,7 +185,7 @@ static void draw_operatingtime(struct display* disp, uint32_t time)
 	memset(strfps, 0, sizeof(strtime));
 
 	sprintf(strtime, "%03d(ms)", time);
-	sprintf(strfps, "%4d(fps)", 1000/time);
+	sprintf(strfps, "%4d(fps)", (time==0)? 1000 : 1000/time);
 
 
 	if (get_framebuf(disp->overlay_p_bo, pbuf) == 0) {
@@ -207,7 +208,7 @@ static void draw_operatingtime(struct display* disp, uint32_t time)
 
 
 	//우리가 자체 제작할 영상처리 알고리즘
-static void img_process(struct display* disp, struct buffer* cambuf, float* map1, float* map2)
+static void img_process(struct display* disp, struct buffer* cambuf, struct thr_data* t_data, float* map1, float* map2)
 {
 	unsigned char srcbuf[VPE_OUTPUT_W * VPE_OUTPUT_H * 3];
 	// 이미지를 나타내는 배열
@@ -239,11 +240,10 @@ static void img_process(struct display* disp, struct buffer* cambuf, float* map1
 		
 		**********************
 		*/
-		OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
-		OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, cam_pbuf[0]);
+		if(t_data->bcalibration) OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
+		if(t_data->btopview) OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
 
-
-
+		memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
 
 		gettimeofday(&et, NULL);
 		optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
@@ -330,9 +330,9 @@ void* image_process_thread(void* arg)
 		//{
 		//	usleep(5 * 1000);
 		//}
-		if(data->bcalibration == true){
-		img_process(vpe->disp, capt, map1, map2);
-		}
+		
+		img_process(vpe->disp, capt, data, map1, map2);
+	
 		// calibration 함수.
 
 
@@ -472,6 +472,7 @@ void* input_thread(void* arg)
 	MSG("\n\nInput command:");
 	MSG("\t dump  : display image(%s, %dx%d) dump", VPE_OUTPUT_FORMAT, VPE_OUTPUT_W, VPE_OUTPUT_H);
 	MSG("\t calib : calibration ON/OFF");
+	MSG("\t top   : top view ON/OFF");
 	MSG("\n");
 
 	while (1)
@@ -507,6 +508,12 @@ void* input_thread(void* arg)
 				data->bcalibration = !data->bcalibration;
 				if(data->bcalibration) printf("\t calibration ON\n");
 				else printf("\t calibration OFF\n");
+			}
+			else if(0 == strncmp(cmd_input, "top", 3))
+			{
+				data->btopview = !data->btopview;
+				if(data->btopview) printf("\t topview ON\n");
+				else printf("\t topview OFF\n");
 			}
 			else
 			{
@@ -594,6 +601,7 @@ int main(int argc, char** argv)
 
 	printf("-- 7_all_test Start --\n");
 	tdata.bcalibration = true;
+	tdata.btopview = true;
 	//캘리브레이션 활성화 상태로 동작.
 	tdata.dump_state = DUMP_NONE;
 	// Dump State를 키 입력 대기 상태로 초기화

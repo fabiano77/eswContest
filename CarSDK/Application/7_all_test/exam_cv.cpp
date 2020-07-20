@@ -392,6 +392,8 @@ extern "C" {
 			Point2f(90, 380) };
 
 		Mat Hmatrix = getPerspectiveTransform(Hp, p);
+		cout << "Hmatrix size" << Hmatrix.size() << endl;
+		cout << "Hmatrix type" << Hmatrix.type() << Hmatrix.
 		Size topviewSize(w, h);	//변환후 사이즈
 		warpPerspective(srcRGB, dstRGB, Hmatrix, topviewSize);
 

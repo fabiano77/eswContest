@@ -374,25 +374,43 @@ extern "C" {
 	}
 
 
-	void OpenCV_topview_transform(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
+	void OpenCV_topview_transform(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int mode)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
+		Mat Hmatrix;
+		
+		if(mode == 1)
+		{
+			Point2f Hp[4] = {	//변환전 좌표
+				Point2f(160*(w/640.0), 180*(h/360.0)),
+				Point2f(480*(w/640.0), 180*(h/360.0)),
+				Point2f(620*(w/640.0), 270*(h/360.0)),
+				Point2f(20*(w/640.0), 270*(h/360.0)) };
 
+			Point2f p[4] = {	//변환후 좌표
+				Point2f(100*(w/640.0), -100*(h/360.0)),
+				Point2f(540*(w/640.0), -100*(h/360.0)),
+				Point2f(550*(w/640.0), 270*(h/360.0)),
+				Point2f(90*(w/640.0), 270*(h/360.0)) };
+				Hmatrix = getPerspectiveTransform(Hp, p);
+		}
+		else if(mode == 2)
+		{
+			Point2f Hp[4] = {	//변환전 좌표
+				Point2f(80*(w/640.0), 200*(h/360.0)),
+				Point2f(560*(w/640.0), 200*(h/360.0)),
+				Point2f(640*(w/640.0), 360*(h/360.0)),
+				Point2f(0*(w/640.0), 360*(h/360.0)) };
 
-		Point2f Hp[4] = {	//변환전 좌표
-			Point2f(170*(w/640.0), 210*(h/360.0)),
-			Point2f(470*(w/640.0), 210*(h/360.0)),
-			Point2f(590*(w/640.0), 300*(h/360.0)),
-			Point2f(50*(w/640.0), 300*(h/360.0)) };
+			Point2f p[4] = {	//변환후 좌표
+				Point2f(0*(w/640.0), 50*(h/360.0)),
+				Point2f(640*(w/640.0), 50*(h/360.0)),
+				Point2f(640*(w/640.0), 360*(h/360.0)),
+				Point2f(0*(w/640.0), 360*(h/360.0)) };
+				Hmatrix = getPerspectiveTransform(Hp, p);
+		}
 
-		Point2f p[4] = {	//변환후 좌표
-			Point2f(90*(w/640.0), 10*(h/360.0)),
-			Point2f(550*(w/640.0), 10*(h/360.0)),
-			Point2f(550*(w/640.0), 380*(h/360.0)),
-			Point2f(90*(w/640.0), 380*(h/360.0)) };
-
-		Mat Hmatrix = getPerspectiveTransform(Hp, p);
 		Size topviewSize(w, h);	//변환후 사이즈
 		warpPerspective(srcRGB, dstRGB, Hmatrix, topviewSize);
 

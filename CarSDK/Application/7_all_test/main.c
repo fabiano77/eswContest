@@ -15,6 +15,7 @@
 #include "drawing.h"
 #include "input_cmd.h"
 #include "exam_cv.h"
+#include "imgProcess.h"
 #include "car_lib.h"
 
 
@@ -158,11 +159,6 @@ static void free_input_buffers(struct buffer** buffer, uint32_t n, bool bmultipl
 				  time : operate time (ms)
   * @retval none
   */
-
-  // characteristic : 연산에 소요된 시간을 이미지에 출력한다.
-  // precondition : none
-  // postcondition : 연산에 소요된 시간을 disp에 표시한다.
-
 static void draw_operatingtime(struct display* disp, uint32_t time)
 {
 	FrameBuffer tmpFrame;
@@ -194,8 +190,6 @@ static void draw_operatingtime(struct display* disp, uint32_t time)
 				 cambuf: vpe output buffer that converted capture image
   * @retval none
   */
-
-
 	//우리가 자체 제작할 영상처리 알고리즘
 static void img_process(struct display* disp, struct buffer* cambuf, struct thr_data* t_data, float* map1, float* map2)
 {
@@ -245,9 +239,6 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
   * @param  arg: pointer to parameter of thr_data
   * @retval none
   */
-  // characteristic : Thread 함수로 동작한다. capture된 이미지를 대상으로 허프 변환을 실시하고 변환 결과와 소요 시간을 이미지에 적용하여 출력한다.
-  // precondition : 버퍼 이미지가 존재해야 한다.
-  // postcondition : none
 void* image_process_thread(void* arg)
 {
 	struct thr_data* data = (struct thr_data*)arg;
@@ -257,39 +248,29 @@ void* image_process_thread(void* arg)
 	bool isFirst = true;
 	int index;
 	int i;
+
 	float map1[VPE_OUTPUT_W * VPE_OUTPUT_H] = {0, };
 	float map2[VPE_OUTPUT_W * VPE_OUTPUT_H] = {0, };
 	memset(map1, 0, VPE_OUTPUT_W * VPE_OUTPUT_H);
 	memset(map2, 0, VPE_OUTPUT_W * VPE_OUTPUT_H);
-
-
-
 	OpenCV_calibration(map1, map2, VPE_OUTPUT_W, VPE_OUTPUT_H);
 
 	v4l2_reqbufs(v4l2, NUMBUF);
-	// 영상을 저장할 큐 버퍼 만큼의 메모리를 할당
 	vpe_input_init(vpe);
-	// vpe 입력을 초기화한다.
 	allocate_input_buffers(data);
-	// vpe input buffer를 할당해준다.
 	if (vpe->dst.coplanar)
 		vpe->disp->multiplanar = true;
 	else
 		vpe->disp->multiplanar = false;
 	printf("disp multiplanar:%d \n", vpe->disp->multiplanar);
-	// pass
 	vpe_output_init(vpe);
 	vpe_output_fullscreen(vpe, data->bfull_screen);
-	// vpe 출력을 초기화하고 할당한다.
 	for (i = 0; i < NUMBUF; i++)
 		v4l2_qbuf(v4l2, vpe->input_buf_dmafd[i], i);
 	for (i = 0; i < NUMBUF; i++)
 		vpe_output_qbuf(vpe, i);
-	// vpe 버퍼에 존재하는 영상을 vpe 가공 후에 큐에 저장한다.
 	v4l2_streamon(v4l2);
 	vpe_stream_on(vpe->fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
-	// 영상 캡쳐를 시작하고 vpe 하드웨어의 출력 stream을 on 상태로 한다.
-	// 여기까지의 과정이 영상 입출력 버퍼 초기화, vpe 초기화 과정이다.
 
 	vpe->field = V4L2_FIELD_ANY;
 
@@ -306,8 +287,6 @@ void* image_process_thread(void* arg)
 		}
 		index = vpe_output_dqbuf(vpe);
 		capt = vpe->disp_bufs[index];
-		// driver에서 application으로 소유권을 넘겨준다.
-
 
 		/*******************************************************
 		* 영상처리 코드를 진행되는 부분.
@@ -330,10 +309,7 @@ void* image_process_thread(void* arg)
 			ERROR("Post buffer failed");
 			return NULL;
 		}
-		// 영상 출력 버퍼(disp)로 영상(capt)을 보내준다.
 		update_overlay_disp(vpe->disp);
-		// overlay된 영상(hough_transform된 이미지와 수행 시간)을 병합하여 출력한다.
-
 		if (data->dump_state == DUMP_READY)
 		{
 			DumpMsg dumpmsg;
@@ -373,7 +349,6 @@ void* image_process_thread(void* arg)
 		vpe_output_qbuf(vpe, index);
 		index = vpe_input_dqbuf(vpe);
 		v4l2_qbuf(v4l2, vpe->input_buf_dmafd[index], index);
-		// application으로 이전되었던 소유권을 다시 driver로 돌려준다.
 	}
 
 	MSG("Ok!");
@@ -385,9 +360,6 @@ void* image_process_thread(void* arg)
   * @param  arg: pointer to parameter of thr_data
   * @retval none
   */
-  // characteristic : hough transform을 수행한 캡쳐된 이미지 덤프를 파일로 저장한다.
-  // precondition : none
-  // postcondition : File로 이미지가 저장된다.
 void* capture_dump_thread(void* arg)
 {
 	struct thr_data* data = (struct thr_data*)arg;
@@ -439,14 +411,6 @@ void* capture_dump_thread(void* arg)
   * @param  arg: pointer to parameter of thr_data
   * @retval none
   */
-  // characteristic : console에서 키 입력을 대기하는 함수이다.
-  // 키 입력시:
-  // 1. thread간 공유 데이터 수정 (dump_state = DUMP_CMD)
-  // 2. msgsnd로 capture_dump_thread 호출 (DUMP_CMD)
-  // 3. Dump 완료시 까지 대기: thread간 공유 데이터값 확읶(dump_state = DUMP_DONE)
-  // precondition : none
-  // postcondition : File로 이미지가 저장된다.
-
 void* input_thread(void* arg)
 {
 	struct thr_data* data = (struct thr_data*)arg;
@@ -543,7 +507,7 @@ void* input_thread(void* arg)
 				int d_data;
 				int channel;
 				int j;
-				printf("channel(0~5) : ");
+				printf("channel(1~6) : ");
 				scanf("%d", &channel);
 				for (j = 0; j < 70; j++)
 				{
@@ -578,6 +542,7 @@ void* control_thread(void* arg)
 	double err_D = 0;
 	double err_B = 0;
 	int goal;
+	int writeVal;
 	bool isStop = 1;
 
 	SpeedPIDProportional_Write(20);
@@ -610,12 +575,12 @@ void* control_thread(void* arg)
 			err_D = err_B - err_P;
 			err_B = err_P;
 
-			 int writeVal = goal - (err_P*0.11 + err_I*0.08 + err_D*0.15);
-			// // printf("currentSpeed = %d, writeVal = %d\n", currentSpeed, writeVal);
-			// // printf("errP = %4.1f, errI = %4.1f, errD = %4.1f\n\n",err_P, err_I, err_D);
+			writeVal = goal - (err_P*0.11 + err_I*0.08 + err_D*0.15);
+			// printf("currentSpeed = %d, writeVal = %d\n", currentSpeed, writeVal);
+			// printf("errP = %4.1f, errI = %4.1f, errD = %4.1f\n\n",err_P, err_I, err_D);
 			 DesireSpeed_Write(writeVal);
 
-			usleep(300000); //10ms
+			usleep(300000); //300ms
 		}
 	}
 
@@ -794,7 +759,6 @@ int main(int argc, char** argv)
 
 	return ret;
 }
-
 
 void manualControl(struct ControlData* cdata, char key)
 {

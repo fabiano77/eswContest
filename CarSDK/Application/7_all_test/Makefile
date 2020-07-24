@@ -26,8 +26,8 @@ all: $(TARGET)
 clean:
 	rm -f *.a *.o $(TARGET) *.lo
 
-$(TARGET): main.c v4l2.lo display-kms.lo util.lo vpe-common.lo input_cmd.lo drawing.lo exam_cv.lo car_lib.lo
-	$(CC) $(CFLAGS) -o $@ main.c v4l2.lo display-kms.lo util.lo vpe-common.lo input_cmd.lo drawing.lo exam_cv.lo car_lib.lo $(LDFLAGS)
+$(TARGET): main.c v4l2.lo display-kms.lo util.lo vpe-common.lo input_cmd.lo drawing.lo exam_cv.lo imgProcess.lo car_lib.lo
+	$(CC) $(CFLAGS) -o $@ main.c v4l2.lo display-kms.lo util.lo vpe-common.lo input_cmd.lo drawing.lo exam_cv.lo imgProcess.lo car_lib.lo $(LDFLAGS)
 
 v4l2.lo: v4l2.c v4l2.h
 	$(CC) -c $(CFLAGS) -o $@ v4l2.c
@@ -49,6 +49,9 @@ input_cmd.lo: input_cmd.cpp input_cmd.h
 
 exam_cv.lo: exam_cv.cpp exam_cv.h
 	$(CXX) -c $(CXXFLAGS) -o $@ exam_cv.cpp
+
+imgProcess.lo: imgProcess.cpp imgProcess.h
+	$(CXX) -c $(CXXFLAGS) -o $@ imgProcess.cpp
 
 car_lib.lo: car_lib.c car_lib.h
 	$(CC) -c $(CFLAGS) -o $@ car_lib.c

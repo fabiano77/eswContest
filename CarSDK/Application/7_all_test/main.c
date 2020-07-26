@@ -71,6 +71,7 @@ typedef struct _DumpMsg {
 
 struct ControlData {
 	bool stopFlag;
+	bool steerWrite;
 	int steerVal;
 	int cameraY;
 	int desireSpeedVal;
@@ -211,25 +212,13 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		* 우리가 만든 알고리즘 함수를 넣는 부분.
 		********************************************************/
 
-		/*****pseudo code*****
-		
-		캘리브레이션func();
-
-		stop = 우선정지검출func();
-		if( stop ) stopFlag = 1;
-		else
-		{
-			steer = 조향값검출func();
-		}
-		
-		**********************
-		*/
 		int steerVal = 0;
 		if(t_data->bcalibration) OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
 		if(t_data->btopview) OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->topMode);
 		if(t_data->bauto) steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
 
 		t_data->controlData.steerVal = 1500 + steerVal;
+		t_data->controlData.steerWrite = 1;
 
 		memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
 
@@ -299,14 +288,7 @@ void* image_process_thread(void* arg)
 		* thr_data의 멤버 변수로 저장하여 control_thread로 전달한다.
 		********************************************************/
 		
-		//while(event)
-		//{
-		//	usleep(5 * 1000);
-		//}
-		
 		img_process(vpe->disp, capt, data, map1, map2);
-	
-		// calibration 함수.
 
 
 		if (disp_post_vid_buffer(vpe->disp, capt, 0, 0, vpe->dst.width, vpe->dst.height))
@@ -563,7 +545,12 @@ void* control_thread(void* arg)
 
 	while (1)
 	{
-		SteeringServoControl_Write(data->controlData.steerVal);
+		if(data->controlData.steerWrite == 1)
+		{
+			data->controlData.steerWrite = 0;
+			SteeringServoControl_Write(data->controlData.steerVal);
+			usleep(100000); //100ms
+		}
 
 		if(data->controlData.stopFlag == 1)
 		{
@@ -573,13 +560,15 @@ void* control_thread(void* arg)
 			err_I = 0;
 			err_D = 0;
 			err_B = 0;
-			usleep(300000); //300ms
+			usleep(100000); //100ms
 		}
 		else
 		{
 			isStop = 0;
 			goal = data->controlData.desireSpeedVal;
 			currentSpeed = DesireSpeed_Read();
+			usleep(10000); //10ms
+
 			if(currentSpeed<-500 || currentSpeed>500) continue;
 			err_P = currentSpeed - goal;
 			err_I += err_P;
@@ -589,9 +578,9 @@ void* control_thread(void* arg)
 			writeVal = goal - (err_P*0.11 + err_I*0.08 + err_D*0.15);
 			// printf("currentSpeed = %d, writeVal = %d\n", currentSpeed, writeVal);
 			// printf("errP = %4.1f, errI = %4.1f, errD = %4.1f\n\n",err_P, err_I, err_D);
-			 DesireSpeed_Write(writeVal);
+			DesireSpeed_Write(writeVal);
 
-			usleep(300000); //300ms
+			usleep(100000); //100ms
 		}
 	}
 
@@ -658,6 +647,7 @@ int main(int argc, char** argv)
 	tdata.controlData.steerVal = 1500;
 	tdata.controlData.cameraY = 1660;
 	tdata.controlData.stopFlag = 0;
+	tdata.controlData.steerWrite = 0;
 
 	//캘리브레이션 활성화 상태로 동작.
 	tdata.dump_state = DUMP_NONE;

@@ -97,6 +97,7 @@ struct thr_data {
 	int msgq_id;
 	bool bcalibration;
 	bool btopview;
+	bool bauto;
 	int topMode;
 	bool bfull_screen;
 	bool bstream_start;
@@ -223,8 +224,12 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		
 		**********************
 		*/
+		int steerVal = 0;
 		if(t_data->bcalibration) OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
 		if(t_data->btopview) OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->topMode);
+		if(t_data->bauto) steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+
+		t_data->controlData.steerVal = 1500 + steerVal;
 
 		memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
 
@@ -439,6 +444,7 @@ void* input_thread(void* arg)
 	MSG("\t dist  : distance sensor check");
 	MSG("\t calib : calibration ON/OFF");
 	MSG("\t top   : top view ON/OFF");
+	MSG("\t auto  : auto steering ON/OFF");
 	MSG("\n");
 
 	while (1)
@@ -475,6 +481,12 @@ void* input_thread(void* arg)
 				data->bcalibration = !data->bcalibration;
 				if(data->bcalibration) printf("\t calibration ON\n");
 				else printf("\t calibration OFF\n");
+			}
+			else if(0 == strncmp(cmd_input, "auto", 4))
+			{
+				data->bauto = !data->bauto;
+				if(data->bauto) printf("\t auto steering ON\n");
+				else printf("\t auto steering OFF\n");
 			}
 			else if(0 == strncmp(cmd_input, "top", 3))
 			{
@@ -551,9 +563,8 @@ void* control_thread(void* arg)
 
 	while (1)
 	{
-		// SteeringServoControl_Write(data->controlData.steerVal);
-		// DesireSpeed_Write(data->controlData.desireSpeedVal);
-		//CameraYServoControl_Write(1630);
+		SteeringServoControl_Write(data->controlData.steerVal);
+
 		if(data->controlData.stopFlag == 1)
 		{
 			if(!isStop) DesireSpeed_Write(0);
@@ -562,7 +573,7 @@ void* control_thread(void* arg)
 			err_I = 0;
 			err_D = 0;
 			err_B = 0;
-
+			usleep(300000); //300ms
 		}
 		else
 		{
@@ -633,6 +644,7 @@ int main(int argc, char** argv)
 	printf("-- 7_all_test Start --\n");
 	tdata.bcalibration = true;
 	tdata.btopview = true;
+	tdata.bauto = true;
 	tdata.topMode = 1;
 	
 	CarControlInit();

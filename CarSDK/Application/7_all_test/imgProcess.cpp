@@ -5,7 +5,9 @@
 #include <math.h>
 #include <iostream>
 #include <stdio.h>
-#include <string.h>
+#include <string>
+#include <sstream>
+
 //#include <sys/time.h>
 
 #include <opencv2/opencv.hpp>
@@ -15,6 +17,48 @@
 
 using namespace std;
 using namespace cv;
+
+int calculSteer(Mat& src);
+//PreCondition	: frame�� �ڵ����� topview2������ �Է����� �޴´�.
+//PostCondition	: ������ �ν��Ͽ� �νĵ� ����� src�� ǥ���Ѵ�..
+//Return : �����ؾߵ� ������� ��ȯ�Ѵ�(-500 ~ 500)
+
+void lineFiltering(Mat& src, Mat& dst, int mode);
+//PreCondition	: ����
+//PostCondition	: �����(or ���)������ �����ϴ� src���󿡼� ���������� ���� ���͸��Ͽ� dst�� ��ȯ�Ѵ�.
+//Return : ����
+
+void houghLineDetection(Mat& src, Mat& dst, bool printMode);//, Vec4i& firstLine, Vec4i& secondLine);
+//PreCondition	: ����.
+//PostCondition	: houghLineP �Լ� ����� dst�� ��Ÿ���ش�.
+//Return : ����
+
+void cannyEdge(Mat& src, Mat& dst);
+//PreCondition	: ����
+//PostCondition	: canny�Լ� ����� dst�� ����Ѵ�.
+//Return : ����
+
+Vec4i ransacLine(Mat& src, Mat& dst, int w, int h, double T, int n, bool printMode);
+//PreCondition	: src������ cannyó���� ��ģ ��������Ѵ�.
+//PostCondition	: dst�� ����� ������ ��ũ������ ǥ���Ѵ�.
+//Return : ����� ������ ��ȯ(Vec4i)
+
+Vec8i split_ransacLine(Mat& src, Mat& dst, int w, int h, double T, int n, bool printMode);
+//PreCondition	: src������ cannyó���� ��ģ ��������Ѵ�.
+//PostCondition	: src������ �¿�� �����Ͽ� �����Ѵ�. �׿� ����.
+//Return : ����� ���� �ΰ��� ��ȯ(Vec8i)
+//			return Vec8i(leftLine[0], leftLine[1], leftLine[2], leftLine[3],
+//						rightLine[0], rightLine[1], rightLine[2], rightLine[3]);
+
+double distance_between_line_and_point(Vec4i& line, Point2i point, int w, int h);
+
+int slopeSign(Vec4i line);
+
+double slope(Vec4i line);
+
+int lineDeviation(Vec4i line1, Vec4i line2);
+
+int getPointX_at_Y(Vec4i line);
 
 extern "C" {
 
@@ -156,17 +200,20 @@ extern "C" {
 
 	}
 
+	int autoSteering(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
+	{
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		Mat dstRGB(h, w, CV_8UC3, outBuf);
+
+		int steer = calculSteer(srcRGB);
+		dstRGB = srcRGB;
+
+		return steer;
+	}
 }
 
-Scalar color[7]{
-	Scalar(255,255,0),
-	Scalar(255,0,0),
-	Scalar(0,255,0),
-	Scalar(0, 0, 255),
-	Scalar(255,0,255),
-	Scalar(0,255,255),
-	Scalar(192,192,192)
-};
+
+Scalar color[7];
 Scalar pink(255, 50, 255);
 Scalar mint(255, 153, 0);
 Scalar red(0, 0, 255);
@@ -176,20 +223,36 @@ Scalar blue(255, 0, 0);
 Vec4i leftGuide(0, 118, 320, -330);//leftGuide(0, 138, 320, -278);
 Vec4i rightGuide(320, -420, 640, 155);//rightGuide(320, -390, 640, 178);
 
-Vec4i centerGuide[4]{
-	Vec4i(320, 200, 320, 240),
-	Vec4i(320, 240, 320, 280),
-	Vec4i(320, 280, 320, 320),
-	Vec4i(320, 320, 320, 360),
-};
+Vec4i centerGuide[4];
 
-
+bool first = 0;
 int HLP_threshold = 60;	//105
 int HLP_minLineLength = 70;//115
 int HLP_maxLineGap = 500;	//260
 
+void settingStatic()
+{
+	color[0] = Scalar(255, 255, 0);
+	color[1] = Scalar(255, 0, 0);
+	color[2] = Scalar(0, 255, 0);
+	color[3] = Scalar(0, 0, 255);
+	color[4] = Scalar(255, 0, 255);
+	color[5] = Scalar(0, 255, 255);
+	color[6] = Scalar(192, 192, 192);
+
+	centerGuide[0] = Vec4i(320, 200, 320, 240);
+	centerGuide[1] = Vec4i(320, 240, 320, 280);
+	centerGuide[2] = Vec4i(320, 280, 320, 320);
+	centerGuide[3] = Vec4i(320, 320, 320, 360);
+	cout << "settingStatic" << endl;
+}
+
 int calculSteer(Mat& src)
 {
+	if (!first++) settingStatic();
+	int retval;
+	stringstream ss;
+	string text1, text2;
 	Mat src_yel;
 	Mat src_can;
 
@@ -222,15 +285,20 @@ int calculSteer(Mat& src)
 		}
 
 		cout << "(곡선)proximity =" << proximity << endl;
-		putText(src, "proximity = " + to_string(proximity), Point(210, 100), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+		text1.append("proximity = ");
+		ss << proximity;
+		ss >> text2;
+		putText(src, text1 + text2, Point(210, 100), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
 		if (slopeSign(leftLine) + slopeSign(rightLine) < 0)
 		{
 			//기울기 음수 = (/)
 			putText(src, "(->)", Point(290, 130), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+			retval = proximity;
 		}
 		else
 		{
 			putText(src, "(<-)", Point(290, 130), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+			retval = -proximity;
 		}
 	}
 	else //기울기 부호가 다르다 == 직선
@@ -246,11 +314,17 @@ int calculSteer(Mat& src)
 		if (rightLine[1] != -1)
 			Deviation += lineDeviation(rightLine, rightGuide);
 		cout << "(직선)Deviation =" << Deviation << endl;
-		putText(src, "Deviation = " + to_string(Deviation), Point(210, 100), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+		text1.append("Deviation = ");
+		ss << Deviation;
+		ss >> text2;
+		putText(src, text1 + text2, Point(210, 100), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
 		putText(src, (Deviation < 0) ? "(<-)" : "(->)", Point(290, 130), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+		retval = Deviation;
 	}
 	line(src, Point(leftLine[0], leftLine[1]), Point(leftLine[2], leftLine[3]), pink, 5);
 	line(src, Point(rightLine[0], rightLine[1]), Point(rightLine[2], rightLine[3]), pink, 5);
+
+	return retval;
 }
 
 void lineFiltering(Mat& src, Mat& dst, int mode)
@@ -293,26 +367,11 @@ void houghLineDetection(Mat& src, Mat& dst, bool printMode)//, Vec4i& firstLine,
 
 	HoughLinesP(src, lines, 1, CV_PI / 180, HLP_threshold, HLP_minLineLength, HLP_maxLineGap);
 
-	for (int j = 0; j < lines.size(); j++)
+	for (unsigned int j = 0; j < lines.size(); j++)
 	{
-		if (printMode)
-		{
-			string text("line ");
-			text.append(to_string(j + 1));
-			text.append(" : (");
-			text.append(to_string(lines[j].operator[](0)));
-			text.append(", ");
-			text.append(to_string(lines[j].operator[](1)));
-			text.append("), (");
-			text.append(to_string(lines[j].operator[](2)));
-			text.append(", ");
-			text.append(to_string(lines[j].operator[](3)));
-			text.append(")");
-			putText(dst, text, Point(30, 30 * (j + 2)), FONT_HERSHEY_COMPLEX, 0.7, color[j], 2);
-		}
 		line(dst, Point(lines[j][0], lines[j][1]), Point(lines[j][2], lines[j][3]), color[j], 2);
-		circle(dst, Point2i(lines[j].operator[](0), lines[j].operator[](1)), 5, color[j], -1, LINE_AA);
-		circle(dst, Point2i(lines[j].operator[](2), lines[j].operator[](3)), 5, color[j], -1, LINE_AA);
+		circle(dst, Point2i(lines[j].operator[](0), lines[j].operator[](1)), 5, color[j], -1, 8);
+		circle(dst, Point2i(lines[j].operator[](2), lines[j].operator[](3)), 5, color[j], -1, 8);
 	}
 }
 
@@ -326,10 +385,11 @@ void cannyEdge(Mat& src, Mat& dst)
 
 Vec4i ransacLine(Mat& src, Mat& dst, int w, int h, double T, int n, bool printMode)
 {
+	stringstream ss;
+	string text1, text2;
 	Point printPoint(20, 200);
 	vector<Point2i> P;
 	Vec4i resultLine;
-	int size = 0;
 	for (int x = 0; x < w; x++)
 	{
 		for (int y = 0; y < h; y++)
@@ -363,7 +423,7 @@ Vec4i ransacLine(Mat& src, Mat& dst, int w, int h, double T, int n, bool printMo
 		if (P1 == P2) { i--; continue; }
 
 		Vec4i checkLine(P1.x, P1.y, P2.x, P2.y);
-		for (int j = 0; j < P.size(); j += 20)
+		for (unsigned int j = 0; j < P.size(); j += 20)
 		{
 			//임의의 직선과 나머지 직선의 거리를 비교하여 임계치 조사.
 			Point2i calculPoint = P[j];
@@ -384,17 +444,32 @@ Vec4i ransacLine(Mat& src, Mat& dst, int w, int h, double T, int n, bool printMo
 	{
 		//inlier가 일정수치 미만이면 패스.
 		putText(dst, "No line", printPoint, FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
-		putText(dst, "inlier(%) = " + to_string((int)inlierPercent) + "%", printPoint + Point(0, 30), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+		text1.assign("inlier(%) = ");
+		ss << (int)inlierPercent;
+		ss >> text2;
+		putText(dst, text1 + text2 + "%", printPoint + Point(0, 30), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
 		return Vec4i(-1, -1, -1, -1);
 	}
 	if (printMode == 1)
 	{
-		putText(dst, "P size = " + to_string(P.size()), printPoint, FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
-		putText(dst, "cntMax = " + to_string(cntMax), printPoint + Point(0, 30), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
-		putText(dst, "inlier(%) = " + to_string((int)inlierPercent) + "%", printPoint + Point(0, 60), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+		text1.assign("P size = ");
+		ss << P.size();
+		ss >> text2;
+		putText(dst, text1 + text2, printPoint, FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+		text1.assign("cntMax = ");
+		ss << cntMax;
+		ss >> text2;
+		putText(dst, text1 + text2, printPoint + Point(0, 30), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+		text1.assign("inlier(%) = ");
+		ss << (int)inlierPercent;
+		ss >> text2;
+		putText(dst, text1 + text2 + "%", printPoint + Point(0, 60), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
 	}
 
-	putText(dst, "slope = " + to_string(slope(resultLine)), printPoint + Point(0, 90), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+	text1.assign("slope = ");
+	ss << slope(resultLine);
+	ss >> text2;
+	putText(dst, text1 + text2 , printPoint + Point(0, 90), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
 	return resultLine;
 
 }

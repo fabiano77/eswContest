@@ -57,9 +57,7 @@ extern "C" {
 		ostringstream osstream;
 
 		while (successes < numBoards) {
-			.
-
-				osstream.str("");
+			osstream.str("");
 			osstream << "./Calib_img/frame_" << 1280 << "_" << successes << ".png";
 
 			image = imread(osstream.str(), IMREAD_COLOR);

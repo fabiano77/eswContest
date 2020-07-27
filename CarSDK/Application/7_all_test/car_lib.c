@@ -31,7 +31,7 @@
 static int uart_fd;
 static int i2c_fd;
 
-int dist_table[6][28]{
+static int dist_table[6][28]{
 	{4095, 3750, 3360, 3012, 2703, 2430, 2189, 1979,1795,1635,1498,1379,1278,1191,1117,1054,999,952,911,873,839,806,773,740,705,668,628,585},
 	{4095, 3760, 3374, 3027, 2718, 2443, 2200, 1986, 1799, 1636, 1495, 1373, 1269, 1181, 1106, 1042, 988, 942, 902, 866, 833, 802, 772, 740, 706, 668, 627, 579},
 	{4095,3752,3373,3033,2731,2462,2225,2016,1834,1675,1537,1418,1316,1229,1154,1091,1036,989,948,911,877,846,814,783,750,715,676,635},
@@ -648,41 +648,6 @@ int DistanceSensor(int channel)
 }
 
 
-int DistanceSensor(int channel)
-{
-	unsigned char buf[8];
-	unsigned char command;
-	unsigned char value[2];
-	useconds_t delay = 2000;
-	int data;
-	int r;
-
-	switch (channel)
-	{
-	case 1: command = 0x8c; break;
-	case 2: command = 0xcc; break;
-	case 3: command = 0x9c; break;
-	case 4: command = 0xdc; break;
-	case 5: command = 0xac; break;
-	case 6: command = 0xec; break;
-	default: printf("channel error.\n"); break;
-	}
-	r = write(i2c_fd, &command, 1);
-	usleep(delay);
-
-	r = read(i2c_fd, value, 2);
-	if (r != 2)
-	{
-		perror("reading i2c device\n");
-	}
-	usleep(delay);
-
-	data = (int)((value[0] & 0b00001111) << 8) + value[1];
-
-	return data;
-}
-
-
 int DistanceSensor_cm(int channel)
 {
 	unsigned char buf[8];
@@ -720,7 +685,8 @@ int DistanceSensor_cm(int channel)
 
 int sensor_dist(int channel, int input) {
 	int position = 0;
-	for (int i = 0; i < 28; i++) {
+	int i = 0;
+	for (i = 0; i < 28; i++) {
 		if (input > dist_table[channel][i]) {
 			position = i + 3;
 			break;

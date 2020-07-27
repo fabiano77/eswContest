@@ -2,22 +2,19 @@
 #include <pthread.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
-#include <termios.h>
 #include <sys/time.h>
+#include <termios.h>
 #include <errno.h>
 #include <syslog.h>
-
 #include "util.h"
-
-#include "display-kms.h"
 #include "v4l2.h"
+#include "display-kms.h"
 #include "vpe-common.h"
-#include "drawing.h"
 #include "input_cmd.h"
+#include "drawing.h"
 #include "exam_cv.h"
-#include "imgProcess.h"
 #include "car_lib.h"
-
+#include "imgProcess.h"
 
 #define CAPTURE_IMG_W       1280
 #define CAPTURE_IMG_H       720
@@ -27,16 +24,6 @@
 //해상도를 바꾸려면 이부분만 변경하면 됨. 현재 calib지원 해상도는, 1280x720, 640x360, 320x180
 #define VPE_OUTPUT_W        640
 #define VPE_OUTPUT_H        360
-// #define VPE_OUTPUT_W        1280
-// #define VPE_OUTPUT_H        720
-
-// display output & dump  format: NV12, w:320, h:180
-//#define VPE_OUTPUT_IMG_SIZE    (VPE_OUTPUT_W*VPE_OUTPUT_H*3/2) // NV12 : 12bpp
-//#define VPE_OUTPUT_FORMAT       "nv12"
-
-// display output & dump  format: yuyv, w:320, h:180
-//#define VPE_OUTPUT_IMG_SIZE    (VPE_OUTPUT_W*VPE_OUTPUT_H*2)
-//#define VPE_OUTPUT_FORMAT       "yuyv"
 
 #define VPE_OUTPUT_IMG_SIZE    (VPE_OUTPUT_W*VPE_OUTPUT_H*3)
 #define VPE_OUTPUT_FORMAT       "bgr24"
@@ -79,11 +66,6 @@ struct ControlData {
 	unsigned short lightFlag;
 };
 
-// struct SensorData {
-// 	int distance[6];
-// 	int lineSensor[7];
-// };
-
 struct thr_data {
 	struct display* disp;
 	struct v4l2* v4l2;
@@ -105,13 +87,8 @@ struct thr_data {
 	pthread_t threads[4];
 };
 
-void manualControl(struct ControlData* cdata, char key);
+static void manualControl(struct ControlData* cdata, char key);
 
-/**
-  * @brief  Alloc vpe input buffer and a new buffer object
-  * @param  data: pointer to parameter of thr_data
-  * @retval none
-  */
 static int allocate_input_buffers(struct thr_data* data)
 {
 	int i;
@@ -132,13 +109,6 @@ static int allocate_input_buffers(struct thr_data* data)
 	return 0;
 }
 
-/**
-  * @brief  Free vpe input buffer and destroy a buffer object
-  * @param  buffer: pointer to parameter of buffer object
-				  n : count of buffer object
-				  bmultiplanar : multipanar value of buffer object
-  * @retval none
-  */
 static void free_input_buffers(struct buffer** buffer, uint32_t n, bool bmultiplanar)
 {
 	uint32_t i;
@@ -155,12 +125,6 @@ static void free_input_buffers(struct buffer** buffer, uint32_t n, bool bmultipl
 	free(buffer);
 }
 
-/**
-  * @brief  Draw operating time to overlay buffer.
-  * @param  disp: pointer to parameter of struct display
-				  time : operate time (ms)
-  * @retval none
-  */
 static void draw_operatingtime(struct display* disp, uint32_t time)
 {
 	FrameBuffer tmpFrame;
@@ -186,53 +150,97 @@ static void draw_operatingtime(struct display* disp, uint32_t time)
 	}
 }
 
-/**
-  * @brief  Handle houht transform with opencv api
-  * @param  disp: pointer to parameter of struct display
-				 cambuf: vpe output buffer that converted capture image
-  * @retval none
-  */
-	//우리가 자체 제작할 영상처리 알고리즘
+	
+/************************************************
+*	img_process
+*************************************************/
 static void img_process(struct display* disp, struct buffer* cambuf, struct thr_data* t_data, float* map1, float* map2)
 {
 	unsigned char srcbuf[VPE_OUTPUT_W * VPE_OUTPUT_H * 3];
-	// 이미지를 나타내는 배열
 	uint32_t optime;
 	struct timeval st, et;
-
 	unsigned char* cam_pbuf[4];
 	if (get_framebuf(cambuf, cam_pbuf) == 0)
 	{
 		memcpy(srcbuf, cam_pbuf[0], VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
-		//scrbuf 에 입력영상을 복사한다.
-		//cam_pbuf는 img_process_thread에서 매개변수로 전달한 영상과 동기화된다.
 		gettimeofday(&st, NULL);
 
 		/*******************************************************
-		* 우리가 만든 알고리즘 함수를 넣는 부분.
+		*	 우리가 만든 알고리즘 함수를 넣는 부분.
 		********************************************************/
 
-		int steerVal = 0;
+
 		if(t_data->bcalibration) OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
 		if(t_data->btopview) OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->topMode);
-		if(t_data->bauto) steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+		if(t_data->bauto)
+		{
+			int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+			t_data->controlData.steerVal = 1500 - steerVal;
+			t_data->controlData.steerWrite = 1;
+		}
 
-		t_data->controlData.steerVal = 1500 - steerVal;
-		t_data->controlData.steerWrite = 1;
+
+		/*******************************************************
+		*			 영상처리 종료
+		********************************************************/
 
 		memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
-
 		gettimeofday(&et, NULL);
 		optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
 		draw_operatingtime(disp, optime);
 	}
 }
 
-/**
-  * @brief  Camera capture, capture image covert by VPE and display after sobel edge
-  * @param  arg: pointer to parameter of thr_data
-  * @retval none
-  */
+void* capture_dump_thread(void* arg)
+{
+	struct thr_data* data = (struct thr_data*)arg;
+	FILE* fp;
+	char file[50];
+	struct timeval timestamp;
+	struct tm* today;
+	DumpMsg dumpmsg;
+
+	while (1)
+	{
+		if (msgrcv(data->msgq_id, &dumpmsg, sizeof(DumpMsg) - sizeof(long), DUMP_MSGQ_MSG_TYPE, 0) >= 0)
+		{
+			switch (dumpmsg.state_msg)
+			{
+			case DUMP_CMD:
+				gettimeofday(&timestamp, NULL);
+				today = localtime(&timestamp.tv_sec);
+				sprintf(file, "dump_%04d%02d%02d_%02d%02d%02d.%s", today->tm_year + 1900, today->tm_mon + 1, today->tm_mday, today->tm_hour, today->tm_min, today->tm_sec, VPE_OUTPUT_FORMAT);
+				data->dump_state = DUMP_READY;
+				MSG("file name:%s", file);
+				break;
+
+			case DUMP_WRITE_TO_FILE:
+				if ((fp = fopen(file, "w+")) == NULL)
+				{
+					ERROR("Fail to fopen");
+				}
+				else
+				{
+					fwrite(data->dump_img_data, VPE_OUTPUT_IMG_SIZE, 1, fp);
+				}
+				fclose(fp);
+				data->dump_state = DUMP_DONE;
+				break;
+
+			default:
+				MSG("dump msg wrong (%d)", dumpmsg.state_msg);
+				break;
+			}
+		}
+	}
+
+	return NULL;
+}
+
+
+/************************************************
+*	image_process_thread
+*************************************************/
 void* image_process_thread(void* arg)
 {
 	struct thr_data* data = (struct thr_data*)arg;
@@ -242,13 +250,11 @@ void* image_process_thread(void* arg)
 	bool isFirst = true;
 	int index;
 	int i;
-
 	float map1[VPE_OUTPUT_W * VPE_OUTPUT_H] = {0, };
 	float map2[VPE_OUTPUT_W * VPE_OUTPUT_H] = {0, };
 	memset(map1, 0, VPE_OUTPUT_W * VPE_OUTPUT_H);
 	memset(map2, 0, VPE_OUTPUT_W * VPE_OUTPUT_H);
 	OpenCV_calibration(map1, map2, VPE_OUTPUT_W, VPE_OUTPUT_H);
-
 	v4l2_reqbufs(v4l2, NUMBUF);
 	vpe_input_init(vpe);
 	allocate_input_buffers(data);
@@ -265,8 +271,8 @@ void* image_process_thread(void* arg)
 		vpe_output_qbuf(vpe, i);
 	v4l2_streamon(v4l2);
 	vpe_stream_on(vpe->fd, V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE);
-
 	vpe->field = V4L2_FIELD_ANY;
+
 
 	while (1) 
 	{
@@ -283,14 +289,14 @@ void* image_process_thread(void* arg)
 		capt = vpe->disp_bufs[index];
 
 		/*******************************************************
-		* 영상처리 코드를 진행되는 부분.
-		* img_process에서 steer나 stop flag등 영상처리로 얻을 수 있는 정보를
-		* thr_data의 멤버 변수로 저장하여 control_thread로 전달한다.
+		* 영상처리 시작.
 		********************************************************/
-		
+
 		img_process(vpe->disp, capt, data, map1, map2);
 
-
+		/*******************************************************
+		* 영상처리 종료
+		********************************************************/
 		if (disp_post_vid_buffer(vpe->disp, capt, 0, 0, vpe->dst.width, vpe->dst.height))
 		{
 			ERROR("Post buffer failed");
@@ -342,62 +348,10 @@ void* image_process_thread(void* arg)
 	return NULL;
 }
 
-/**
-  * @brief  Hough transform the captured image dump and save to file
-  * @param  arg: pointer to parameter of thr_data
-  * @retval none
-  */
-void* capture_dump_thread(void* arg)
-{
-	struct thr_data* data = (struct thr_data*)arg;
-	FILE* fp;
-	char file[50];
-	struct timeval timestamp;
-	struct tm* today;
-	DumpMsg dumpmsg;
 
-	while (1)
-	{
-		if (msgrcv(data->msgq_id, &dumpmsg, sizeof(DumpMsg) - sizeof(long), DUMP_MSGQ_MSG_TYPE, 0) >= 0)
-		{
-			switch (dumpmsg.state_msg)
-			{
-			case DUMP_CMD:
-				gettimeofday(&timestamp, NULL);
-				today = localtime(&timestamp.tv_sec);
-				sprintf(file, "dump_%04d%02d%02d_%02d%02d%02d.%s", today->tm_year + 1900, today->tm_mon + 1, today->tm_mday, today->tm_hour, today->tm_min, today->tm_sec, VPE_OUTPUT_FORMAT);
-				data->dump_state = DUMP_READY;
-				MSG("file name:%s", file);
-				break;
-
-			case DUMP_WRITE_TO_FILE:
-				if ((fp = fopen(file, "w+")) == NULL)
-				{
-					ERROR("Fail to fopen");
-				}
-				else
-				{
-					fwrite(data->dump_img_data, VPE_OUTPUT_IMG_SIZE, 1, fp);
-				}
-				fclose(fp);
-				data->dump_state = DUMP_DONE;
-				break;
-
-			default:
-				MSG("dump msg wrong (%d)", dumpmsg.state_msg);
-				break;
-			}
-		}
-	}
-
-	return NULL;
-}
-
-/**
-  * @brief  handling an input command
-  * @param  arg: pointer to parameter of thr_data
-  * @retval none
-  */
+/************************************************
+*	input_thread
+*************************************************/
 void* input_thread(void* arg)
 {
 	struct thr_data* data = (struct thr_data*)arg;
@@ -521,7 +475,7 @@ void* input_thread(void* arg)
 				for (j = 0; j < 70; j++)
 				{
 					d_data = DistanceSensor_cm(channel);
-					printf("channel = %d, distance = 0x%04X(%d)(cm) \n", channel, d_data, d_data);
+					printf("channel = %d, distance = %d[cm] \n", channel, d_data);
 					usleep(100000);
 				}
 			}
@@ -536,11 +490,10 @@ void* input_thread(void* arg)
 	return NULL;
 }
 
-/**
-  * characteristic : 차체를 제어하는 스레드이다.
-  *					input 스레드에서 받아온 공유데이터로 어떻게 제어할지 결정한다.
-  *
-  */
+
+/************************************************
+*	control_thread
+*************************************************/
 void* control_thread(void* arg)
 {
 	struct thr_data* data = (struct thr_data*)arg;
@@ -604,11 +557,6 @@ void* control_thread(void* arg)
 
 static struct thr_data* pexam_data = NULL;
 
-/**
-  * @brief  handling an SIGINT(CTRL+C) signal
-  * @param  sig: signal type
-  * @retval none
-  */
 void signal_handler(int sig)
 {
 	if (sig == SIGINT) {
@@ -636,6 +584,139 @@ void signal_handler(int sig)
 	}
 }
 
+void manualControl(struct ControlData* cdata, char key)
+{
+	int i;
+	switch (key)
+	{
+	case 'a':	//steering left		: servo 조향값 (2000(좌) ~ 1500(중) ~ 1000(우)
+		cdata->steerVal += 50;
+		SteeringServoControl_Write(cdata->steerVal);
+		printf("angle_steering = %d\n", cdata->steerVal);
+		printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read());    //default = 1500, 0x5dc
+		break;
+
+	case 'd':	//steering right	: servo 조향값 (2000(좌) ~ 1500(중) ~ 1000(우)
+		cdata->steerVal -= 50;
+		SteeringServoControl_Write(cdata->steerVal);
+		printf("angle_steering = %d\n", cdata->steerVal);
+		printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read());    //default = 1500, 0x5dc
+		break;
+
+	case 's':	//stop
+		// DesireSpeed_Write(0);
+		// printf("DC motor stop\n");
+		cdata->stopFlag = 1;
+		break;
+
+	case 'w':	//go forward
+		cdata->stopFlag = 0;
+		cdata->desireSpeedVal = cdata->settingSpeedVal;
+		// DesireSpeed_Write(cdata->desireSpeedVal);
+		// usleep(100000);	//1 000 000 us
+		// printf("cdata->desireSpeedVal = %d\n", cdata->desireSpeedVal);
+		// printf("DesireSpeed_Read() = %d\n", DesireSpeed_Read());
+		break;
+
+	case 'x':	//go backward	speed 음수 인가하면 후진.
+		cdata->stopFlag = 0;
+		cdata->desireSpeedVal = -cdata->settingSpeedVal;
+		// DesireSpeed_Write(0 - cdata->desireSpeedVal);
+		// usleep(100000);	//1 000 000 us
+		// printf("DesireSpeed_Read() = %d\n", DesireSpeed_Read());
+		break;
+
+		// case 'j':	//cam left
+		// 	angle_cameraX += 50;
+		// 	CameraXServoControl_Write(angle_cameraX);
+		// 	printf("angle_cameraX = %d\n", angle_cameraX);
+		// 	printf("CameraXServoControl_Read() = %d\n", CameraXServoControl_Read());    //default = 1500, 0x5dc
+		// 	break;
+
+		// case 'l':	//cam right
+		// 	angle_cameraX -= 50;
+		// 	CameraXServoControl_Write(angle_cameraX);
+		// 	printf("angle_cameraX = %d\n", angle_cameraX);
+		// 	printf("CameraXServoControl_Read() = %d\n", CameraXServoControl_Read());    //default = 1500, 0x5dc
+		// 	break;
+
+	case 'i':	//cam up
+		cdata->cameraY -= 50;
+		CameraYServoControl_Write(cdata->cameraY);
+		printf("cdata->cameraY = %d\n", cdata->cameraY);
+		printf("CameraYServoControl_Read() = %d\n", CameraYServoControl_Read());    //default = 1500, 0x5dc
+		break;
+
+	case 'k':	//cam down
+		cdata->cameraY += 50;
+		CameraYServoControl_Write(cdata->cameraY);
+		printf("angle_cameraY = %d\n", cdata->cameraY);
+		printf("CameraYServoControl_Read() = %d\n", CameraYServoControl_Read());    //default = 1500, 0x5dc
+		break;
+
+	case '1':	//speed up		최대 스피드 500
+		cdata->settingSpeedVal += 10;
+		printf("speed = %d\n", cdata->settingSpeedVal);
+		break;
+
+	case '2':	//speed down
+		cdata->settingSpeedVal -= 10;
+		printf("speed = %d\n", cdata->settingSpeedVal);
+		break;
+
+	case 'q':	//Flashing left winker 2 s
+
+		Winker_Write(LEFT_ON);
+		usleep(2000000);		// 2 000 000 us
+		Winker_Write(ALL_OFF);
+		break;
+
+	case 'e':	//Flashing right winker 3 times 
+
+		Winker_Write(RIGHT_ON);
+		usleep(2000000);		// 2 000 000 us
+		Winker_Write(ALL_OFF);
+		break;
+
+	case 'z':	//front lamp on/off
+		cdata->lightFlag = cdata->lightFlag ^ 0x01;	// 00000000 ^ 00000001 (XOR)���� : 0����Ʈ�� XOR�����Ѵ�.
+		CarLight_Write(cdata->lightFlag);
+		break;
+
+	case 'c':	//rear lamp on/off
+		cdata->lightFlag = cdata->lightFlag ^ 0x02;	// 00000000 ^ 00000010 (XOR)���� : 1����Ʈ�� XOR�����Ѵ�.
+		CarLight_Write(cdata->lightFlag);
+		break;
+
+	case ' ':	//alarm 
+		for (i = 0; i < 2; i++)
+		{
+			Alarm_Write(ON);
+			usleep(200000);
+			Alarm_Write(OFF);
+			usleep(200000);
+		}
+		break;
+
+	case '0':
+		SpeedPIDProportional_Write(40);
+		SpeedPIDIntegral_Write(40);
+		SpeedPIDProportional_Write(40);
+		break;
+	case '\n':
+		break;
+
+	default:
+		printf("wrong key input.\n");
+		break;
+	}
+
+}
+
+
+/************************************************
+*	main
+*************************************************/
 int main(int argc, char** argv)
 {
 	struct v4l2* v4l2;
@@ -649,7 +730,7 @@ int main(int argc, char** argv)
 	tdata.bcalibration = true;
 	tdata.btopview = true;
 	tdata.bauto = true;
-	tdata.topMode = 1;
+	tdata.topMode = 2;
 	
 	CarControlInit();
 	CameraYServoControl_Write(1660);
@@ -775,133 +856,4 @@ int main(int argc, char** argv)
 	pause();
 
 	return ret;
-}
-
-void manualControl(struct ControlData* cdata, char key)
-{
-	int i;
-	switch (key)
-	{
-	case 'a':	//steering left		: servo 조향값 (2000(좌) ~ 1500(중) ~ 1000(우)
-		cdata->steerVal += 50;
-		SteeringServoControl_Write(cdata->steerVal);
-		printf("angle_steering = %d\n", cdata->steerVal);
-		printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read());    //default = 1500, 0x5dc
-		break;
-
-	case 'd':	//steering right	: servo 조향값 (2000(좌) ~ 1500(중) ~ 1000(우)
-		cdata->steerVal -= 50;
-		SteeringServoControl_Write(cdata->steerVal);
-		printf("angle_steering = %d\n", cdata->steerVal);
-		printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read());    //default = 1500, 0x5dc
-		break;
-
-	case 's':	//stop
-		// DesireSpeed_Write(0);
-		// printf("DC motor stop\n");
-		cdata->stopFlag = 1;
-		break;
-
-	case 'w':	//go forward
-		cdata->stopFlag = 0;
-		cdata->desireSpeedVal = cdata->settingSpeedVal;
-		// DesireSpeed_Write(cdata->desireSpeedVal);
-		// usleep(100000);	//1 000 000 us
-		// printf("cdata->desireSpeedVal = %d\n", cdata->desireSpeedVal);
-		// printf("DesireSpeed_Read() = %d\n", DesireSpeed_Read());
-		break;
-
-	case 'x':	//go backward	speed 음수 인가하면 후진.
-		cdata->stopFlag = 0;
-		cdata->desireSpeedVal = -cdata->settingSpeedVal;
-		// DesireSpeed_Write(0 - cdata->desireSpeedVal);
-		// usleep(100000);	//1 000 000 us
-		// printf("DesireSpeed_Read() = %d\n", DesireSpeed_Read());
-		break;
-
-	// case 'j':	//cam left
-	// 	angle_cameraX += 50;
-	// 	CameraXServoControl_Write(angle_cameraX);
-	// 	printf("angle_cameraX = %d\n", angle_cameraX);
-	// 	printf("CameraXServoControl_Read() = %d\n", CameraXServoControl_Read());    //default = 1500, 0x5dc
-	// 	break;
-
-	// case 'l':	//cam right
-	// 	angle_cameraX -= 50;
-	// 	CameraXServoControl_Write(angle_cameraX);
-	// 	printf("angle_cameraX = %d\n", angle_cameraX);
-	// 	printf("CameraXServoControl_Read() = %d\n", CameraXServoControl_Read());    //default = 1500, 0x5dc
-	// 	break;
-
-	case 'i':	//cam up
-		cdata->cameraY -= 50;
-		CameraYServoControl_Write(cdata->cameraY);
-		printf("cdata->cameraY = %d\n", cdata->cameraY);
-		printf("CameraYServoControl_Read() = %d\n", CameraYServoControl_Read());    //default = 1500, 0x5dc
-		break;
-
-	case 'k':	//cam down
-		cdata->cameraY += 50;
-		CameraYServoControl_Write(cdata->cameraY);
-		printf("angle_cameraY = %d\n", cdata->cameraY);
-		printf("CameraYServoControl_Read() = %d\n", CameraYServoControl_Read());    //default = 1500, 0x5dc
-		break;
-
-	case '1':	//speed up		최대 스피드 500
-		cdata->settingSpeedVal += 10;
-		printf("speed = %d\n", cdata->settingSpeedVal);
-		break;
-
-	case '2':	//speed down
-		cdata->settingSpeedVal -= 10;
-		printf("speed = %d\n", cdata->settingSpeedVal);
-		break;
-
-	case 'q':	//Flashing left winker 2 s
-
-		Winker_Write(LEFT_ON);
-		usleep(2000000);		// 2 000 000 us
-		Winker_Write(ALL_OFF);
-		break;
-
-	case 'e':	//Flashing right winker 3 times 
-
-		Winker_Write(RIGHT_ON);
-		usleep(2000000);		// 2 000 000 us
-		Winker_Write(ALL_OFF);
-		break;
-
-	case 'z':	//front lamp on/off
-		cdata->lightFlag = cdata->lightFlag ^ 0x01;	// 00000000 ^ 00000001 (XOR)���� : 0����Ʈ�� XOR�����Ѵ�.
-		CarLight_Write(cdata->lightFlag);
-		break;
-
-	case 'c':	//rear lamp on/off
-		cdata->lightFlag = cdata->lightFlag ^ 0x02;	// 00000000 ^ 00000010 (XOR)���� : 1����Ʈ�� XOR�����Ѵ�.
-		CarLight_Write(cdata->lightFlag);
-		break;
-
-	case ' ':	//alarm 
-		for (i = 0; i < 2; i++)
-		{
-			Alarm_Write(ON);
-			usleep(200000);
-			Alarm_Write(OFF);
-			usleep(200000);
-		}
-		break;
-
-	case '0':
-		SpeedPIDProportional_Write(40);
-		SpeedPIDIntegral_Write(40);
-		SpeedPIDProportional_Write(40);
-		break;
-	case '\n':
-		break;
-
-	default:
-		printf("wrong key input.\n");
-		break;
-	}
-
 }

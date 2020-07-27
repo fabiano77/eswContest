@@ -1,5 +1,4 @@
-﻿
-#include "imgProcess.h"
+﻿#include "imgProcess.h"
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
@@ -7,64 +6,44 @@
 #include <stdio.h>
 #include <string>
 #include <sstream>
-
-//#include <sys/time.h>
-
 #include <opencv2/opencv.hpp>
-
 
 #define PI 3.1415926
 
 using namespace std;
 using namespace cv;
 
-int calculSteer(Mat& src);
-//PreCondition	: frame은 자동차의 topview2영상을 입력으로 받는다.
-//PostCondition	: 차선을 인식하여 인식된 결과를 src에 표시한다..
-//Return : 조향해야될 결과값을 반환한다(-500 ~ 500)
+void settingStatic(int w, int h);
+
+int calculSteer(Mat& src, int w, int h, bool whiteMode);
 
 void lineFiltering(Mat& src, Mat& dst, int mode);
-//PreCondition	: 없음
-//PostCondition	: 노란색(or 흰색)차선이 존재하는 src영상에서 차선영역만 남게 필터링하여 dst로 반환한다.
-//Return : 없음
-
-void houghLineDetection(Mat& src, Mat& dst, bool printMode);//, Vec4i& firstLine, Vec4i& secondLine);
-//PreCondition	: 없음.
-//PostCondition	: houghLineP 함수 결과를 dst에 나타내준다.
-//Return : 없음
 
 void cannyEdge(Mat& src, Mat& dst);
-//PreCondition	: 없음
-//PostCondition	: canny함수 결과를 dst로 출력한다.
-//Return : 없음
 
-Vec4i ransacLine(Mat& src, Mat& dst, int w, int h, double T, int n, bool printMode);
-//PreCondition	: src영상은 canny처리를 거친 결과여야한다.
-//PostCondition	: dst에 검출된 직선을 핑크색으로 표시한다.
-//Return : 검출된 라인이 반환(Vec4i)
+Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType);
 
-Vec8i split_ransacLine(Mat& src, Mat& dst, int w, int h, double T, int n, bool printMode);
-//PreCondition	: src영상은 canny처리를 거친 결과여야한다.
-//PostCondition	: src영상을 좌우로 분할하여 검출한다. 그외 동일.
-//Return : 검출된 라인 두개를 반환(Vec8i)
-//			return Vec8i(leftLine[0], leftLine[1], leftLine[2], leftLine[3],
-//						rightLine[0], rightLine[1], rightLine[2], rightLine[3]);
-
-double distance_between_line_and_point(Vec4i& line, Point2i point, int w, int h);
+Vec4i ransac_algorithm(vector<Vec4i> lines, vector<Point2i> P, int w, int h, int T, double& inlierPercent);
 
 int slopeSign(Vec4i line);
 
 double slope(Vec4i line);
 
-int lineDeviation(Vec4i line1, Vec4i line2);
+double distance_between_line_and_point(Vec4i& line, Point2i point, int w, int h);
 
-int getPointX_at_Y(Vec4i line);
+int getPointX_at_Y(Vec4i line, const int Y);
+
+int getPointY_at_X(Vec4i line, const int X);
+
+int lineDeviation(Mat& dst, Vec4i line1, Vec4i line2);
+
+string toString(int A);
+
+string toString(double A);
+
+
 
 extern "C" {
-
-	/**********************
-	* 영상처리 알고리즘 작성
-	***********************/
 
 	void OpenCV_calibration(float* map1, float* map2, int w, int h) {
 		Size videoSize = Size(w, h);
@@ -205,12 +184,14 @@ extern "C" {
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
-		int steer = calculSteer(srcRGB);
+		int steer = calculSteer(srcRGB, w, h, 0);
 		dstRGB = srcRGB;
 
 		return steer;
 	}
+
 }
+
 
 
 Scalar color[7];
@@ -219,18 +200,20 @@ Scalar mint(255, 153, 0);
 Scalar red(0, 0, 255);
 Scalar green(0, 255, 0);
 Scalar blue(255, 0, 0);
-
-Vec4i leftGuide(0, 118, 320, -330);//leftGuide(0, 138, 320, -278);
-Vec4i rightGuide(320, -420, 640, 155);//rightGuide(320, -390, 640, 178);
-
+Scalar purple(255, 102, 165);
+Vec4i leftGuide;
+Vec4i rightGuide;
 Vec4i centerGuide[4];
-
 bool first = 0;
 int HLP_threshold = 60;	//105
-int HLP_minLineLength = 70;//115
+int HLP_minLineLength = 90;//115
 int HLP_maxLineGap = 500;	//260
 
-void settingStatic()
+//static void on_trackbar(int, void*)
+//{
+//}
+
+void settingStatic(int w, int h)
 {
 	color[0] = Scalar(255, 255, 0);
 	color[1] = Scalar(255, 0, 0);
@@ -244,54 +227,54 @@ void settingStatic()
 	centerGuide[1] = Vec4i(320, 240, 320, 280);
 	centerGuide[2] = Vec4i(320, 280, 320, 320);
 	centerGuide[3] = Vec4i(320, 320, 320, 360);
+
+	leftGuide = Vec4i(0, 118, 320, -330) * (w / 640.0);
+	rightGuide = Vec4i(320, -420, 640, 155) * (w / 640.0);
+
 	cout << "settingStatic" << endl;
 }
 
-int calculSteer(Mat& src)
+int calculSteer(Mat& src, int w, int h, bool whiteMode)
 {
-	if (!first++) settingStatic();
-	int retval;
-	stringstream ss;
-	string text1, text2;
+	if (!first++) settingStatic(w, h);
+	int retval(0);
 	Mat src_yel;
 	Mat src_can;
 
-	lineFiltering(src, src_yel, 0);
+	lineFiltering(src, src_yel, whiteMode);
 	cannyEdge(src_yel, src_can);
-	Vec8i l = split_ransacLine(src_can, src, 640, 360, 13, 20, 1);
-	Vec4i leftLine(l[0], l[1], l[2], l[3]);
-	Vec4i rightLine(l[4], l[5], l[6], l[7]);
+	int lineType;	// 0 == 라인이 없다, 1 == 라인이 한개, 2 == 라인이 두개.
+	Vec8i l = hough_ransacLine(src_can, src, w, h, 20, 1, lineType);
+	Vec4i firstLine(l[0], l[1], l[2], l[3]);
+	Vec4i secondLine(l[4], l[5], l[6], l[7]);
 
-	if (slopeSign(leftLine) == 0 && slopeSign(rightLine) == 0)
+	if (lineType == 0)
 	{
-		//양쪽 직선 모두 없다.
 		putText(src, "NONE", Point(260, 100), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
 	}
-	else if (slopeSign(leftLine) == slopeSign(rightLine) || abs(slope(leftLine)) < 1.0 || abs(slope(rightLine)) < 1.0)
+	else if (lineType == 1 && abs(slope(firstLine) < 0.95)) //직선이 1개이며, 기울기절댓값이 0.95미만이다 == 곡선
 	{
-		//기울기 부호가 같다 == 곡선.
-		//기울기 부호가 1.2미만 == 곡선
-		int lineCenterY = (leftLine[3] > rightLine[1]) ? leftLine[3] : rightLine[1];
-		int proximity = ((lineCenterY - 200.0) / (160.0)) * 500;
-		if (proximity < 0) proximity = 0;
-
+		int proximity(0);
+		int linePointY_atCenter = getPointY_at_X(firstLine, w / 2);
 		for (int i = 0; i < 4; i++)
 		{
 			//가이드 직선 표시.
-			if (lineCenterY > centerGuide[i][1])
-				rectangle(src, Point(centerGuide[i][0] - 5, centerGuide[i][1]), Point(centerGuide[i][2] + 5, centerGuide[i][3]), Scalar(150, 150, 150), -1);
+			if (linePointY_atCenter > centerGuide[i][1])
+			{
+				//rectangle(src, Point(centerGuide[i][0] - 5, centerGuide[i][1]), Point(centerGuide[i][2] + 5, centerGuide[i][3]), Scalar(70, 70, 70), -1);
+				proximity += 100;
+			}
 			else
-				rectangle(src, Point(centerGuide[i][0] - 10, centerGuide[i][1]), Point(centerGuide[i][2] + 10, centerGuide[i][3]), color[i], -1);
+				rectangle(src, Point(centerGuide[i][0] - 8, centerGuide[i][1]), Point(centerGuide[i][2] + 8, centerGuide[i][3]), color[i], -1);
 		}
+		if (linePointY_atCenter > h) proximity += 100;
 
-		cout << "(곡선)proximity =" << proximity << endl;
-		text1.append("proximity = ");
-		ss << proximity;
-		ss >> text2;
-		putText(src, text1 + text2, Point(210, 100), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
-		if (slopeSign(leftLine) + slopeSign(rightLine) < 0)
+		//proximity = ((pointY_atCenter - 200) / 160) * 500;
+		//if (proximity < 0) proximity = 0;
+		putText(src, "proximity = " + toString(proximity), Point(210, 100), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+
+		if (slopeSign(firstLine) < 0)
 		{
-			//기울기 음수 = (/)
 			putText(src, "(->)", Point(290, 130), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
 			retval = proximity;
 		}
@@ -301,28 +284,38 @@ int calculSteer(Mat& src)
 			retval = -proximity;
 		}
 	}
-	else //기울기 부호가 다르다 == 직선
+	else //if(lineType == 2 || 
 	{
-		//가이드 직선 표시.
+		//가이드 표시.
 		line(src, Point(leftGuide[0], leftGuide[1]), Point(leftGuide[2], leftGuide[3]), mint, 8);
 		line(src, Point(rightGuide[0], rightGuide[1]), Point(rightGuide[2], rightGuide[3]), mint, 8);
 
-		//기울기 절대값이 1.0미만이면 곡선
 		int Deviation = 0;
-		if (leftLine[1] != -1)
-			Deviation += lineDeviation(leftLine, leftGuide);
-		if (rightLine[1] != -1)
-			Deviation += lineDeviation(rightLine, rightGuide);
-		cout << "(직선)Deviation =" << Deviation << endl;
-		text1.append("Deviation = ");
-		ss << Deviation;
-		ss >> text2;
-		putText(src, text1 + text2, Point(210, 100), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+		if (lineType == 2)
+		{
+			Deviation += lineDeviation(src, firstLine, leftGuide);
+			Deviation += lineDeviation(src, secondLine, rightGuide);
+
+			Deviation *= 1;
+			//직선 2개 보이는 직진구간 보정.
+		}
+		else //lineType == 1
+		{
+			if (slope(firstLine) < 0)
+				Deviation += lineDeviation(src, firstLine, leftGuide);
+			else
+				Deviation += lineDeviation(src, firstLine, rightGuide);
+
+			Deviation *= 1.5;
+			//직선 1개만 보이는 직진구간 보정.
+		}
+		putText(src, "Deviation = " + toString(Deviation), Point(210, 100), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
 		putText(src, (Deviation < 0) ? "(<-)" : "(->)", Point(290, 130), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
 		retval = Deviation;
 	}
-	line(src, Point(leftLine[0], leftLine[1]), Point(leftLine[2], leftLine[3]), pink, 5);
-	line(src, Point(rightLine[0], rightLine[1]), Point(rightLine[2], rightLine[3]), pink, 5);
+	line(src, Point(firstLine[0], firstLine[1]), Point(firstLine[2], firstLine[3]), pink, 5);
+	if (lineType == 2)
+		line(src, Point(secondLine[0], secondLine[1]), Point(secondLine[2], secondLine[3]), purple, 5);
 
 	return retval;
 }
@@ -355,26 +348,6 @@ void lineFiltering(Mat& src, Mat& dst, int mode)
 	//bitwise_and(src, src, dst, binMat);	//binMat객체로 원본 frame 필터링.(노란색남음)
 }
 
-void houghLineDetection(Mat& src, Mat& dst, bool printMode)//, Vec4i& firstLine, Vec4i& secondLine)
-{
-	vector<Vec4i> lines;		//검출될 직선이 저장될 객체
-
-	//createTrackbar("H_thresh", "trackbar", &HLP_threshold, 120, on_trackbar);
-	//createTrackbar("H_minLen", "trackbar", &HLP_minLineLength, 200, on_trackbar);
-	//createTrackbar("H_maxGap", "trackbar", &HLP_maxLineGap, 500, on_trackbar);
-	//namedWindow("trackbar", WINDOW_NORMAL);
-	//moveWindow("trackbar", 320 * 5, 40);
-
-	HoughLinesP(src, lines, 1, CV_PI / 180, HLP_threshold, HLP_minLineLength, HLP_maxLineGap);
-
-	for (unsigned int j = 0; j < lines.size(); j++)
-	{
-		line(dst, Point(lines[j][0], lines[j][1]), Point(lines[j][2], lines[j][3]), color[j], 2);
-		circle(dst, Point2i(lines[j].operator[](0), lines[j].operator[](1)), 5, color[j], -1, 8);
-		circle(dst, Point2i(lines[j].operator[](2), lines[j].operator[](3)), 5, color[j], -1, 8);
-	}
-}
-
 void cannyEdge(Mat& src, Mat& dst)
 {
 	int threshold_1 = 118;		//215 //340
@@ -383,13 +356,13 @@ void cannyEdge(Mat& src, Mat& dst)
 	Canny(src, dst, threshold_1, threshold_2);	//노란색만 남은 frame의 윤곽을 1채널 Mat객체로 추출
 }
 
-Vec4i ransacLine(Mat& src, Mat& dst, int w, int h, double T, int n, bool printMode)
+Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType)
 {
-	stringstream ss;
-	string text1, text2;
-	Point printPoint(20, 200);
+	Point printPoint(210, 200);
 	vector<Point2i> P;
-	Vec4i resultLine;
+	Vec4i firstLine;
+	Vec4i secondLine;
+
 	for (int x = 0; x < w; x++)
 	{
 		for (int y = 0; y < h; y++)
@@ -401,31 +374,99 @@ Vec4i ransacLine(Mat& src, Mat& dst, int w, int h, double T, int n, bool printMo
 			}
 		}
 	}
-	if (P.size() < 100.0 * (360 / w))
+
+	//createTrackbar("H_thresh", "trackbar", &HLP_threshold, 120, on_trackbar);
+	//createTrackbar("H_minLen", "trackbar", &HLP_minLineLength, 200, on_trackbar);
+	//createTrackbar("H_maxGap", "trackbar", &HLP_maxLineGap, 500, on_trackbar);
+	//namedWindow("trackbar", WINDOW_NORMAL);
+	//moveWindow("trackbar", 320 * 5, 40);
+
+	vector<Vec4i> lines;		//검출될 직선이 저장될 객체
+	HoughLinesP(src, lines, 1, CV_PI / 180, HLP_threshold, HLP_minLineLength, HLP_maxLineGap);
+	if (lines.size() < 1)
 	{
-		//src에 존재하는 픽셀이 100 미만이면 패스
-		putText(dst, "No edge point", printPoint, FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
-		return Vec4i(-1, -1, -1, -1);
+		putText(src, "No line", Point(260, 100), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+		detectedLineType = 0;
+		return Vec8i();
 	}
 
+	Vec4i rightLine(0, -1, 0, 0);		//최우측 직선
+	Vec4i leftLine(640, -1, 640, 0);		//최좌측 직선
+	for (unsigned int i = 0; i < lines.size(); i++)
+	{
+		if (leftLine[0] > lines[i][0])
+		{
+			leftLine = lines[i];
+		}
+		if (rightLine[2] < lines[i][2])
+		{
+			rightLine = lines[i];
+		}
+	}
+	//for문이 끝나고 나면 각종 최좌측, 최우측 직선 각각 저장.
+
+	if (slopeSign(leftLine) == slopeSign(rightLine))	//좌우 직선의 기울기가 같으면
+	{
+		detectedLineType = 1;
+		double inlierPercent;
+		firstLine = ransac_algorithm(lines, P, w, h, T, inlierPercent);
+
+		if (printMode == 1)
+		{
+			putText(dst, "inlier(%)  = " + toString((int)inlierPercent) + "%", printPoint + Point(0, 0), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+			putText(dst, "slope = " + toString(slope(firstLine)), printPoint + Point(0, 30), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+		}
+
+		return Vec8i(firstLine[0], firstLine[1], firstLine[2], firstLine[3],
+			-1, -1, -1, -1);
+	}
+	else	//좌우 직선의 기울기가 다르다 == 직진구간.
+	{
+		detectedLineType = 2;
+		double left_inlierPercent;
+		double right_inlierPercent;
+		vector<Vec4i> leftLines;
+		vector<Vec4i> rightLines;
+		for (unsigned int i = 0; i < lines.size(); i++)
+		{
+			if (slope(lines[i]) < 0)
+				leftLines.push_back(lines[i]);
+			else
+				rightLines.push_back(lines[i]);
+		}
+		firstLine = ransac_algorithm(leftLines, P, w, h, T, left_inlierPercent);
+		secondLine = ransac_algorithm(rightLines, P, w, h, T, right_inlierPercent);
+		if (printMode == 1)
+		{
+			putText(dst, "inlier(%)  = " + toString((int)left_inlierPercent) + "%", printPoint + Point(-160, 0), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+			putText(dst, "inlier(%)  = " + toString((int)right_inlierPercent) + "%", printPoint + Point(+160, 0), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+			putText(dst, "slope = " + toString(slope(firstLine)), printPoint + Point(-160, 30), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+			putText(dst, "slope = " + toString(slope(secondLine)), printPoint + Point(+160, 30), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+		}
+
+		return Vec8i(firstLine[0], firstLine[1], firstLine[2], firstLine[3],
+			secondLine[0], secondLine[1], secondLine[2], secondLine[3]);
+	}
+
+
+
+
+	return 0;
+}
+
+Vec4i ransac_algorithm(vector<Vec4i> lines, vector<Point2i> P, int w, int h, int T, double& inlierPercent)
+{
+	Vec4i resultLine;
 	int cntMax(-1);
 	int checkCnt(0);
-	double inlierPercent;
-	srand(time(NULL));
-	for (int i = 0; i < n; i++)
+	for (unsigned int i = 0; i < lines.size(); i++)
 	{
-		//임의의 두점을 정하고 그것들을 이어서 직선 만들기
 		int cntInlier = 0;
 		int cnt = 0;
-		Point2i P1, P2;
-		P1 = P[rand() % P.size()];
-		P2 = P[rand() % P.size()];
-		if (P1 == P2) { i--; continue; }
 
-		Vec4i checkLine(P1.x, P1.y, P2.x, P2.y);
-		for (unsigned int j = 0; j < P.size(); j += 20)
+		Vec4i checkLine = lines[i];
+		for (unsigned int j = 0; j < P.size(); j += 1)
 		{
-			//임의의 직선과 나머지 직선의 거리를 비교하여 임계치 조사.
 			Point2i calculPoint = P[j];
 			cnt++;
 			if (distance_between_line_and_point(checkLine, calculPoint, w, h) < T) cntInlier++;
@@ -433,73 +474,29 @@ Vec4i ransacLine(Mat& src, Mat& dst, int w, int h, double T, int n, bool printMo
 
 		if (cntInlier > cntMax)
 		{
-			//inlier가 가장많은 직선을 남긴다.
 			resultLine = checkLine;
 			cntMax = cntInlier;
 			checkCnt = cnt;
 		}
 	}
 	inlierPercent = ((double)cntMax / checkCnt) * 100.0;
-	if (inlierPercent < 47)
-	{
-		//inlier가 일정수치 미만이면 패스.
-		putText(dst, "No line", printPoint, FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
-		text1.assign("inlier(%) = ");
-		ss << (int)inlierPercent;
-		ss >> text2;
-		putText(dst, text1 + text2 + "%", printPoint + Point(0, 30), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
-		return Vec4i(-1, -1, -1, -1);
-	}
-	if (printMode == 1)
-	{
-		text1.assign("P size = ");
-		ss << P.size();
-		ss >> text2;
-		putText(dst, text1 + text2, printPoint, FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
-		text1.assign("cntMax = ");
-		ss << cntMax;
-		ss >> text2;
-		putText(dst, text1 + text2, printPoint + Point(0, 30), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
-		text1.assign("inlier(%) = ");
-		ss << (int)inlierPercent;
-		ss >> text2;
-		putText(dst, text1 + text2 + "%", printPoint + Point(0, 60), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
-	}
 
-	text1.assign("slope = ");
-	ss << slope(resultLine);
-	ss >> text2;
-	putText(dst, text1 + text2 , printPoint + Point(0, 90), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
 	return resultLine;
-
 }
 
-Vec8i split_ransacLine(Mat& src, Mat& dst, int w, int h, double T, int n, bool printMode)
+int slopeSign(Vec4i line)
 {
-	//화면을 두개로 쪼개어 ransacline을 찾는다.
-	Mat src1 = src(Range(0, h), Range(0, w / 2));
-	Mat src2 = src(Range(0, h), Range(w / 2, w));
-	Mat dst_right = dst(Range(0, h), Range(w / 2, w));
+	if (line[1] == -1)	//직선이 없다는것.
+		return 0;
+	else if (slope(line) > 0)
+		return 1;
+	else
+		return -1;
+}
 
-	Vec4i leftLine = ransacLine(src1, dst, w / 2, h, T, n, printMode);
-	Vec4i rightLine = ransacLine(src2, dst_right, w / 2, h, T, n, printMode);
-	if ((leftLine[0] != leftLine[2]) && (rightLine[0] != rightLine[2]))
-	{
-		//왼쪽 직선과 오른쪽 직선이 모두 있다면
-		if (slopeSign(leftLine) == slopeSign(rightLine))
-		{
-			//왼쪽 직선과 오른쪽 직선의 부호가 같다면.
-			//좌우 직선의 가운데점을 중점으로맞춘다.
-			int center = (leftLine[3] + rightLine[1]) / 2;
-			leftLine[3] = center;
-			rightLine[1] = center;
-		}
-	}
-	line(dst, Point(leftLine[0], leftLine[1]), Point(leftLine[2], leftLine[3]), pink, 5);
-	line(dst_right, Point(rightLine[0], rightLine[1]), Point(rightLine[2], rightLine[3]), pink, 5);
-
-	return Vec8i(leftLine[0], leftLine[1], leftLine[2], leftLine[3],
-		rightLine[0] + (w / 2), rightLine[1], rightLine[2] + (w / 2), rightLine[3]);
+double slope(Vec4i line)
+{
+	return ((double)line[3] - line[1]) / ((double)line[2] - line[0]);
 }
 
 double distance_between_line_and_point(Vec4i& line, Point2i point, int w, int h)
@@ -521,32 +518,45 @@ double distance_between_line_and_point(Vec4i& line, Point2i point, int w, int h)
 	return (abs(m * point.x + b - point.y) / sqrt(m * m + 1));
 }
 
-int slopeSign(Vec4i line)
-{
-	if (line[1] == -1)	//직선이 없다는것.
-		return 0;
-	else if (slope(line) > 0)
-		return 1;
-	else
-		return -1;
-}
-
-double slope(Vec4i line)
-{
-	return ((double)line[3] - line[1]) / ((double)line[2] - line[0]);
-}
-
-int lineDeviation(Vec4i line1, Vec4i line2)
-{
-	//y = 50에서 직선끼리의 거리 비교.
-	return getPointX_at_Y(line1) - getPointX_at_Y(line2);
-}
-
-int getPointX_at_Y(Vec4i line)
+int getPointX_at_Y(Vec4i line, const int Y)
 {
 	double m, b;
 	m = slope(line);
 	b = line[1] - m * line[0];
 
-	return ((100 - b) / m);
+	return (int)((Y - b) / m);
+}
+
+int getPointY_at_X(Vec4i line, const int X)
+{
+	double m, b;
+	m = slope(line);
+	b = line[1] - m * line[0];
+
+	return (int)(m * X + b);
+}
+
+int lineDeviation(Mat& dst, Vec4i line1, Vec4i line2)
+{
+	//y = 10에서 직선끼리의 거리 비교.
+	line(dst, Point(getPointX_at_Y(line1, 100), 100), Point(getPointX_at_Y(line2, 100), 100), Scalar(255, 255, 255), 8);
+	return getPointX_at_Y(line1, 100) - getPointX_at_Y(line2, 100);
+}
+
+string toString(int A)
+{
+	stringstream ss;
+	string text;
+	ss << A;
+	ss >> text;
+	return text;
+}
+
+string toString(double A)
+{
+	stringstream ss;
+	string text;
+	ss << A;
+	ss >> text;
+	return text;
 }

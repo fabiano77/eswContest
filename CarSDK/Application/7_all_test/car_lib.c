@@ -203,7 +203,6 @@ void Winker_Write(char status)
 	write(uart_fd, &buf[0], 5);
 }
 
-
 char SpeedControlOnOff_Read(void)
 {
 	unsigned char buf[8];
@@ -498,7 +497,6 @@ void EncoderCounter_Write(signed int position)
 	write(uart_fd, &buf[0], 8);
 }
 
-
 signed short SteeringServoControl_Read(void)
 {
 	unsigned char buf[8];
@@ -643,44 +641,13 @@ int DistanceSensor(int channel)
 
 	data = (int)((value[0] & 0b00001111) << 8) + value[1];
 
-	return sensor_dist(channel, data);
+	return data;
 }
-
 
 int DistanceSensor_cm(int channel)
 {
-	unsigned char buf[8];
-	unsigned char command;
-	unsigned char value[2];
-	useconds_t delay = 2000;
-	int data;
-	int r;
-
-	switch (channel)
-	{
-	case 1: command = 0x8c; break;
-	case 2: command = 0xcc; break;
-	case 3: command = 0x9c; break;
-	case 4: command = 0xdc; break;
-	case 5: command = 0xac; break;
-	case 6: command = 0xec; break;
-	default: printf("channel error.\n"); break;
-	}
-	r = write(i2c_fd, &command, 1);
-	usleep(delay);
-
-	r = read(i2c_fd, value, 2);
-	if (r != 2)
-	{
-		perror("reading i2c device\n");
-	}
-	usleep(delay);
-
-	data = (int)((value[0] & 0b00001111) << 8) + value[1];
-
-	return sensor_dist(channel, data);
+	return sensor_dist(channel, DistanceSensor(channel));
 }
-
 
 int sensor_dist(int channel, int input) {
 	int position = 0;

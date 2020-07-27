@@ -31,6 +31,15 @@
 static int uart_fd;
 static int i2c_fd;
 
+int dist_table[6][28]{
+    {},
+    {4095, 3760, 3374, 3027, 2718, 2443, 2200, 1986, 1799, 1636, 1495, 1373, 1269, 1181, 1106, 1042, 988, 942, 902, 866, 833, 802, 772, 740, 706, 668, 627, 579},
+    {},
+    {},
+    {},
+    {}
+}
+
 /*******************************************************************************
  *  Functions
  *******************************************************************************
@@ -635,5 +644,88 @@ int DistanceSensor(int channel)
          
     data = (int)((value[0] & 0b00001111)<<8)+value[1];
 
+    return sensor_dist(channel, data);
+}
+
+
+int DistanceSensor(int channel)
+{
+    unsigned char buf[8];
+    unsigned char command;
+    unsigned char value[2];
+    useconds_t delay = 2000;
+    int data;
+    int r;
+
+    switch (channel)
+    {
+    case 1: command = 0x8c; break;
+    case 2: command = 0xcc; break;
+    case 3: command = 0x9c; break;
+    case 4: command = 0xdc; break;
+    case 5: command = 0xac; break;
+    case 6: command = 0xec; break;
+    default: printf("channel error.\n"); break;
+    }
+    r = write(i2c_fd, &command, 1);
+    usleep(delay);
+
+    r = read(i2c_fd, value, 2);
+    if (r != 2)
+    {
+        perror("reading i2c device\n");
+    }
+    usleep(delay);
+
+    data = (int)((value[0] & 0b00001111) << 8) + value[1];
+
     return data;
+}
+
+
+int DistanceSensor_cm(int channel)
+{
+    unsigned char buf[8];
+    unsigned char command;
+    unsigned char value[2];
+    useconds_t delay = 2000;
+    int data;
+    int r;
+
+    switch (channel)
+    {
+    case 1: command = 0x8c; break;
+    case 2: command = 0xcc; break;
+    case 3: command = 0x9c; break;
+    case 4: command = 0xdc; break;
+    case 5: command = 0xac; break;
+    case 6: command = 0xec; break;
+    default: printf("channel error.\n"); break;
+    }
+    r = write(i2c_fd, &command, 1);
+    usleep(delay);
+
+    r = read(i2c_fd, value, 2);
+    if (r != 2)
+    {
+        perror("reading i2c device\n");
+    }
+    usleep(delay);
+
+    data = (int)((value[0] & 0b00001111) << 8) + value[1];
+
+    return sensor_dist(channel, data);
+}
+
+
+int sensor_dist(int channel, int input) {
+    int position = 0;
+    for (int i = 0; i < 28; i++) {
+        if (input > dist_table[channel][i]) {
+            position = i + 3;
+            break;
+        }
+        else {}
+    }
+    return position;
 }

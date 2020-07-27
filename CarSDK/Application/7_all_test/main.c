@@ -217,7 +217,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		if(t_data->btopview) OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->topMode);
 		if(t_data->bauto) steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
 
-		t_data->controlData.steerVal = 1500 + steerVal;
+		t_data->controlData.steerVal = 1500 - steerVal;
 		t_data->controlData.steerWrite = 1;
 
 		memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
@@ -424,6 +424,7 @@ void* input_thread(void* arg)
 	MSG("\n\nInput command:");
 	MSG("\t dump  : display image(%s, %dx%d) dump", VPE_OUTPUT_FORMAT, VPE_OUTPUT_W, VPE_OUTPUT_H);
 	MSG("\t dist  : distance sensor check");
+	MSG("\t distc : distance sensor check by -cm-");
 	MSG("\t calib : calibration ON/OFF");
 	MSG("\t top   : top view ON/OFF");
 	MSG("\t auto  : auto steering ON/OFF");
@@ -507,6 +508,20 @@ void* input_thread(void* arg)
 				{
 					d_data = DistanceSensor(channel);
 					printf("channel = %d, distance = 0x%04X(%d) \n", channel, d_data, d_data);
+					usleep(100000);
+				}
+			}
+			else if(0 == strncmp(cmd_input, "distc", 5))
+			{
+				int d_data;
+				int channel;
+				int j;
+				printf("channel(1~6) : ");
+				scanf("%d", &channel);
+				for (j = 0; j < 70; j++)
+				{
+					d_data = DistanceSensor_cm(channel);
+					printf("channel = %d, distance = 0x%04X(%d)(cm) \n", channel, d_data, d_data);
 					usleep(100000);
 				}
 			}

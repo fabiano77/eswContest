@@ -267,7 +267,7 @@ int calculSteer(Mat& src)
 		//양쪽 직선 모두 없다.
 		putText(src, "NONE", Point(260, 100), FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
 	}
-	else if (slopeSign(leftLine) == slopeSign(rightLine) || abs(slope(leftLine)) < 1.2 || abs(slope(rightLine)) < 1.2)
+	else if (slopeSign(leftLine) == slopeSign(rightLine) || abs(slope(leftLine)) < 1.0 || abs(slope(rightLine)) < 1.0)
 	{
 		//기울기 부호가 같다 == 곡선.
 		//기울기 부호가 1.2미만 == 곡선

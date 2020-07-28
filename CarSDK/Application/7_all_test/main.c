@@ -379,6 +379,7 @@ void* input_thread(void* arg)
 	MSG("\t dump  : display image(%s, %dx%d) dump", VPE_OUTPUT_FORMAT, VPE_OUTPUT_W, VPE_OUTPUT_H);
 	MSG("\t dist  : distance sensor check");
 	MSG("\t distc : distance sensor check by -cm-");
+	MSG("\t distloop : distance sensor check constantly");
 	MSG("\t calib : calibration ON/OFF");
 	MSG("\t top   : top view ON/OFF");
 	MSG("\t auto  : auto steering ON/OFF");
@@ -477,6 +478,20 @@ void* input_thread(void* arg)
 					d_data = DistanceSensor_cm(channel);
 					printf("channel = %d, distance = %d[cm] \n", channel, d_data);
 					usleep(100000);
+				}
+			}
+			else if (0 == strncmp(cmd_input, "distloop", 8))
+			{
+				int d_data;
+				int channel;
+				int j;
+				printf("channel(1~6) : ");
+				scanf("%d", &channel);
+				for (j = 0; j < 50000; j++)
+				{
+					d_data = DistanceSensor(channel);
+					printf("channel = %d, distance = 0x%04X(%d) \n", channel, d_data, d_data);
+					usleep(300000);
 				}
 			}
 			else

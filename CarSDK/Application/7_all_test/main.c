@@ -6,6 +6,7 @@
 #include <termios.h>
 #include <errno.h>
 #include <syslog.h>
+#include <math.h>
 #include "util.h"
 #include "v4l2.h"
 #include "display-kms.h"
@@ -59,6 +60,7 @@ typedef struct _DumpMsg {
 struct ControlData {
 	bool stopFlag;
 	bool steerWrite;
+	bool speedWrite;
 	int steerVal;
 	int cameraY;
 	int desireSpeedVal;
@@ -136,7 +138,7 @@ static void draw_operatingtime(struct display* disp, uint32_t time)
 	memset(strfps, 0, sizeof(strtime));
 
 	sprintf(strtime, "%03d(ms)", time);
-	sprintf(strfps, "%4d(fps)", (time==0)? 1000 : 1000/time);
+	sprintf(strfps, "%4d(fps)", (time == 0) ? 1000 : 1000 / time);
 
 
 	if (get_framebuf(disp->overlay_p_bo, pbuf) == 0) {
@@ -150,7 +152,8 @@ static void draw_operatingtime(struct display* disp, uint32_t time)
 	}
 }
 
-	
+
+
 /************************************************
 *	img_process
 *************************************************/
@@ -170,13 +173,16 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		********************************************************/
 
 
-		if(t_data->bcalibration) OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
-		if(t_data->btopview) OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->topMode);
-		if(t_data->bauto)
+		if (t_data->bcalibration) OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
+		if (t_data->btopview) OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->topMode);
+		if (t_data->bauto)
 		{
 			int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
-			t_data->controlData.steerVal = 1500 - steerVal;
-			t_data->controlData.steerWrite = 1;
+			if (steerVal != 0)
+			{
+				t_data->controlData.steerVal = 1500 - steerVal;
+				t_data->controlData.steerWrite = 1;
+			}
 		}
 
 
@@ -250,8 +256,8 @@ void* image_process_thread(void* arg)
 	bool isFirst = true;
 	int index;
 	int i;
-	float map1[VPE_OUTPUT_W * VPE_OUTPUT_H] = {0, };
-	float map2[VPE_OUTPUT_W * VPE_OUTPUT_H] = {0, };
+	float map1[VPE_OUTPUT_W * VPE_OUTPUT_H] = { 0, };
+	float map2[VPE_OUTPUT_W * VPE_OUTPUT_H] = { 0, };
 	memset(map1, 0, VPE_OUTPUT_W * VPE_OUTPUT_H);
 	memset(map2, 0, VPE_OUTPUT_W * VPE_OUTPUT_H);
 	OpenCV_calibration(map1, map2, VPE_OUTPUT_W, VPE_OUTPUT_H);
@@ -274,7 +280,7 @@ void* image_process_thread(void* arg)
 	vpe->field = V4L2_FIELD_ANY;
 
 
-	while (1) 
+	while (1)
 	{
 		index = v4l2_dqbuf(v4l2, &vpe->field);
 		vpe_input_qbuf(vpe, index);
@@ -414,28 +420,28 @@ void* input_thread(void* arg)
 				data->dump_state = DUMP_NONE;
 				MSG("image dump done");
 			}
-			else if(0 == strncmp(cmd_input, "calib", 5))
+			else if (0 == strncmp(cmd_input, "calib", 5))
 			{
 				data->bcalibration = !data->bcalibration;
-				if(data->bcalibration) printf("\t calibration ON\n");
+				if (data->bcalibration) printf("\t calibration ON\n");
 				else printf("\t calibration OFF\n");
 			}
-			else if(0 == strncmp(cmd_input, "auto", 4))
+			else if (0 == strncmp(cmd_input, "auto", 4))
 			{
 				data->bauto = !data->bauto;
-				if(data->bauto) printf("\t auto steering ON\n");
+				if (data->bauto) printf("\t auto steering ON\n");
 				else printf("\t auto steering OFF\n");
 			}
-			else if(0 == strncmp(cmd_input, "top", 3))
+			else if (0 == strncmp(cmd_input, "top", 3))
 			{
-				if(!data->btopview)
+				if (!data->btopview)
 				{
 					data->btopview = !data->btopview;
 					printf("\t topview 1 ON\n");
 				}
 				else
 				{
-					if(data->topMode == 1)
+					if (data->topMode == 1)
 					{
 						data->topMode = 2;
 						printf("\t topview 2 ON\n");
@@ -444,15 +450,15 @@ void* input_thread(void* arg)
 					{
 						data->topMode = 1;
 						data->btopview = !data->btopview;
-					 	printf("\t topview OFF\n");
+						printf("\t topview OFF\n");
 					}
 				}
 			}
-			else if(strlen(cmd_input) == 1)
+			else if (strlen(cmd_input) == 1)
 			{
 				manualControl(&(data->controlData), cmd_input[0]);
 			}
-			else if(0 == strncmp(cmd_input, "dist", 4))
+			else if (0 == strncmp(cmd_input, "dist", 4))
 			{
 				int d_data;
 				int channel;
@@ -466,7 +472,7 @@ void* input_thread(void* arg)
 					usleep(100000);
 				}
 			}
-			else if(0 == strncmp(cmd_input, "distc", 5))
+			else if (0 == strncmp(cmd_input, "distc", 5))
 			{
 				int d_data;
 				int channel;
@@ -528,42 +534,48 @@ void* control_thread(void* arg)
 
 	while (1)
 	{
-		if(data->controlData.steerWrite == 1)
+		if (data->controlData.steerWrite == 1)
 		{
 			data->controlData.steerWrite = 0;
 			SteeringServoControl_Write(data->controlData.steerVal);
-			usleep(100000); //100ms
+			//usleep(100000); //100ms
 		}
 
-		if(data->controlData.stopFlag == 1)
+		if (data->controlData.stopFlag == 1)
 		{
-			if(!isStop) DesireSpeed_Write(0);
+			if (!isStop) DesireSpeed_Write(0);
 			isStop = 1;
 			err_P = 0;
 			err_I = 0;
 			err_D = 0;
 			err_B = 0;
-			usleep(100000); //100ms
+			//usleep(100000); //100ms
 		}
-		else
+
+		if (data->controlData.speedWrite == 1)
 		{
 			isStop = 0;
 			goal = data->controlData.desireSpeedVal;
 			currentSpeed = DesireSpeed_Read();
 			usleep(10000); //10ms
 
-			if(currentSpeed<-500 || currentSpeed>500) continue;
+			if (abs(currentSpeed - goal) < 3)
+			{
+				data->controlData.speedWrite = 0;
+				continue;
+			}
+			if (currentSpeed < -500 || currentSpeed>500) continue;
 			err_P = currentSpeed - goal;
 			err_I += err_P;
 			err_D = err_B - err_P;
 			err_B = err_P;
 
-			writeVal = goal - (err_P*0.11 + err_I*0.08 + err_D*0.15);
+			writeVal = goal - (err_P * 0.11 + err_I * 0.08 + err_D * 0.15);
 			// printf("currentSpeed = %d, writeVal = %d\n", currentSpeed, writeVal);
 			// printf("errP = %4.1f, errI = %4.1f, errD = %4.1f\n\n",err_P, err_I, err_D);
 			DesireSpeed_Write(writeVal);
 
-			usleep(100000); //100ms
+			usleep(70000); //70ms
 		}
 	}
 
@@ -626,6 +638,7 @@ void manualControl(struct ControlData* cdata, char key)
 
 	case 'w':	//go forward
 		cdata->stopFlag = 0;
+		cdata->speedWrite = 1;
 		cdata->desireSpeedVal = cdata->settingSpeedVal;
 		// DesireSpeed_Write(cdata->desireSpeedVal);
 		// usleep(100000);	//1 000 000 us
@@ -635,6 +648,7 @@ void manualControl(struct ControlData* cdata, char key)
 
 	case 'x':	//go backward	speed 음수 인가하면 후진.
 		cdata->stopFlag = 0;
+		cdata->speedWrite = 1;
 		cdata->desireSpeedVal = -cdata->settingSpeedVal;
 		// DesireSpeed_Write(0 - cdata->desireSpeedVal);
 		// usleep(100000);	//1 000 000 us
@@ -679,17 +693,17 @@ void manualControl(struct ControlData* cdata, char key)
 		printf("speed = %d\n", cdata->settingSpeedVal);
 		break;
 
-	case 'q':	//Flashing left winker 2 s
+	case 'q':	//Flashing left winker 3 s
 
 		Winker_Write(LEFT_ON);
-		usleep(2000000);		// 2 000 000 us
+		usleep(3000000);		// 3 000 000 us
 		Winker_Write(ALL_OFF);
 		break;
 
-	case 'e':	//Flashing right winker 3 times 
+	case 'e':	//Flashing right winker 3 s 
 
 		Winker_Write(RIGHT_ON);
-		usleep(2000000);		// 2 000 000 us
+		usleep(3000000);		// 3 000 000 us
 		Winker_Write(ALL_OFF);
 		break;
 
@@ -742,16 +756,16 @@ int main(int argc, char** argv)
 	int ret = 0;
 
 	printf("-- 7_all_test Start --\n");
-	tdata.bcalibration = true;
-	tdata.btopview = true;
-	tdata.bauto = true;
-	tdata.topMode = 2;
-	
+
 	CarControlInit();
 	CameraYServoControl_Write(1660);
 	CameraXServoControl_Write(1500);
 	PositionControlOnOff_Write(UNCONTROL); // position controller must be OFF !!!
 	SpeedControlOnOff_Write(CONTROL);   // speed controller must be also ON !!!
+	tdata.bcalibration = true;
+	tdata.btopview = true;
+	tdata.bauto = true;
+	tdata.topMode = 2;
 	tdata.controlData.settingSpeedVal = 30;
 	tdata.controlData.desireSpeedVal = 0;
 	tdata.controlData.lightFlag = 0x00;
@@ -759,6 +773,7 @@ int main(int argc, char** argv)
 	tdata.controlData.cameraY = 1660;
 	tdata.controlData.stopFlag = 0;
 	tdata.controlData.steerWrite = 0;
+	tdata.controlData.speedWrite = 0;
 
 	//캘리브레이션 활성화 상태로 동작.
 	tdata.dump_state = DUMP_NONE;

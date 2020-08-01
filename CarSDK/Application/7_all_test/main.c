@@ -475,14 +475,16 @@ void* input_thread(void* arg)
 			else if (0 == strncmp(cmd_input, "distc", 5))
 			{
 				int d_data;
+				int d_data_cm;
 				int channel;
 				int j;
 				printf("channel(1~6) : ");
 				scanf("%d", &channel);
 				for (j = 0; j < 70; j)
 				{
-					d_data = DistanceSensor_cm(channel);
-					printf("channel = %d, distance = %d[cm] \n", channel, d_data);
+					d_data_cm = DistanceSensor_cm(channel);
+					d_data = DistanceSensor(channel);
+					printf("channel = %d, distance = %d[cm], %d \n", channel, d_data_cm, d_data);
 					usleep(300000);
 				}
 			}

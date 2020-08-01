@@ -653,7 +653,7 @@ int sensor_dist(int channel, int input) {
 	int position = 0;
 	int i = 0;
 	for (i = 0; i < 28; i++) {
-		if (input > dist_table[channel][i]) {
+		if (input > dist_table[channel-1][i]) {
 			position = i + 3;
 			break;
 		}

@@ -458,18 +458,18 @@ void* input_thread(void* arg)
 			{
 				manualControl(&(data->controlData), cmd_input[0]);
 			}
-			else if (0 == strncmp(cmd_input, "dist", 4))
+			else if (0 == strncmp(cmd_input, "distloop", 8))
 			{
 				int d_data;
 				int channel;
 				int j;
 				printf("channel(1~6) : ");
 				scanf("%d", &channel);
-				for (j = 0; j < 70; j++)
+				for (j = 0; j < 50000; j++)
 				{
 					d_data = DistanceSensor(channel);
 					printf("channel = %d, distance = 0x%04X(%d) \n", channel, d_data, d_data);
-					usleep(100000);
+					usleep(300000);
 				}
 			}
 			else if (0 == strncmp(cmd_input, "distc", 5))
@@ -486,18 +486,18 @@ void* input_thread(void* arg)
 					usleep(100000);
 				}
 			}
-			else if (0 == strncmp(cmd_input, "distloop", 8))
+			else if (0 == strncmp(cmd_input, "dist", 4))
 			{
 				int d_data;
 				int channel;
 				int j;
 				printf("channel(1~6) : ");
 				scanf("%d", &channel);
-				for (j = 0; j < 50000; j++)
+				for (j = 0; j < 70; j++)
 				{
 					d_data = DistanceSensor(channel);
 					printf("channel = %d, distance = 0x%04X(%d) \n", channel, d_data, d_data);
-					usleep(300000);
+					usleep(100000);
 				}
 			}
 			else

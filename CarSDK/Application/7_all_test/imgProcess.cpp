@@ -226,10 +226,10 @@ void settingStatic(int w, int h)
 	color[5] = Scalar(0, 255, 255);
 	color[6] = Scalar(192, 192, 192);
 
-	centerGuide[0] = Vec4i(320, 200, 320, 240);
-	centerGuide[1] = Vec4i(320, 240, 320, 280);
-	centerGuide[2] = Vec4i(320, 280, 320, 320);
-	centerGuide[3] = Vec4i(320, 320, 320, 360);
+	centerGuide[0] = Vec4i(320, 160, 320, 200);
+	centerGuide[1] = Vec4i(320, 200, 320, 240);
+	centerGuide[2] = Vec4i(320, 240, 320, 300);
+	centerGuide[3] = Vec4i(320, 300, 320, 360);
 
 	for (int i = 0; i < 4; i++)
 	{

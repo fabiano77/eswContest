@@ -479,11 +479,11 @@ void* input_thread(void* arg)
 				int j;
 				printf("channel(1~6) : ");
 				scanf("%d", &channel);
-				for (j = 0; j < 70; j++)
+				for (j = 0; j < 70; j)
 				{
 					d_data = DistanceSensor_cm(channel);
 					printf("channel = %d, distance = %d[cm] \n", channel, d_data);
-					usleep(100000);
+					usleep(300000);
 				}
 			}
 			else if (0 == strncmp(cmd_input, "dist", 4))

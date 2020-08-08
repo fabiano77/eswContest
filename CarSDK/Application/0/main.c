@@ -83,6 +83,7 @@ struct thr_data {
 	bool bcalibration;
 	bool btopview;
 	bool bauto;
+	bool btrack;
 	int topMode;
 	bool bfull_screen;
 	bool bstream_start;
@@ -172,7 +173,6 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		*	 우리가 만든 알고리즘 함수를 넣는 부분.
 		********************************************************/
 
-
 		if (t_data->bcalibration) OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
 		if (t_data->btopview) OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->topMode);
 		if (t_data->bauto)
@@ -183,6 +183,15 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				t_data->controlData.steerVal = 1500 - steerVal;
 				t_data->controlData.steerWrite = 1;
 			}
+		}
+		if (t_data->btrack) // tracking Object
+		{
+			int steerVal, speedVal;
+			tracking_Object(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, steerVal, speedVal);
+			t_data->controlData.steerVal = steerVal;
+			t_data->controlData.steerWrite = 1;
+			t_data->controlData.desireSpeedVal = speedVal;
+			t_data->controlData.speedWrite = 1;
 		}
 
 
@@ -389,6 +398,7 @@ void* input_thread(void* arg)
 	MSG("\t calib : calibration ON/OFF");
 	MSG("\t top   : top view ON/OFF");
 	MSG("\t auto  : auto steering ON/OFF");
+	MSG("\t track : tracking object ON/OFF")
 	MSG("\n");
 
 	while (1)
@@ -431,6 +441,12 @@ void* input_thread(void* arg)
 				data->bauto = !data->bauto;
 				if (data->bauto) printf("\t auto steering ON\n");
 				else printf("\t auto steering OFF\n");
+			}
+			else if (0 == strncmp(cmd_input, "track", 5))
+			{
+				data->btrack = !data->btrack;
+				if (data->btrack) printf("\t tracking object ON\n");
+				else printf("\t tracking object OFF\n");
 			}
 			else if (0 == strncmp(cmd_input, "top", 3))
 			{
@@ -767,6 +783,7 @@ int main(int argc, char** argv)
 	tdata.bcalibration = true;
 	tdata.btopview = true;
 	tdata.bauto = true;
+	tdata.btrack = true;
 	tdata.topMode = 2;
 	tdata.controlData.settingSpeedVal = 30;
 	tdata.controlData.desireSpeedVal = 0;

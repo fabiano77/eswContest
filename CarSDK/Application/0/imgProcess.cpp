@@ -193,10 +193,20 @@ extern "C" {
 		return steer;
 	}
 
+	void tracking_Object(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int* steerVal, int* speedVal)
+	{
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		Mat dstRGB(h, w, CV_8UC3, outBuf);
+
+		tracking_Object(srcRGB, true, steerVal, speedVal);
+
+		dstRGB = srcRGB;
+	}
+
 }
 
 
-
+// autoSteering에 사용되는 변수
 Scalar color[7];
 Scalar pink(255, 50, 255);
 Scalar mint(255, 153, 0);
@@ -212,12 +222,37 @@ int HLP_threshold = 60;	//105
 int HLP_minLineLength = 90;//115
 int HLP_maxLineGap = 500;	//260
 
+// tracking에 사용되는 변수
+Scalar lower_red1;
+Scalar upper_red1;
+Scalar lower_red2;
+Scalar upper_red2;
+
+Mat frame_hsv;
+Mat frame_red;
+Mat frame_red1;
+Mat frame_red2;
+Mat frame_gray;
+Mat frame;
+
+vector<Vec3f> circles;
+int num_circles;
+
+Point CENTER;
+int RADIUS;
+int angle;
+int speed;
+int angle_flag[4];
+int speed_flag[4];
+/////////////////////////////////////
+
 static void on_trackbar(int, void*)
 {
 }
 
 void settingStatic(int w, int h)
 {
+	////////////////////////////////////////
 	color[0] = Scalar(255, 255, 0);
 	color[1] = Scalar(255, 0, 0);
 	color[2] = Scalar(0, 255, 0);
@@ -241,6 +276,22 @@ void settingStatic(int w, int h)
 
 	leftGuide = Vec4i(0, 118, 320, -330) * (w / 640.0);
 	rightGuide = Vec4i(320, -420, 640, 155) * (w / 640.0);
+
+	////////////////////////////////////////
+	lower_red1 = Scalar(0, 100, 150);
+	upper_red1 = Scalar(12, 255, 255);
+	lower_red2 = Scalar(168, 100, 150);
+	upper_red2 = Scalar(180, 255, 255);
+	num_circles = 0;
+	CENTER = Point(0, 0);
+	RADIUS = 0;
+	for (int i = 0; i < 4; i++) {
+		angle_flag[i] = 1;
+		speed_flag[i] = 1;
+	}
+	angle = 1500;
+	speed = 00;
+	////////////////////////////////////////
 
 	cout << "settingStatic" << endl;
 }
@@ -642,3 +693,160 @@ string toString(double A)
 	ss >> text;
 	return text;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void filtering_Object(Mat& frame) {
+	// RED 필터링 frame -> frame_red
+	cvtColor(frame, frame_hsv, COLOR_BGR2HSV);
+	inRange(frame_hsv, lower_red1, upper_red1, frame_red1);
+	inRange(frame_hsv, lower_red2, upper_red2, frame_red2);
+	frame_red = frame_red1 | frame_red2;
+
+	// 블러링 frame_red -> frame_gray
+	GaussianBlur(frame_red, frame_gray, Size(9, 9), 2, 2);
+}
+
+void tracking_Object(Mat& frame, bool showCircles, int& steerVal, int& speedVal) {
+	if (!first++) settingStatic(w, h);
+
+	// 필터링 frame -> frame_gray
+	filtering_Object(frame);
+
+	// 원 객체 검출 -> circles
+	HoughCircles(frame_gray, circles, HOUGH_GRADIENT, 1, 300, 150, 30, 10);
+
+	// circles => (a,b) 좌표에서 반지름 r을 가지고 있음
+	// circles[0] : a
+	// circles[1] : b
+	// circles[2] : r
+
+	cvtColor(frame_gray, frame, COLOR_GRAY2BGR);
+
+	// 검출된 객체 개수
+	num_circles = circles.size();
+
+	if (num_circles > 0) { // 객체가 하나라도 있을 경우
+		Point CENTER_total(0, 0);
+		for (Vec3f c : circles) {
+			Point center(cvRound(c[0]), cvRound(c[1]));
+			CENTER_total.x += c[0];
+			CENTER_total.y += c[1];
+			int radius = cvRound(c[2]);
+			if (showCircles)
+				circle(frame, center, radius, Scalar(0, 0, 255), 2, LINE_AA);
+		}
+		// 객체의 평균 중심 좌표
+		CENTER.x = CENTER_total.x / num_circles;
+		CENTER.y = CENTER_total.y / num_circles;
+
+		// 원 중심의 x좌표 위치에 따른 조향각 설정 - default 1500
+		// frame 2번 이상 잡혀야지만 각이 수정된다
+		if (abs(frame.cols / 2 - CENTER.x) < frame.cols * 1 / 8) {
+			if (angle_flag[0] == 2) {
+				angle = 1500;
+				angle_flag[0] = 0;
+			}
+			angle_flag[0]++;
+		}
+		else if ((abs(frame.cols / 2 - CENTER.x) >= frame.cols * 1 / 8) && (abs(frame.cols / 2 - CENTER.x) < frame.cols * 2 / 8)) {
+			if (angle_flag[1] == 2) {
+				if (CENTER.x > frame.cols / 2) {
+					angle = 1650;
+				}
+				else {
+					angle = 1350;
+				}
+				angle_flag[1] = 0;
+			}
+			angle_flag[1]++;
+		}
+		else if ((abs(frame.cols / 2 - CENTER.x) >= frame.cols * 2 / 8) && (abs(frame.cols / 2 - CENTER.x) < frame.cols * 3 / 8)) {
+			if (angle_flag[2] == 2) {
+				if (CENTER.x > frame.cols / 2) {
+					angle = 1800;
+				}
+				else {
+					angle = 1200;
+				}
+				angle_flag[2] = 0;
+			}
+			angle_flag[2]++;
+		}
+		else {
+			if (angle_flag[3] == 2) {
+				if (CENTER.x > frame.cols / 2) {
+					angle = 2000;
+				}
+				else {
+					angle = 1000;
+				}
+				angle_flag[3] = 0;
+			}
+			angle_flag[3]++;
+		}
+
+		// 원 중심의 y좌표 위치에 따른 속도 설정 - default 200 (0~500)
+		// frame 2번 이상 잡혀야지만 각이 수정된다 
+		if (abs(frame.rows / 2 - CENTER.y) < frame.rows * 1 / 8) {
+			if (speed_flag[0] == 2) {
+				speed = 200;
+				speed_flag[0] = 0;
+			}
+			speed_flag[0]++;
+		}
+		else if ((abs(frame.rows / 2 - CENTER.y) >= frame.rows * 1 / 8) && (abs(frame.rows / 2 - CENTER.y) < frame.rows * 2 / 8)) {
+			if (speed_flag[1] == 2) {
+				if (CENTER.y < frame.rows / 2) {
+					speed = 250;
+				}
+				else {
+					speed = 150;
+				}
+				speed_flag[1] = 0;
+			}
+			speed_flag[1]++;
+		}
+		else if ((abs(frame.rows / 2 - CENTER.y) >= frame.rows * 2 / 8) && (abs(frame.rows / 2 - CENTER.y) < frame.rows * 3 / 8)) {
+			if (speed_flag[2] == 2) {
+				if (CENTER.y < frame.rows / 2) {
+					speed = 300;
+				}
+				else {
+					speed = 100;
+				}
+				speed_flag[2] = 0;
+			}
+			speed_flag[2]++;
+		}
+		else {
+			if (speed_flag[3] == 2) {
+				if (CENTER.y < frame.rows / 2) {
+					speed = 350;
+				}
+				else {
+					speed = 50;
+				}
+				speed_flag[3] = 0;
+			}
+			speed_flag[3]++;
+		}
+		steerVal = angle;
+		speedVal = speed;
+	}
+	else { // 검출된 객체가 없을 경우
+		if ((CENTER == Point(0, 0)) && (RADIUS == 0)) { // 지금까지 객체가 한번도 검출되지 않았을 경우
+			Angle = 1500;
+			speed = 00;
+		}
+		else { // 이전에 검출된 객체의 값을 따라감
+			steerVal = angle;
+			speedVal = speed;
+		}
+	}
+
+	cout << CENTER << " angle : " << (angle - 1500) << " speed : " << speed << endl;
+	//if (showCircles)
+	//	imshow("circles", frame);
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -36,3 +36,5 @@ CarSDK/Application/2_2_camera_RGB_dump_test/util.lo
 CarSDK/Application/2_2_camera_RGB_dump_test/v4l2.lo
 CarSDK/Application/2_2_camera_RGB_dump_test/vpe-common.lo
 CarSDK/Application/7_all_test/imgProcess.lo
+CarSDK/Application/7_all_test/all_control_camera_test
+CarSDK/Application/7_all_test/imgProcess.lo

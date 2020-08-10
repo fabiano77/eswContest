@@ -26,7 +26,7 @@ void cannyEdge(Mat& src, Mat& dst);
 
 Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType);
 
-Vec4i ransac_algorithm(vector<Vec4i> lines, vector<Point2i> P, int w, int h, int T, double& inlierPercent, Rect2i weightingRect);
+Vec4i ransac_algorithm(vector<Vec4i> lines, vector<Point2i> P, int w, int h, int T, double& inlierPercent, Rect weightingRect);
 
 int slopeSign(Vec4i line);
 
@@ -541,7 +541,7 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 	{
 		detectedLineType = 1;
 		//가중치 영역 설정.
-		Rect2i weightingRect(w / 3, h / 2, w / 3, h / 2);
+		Rect weightingRect(w / 3, h / 2, w / 3, h / 2);
 		//rectangle(dst, weightingRect, purple, 2);
 
 		double inlierPercent;
@@ -559,7 +559,7 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 	return 0;
 }
 
-Vec4i ransac_algorithm(vector<Vec4i> lines, vector<Point2i> P, int w, int h, int T, double& inlierPercent, Rect2i weightingRect)
+Vec4i ransac_algorithm(vector<Vec4i> lines, vector<Point2i> P, int w, int h, int T, double& inlierPercent, Rect weightingRect)
 {
 	Vec4i resultLine;
 	int cntMax(-1);

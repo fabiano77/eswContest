@@ -38,3 +38,10 @@ CarSDK/Application/2_2_camera_RGB_dump_test/vpe-common.lo
 CarSDK/Application/7_all_test/imgProcess.lo
 CarSDK/Application/7_all_test/all_control_camera_test
 CarSDK/Application/7_all_test/imgProcess.lo
+CarSDK/Application/0/display-kms.lo
+CarSDK/Application/0/drawing.lo
+CarSDK/Application/0/exam_cv.lo
+CarSDK/Application/0/input_cmd.lo
+CarSDK/Application/0/util.lo
+CarSDK/Application/0/v4l2.lo
+CarSDK/Application/0/vpe-common.lo

@@ -712,7 +712,7 @@ void filtering_Object(Mat& frame) {
 	// 블러링 frame_red -> frame_gray
 	GaussianBlur(frame_red, frame_gray, Size(9, 9), 2, 2);
 }
-
+2
 void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, int* speedVal) {
 	if (!first++) settingStatic(w, h);
 
@@ -734,11 +734,11 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 
 	if (num_circles > 0) { // 객체가 하나라도 있을 경우
 		Point CENTER_total(0, 0);
-		for (Vec3f c : circles) {
-			Point center(cvRound(c[0]), cvRound(c[1]));
-			CENTER_total.x += c[0];
-			CENTER_total.y += c[1];
-			int radius = cvRound(c[2]);
+		for (int i = 0; i < num_circles; i++) {
+			Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+			CENTER_total.x += circles[i][0];
+			CENTER_total.y += circles[i][1];
+			int radius = cvRound(circles[i][2]);
 			if (showCircles)
 				circle(frame, center, radius, Scalar(0, 0, 255), 2, 0);
 		}

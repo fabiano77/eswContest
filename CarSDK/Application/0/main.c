@@ -173,26 +173,23 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		*	 우리가 만든 알고리즘 함수를 넣는 부분.
 		********************************************************/
 
-		if (t_data->bcalibration) OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
-		if (t_data->btopview) OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->topMode);
-		if (t_data->bauto)
+		if (1) OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
+		if (1) // tracking Object
 		{
-			int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
-			if (steerVal != 0)
-			{
-				t_data->controlData.steerVal = 1500 - steerVal;
-				t_data->controlData.steerWrite = 1;
-			}
-		}
-		if (t_data->btrack) // tracking Object
-		{
-			int *steerVal = 0;
-			int *speedVal = 0;
-			tracking(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, steerVal, speedVal);
-			t_data->controlData.steerVal = *steerVal;
+			int steerVal = 0;
+			int speedVal = 0;
+			int *ptrsteerVal = &steerVal;
+			int *ptrspeedVal = &speedVal;
+			tracking(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, ptrsteerVal, ptrspeedVal);
+			printf("1");
+			t_data->controlData.steerVal = steerVal;
+			printf("2");
 			t_data->controlData.steerWrite = 1;
-			t_data->controlData.desireSpeedVal = *speedVal;
+			printf("3");
+			t_data->controlData.desireSpeedVal = speedVal;
+			printf("4");
 			t_data->controlData.speedWrite = 1;
+			printf("5");
 		}
 
 

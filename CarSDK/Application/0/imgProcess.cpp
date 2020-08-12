@@ -207,6 +207,7 @@ extern "C" {
 		tracking_Object(srcRGB, w, h, true, steerVal, speedVal);
 
 		dstRGB = srcRGB;
+		printf("tracking end \n");
 	}
 
 }
@@ -731,7 +732,7 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 
 	// 검출된 객체 개수
 	num_circles = circles.size();
-
+	cout <<"size " << num_circles << endl;
 	if (num_circles > 0) { // 객체가 하나라도 있을 경우
 		Point CENTER_total(0, 0);
 		for (int i = 0; i < num_circles; i++) {

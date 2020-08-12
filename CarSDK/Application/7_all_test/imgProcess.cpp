@@ -414,11 +414,11 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 		}
 	}
 
-	createTrackbar("H_thresh", "trackbar", &HLP_threshold, 120, on_trackbar);
-	createTrackbar("H_minLen", "trackbar", &HLP_minLineLength, 200, on_trackbar);
-	createTrackbar("H_maxGap", "trackbar", &HLP_maxLineGap, 500, on_trackbar);
-	namedWindow("trackbar", WINDOW_NORMAL);
-	moveWindow("trackbar", 320 * 5, 180 * 5);
+	// createTrackbar("H_thresh", "trackbar", &HLP_threshold, 120, on_trackbar);
+	// createTrackbar("H_minLen", "trackbar", &HLP_minLineLength, 200, on_trackbar);
+	// createTrackbar("H_maxGap", "trackbar", &HLP_maxLineGap, 500, on_trackbar);
+	// namedWindow("trackbar", WINDOW_NORMAL);
+	// moveWindow("trackbar", 320 * 5, 180 * 5);
 
 	vector<Vec4i> lines;		//검출될 직선이 저장될 객체
 	HoughLinesP(src, lines, 1, CV_PI / 180, HLP_threshold, HLP_minLineLength, HLP_maxLineGap);

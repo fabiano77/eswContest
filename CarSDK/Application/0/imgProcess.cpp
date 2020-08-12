@@ -40,6 +40,12 @@ int getPointY_at_X(Vec4i line, const int X);
 
 int lineDeviation(Mat& dst, Vec4i line1, Vec4i line2);
 
+////////
+void filtering_Object(Mat& frame);
+
+void tracking_Object(Mat& frame, int w, int h, bool showCircles, int& steerVal, int& speedVal);
+////////
+
 string toString(int A);
 
 string toString(double A);
@@ -198,7 +204,7 @@ extern "C" {
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
-		tracking_Object(srcRGB, true, steerVal, speedVal);
+		tracking_Object(srcRGB, w, h, true, steerVal, speedVal);
 
 		dstRGB = srcRGB;
 	}
@@ -278,9 +284,9 @@ void settingStatic(int w, int h)
 	rightGuide = Vec4i(320, -420, 640, 155) * (w / 640.0);
 
 	////////////////////////////////////////
-	lower_red1 = Scalar(0, 100, 150);
-	upper_red1 = Scalar(12, 255, 255);
-	lower_red2 = Scalar(168, 100, 150);
+	lower_red1 = Scalar(0, 50, 150);
+	upper_red1 = Scalar(6, 255, 255);
+	lower_red2 = Scalar(174, 50, 150);
 	upper_red2 = Scalar(180, 255, 255);
 	num_circles = 0;
 	CENTER = Point(0, 0);
@@ -707,14 +713,14 @@ void filtering_Object(Mat& frame) {
 	GaussianBlur(frame_red, frame_gray, Size(9, 9), 2, 2);
 }
 
-void tracking_Object(Mat& frame, bool showCircles, int& steerVal, int& speedVal) {
+void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, int* speedVal) {
 	if (!first++) settingStatic(w, h);
 
 	// 필터링 frame -> frame_gray
 	filtering_Object(frame);
 
 	// 원 객체 검출 -> circles
-	HoughCircles(frame_gray, circles, HOUGH_GRADIENT, 1, 300, 150, 30, 10);
+	HoughCircles(frame_gray, circles, 3, 1, 300, 150, 30, 10);
 
 	// circles => (a,b) 좌표에서 반지름 r을 가지고 있음
 	// circles[0] : a
@@ -734,7 +740,7 @@ void tracking_Object(Mat& frame, bool showCircles, int& steerVal, int& speedVal)
 			CENTER_total.y += c[1];
 			int radius = cvRound(c[2]);
 			if (showCircles)
-				circle(frame, center, radius, Scalar(0, 0, 255), 2, LINE_AA);
+				circle(frame, center, radius, Scalar(0, 0, 255), 2, 0);
 		}
 		// 객체의 평균 중심 좌표
 		CENTER.x = CENTER_total.x / num_circles;
@@ -831,17 +837,17 @@ void tracking_Object(Mat& frame, bool showCircles, int& steerVal, int& speedVal)
 			}
 			speed_flag[3]++;
 		}
-		steerVal = angle;
-		speedVal = speed;
+		*steerVal = angle;
+		*speedVal = speed;
 	}
 	else { // 검출된 객체가 없을 경우
 		if ((CENTER == Point(0, 0)) && (RADIUS == 0)) { // 지금까지 객체가 한번도 검출되지 않았을 경우
-			Angle = 1500;
+			angle = 1500;
 			speed = 00;
 		}
 		else { // 이전에 검출된 객체의 값을 따라감
-			steerVal = angle;
-			speedVal = speed;
+			*steerVal = angle;
+			*speedVal = speed;
 		}
 	}
 

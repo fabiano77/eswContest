@@ -13,6 +13,8 @@ extern "C" {
 
 	int autoSteering(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
 
+	void tracking_Object(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int* steerVal, int* speedVal);
+
 #ifdef __cplusplus
 }
 #endif

@@ -398,7 +398,7 @@ void* input_thread(void* arg)
 	MSG("\t calib : calibration ON/OFF");
 	MSG("\t top   : top view ON/OFF");
 	MSG("\t auto  : auto steering ON/OFF");
-	MSG("\t track : tracking object ON/OFF")
+	MSG("\t track : tracking object ON/OFF");
 	MSG("\n");
 
 	while (1)

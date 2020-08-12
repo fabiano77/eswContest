@@ -712,7 +712,7 @@ void filtering_Object(Mat& frame) {
 	// 블러링 frame_red -> frame_gray
 	GaussianBlur(frame_red, frame_gray, Size(9, 9), 2, 2);
 }
-2
+
 void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, int* speedVal) {
 	if (!first++) settingStatic(w, h);
 

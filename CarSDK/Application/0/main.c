@@ -181,15 +181,18 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 			int *ptrsteerVal = &steerVal;
 			int *ptrspeedVal = &speedVal;
 			tracking(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, ptrsteerVal, ptrspeedVal);
-			printf("1");
 			t_data->controlData.steerVal = steerVal;
-			printf("2");
 			t_data->controlData.steerWrite = 1;
-			printf("3");
-			t_data->controlData.desireSpeedVal = speedVal;
-			printf("4");
-			t_data->controlData.speedWrite = 1;
-			printf("5");
+			if(speedVal == 0)
+			{
+				t_data->controlData.stopFlag = 1;
+			}
+			else
+			{
+				t_data->controlData.stopFlag = 0;
+				t_data->controlData.speedWrite = 1;
+				t_data->controlData.desireSpeedVal = speedVal;
+			}
 		}
 
 
@@ -787,7 +790,7 @@ int main(int argc, char** argv)
 	tdata.controlData.desireSpeedVal = 0;
 	tdata.controlData.lightFlag = 0x00;
 	tdata.controlData.steerVal = 1500;
-	tdata.controlData.cameraY = 1660;
+	tdata.controlData.cameraY = 1500;
 	tdata.controlData.stopFlag = 0;
 	tdata.controlData.steerWrite = 0;
 	tdata.controlData.speedWrite = 0;

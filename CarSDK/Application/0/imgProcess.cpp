@@ -246,11 +246,12 @@ vector<Vec3f> circles;
 int num_circles;
 
 Point CENTER;
+int CENTER_Radius;
 int RADIUS;
 int angle;
 int speed;
 int angle_flag[4];
-int speed_flag[4];
+int speed_flag[5];
 /////////////////////////////////////
 
 static void on_trackbar(int, void*)
@@ -291,8 +292,9 @@ void settingStatic(int w, int h)
 	upper_red2 = Scalar(180, 255, 255);
 	num_circles = 0;
 	CENTER = Point(0, 0);
+	CENTER_Radius = 0;
 	RADIUS = 0;
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 5; i++) {
 		angle_flag[i] = 1;
 		speed_flag[i] = 1;
 	}
@@ -735,17 +737,23 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 	cout <<"size " << num_circles << endl;
 	if (num_circles > 0) { // 객체가 하나라도 있을 경우
 		Point CENTER_total(0, 0);
+		int CENTER_R = 0;
+
 		for (int i = 0; i < num_circles; i++) {
 			Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
 			CENTER_total.x += circles[i][0];
 			CENTER_total.y += circles[i][1];
+			CENTER_R += circles[i][2];
+
 			int radius = cvRound(circles[i][2]);
 			if (showCircles)
 				circle(frame, center, radius, Scalar(0, 0, 255), 2, 0);
 		}
+
 		// 객체의 평균 중심 좌표
 		CENTER.x = CENTER_total.x / num_circles;
 		CENTER.y = CENTER_total.y / num_circles;
+		CENTER_Radius = CENTER_R / num_circles;
 
 		// 원 중심의 x좌표 위치에 따른 조향각 설정 - default 1500
 		// frame 2번 이상 잡혀야지만 각이 수정된다
@@ -795,51 +803,48 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 
 		// 원 중심의 y좌표 위치에 따른 속도 설정 - default 200 (0~500)
 		// frame 2번 이상 잡혀야지만 각이 수정된다 
-		if (abs(frame.rows / 2 - CENTER.y) < frame.rows * 1 / 8) {
+		// 640 x 320 
+		// 최소 반지름 10
+		// 최대 반지름 120
+		// 10~30, 30~50, 
+
+		if (CENTER_Radius > 120) {
 			if (speed_flag[0] == 2) {
-				speed = 00;
+				speed = 0;
 				speed_flag[0] = 0;
 			}
 			speed_flag[0]++;
 		}
-		else if ((abs(frame.rows / 2 - CENTER.y) >= frame.rows * 1 / 8) && (abs(frame.rows / 2 - CENTER.y) < frame.rows * 2 / 8)) {
+		else if (CENTER_Radius >= 80) {
 			if (speed_flag[1] == 2) {
-				if (CENTER.y < frame.rows / 2) {
-					speed = 10;
-				}
-				else {
-					speed = -10;
-				}
+				speed = 15;
 				speed_flag[1] = 0;
 			}
 			speed_flag[1]++;
 		}
-		else if ((abs(frame.rows / 2 - CENTER.y) >= frame.rows * 2 / 8) && (abs(frame.rows / 2 - CENTER.y) < frame.rows * 3 / 8)) {
+		else if (CENTER_Radius >= 55) {
 			if (speed_flag[2] == 2) {
-				if (CENTER.y < frame.rows / 2) {
-					speed = 20;
-				}
-				else {
-					speed = -20;
-				}
+				speed = 25;
 				speed_flag[2] = 0;
 			}
 			speed_flag[2]++;
 		}
-		else {
+		else if (CENTER_Radius >= 30) {
 			if (speed_flag[3] == 2) {
-				if (CENTER.y < frame.rows / 2) {
-					speed = 30;
-				}
-				else {
-					speed = -30;
-				}
+				speed = 38;
 				speed_flag[3] = 0;
 			}
 			speed_flag[3]++;
 		}
+		else {
+			if (speed_flag[4] == 2) {
+				speed = 50;
+				speed_flag[4] = 0;
+			}
+			speed_flag[4]++;
+		}
 		*steerVal = angle + 1500;
-		*speedVal = speed + 50;
+		*speedVal = speed;
 	}
 	else { // 검출된 객체가 없을 경우
 		if ((CENTER == Point(0, 0)) && (RADIUS == 0)) { // 지금까지 객체가 한번도 검출되지 않았을 경우
@@ -848,11 +853,11 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 		}
 		else { // 이전에 검출된 객체의 값을 따라감
 			*steerVal = angle + 1500;
-			*speedVal = speed + 50;
+			*speedVal = speed;
 		}
 	}
 
-	cout << CENTER << " angle : " << (angle) << " speed : " << speed + 50 << endl;
+	cout << CENTER << " angle : " << (angle) << " speed : " << speed << endl;
 	//if (showCircles)
 	//	imshow("circles", frame);
 }

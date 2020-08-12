@@ -187,7 +187,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		if (t_data->btrack) // tracking Object
 		{
 			int steerVal, speedVal;
-			tracking_Object(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, steerVal, speedVal);
+			tracking(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, steerVal, speedVal);
 			t_data->controlData.steerVal = steerVal;
 			t_data->controlData.steerWrite = 1;
 			t_data->controlData.desireSpeedVal = speedVal;

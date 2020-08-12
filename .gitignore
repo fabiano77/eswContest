@@ -45,3 +45,7 @@ CarSDK/Application/0/input_cmd.lo
 CarSDK/Application/0/util.lo
 CarSDK/Application/0/v4l2.lo
 CarSDK/Application/0/vpe-common.lo
+CarSDK/Application/0/car_lib.lo
+CarSDK/Application/0/all_control_camera_test
+CarSDK/Application/0/imgProcess.lo
+CarSDK/Application/0/all_control_camera_test

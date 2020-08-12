@@ -134,8 +134,13 @@ unsigned char LineSensor_Read(void);
 
 int DistanceSensor(int channel);
     //Return : 적외선 센서 값을 반환한다. (거리가 가까울수록 숫자높음)
-    //채널 0~5(6개) 전방(0 channel) 우측(1, 2) 후방(3) 좌측(4, 5)
+    //채널 1~6(6개) 전방(1 channel) 우측(2, 3) 후방(4) 좌측(5, 6)
 
+int DistanceSensor_cm(int channel);
+    //Return : 적외선 센서 값(cm)을 반환한다. (거리가 가까울수록 숫자높음)
+
+int sensor_dist(int channel, int input);
+    //Return : 적외선 센서 값을 측정값 기준으로 맵핑하여 cm 단위로 반환한다.
 
 #ifdef __cplusplus
 }

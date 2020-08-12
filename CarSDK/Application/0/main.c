@@ -186,11 +186,12 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		}
 		if (t_data->btrack) // tracking Object
 		{
-			int steerVal, speedVal;
+			int *steerVal = 0;
+			int *speedVal = 0;
 			tracking(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, steerVal, speedVal);
-			t_data->controlData.steerVal = steerVal;
+			t_data->controlData.steerVal = *steerVal;
 			t_data->controlData.steerWrite = 1;
-			t_data->controlData.desireSpeedVal = speedVal;
+			t_data->controlData.desireSpeedVal = *speedVal;
 			t_data->controlData.speedWrite = 1;
 		}
 
@@ -398,7 +399,7 @@ void* input_thread(void* arg)
 	MSG("\t calib : calibration ON/OFF");
 	MSG("\t top   : top view ON/OFF");
 	MSG("\t auto  : auto steering ON/OFF");
-	MSG("\t track : tracking object ON/OFF")
+	MSG("\t track : tracking object ON/OFF");
 	MSG("\n");
 
 	while (1)
@@ -496,7 +497,7 @@ void* input_thread(void* arg)
 				int j;
 				printf("channel(1~6) : ");
 				scanf("%d", &channel);
-				for (j = 0; j < 70; j)
+				for (j = 0; j < 70; j++)
 				{
 					d_data_cm = DistanceSensor_cm(channel);
 					d_data = DistanceSensor(channel);

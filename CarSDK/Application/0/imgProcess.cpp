@@ -43,7 +43,7 @@ int lineDeviation(Mat& dst, Vec4i line1, Vec4i line2);
 ////////
 void filtering_Object(Mat& frame);
 
-void tracking_Object(Mat& frame, int w, int h, bool showCircles, int& steerVal, int& speedVal);
+void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, int* speedVal);
 ////////
 
 string toString(int A);

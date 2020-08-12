@@ -247,7 +247,6 @@ int num_circles;
 
 Point CENTER;
 int CENTER_Radius;
-int RADIUS;
 int angle;
 int speed;
 int angle_flag[4];
@@ -286,14 +285,13 @@ void settingStatic(int w, int h)
 	rightGuide = Vec4i(320, -420, 640, 155) * (w / 640.0);
 
 	////////////////////////////////////////
-	lower_red1 = Scalar(0, 50, 150);
-	upper_red1 = Scalar(6, 255, 255);
-	lower_red2 = Scalar(174, 50, 150);
+	lower_red1 = Scalar(0, 140, 170);
+	upper_red1 = Scalar(10, 255, 255);
+	lower_red2 = Scalar(170, 140, 170);
 	upper_red2 = Scalar(180, 255, 255);
 	num_circles = 0;
 	CENTER = Point(0, 0);
 	CENTER_Radius = 0;
-	RADIUS = 0;
 	for (int i = 0; i < 5; i++) {
 		angle_flag[i] = 1;
 		speed_flag[i] = 1;
@@ -847,7 +845,7 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 		*speedVal = speed;
 	}
 	else { // 검출된 객체가 없을 경우
-		if ((CENTER == Point(0, 0)) && (RADIUS == 0)) { // 지금까지 객체가 한번도 검출되지 않았을 경우
+		if ((CENTER == Point(0, 0)) && (CENTER_Radius == 0)) { // 지금까지 객체가 한번도 검출되지 않았을 경우
 			angle = 00;
 			speed = 00;
 		}

@@ -296,7 +296,7 @@ void settingStatic(int w, int h)
 		angle_flag[i] = 1;
 		speed_flag[i] = 1;
 	}
-	angle = 1500;
+	angle = 00;
 	speed = 00;
 	////////////////////////////////////////
 
@@ -751,7 +751,7 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 		// frame 2번 이상 잡혀야지만 각이 수정된다
 		if (abs(frame.cols / 2 - CENTER.x) < frame.cols * 1 / 8) {
 			if (angle_flag[0] == 2) {
-				angle = 1500;
+				angle = 0;
 				angle_flag[0] = 0;
 			}
 			angle_flag[0]++;
@@ -759,10 +759,10 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 		else if ((abs(frame.cols / 2 - CENTER.x) >= frame.cols * 1 / 8) && (abs(frame.cols / 2 - CENTER.x) < frame.cols * 2 / 8)) {
 			if (angle_flag[1] == 2) {
 				if (CENTER.x > frame.cols / 2) {
-					angle = 1650;
+					angle = -150;
 				}
 				else {
-					angle = 1350;
+					angle = 150;
 				}
 				angle_flag[1] = 0;
 			}
@@ -771,10 +771,10 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 		else if ((abs(frame.cols / 2 - CENTER.x) >= frame.cols * 2 / 8) && (abs(frame.cols / 2 - CENTER.x) < frame.cols * 3 / 8)) {
 			if (angle_flag[2] == 2) {
 				if (CENTER.x > frame.cols / 2) {
-					angle = 1800;
+					angle = -300;
 				}
 				else {
-					angle = 1200;
+					angle = 300;
 				}
 				angle_flag[2] = 0;
 			}
@@ -783,10 +783,10 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 		else {
 			if (angle_flag[3] == 2) {
 				if (CENTER.x > frame.cols / 2) {
-					angle = 2000;
+					angle = -500;
 				}
 				else {
-					angle = 1000;
+					angle = 500;
 				}
 				angle_flag[3] = 0;
 			}
@@ -797,7 +797,7 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 		// frame 2번 이상 잡혀야지만 각이 수정된다 
 		if (abs(frame.rows / 2 - CENTER.y) < frame.rows * 1 / 8) {
 			if (speed_flag[0] == 2) {
-				speed = 200;
+				speed = 00;
 				speed_flag[0] = 0;
 			}
 			speed_flag[0]++;
@@ -805,10 +805,10 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 		else if ((abs(frame.rows / 2 - CENTER.y) >= frame.rows * 1 / 8) && (abs(frame.rows / 2 - CENTER.y) < frame.rows * 2 / 8)) {
 			if (speed_flag[1] == 2) {
 				if (CENTER.y < frame.rows / 2) {
-					speed = 250;
+					speed = 10;
 				}
 				else {
-					speed = 150;
+					speed = -10;
 				}
 				speed_flag[1] = 0;
 			}
@@ -817,10 +817,10 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 		else if ((abs(frame.rows / 2 - CENTER.y) >= frame.rows * 2 / 8) && (abs(frame.rows / 2 - CENTER.y) < frame.rows * 3 / 8)) {
 			if (speed_flag[2] == 2) {
 				if (CENTER.y < frame.rows / 2) {
-					speed = 300;
+					speed = 20;
 				}
 				else {
-					speed = 100;
+					speed = -20;
 				}
 				speed_flag[2] = 0;
 			}
@@ -829,30 +829,30 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 		else {
 			if (speed_flag[3] == 2) {
 				if (CENTER.y < frame.rows / 2) {
-					speed = 350;
+					speed = 30;
 				}
 				else {
-					speed = 50;
+					speed = -30;
 				}
 				speed_flag[3] = 0;
 			}
 			speed_flag[3]++;
 		}
-		*steerVal = angle;
-		*speedVal = speed;
+		*steerVal = angle + 1500;
+		*speedVal = speed + 50;
 	}
 	else { // 검출된 객체가 없을 경우
 		if ((CENTER == Point(0, 0)) && (RADIUS == 0)) { // 지금까지 객체가 한번도 검출되지 않았을 경우
-			angle = 1500;
+			angle = 00;
 			speed = 00;
 		}
 		else { // 이전에 검출된 객체의 값을 따라감
-			*steerVal = angle;
-			*speedVal = speed;
+			*steerVal = angle + 1500;
+			*speedVal = speed + 50;
 		}
 	}
 
-	cout << CENTER << " angle : " << (angle - 1500) << " speed : " << speed << endl;
+	cout << CENTER << " angle : " << (angle) << " speed : " << speed + 50 << endl;
 	//if (showCircles)
 	//	imshow("circles", frame);
 }

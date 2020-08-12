@@ -777,7 +777,7 @@ int main(int argc, char** argv)
 	printf("-- 7_all_test Start --\n");
 
 	CarControlInit();
-	CameraYServoControl_Write(1660);
+	CameraYServoControl_Write(1500);
 	CameraXServoControl_Write(1500);
 	PositionControlOnOff_Write(UNCONTROL); // position controller must be OFF !!!
 	SpeedControlOnOff_Write(CONTROL);   // speed controller must be also ON !!!

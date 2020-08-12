@@ -801,35 +801,35 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 
 		// 원 중심의 y좌표 위치에 따른 속도 설정 - default 200 (0~500)
 		// frame 2번 이상 잡혀야지만 각이 수정된다 
-		// 640 x 320 
+		// 640 x 360 
 		// 최소 반지름 10
 		// 최대 반지름 120
 		// 10~30, 30~50, 
 
-		if (CENTER_Radius > 120) {
+		if (CENTER_Radius > 70) {
 			if (speed_flag[0] == 2) {
 				speed = 0;
 				speed_flag[0] = 0;
 			}
 			speed_flag[0]++;
 		}
-		else if (CENTER_Radius >= 80) {
+		else if (CENTER_Radius >= 50) {
 			if (speed_flag[1] == 2) {
 				speed = 15;
 				speed_flag[1] = 0;
 			}
 			speed_flag[1]++;
 		}
-		else if (CENTER_Radius >= 55) {
+		else if (CENTER_Radius >= 35) {
 			if (speed_flag[2] == 2) {
-				speed = 25;
+				speed = 27;
 				speed_flag[2] = 0;
 			}
 			speed_flag[2]++;
 		}
-		else if (CENTER_Radius >= 30) {
+		else if (CENTER_Radius >= 20) {
 			if (speed_flag[3] == 2) {
-				speed = 38;
+				speed = 40;
 				speed_flag[3] = 0;
 			}
 			speed_flag[3]++;
@@ -855,7 +855,10 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 		}
 	}
 
-	cout << CENTER << " angle : " << (angle) << " speed : " << speed << endl;
+	putText(frame, "r = " + toString(CENTER_Radius), Point(100, 100), 0, 0.8, Scalar(255,255,255), 3);
+	putText(frame, "angle = " + toString(angle), Point(100, 130), 0, 0.8, Scalar(255, 255, 255), 3);
+	putText(frame, "speed = " + toString(speed), Point(100, 160), 0, 0.8, Scalar(255, 255, 255), 3);
+
 	//if (showCircles)
 	//	imshow("circles", frame);
 }

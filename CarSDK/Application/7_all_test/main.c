@@ -59,6 +59,8 @@ typedef struct _DumpMsg {
 
 struct ControlData {
 	bool stopFlag;
+	bool verticalFlag; // 수직 주차 활성화를 나타내는 플래그
+	bool horizontalFlag; // 수평 주차 활성화를 나타내는 플래그
 	bool steerWrite;
 	bool speedWrite;
 	int steerVal;
@@ -256,6 +258,10 @@ void* image_process_thread(void* arg)
 	bool isFirst = true;
 	int index;
 	int i;
+	int channel_0, channel_1, channel_2, channel_3, channel_4, channel_5;
+	// 거리 센서에서 거리를 받아오는 변수
+	bool frontRight = false, rearRight = false;
+	// 우측 거리 센서의 주차 조건을 판단할 때 사용되는 변수
 	float map1[VPE_OUTPUT_W * VPE_OUTPUT_H] = { 0, };
 	float map2[VPE_OUTPUT_W * VPE_OUTPUT_H] = { 0, };
 	memset(map1, 0, VPE_OUTPUT_W * VPE_OUTPUT_H);
@@ -299,6 +305,27 @@ void* image_process_thread(void* arg)
 		********************************************************/
 
 		img_process(vpe->disp, capt, data, map1, map2);
+
+		// 추후 미션 쓰레드에 추가 할 부분.
+		channel_0 = DistanceSensor_cm(0);
+		channel_1 = DistanceSensor_cm(1);
+		channel_2 = DistanceSensor_cm(2);
+		channel_3 = DistanceSensor_cm(3);
+		channel_4 = DistanceSensor_cm(4);
+		channel_5 = DistanceSensor_cm(5);
+		// 각 채널 변수에 거리 정보를 받아온다.
+
+		if (channel_1 <= 15) frontRight = true;
+		// 처음 벽이 감지되었을 경우
+		if ((channel_1 >= 20) && frontRight) rearRight = true;
+		// 주차 공간이 감지되었을 경우
+		if ((channel_1 <= 15) && frontRight && rearRight) {
+			data->controlData.horizontalFlag = true;
+			frontRight = false;
+			rearRight = false;
+		}
+		// 주차 공간을 지나 벽이 감지되었을 경우 주차 분기로 판단하고 주차 플래그를 활성화시킨다.
+		// 수직과 수평 주차를 구분하는 부분 추가 예정
 
 		/*******************************************************
 		* 영상처리 종료
@@ -578,6 +605,12 @@ void* control_thread(void* arg)
 			DesireSpeed_Write(writeVal);
 
 			usleep(70000); //70ms
+		}
+
+		if (data->controlData.horizontalFlag == 1) {
+			// 주차 분기가 활성화 되었을 때 실행 할 부분
+			// switch case 문 이용하여 차량을 절차적으로 제어한다.
+
 		}
 	}
 

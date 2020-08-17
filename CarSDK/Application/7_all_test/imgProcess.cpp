@@ -172,8 +172,8 @@ extern "C" {
 				Point2f(0 * (w / 640.0), 360 * (h / 360.0)) };
 
 			Point2f p[4] = {	//변환후 좌표
-				Point2f(0 * (w / 640.0), 50 * (h / 360.0)),
-				Point2f(640 * (w / 640.0), 50 * (h / 360.0)),
+				Point2f(30 * (w / 640.0), 100 * (h / 360.0)),
+				Point2f(610 * (w / 640.0), 100 * (h / 360.0)),
 				Point2f(640 * (w / 640.0), 360 * (h / 360.0)),
 				Point2f(0 * (w / 640.0), 360 * (h / 360.0)) };
 			Hmatrix = getPerspectiveTransform(Hp, p);
@@ -250,8 +250,8 @@ void settingStatic(int w, int h)
 		centerGuide[i][3] *= (h / 360.0);
 	}
 
-	leftGuide = Vec4i(0, 118, 320, -330) * (w / 640.0);
-	rightGuide = Vec4i(320, -420, 640, 155) * (w / 640.0);
+	leftGuide = Vec4i(0, 180, 150, 0) * (w / 640.0);
+	rightGuide = Vec4i(490, 0, 640, 180) * (w / 640.0);
 
 	cout << "settingStatic" << endl;
 }

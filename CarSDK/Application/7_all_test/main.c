@@ -61,6 +61,7 @@ struct ControlData {
 	bool stopFlag;
 	bool verticalFlag; // 수직 주차 활성화를 나타내는 플래그
 	bool horizontalFlag; // 수평 주차 활성화를 나타내는 플래그
+	bool on_parkingFlag; // 주차 진행 중을 나타내는 플래그
 	bool steerWrite;
 	bool speedWrite;
 	int steerVal;
@@ -85,6 +86,8 @@ struct thr_data {
 	bool bcalibration;
 	bool btopview;
 	bool bauto;
+	bool bparking;
+	// 주차 중 거리 정보 출력을 위한 변수
 	int topMode;
 	bool bfull_screen;
 	bool bstream_start;
@@ -262,6 +265,8 @@ void* image_process_thread(void* arg)
 	// 거리 센서에서 거리를 받아오는 변수
 	bool frontRight = false, rearRight = false;
 	// 우측 거리 센서의 주차 조건을 판단할 때 사용되는 변수
+	int parking_width = 0;
+	// 수직 및 수평 주차를 구분하기 위해 주차 공간의 폭을 측정할 때 사용되는 변수
 	float map1[VPE_OUTPUT_W * VPE_OUTPUT_H] = { 0, };
 	float map2[VPE_OUTPUT_W * VPE_OUTPUT_H] = { 0, };
 	memset(map1, 0, VPE_OUTPUT_W * VPE_OUTPUT_H);
@@ -307,25 +312,45 @@ void* image_process_thread(void* arg)
 		img_process(vpe->disp, capt, data, map1, map2);
 
 		// 추후 미션 쓰레드에 추가 할 부분.
-		channel_0 = DistanceSensor_cm(0);
-		channel_1 = DistanceSensor_cm(1);
-		channel_2 = DistanceSensor_cm(2);
-		channel_3 = DistanceSensor_cm(3);
-		channel_4 = DistanceSensor_cm(4);
-		channel_5 = DistanceSensor_cm(5);
+		channel_0 = DistanceSensor_cm(1);
+		channel_1 = DistanceSensor_cm(2);
+		channel_2 = DistanceSensor_cm(3);
+		channel_3 = DistanceSensor_cm(4);
+		channel_4 = DistanceSensor_cm(5);
+		channel_5 = DistanceSensor_cm(6);
 		// 각 채널 변수에 거리 정보를 받아온다.
 
-		if (channel_1 <= 15) frontRight = true;
-		// 처음 벽이 감지되었을 경우
-		if ((channel_1 >= 20) && frontRight) rearRight = true;
-		// 주차 공간이 감지되었을 경우
-		if ((channel_1 <= 15) && frontRight && rearRight) {
-			data->controlData.horizontalFlag = true;
-			frontRight = false;
-			rearRight = false;
+		if (!data->controlData.on_parkingFlag) {
+			if (channel_1 <= 10) frontRight = true;
+			// 처음 벽이 감지되었을 경우
+			if ((channel_1 >= 20) && frontRight) {
+				rearRight = true;
+				/*
+				주차 폭에 대한 거리를 측정하기 위해 거리 측정 시작
+				*/
+			}
+			// 주차 공간이 감지되었을 경우
+			if ((channel_2 <= 10) && frontRight && rearRight) {
+				/*
+				거리 측정 종료 -> 측정 거리를 변수에 담는다.
+				*/
+				if (parking_width <= 45 && parking_width >= 25) {
+					data->controlData.verticalFlag = true;
+					frontRight = false;
+					rearRight = false;
+					data->controlData.on_parkingFlag = true;
+					// 주차 플래그가 on이 되면, 주차 진행을 나타내는 플래그를 on 시킨다.
+				}
+				if (parknig_width <= 65 && parking_width >= 45) {
+					data->controlData.horizontalFlag = true;
+					frontRight = false;
+					rearRight = false;
+					data->controlData.on_parkingFlag = true;
+					// 주차 플래그가 on이 되면, 주차 진행을 나타내는 플래그를 on 시킨다.
+				}
+			}
 		}
-		// 주차 공간을 지나 벽이 감지되었을 경우 주차 분기로 판단하고 주차 플래그를 활성화시킨다.
-		// 수직과 수평 주차를 구분하는 부분 추가 예정
+		// 주차 공간을 지나 우측 후방 거리 센서에 벽이 감지되었을 경우 주차 분기로 판단하고 주차 플래그를 활성화시킨다.
 
 		/*******************************************************
 		* 영상처리 종료
@@ -452,6 +477,26 @@ void* input_thread(void* arg)
 				data->bcalibration = !data->bcalibration;
 				if (data->bcalibration) printf("\t calibration ON\n");
 				else printf("\t calibration OFF\n");
+			}
+			else if (0 == strncmp(cmd_input, "parking", 7))
+			{
+				int c1, c2, c3, c4, c5, c6;
+				data->bparking = !data->bparking;
+				if (data->bparking) {
+					printf("\t parking ON\n");
+					for (j = 0; j < 50000; j++)
+					{
+						c1 = DistanceSensor_cm(1);
+						c2 = DistanceSensor_cm(2);
+						c3 = DistanceSensor_cm(3);
+						c4 = DistanceSensor_cm(4);
+						c5 = DistanceSensor_cm(5);
+						c6 = DistanceSensor_cm(6);
+						printf("1 : %-2d, 2 : %-2d, 3 : %-2d, 4: %-2d, 5 : %-2d, 6 : %-2d \n", c1, c2, c3, c4, c5, c6);
+						usleep(500000); // 0.5초 마다 출력
+					}
+				}
+				else printf("\t parking OFF\n");
 			}
 			else if (0 == strncmp(cmd_input, "auto", 4))
 			{

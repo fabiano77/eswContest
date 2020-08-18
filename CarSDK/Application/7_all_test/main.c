@@ -57,6 +57,7 @@ struct MissionData {
 	bool on_parkingFlag; // 주차 진행 중을 나타내는 플래그
 	bool bround; // 회전교차로 플래그
 	bool bparking;	// 주차 중 거리 정보 출력을 위한 변수
+	bool overtakingFlag;// 추월차로 플래그 ->MS 이후 overtaking struct 추가할 것
 	struct Parking sparking; // 주차에 필요한 플래그를 담는 구조체
 
 
@@ -200,7 +201,11 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				t_data->controlData.steerWrite = 1;
 			}
 		}
-
+		/*MS 추월차로시에 사용*/
+		if (t_data->imgData.bcalibration && t_data->missionData.overtakingFlag)//camera 올라간 flag도 필요함
+		{
+			//srcbuf를 활용하여 capture한 영상을 변환
+		}
 
 		/*******************************************************
 		*			 영상처리 종료
@@ -540,6 +545,12 @@ void* mission_thread(void* arg)
 			data->missionData.bround = 1;
 			data->missionData.on_processing = 1;
 		}
+		/*MS 분기진입 명령 지시*/
+		if (!data->missionData.on_parkingFlag && !data->missionData.overtakingFlag) //주차 상황이 아닐때, 분기진입 가능
+		{
+			if (c1 <= 30) { data->missionData.overtakingFlag = true; }
+		}
+		//30넘을 때 control thread 변환을 주어야함 MS
 		usleep(500000);
 		gettimeofday(&et, NULL);
 		data->missionData.loopTime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);

@@ -512,7 +512,7 @@ void* mission_thread(void* arg)
 	enum MissionState roundabout = READY;
 	enum MissionState tunnel = NONE;
 	enum MissionState overtake = READY;
-	enum MissionState signalLight = READY;
+	enum MissionState signalLight = NONE;
 	enum MissionState finish = NONE;
 
 	//각 미션이 수행되고나면 detect를 하지 않도록 변수설정.
@@ -616,6 +616,7 @@ void* mission_thread(void* arg)
 				data->missionData.bround = true;
 				printf("roundabout\n");
 				roundabout = DONE;
+				signalLight = READY;
 			}
 		}
 

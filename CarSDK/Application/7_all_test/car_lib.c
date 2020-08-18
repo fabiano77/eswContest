@@ -679,21 +679,21 @@ int StopLine(int Lineflag) {
 	char sensor;
 	char byte = 0x80;
 	sensor = LineSensor_Read();        // black:1, white:0
-	printf("LineSensor_Read() = ");
+//	printf("LineSensor_Read() = ");
 	int flag = 0;
 	int i;
 	for (i = 0; i < 8; i++)
 	{
 		if ((i % 4) == 0) printf(" ");
 		if ((sensor & byte)) {
-			printf("1");
+//			printf("1");
 			flag++;
 		}//byte == 0x80 == 0111 0000 (2)
-		else printf("0");
+//		else printf("0");
 		sensor = sensor << 1;
 	}
-	printf("\n");
-	printf("LineSensor_Read() = %d \n", sensor);
+//	printf("\n");
+//	printf("LineSensor_Read() = %d \n", sensor);
 	if (flag > Lineflag) {
 		return 1;
 	}

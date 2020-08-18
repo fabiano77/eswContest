@@ -641,6 +641,7 @@ void* mission_thread(void* arg)
 			data->missionData.bround = 1;
 			data->missionData.on_processing = 1;
 		}
+		usleep(500000);
 	}
 }
 

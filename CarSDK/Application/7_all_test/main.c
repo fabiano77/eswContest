@@ -15,7 +15,9 @@
 #include "drawing.h"
 #include "exam_cv.h"
 #include "car_lib.h"
+
 #include "imgProcess.h"
+#include "control_mission.h"
 
 #define CAPTURE_IMG_W       1280
 #define CAPTURE_IMG_H       720
@@ -160,8 +162,8 @@ static void draw_operatingtime(struct display* disp, uint32_t time, uint32_t cti
 		tmpFrame.format = draw_get_pixel_foramt(disp->overlay_p_bo->fourcc);//FORMAT_RGB888; //alloc_overlay_plane() -- FOURCC('R','G','2','4');
 		tmpFrame.stride = disp->overlay_p_bo->pitches[0];//tmpFrame.width*3;
 
-		drawString(&tmpFrame, strctime, TIME_TEXT_X, TIME_TEXT_Y-40, 0, TIME_TEXT_COLOR);
-		drawString(&tmpFrame, strmtime, TIME_TEXT_X, TIME_TEXT_Y-20, 0, TIME_TEXT_COLOR);
+		drawString(&tmpFrame, strctime, TIME_TEXT_X, TIME_TEXT_Y - 40, 0, TIME_TEXT_COLOR);
+		drawString(&tmpFrame, strmtime, TIME_TEXT_X, TIME_TEXT_Y - 20, 0, TIME_TEXT_COLOR);
 		drawString(&tmpFrame, strtime, TIME_TEXT_X, TIME_TEXT_Y, 0, TIME_TEXT_COLOR);
 		drawString(&tmpFrame, strfps, FPS_TEXT_X, FPS_TEXT_Y, 0, FPS_TEXT_COLOR);
 
@@ -316,19 +318,19 @@ void* input_thread(void* arg)
 	printf("	space bar = Alarm									\n");
 	printf("----------------------------------------------------	\n");
 	MSG("\n\nInput command:");
-	MSG("\t dist  : distance sensor check");
-	MSG("\t distc : distance sensor check by -cm-");
-	MSG("\t distloop : distance sensor check constantly");
 	MSG("\t calib : calibration ON/OFF");
 	MSG("\t top   : top view ON/OFF");
 	MSG("\t auto  : auto steering ON/OFF");
+	MSG("\t dist  : distance sensor check");
+	MSG("\t distc : distance sensor check by -cm-");
+	MSG("\t distl : distance sensor check constantly");
 	MSG("\n");
 
 	while (1)
 	{
-		printf("input : ");
 		if (cmd_ready == true)
 		{
+			printf("\tinput : ");
 			/*standby to input command */
 			cmd_ready = StandbyInput(cmd_input);     //define in cmd.cpp
 		}
@@ -348,8 +350,8 @@ void* input_thread(void* arg)
 			{
 				int j;
 				int c1, c2, c3, c4, c5, c6;
-				data->bparking = !data->bparking;
-				if (data->bparking) {
+				data->missionData.bparking = !data->missionData.bparking;
+				if (data->missionData.bparking) {
 					printf("\t parking ON\n");
 					for (j = 0; j < 50000; j++)
 					{
@@ -393,7 +395,7 @@ void* input_thread(void* arg)
 					}
 				}
 			}
-			else if (0 == strncmp(cmd_input, "distloop", 8))
+			else if (0 == strncmp(cmd_input, "distl", 5))
 			{
 				int d_data;
 				int channel;
@@ -476,38 +478,39 @@ void* mission_thread(void* arg)
 	struct thr_data* data = (struct thr_data*)arg;
 	struct timeval st, et;
 
-	int c1, c2, c3, c4, c5, c6;
-	// 거리 센서의 정보를 받아 올 6개의 변수
-	//bool frontRight = 0, rearRight = 0;
-	// 우측 거리 센서의 주차 조건을 판단할 때 사용되는 변수
-	int parking_width = 0;
-	// 수직 및 수평 주차를 구분하기 위해 주차 공간의 폭을 측정할 때 사용되는 변수
-	bool stopLine;
-	// 정지선의 감지를 나타내는 변수, true = 감지
-	while (1) {
-		gettimeofday(&st, NULL);
-		c1 = DistanceSensor_cm(1);
-		c2 = DistanceSensor_cm(2);
-		c3 = DistanceSensor_cm(3);
-		c4 = DistanceSensor_cm(4);
-		c5 = DistanceSensor_cm(5);
-		c6 = DistanceSensor_cm(6);
-		stopLine = StopLine(4);
+	int d1, d2, d3, d4, d5, d6;		// 거리 센서의 정보를 받아 올 6개의 변수
+	int parking_width = 0;			// 수직 및 수평 주차를 구분하기 위해 주차 공간의 폭을 측정할 때 사용되는 변수
+	bool stopLine;					// 정지선의 감지를 나타내는 변수, true = 감지
 
-		if (data->missionData.on_processing == 1) {
+	while (1)
+	{
+		gettimeofday(&st, NULL);
+
+		d1 = DistanceSensor_cm(1);
+		d2 = DistanceSensor_cm(2);
+		d3 = DistanceSensor_cm(3);
+		d4 = DistanceSensor_cm(4);
+		d5 = DistanceSensor_cm(5);
+		d6 = DistanceSensor_cm(6);
+		stopLine = StopLine(4);
+		//거리 센서, 라인 센서값 수집
+
+		if (data->missionData.on_processing) 
+		{
 			continue;
 		}
-		if (!data->missionData.on_parkingFlag) {
-			if (c2 <= 10) data->missionData.sparking.frontRight = 1;
+		if (!data->missionData.on_parkingFlag) 
+		{
+			if (d2 <= 10) data->missionData.sparking.frontRight = 1;
 			// 처음 벽이 감지되었을 경우
-			if ((c2 >= 20) && data->missionData.sparking.frontRight) {
+			if ((d2 >= 20) && data->missionData.sparking.frontRight) {
 				data->missionData.sparking.rearRight = 1;
 				/*
 				주차 폭에 대한 거리를 측정하기 위해 거리 측정 시작
 				*/
 			}
 			// 주차 공간이 감지되었을 경우
-			if ((c3 <= 10) && data->missionData.sparking.frontRight && data->missionData.sparking.rearRight) {
+			if ((d3 <= 10) && data->missionData.sparking.frontRight && data->missionData.sparking.rearRight) {
 				/*
 				거리 측정 종료 -> 측정 거리를 변수에 담는다.
 				*/
@@ -541,6 +544,7 @@ void* mission_thread(void* arg)
 			data->missionData.on_processing = 1;
 		}
 		usleep(500000);
+
 		gettimeofday(&et, NULL);
 		data->missionData.loopTime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
 	}
@@ -687,9 +691,7 @@ void manualControl(struct ControlData* cdata, char key)
 		printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read());    //default = 1500, 0x5dc
 		break;
 
-	case 's':	//stop
-		// DesireSpeed_Write(0);
-		// printf("DC motor stop\n");
+	case 's':	
 		cdata->stopFlag = 1;
 		break;
 
@@ -697,19 +699,12 @@ void manualControl(struct ControlData* cdata, char key)
 		cdata->stopFlag = 0;
 		cdata->speedWrite = 1;
 		cdata->desireSpeedVal = cdata->settingSpeedVal;
-		// DesireSpeed_Write(cdata->desireSpeedVal);
-		// usleep(100000);	//1 000 000 us
-		// printf("cdata->desireSpeedVal = %d\n", cdata->desireSpeedVal);
-		// printf("DesireSpeed_Read() = %d\n", DesireSpeed_Read());
 		break;
 
 	case 'x':	//go backward	speed 음수 인가하면 후진.
 		cdata->stopFlag = 0;
 		cdata->speedWrite = 1;
 		cdata->desireSpeedVal = -cdata->settingSpeedVal;
-		// DesireSpeed_Write(0 - cdata->desireSpeedVal);
-		// usleep(100000);	//1 000 000 us
-		// printf("DesireSpeed_Read() = %d\n", DesireSpeed_Read());
 		break;
 
 		// case 'j':	//cam left
@@ -818,10 +813,10 @@ int main(int argc, char** argv)
 	PositionControlOnOff_Write(UNCONTROL); // position controller must be OFF !!!
 	SpeedControlOnOff_Write(CONTROL);   // speed controller must be also ON !!!
 
-	tdata.bcalibration = false;
-	tdata.btopview = true;
-	tdata.bauto = true;
-	tdata.topMode = 2;
+	tdata.imgData.bcalibration = false;
+	tdata.imgData.btopview = true;
+	tdata.imgData.topMode = 2;
+	tdata.imgData.bauto = true;
 
 	tdata.controlData.settingSpeedVal = 30;
 	tdata.controlData.desireSpeedVal = 0;
@@ -834,14 +829,15 @@ int main(int argc, char** argv)
 	tdata.controlData.steerWrite = false;
 	tdata.controlData.speedWrite = false;
 
+	tdata.missionData.bparking = false;
 	tdata.missionData.bround = false;
 	tdata.missionData.btunnel = false;
 	tdata.missionData.horizontalFlag = false;
 	tdata.missionData.verticalFlag = false;
-	tdata.missionData.on_processing = false;
 	tdata.missionData.on_parkingFlag = false;
-	tdata.missionData.sparking.frontRight = 0;
-	tdata.missionData.sparking.rearRight = 0;
+	tdata.missionData.on_processing = false;
+	tdata.missionData.sparking.frontRight = false;
+	tdata.missionData.sparking.rearRight = false;
 
 
 	// open vpe

@@ -261,7 +261,7 @@ void* image_process_thread(void* arg)
 	bool isFirst = true;
 	int index;
 	int i;
-	int channel_0, channel_1, channel_2, channel_3, channel_4, channel_5;
+	int channel_1, channel_2, channel_3, channel_4, channel_5, channel_6;
 	// 거리 센서에서 거리를 받아오는 변수
 	bool frontRight = false, rearRight = false;
 	// 우측 거리 센서의 주차 조건을 판단할 때 사용되는 변수
@@ -312,12 +312,12 @@ void* image_process_thread(void* arg)
 		img_process(vpe->disp, capt, data, map1, map2);
 
 		// 추후 미션 쓰레드에 추가 할 부분.
-		channel_0 = DistanceSensor_cm(1);
-		channel_1 = DistanceSensor_cm(2);
-		channel_2 = DistanceSensor_cm(3);
-		channel_3 = DistanceSensor_cm(4);
-		channel_4 = DistanceSensor_cm(5);
-		channel_5 = DistanceSensor_cm(6);
+		channel_1 = DistanceSensor_cm(1);
+		channel_2 = DistanceSensor_cm(2);
+		channel_3 = DistanceSensor_cm(3);
+		channel_4 = DistanceSensor_cm(4);
+		channel_5 = DistanceSensor_cm(5);
+		channel_6 = DistanceSensor_cm(6);
 		// 각 채널 변수에 거리 정보를 받아온다.
 
 		if (!data->controlData.on_parkingFlag) {
@@ -341,7 +341,7 @@ void* image_process_thread(void* arg)
 					data->controlData.on_parkingFlag = true;
 					// 주차 플래그가 on이 되면, 주차 진행을 나타내는 플래그를 on 시킨다.
 				}
-				if (parknig_width <= 65 && parking_width >= 45) {
+				if (parking_width <= 65 && parking_width >= 45) {
 					data->controlData.horizontalFlag = true;
 					frontRight = false;
 					rearRight = false;
@@ -480,6 +480,7 @@ void* input_thread(void* arg)
 			}
 			else if (0 == strncmp(cmd_input, "parking", 7))
 			{
+				int j;
 				int c1, c2, c3, c4, c5, c6;
 				data->bparking = !data->bparking;
 				if (data->bparking) {

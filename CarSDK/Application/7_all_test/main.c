@@ -226,7 +226,11 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				t_data->controlData.steerWrite = 1;
 			}
 		}
-
+		/*MS 추월차로시에 사용*/
+		if (t_data->imgData.bcalibration && t_data->missionData.overtakingFlag)//camera 올라간 flag도 필요함
+		{
+			//srcbuf를 활용하여 capture한 영상을 변환
+		}
 
 		/*******************************************************
 		*			 영상처리 종료
@@ -670,8 +674,7 @@ void* mission_thread(void* arg)
 				cout << "finish" << endl;
 			}
 		}
-
-		//usleep(500000);
+		usleep(500000);
 		gettimeofday(&et, NULL);
 		data->missionData.loopTime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
 		//시간측정

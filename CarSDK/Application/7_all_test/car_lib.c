@@ -675,11 +675,13 @@ int sensor_dist(int channel, int input) {
 	return position;
 }
 
-bool StopLine(int Lineflag) {
+int StopLine(int Lineflag) {
 	char sensor;
+	char byte = 0x80;
 	sensor = LineSensor_Read();        // black:1, white:0
 	printf("LineSensor_Read() = ");
 	int flag = 0;
+	int i;
 	for (i = 0; i < 8; i++)
 	{
 		if ((i % 4) == 0) printf(" ");
@@ -693,7 +695,7 @@ bool StopLine(int Lineflag) {
 	printf("\n");
 	printf("LineSensor_Read() = %d \n", sensor);
 	if (flag > Lineflag) {
-		return true;
+		return 1;
 	}
-	return false;
+	return 0;
 }

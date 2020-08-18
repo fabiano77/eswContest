@@ -594,6 +594,9 @@ void* mission_thread(void* arg)
 		c6 = DistanceSensor_cm(6);
 		stopLine = StopLine(4);
 
+		if (data->missionData.on_processing == true) {
+			continue;
+		}
 		if (!data->missionData.on_parkingFlag) {
 			if (c1 <= 10) frontRight = true;
 			// 처음 벽이 감지되었을 경우
@@ -625,7 +628,14 @@ void* mission_thread(void* arg)
 			}
 		}
 		// 주차 공간을 지나 우측 후방 거리 센서에 벽이 감지되었을 경우 주차 분기로 판단하고 주차 플래그를 활성화시킨다.
-
+		else if (/*on_tunnel()*/0) {
+			data->missionData.btunnel = true;
+			data->missionData.on_processing = true;
+		}
+		else if (/*on_RoundAbout()*/0) {
+			data->missionData.bround = true;
+			data->missionData.on_processing = true;
+		}
 	}
 }
 

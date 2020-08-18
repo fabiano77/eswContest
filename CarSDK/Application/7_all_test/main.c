@@ -68,6 +68,11 @@ struct ControlData {
 	unsigned short lightFlag;
 };
 
+struct Parking {
+	bool frontRight;
+	bool rearRight;
+};
+
 struct MissionData {
 	bool on_processing; // 어떠한 미션이 진행 중임을 나타내는 플래그 -> 미션 쓰레드에서 다른 미션을 활성화 시키지 않도록 한다.
 
@@ -76,7 +81,7 @@ struct MissionData {
 	bool horizontalFlag; // 수평 주차 활성화를 나타내는 플래그
 	bool on_parkingFlag; // 주차 진행 중을 나타내는 플래그
 	bool bround; // 회전교차로 플래그
-
+	struct Parking* sparking; // 주차에 필요한 플래그를 담는 구조체
 
 
 };
@@ -580,7 +585,7 @@ void* mission_thread(void* arg)
 
 	int c1, c2, c3, c4, c5, c6;
 	// 거리 센서의 정보를 받아 올 6개의 변수
-	bool frontRight = 0, rearRight = 0;
+	//bool frontRight = 0, rearRight = 0;
 	// 우측 거리 센서의 주차 조건을 판단할 때 사용되는 변수
 	int parking_width = 0;
 	// 수직 및 수평 주차를 구분하기 위해 주차 공간의 폭을 측정할 때 사용되는 변수
@@ -599,16 +604,16 @@ void* mission_thread(void* arg)
 			continue;
 		}
 		if (!data->missionData.on_parkingFlag) {
-			if (c1 <= 10) frontRight = true;
+			if (c2 <= 10) data->missionData.sparking->frontRight = 1;
 			// 처음 벽이 감지되었을 경우
-			if ((c1 >= 20) && frontRight) {
-				rearRight = true;
+			if ((c2 >= 20) && data->missionData.sparking->frontRight) {
+				data->missionData.sparking->rearRight = 1;
 				/*
 				주차 폭에 대한 거리를 측정하기 위해 거리 측정 시작
 				*/
 			}
 			// 주차 공간이 감지되었을 경우
-			if ((c2 <= 10) && frontRight && rearRight) {
+			if ((c3 <= 10) && data->missionData.sparking->frontRight && data->missionData.sparking->rearRight) {
 				/*
 				거리 측정 종료 -> 측정 거리를 변수에 담는다.
 				*/
@@ -676,6 +681,8 @@ void* control_thread(void* arg)
 			}
 			data->missionData.on_parkingFlag = 0;
 			data->missionData.on_processing = 0;
+			data->missionData.sparking->frontRight = 0;
+			data->missionData.sparking->rearRight = 0;
 		}
 
 		if (data->controlData.steerWrite == 1)

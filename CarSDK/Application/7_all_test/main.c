@@ -43,10 +43,38 @@
 #define FPS_TEXT_Y             260 //240
 #define FPS_TEXT_COLOR         0xffffffff //while
 
+enum MissionState {
+	NONE,
+	READY,
+	REMAIN,
+	DONE = NONE;
+};
+
+enum ParkingState {
+	NONE,
+	FIRST_WALL,
+	DISTANCE_CHECK,
+	DECISION,
+	SECOND_WALL,
+	PARKING_START,
+	DONE = NONE
+};
+
+enum OvertakeState {
+	NONE,
+	FRONT_DETECT,
+	SIDE_ON,
+	SIDE_OFF,
+	DONE = NONE
+};
 
 struct Parking {
 	bool frontRight;
 	bool rearRight;
+	bool on_parkingFlag; // 주차 진행 중을 나타내는 플래그
+	bool bparking;	// 주차 중 거리 정보 출력을 위한 변수
+	bool verticalFlag; // 수직 주차 활성화를 나타내는 플래그
+	bool horizontalFlag; // 수평 주차 활성화를 나타내는 플래그
 };
 
 struct MissionData {
@@ -54,12 +82,8 @@ struct MissionData {
 	bool on_processing; // 어떠한 미션이 진행 중임을 나타내는 플래그 -> 미션 쓰레드에서 다른 미션을 활성화 시키지 않도록 한다.
 
 	bool btunnel; // 터널 플래그
-	bool verticalFlag; // 수직 주차 활성화를 나타내는 플래그
-	bool horizontalFlag; // 수평 주차 활성화를 나타내는 플래그
-	bool on_parkingFlag; // 주차 진행 중을 나타내는 플래그
 	bool bround; // 회전교차로 플래그
-	bool bparking;	// 주차 중 거리 정보 출력을 위한 변수
-	struct Parking sparking; // 주차에 필요한 플래그를 담는 구조체
+	struct Parking parkingData; // 주차에 필요한 플래그를 담는 구조체
 
 
 };
@@ -350,8 +374,8 @@ void* input_thread(void* arg)
 			{
 				int j;
 				int c1, c2, c3, c4, c5, c6;
-				data->missionData.bparking = !data->missionData.bparking;
-				if (data->missionData.bparking) {
+				data->missionData.parkingData.bparking = !data->missionData.parkingData.bparking;
+				if (data->missionData.parkingData.bparking) {
 					printf("\t parking ON\n");
 					for (j = 0; j < 50000; j++)
 					{
@@ -478,75 +502,179 @@ void* mission_thread(void* arg)
 	struct thr_data* data = (struct thr_data*)arg;
 	struct timeval st, et;
 
-	int d1, d2, d3, d4, d5, d6;		// 거리 센서의 정보를 받아 올 6개의 변수
-	int parking_width = 0;			// 수직 및 수평 주차를 구분하기 위해 주차 공간의 폭을 측정할 때 사용되는 변수
-	bool stopLine;					// 정지선의 감지를 나타내는 변수, true = 감지
+	enum MissionState start = NONE;
+	enum MissionState flyover = NONE;
+	enum MissionState parking = READY;
+	enum MissionState roundabout = READY;
+	enum MissionState tunnel = NONE;
+	enum MissionState overtake = READY;
+	enum MissionState signalLight = READY;
+	enum MissionState finish = NONE;
+
+	//각 미션이 수행되고나면 detect를 하지 않도록 변수설정.
 
 	while (1)
 	{
 		gettimeofday(&st, NULL);
 
-		d1 = DistanceSensor_cm(1);
-		d2 = DistanceSensor_cm(2);
-		d3 = DistanceSensor_cm(3);
-		d4 = DistanceSensor_cm(4);
-		d5 = DistanceSensor_cm(5);
-		d6 = DistanceSensor_cm(6);
-		stopLine = StopLine(4);
-		//거리 센서, 라인 센서값 수집
-
-		if (data->missionData.on_processing) 
+		if (start)
 		{
-			continue;
-		}
-		if (!data->missionData.on_parkingFlag) 
-		{
-			if (d2 <= 10) data->missionData.sparking.frontRight = 1;
-			// 처음 벽이 감지되었을 경우
-			if ((d2 >= 20) && data->missionData.sparking.frontRight) {
-				data->missionData.sparking.rearRight = 1;
-				/*
-				주차 폭에 대한 거리를 측정하기 위해 거리 측정 시작
-				*/
-			}
-			// 주차 공간이 감지되었을 경우
-			if ((d3 <= 10) && data->missionData.sparking.frontRight && data->missionData.sparking.rearRight) {
-				/*
-				거리 측정 종료 -> 측정 거리를 변수에 담는다.
-				*/
-				data->missionData.verticalFlag = 1;
-				data->missionData.on_parkingFlag = 1;
-				data->missionData.on_processing = 1;
-				// test용 추가
-				if (parking_width <= 45 && parking_width >= 25) {
-					data->missionData.verticalFlag = 1;
-					data->missionData.sparking.frontRight = 0;
-					data->missionData.sparking.rearRight = 0;
-					data->missionData.on_parkingFlag = 1;
-					// 주차 플래그가 on이 되면, 주차 진행을 나타내는 플래그를 on 시킨다.
-				}
-				if (parking_width <= 65 && parking_width >= 45) {
-					data->missionData.horizontalFlag = 1;
-					data->missionData.sparking.frontRight = 0;
-					data->missionData.sparking.rearRight = 0;
-					data->missionData.on_parkingFlag = 1;
-					// 주차 플래그가 on이 되면, 주차 진행을 나타내는 플래그를 on 시킨다.
-				}
+			if (0)
+			{
+				start = DONE;
 			}
 		}
-		// 주차 공간을 지나 우측 후방 거리 센서에 벽이 감지되었을 경우 주차 분기로 판단하고 주차 플래그를 활성화시킨다.
-		else if (/*on_tunnel()*/0) {
-			data->missionData.btunnel = 1;
-			data->missionData.on_processing = 1;
-		}
-		else if (/*on_RoundAbout()*/0) {
-			data->missionData.bround = 1;
-			data->missionData.on_processing = 1;
-		}
-		usleep(500000);
 
+		if (flyover)
+		{
+			if (0)
+			{
+				data->missionData.on_processing = true;
+
+				flyover = DONE;
+			}
+		}
+
+		if (parking)
+		{
+			if (DistanceSensor_cm(2) <= 10) //처음 벽이 감지되었을 경우
+			{
+				int parking_width;
+				enum ParkingState state = FIRST_WALL;
+				while (state)	// state == END가 아닌이상 루프 진행
+				{
+					data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 10) ? true : false;
+					data->missionData.parkingData.rearRight = (DistanceSensor_cm(3) <= 10) ? true : false;
+
+					switch (state)
+					{
+					case FIRST_WALL:
+						if (data->missionData.parkingData.frontRight == false)
+							state = DISTANCE_CHECK;
+						break;
+
+					case DISTANCE_CHECK:
+						/*
+						주차 폭에 대한 거리를 측정하기 위해 거리 측정 시작
+						*/
+						if (data->missionData.parkingData.frontRight == true)
+						{
+							state = SECOND_WALL;
+							/*
+							거리 측정 종료 -> 측정 거리를 변수에 담는다.
+							*/
+							parking_width = -1;
+
+							if (parking_width <= 45)
+								data->missionData.parkingData.verticalFlag = true;
+							else
+								data->missionData.parkingData.horizontalFlag = true;
+						}
+						break;
+
+					case SECOND_WALL:
+						if (data->missionData.parkingData.rearRight == true)
+							state = PARKING_START;
+						break;
+
+					case PARKING_START:
+						data->missionData.on_processing = true;
+						data->missionData.parkingData.on_parkingFlag = true;
+						state = END;
+
+						if (parking == READY) parking = REMAIN;
+						else if (parking == REMAIN) parking = DONE;
+
+						break;
+					}
+					usleep(50000);
+				}
+			}
+		}
+
+		if (tunnel)
+		{
+			if (/*on_tunnel()*/0) {
+				data->missionData.on_processing = true;
+				data->missionData.btunnel = true;
+				cout << "tunnel" << endl;
+				tunnel = DONE;
+			}
+		}
+
+		if (roundabout)
+		{
+			if (StopLine(4)) {
+				data->missionData.on_processing = true;
+				data->missionData.bround = true;
+				cout << "roundabout" << endl;
+				roundabout = DONE;
+			}
+		}
+
+		if (overtake)
+		{
+			if (DistanceSensor_cm(1) < 0) //전방 장애물 감지
+			{
+				data->missionData.on_processing = true;
+				enum OvertakeState state = FRONT_DETECT;
+				bool obstacle = false;
+				while (state)
+				{
+					switch (state)
+					{
+					case FRONT_DETECT:
+						/* 장애물 좌우 차선에 장애물이 있는지 판단하는 코드 */
+
+						/* 비어있는 차선으로 전진하는 코드*/
+
+						state = SIDE_ON;
+						break;
+
+					case SIDE_ON:
+						/* 현재 장애물이 어디있느냐에 따라 side 센서(2,3 or 4,5)로 감지하는 코드*/
+
+						/*
+							if(오른쪽)		obstacle = (DistanceSensor_cm(2) < 10) ? true : false;
+							else if (왼쪽)	obstacle = (DistanceSensor_cm(5) < 10) ? true : false;
+						*/
+
+						if (0/* obstacle == false */)
+						{
+							state = SIDE_OFF
+						}
+						break;
+
+					case SIDE_OFF:
+						/*원래 차선으로 복귀하는 코드*/
+
+						overtake = DONE;
+						break;
+					}
+				}
+			}
+		}
+
+		if (signalLight)
+		{
+			if (roundabout == DONE && StopLine(4))
+			{
+				cout << "signalLight" << endl;
+			}
+		}
+
+		if (finish)
+		{
+			if (0)
+			{
+				cout << "finish" << endl;
+			}
+		}
+
+		//usleep(500000);
 		gettimeofday(&et, NULL);
 		data->missionData.loopTime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
+		//시간측정
 	}
 }
 
@@ -579,61 +707,64 @@ void* control_thread(void* arg)
 
 		if (data->missionData.verticalFlag == 1) {
 			DesiredDistance(-30, 500);
-			data->missionData.on_parkingFlag = 0;
 			data->missionData.on_processing = 0;
-			data->missionData.sparking.frontRight = 0;
-			data->missionData.sparking.rearRight = 0;
-			data->missionData.verticalFlag = 0;
+			data->missionData.parkingData.on_parkingFlag = 0;
+			data->missionData.parkingData.frontRight = 0;
+			data->missionData.parkingData.rearRight = 0;
+			data->missionData.parkingData.verticalFlag = 0;
 		}
 
-		if (data->controlData.steerWrite == 1)
-		{
-			data->controlData.steerWrite = 0;
-			SteeringServoControl_Write(data->controlData.steerVal);
-			//usleep(100000); //100ms
-		}
-
-		if (data->controlData.stopFlag == 1)
-		{
-			if (!isStop) DesireSpeed_Write(0);
-			isStop = 1;
-			err_P = 0;
-			err_I = 0;
-			err_D = 0;
-			err_B = 0;
-			//usleep(100000); //100ms
-		}
-
-		if (data->controlData.speedWrite == 1)
-		{
-			isStop = 0;
-			goal = data->controlData.desireSpeedVal;
-			currentSpeed = DesireSpeed_Read();
-			usleep(10000); //10ms
-
-			if (abs(currentSpeed - goal) < 3)
-			{
-				data->controlData.speedWrite = 0;
-				continue;
-			}
-			if (currentSpeed < -500 || currentSpeed>500) continue;
-			err_P = currentSpeed - goal;
-			err_I += err_P;
-			err_D = err_B - err_P;
-			err_B = err_P;
-
-			writeVal = goal - (err_P * 0.11 + err_I * 0.08 + err_D * 0.15);
-			// printf("currentSpeed = %d, writeVal = %d\n", currentSpeed, writeVal);
-			// printf("errP = %4.1f, errI = %4.1f, errD = %4.1f\n\n",err_P, err_I, err_D);
-			DesireSpeed_Write(writeVal);
-
-			usleep(70000); //70ms
-		}
-
-		if (data->missionData.horizontalFlag == 1) {
+		if (data->missionData.horizontalFlag) {
 			// 주차 분기가 활성화 되었을 때 실행 할 부분
 			// switch case 문 이용하여 차량을 절차적으로 제어한다.
 
+		}
+
+		if (!data->missionData.on_processing)	//미션 수행중이 아닐 때 
+		{
+			if (data->controlData.steerWrite)
+			{
+				data->controlData.steerWrite = 0;
+				SteeringServoControl_Write(data->controlData.steerVal);
+				//usleep(100000); //100ms
+			}
+
+			if (data->controlData.stopFlag)
+			{
+				if (!isStop) DesireSpeed_Write(0);
+				isStop = 1;
+				err_P = 0;
+				err_I = 0;
+				err_D = 0;
+				err_B = 0;
+				//usleep(100000); //100ms
+			}
+
+			if (data->controlData.speedWrite)
+			{
+				isStop = 0;
+				goal = data->controlData.desireSpeedVal;
+				currentSpeed = DesireSpeed_Read();
+				usleep(10000); //10ms
+
+				if (abs(currentSpeed - goal) < 3)
+				{
+					data->controlData.speedWrite = 0;
+					continue;
+				}
+				if (currentSpeed < -500 || currentSpeed>500) continue;
+				err_P = currentSpeed - goal;
+				err_I += err_P;
+				err_D = err_B - err_P;
+				err_B = err_P;
+
+				writeVal = goal - (err_P * 0.11 + err_I * 0.08 + err_D * 0.15);
+				// printf("currentSpeed = %d, writeVal = %d\n", currentSpeed, writeVal);
+				// printf("errP = %4.1f, errI = %4.1f, errD = %4.1f\n\n",err_P, err_I, err_D);
+				DesireSpeed_Write(writeVal);
+
+				usleep(70000); //70ms
+			}
 		}
 
 		gettimeofday(&et, NULL);
@@ -691,7 +822,7 @@ void manualControl(struct ControlData* cdata, char key)
 		printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read());    //default = 1500, 0x5dc
 		break;
 
-	case 's':	
+	case 's':
 		cdata->stopFlag = 1;
 		break;
 

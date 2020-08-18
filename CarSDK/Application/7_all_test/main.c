@@ -22,7 +22,7 @@
 #define CAPTURE_IMG_SIZE    (CAPTURE_IMG_W*CAPTURE_IMG_H*2) // YUYU : 16bpp
 #define CAPTURE_IMG_FORMAT  "uyvy"
 
-//해상도를 바꾸려면 이부분만 변경하면 됨. 현재 calib지원 해상도는, 1280x720, 640x360, 320x180
+//해상도를 바꾸려면 이부분만 변경하면 됨
 #define VPE_OUTPUT_W        640
 #define VPE_OUTPUT_H        360
 
@@ -41,23 +41,29 @@
 #define FPS_TEXT_Y             260 //240
 #define FPS_TEXT_COLOR         0xffffffff //while
 
-#define DUMP_MSGQ_KEY           1020
-#define DUMP_MSGQ_MSG_TYPE      0x02
 
-typedef enum {
-	DUMP_NONE,
-	DUMP_CMD,
-	DUMP_READY,
-	DUMP_WRITE_TO_FILE,
-	DUMP_DONE
-}DumpState;
+struct Parking {
+	bool frontRight;
+	bool rearRight;
+};
 
-typedef struct _DumpMsg {
-	long type;
-	int  state_msg;
-}DumpMsg;
+struct MissionData {
+	uint32_t loopTime;	// mission 스레드 루프 시간
+	bool on_processing; // 어떠한 미션이 진행 중임을 나타내는 플래그 -> 미션 쓰레드에서 다른 미션을 활성화 시키지 않도록 한다.
+
+	bool btunnel; // 터널 플래그
+	bool verticalFlag; // 수직 주차 활성화를 나타내는 플래그
+	bool horizontalFlag; // 수평 주차 활성화를 나타내는 플래그
+	bool on_parkingFlag; // 주차 진행 중을 나타내는 플래그
+	bool bround; // 회전교차로 플래그
+	bool bparking;	// 주차 중 거리 정보 출력을 위한 변수
+	struct Parking sparking; // 주차에 필요한 플래그를 담는 구조체
+
+
+};
 
 struct ControlData {
+	uint32_t loopTime;	//control 스레드 루프 시간
 	bool stopFlag;
 	bool steerWrite;
 	bool speedWrite;
@@ -68,21 +74,11 @@ struct ControlData {
 	unsigned short lightFlag;
 };
 
-struct Parking {
-	bool frontRight;
-	bool rearRight;
-};
-
-struct MissionData {
-	bool on_processing; // 어떠한 미션이 진행 중임을 나타내는 플래그 -> 미션 쓰레드에서 다른 미션을 활성화 시키지 않도록 한다.
-	bool btunnel; // 터널 플래그
-	bool verticalFlag; // 수직 주차 활성화를 나타내는 플래그
-	bool horizontalFlag; // 수평 주차 활성화를 나타내는 플래그
-	bool on_parkingFlag; // 주차 진행 중을 나타내는 플래그
-	bool bround; // 회전교차로 플래그
-	struct Parking sparking; // 주차에 필요한 플래그를 담는 구조체
-
-
+struct ImgProcessData {
+	bool bcalibration;
+	bool btopview;
+	bool bauto;
+	int topMode;
 };
 
 struct thr_data {
@@ -92,18 +88,10 @@ struct thr_data {
 	struct buffer** input_bufs;
 	struct ControlData controlData;
 	struct MissionData missionData;
-	// struct SensorData sensorData;
-
-	DumpState dump_state;
-	unsigned char dump_img_data[VPE_OUTPUT_IMG_SIZE];
+	struct ImgProcessData imgData;
 
 	int msgq_id;
-	bool bcalibration;
-	bool btopview;
-	bool bauto;
-	bool bparking;
-	// 주차 중 거리 정보 출력을 위한 변수
-	int topMode;
+
 	bool bfull_screen;
 	bool bstream_start;
 	pthread_t threads[4];
@@ -147,17 +135,23 @@ static void free_input_buffers(struct buffer** buffer, uint32_t n, bool bmultipl
 	free(buffer);
 }
 
-static void draw_operatingtime(struct display* disp, uint32_t time)
+static void draw_operatingtime(struct display* disp, uint32_t time, uint32_t ctime, uint32_t mtime)
 {
 	FrameBuffer tmpFrame;
 	unsigned char* pbuf[4];
 	char strtime[128];
+	char strctime[128];
+	char strmtime[128];
 	char strfps[128];
 
 	memset(strtime, 0, sizeof(strtime));
-	memset(strfps, 0, sizeof(strtime));
+	memset(strctime, 0, sizeof(strctime));
+	memset(strmtime, 0, sizeof(strmtime));
+	memset(strfps, 0, sizeof(strfps));
 
-	sprintf(strtime, "%03d(ms)", time);
+	sprintf(strctime, "c thr : %03d(ms)", ctime);
+	sprintf(strmtime, "m thr : %03d(ms)", mtime);
+	sprintf(strtime, "i thr : %03d(ms)", time);
 	sprintf(strfps, "%4d(fps)", (time == 0) ? 1000 : 1000 / time);
 
 
@@ -166,6 +160,8 @@ static void draw_operatingtime(struct display* disp, uint32_t time)
 		tmpFrame.format = draw_get_pixel_foramt(disp->overlay_p_bo->fourcc);//FORMAT_RGB888; //alloc_overlay_plane() -- FOURCC('R','G','2','4');
 		tmpFrame.stride = disp->overlay_p_bo->pitches[0];//tmpFrame.width*3;
 
+		drawString(&tmpFrame, strctime, TIME_TEXT_X, TIME_TEXT_Y-40, 0, TIME_TEXT_COLOR);
+		drawString(&tmpFrame, strmtime, TIME_TEXT_X, TIME_TEXT_Y-20, 0, TIME_TEXT_COLOR);
 		drawString(&tmpFrame, strtime, TIME_TEXT_X, TIME_TEXT_Y, 0, TIME_TEXT_COLOR);
 		drawString(&tmpFrame, strfps, FPS_TEXT_X, FPS_TEXT_Y, 0, FPS_TEXT_COLOR);
 
@@ -193,9 +189,9 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		********************************************************/
 
 
-		if (t_data->bcalibration) OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
-		if (t_data->btopview) OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->topMode);
-		if (t_data->bauto)
+		if (t_data->imgData.bcalibration) OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
+		if (t_data->imgData.btopview) OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
+		if (t_data->imgData.bauto)
 		{
 			int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
 			if (steerVal != 0)
@@ -213,54 +209,8 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
 		gettimeofday(&et, NULL);
 		optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
-		draw_operatingtime(disp, optime);
+		draw_operatingtime(disp, optime, t_data->controlData.loopTime, t_data->missionData.loopTime);
 	}
-}
-
-void* capture_dump_thread(void* arg)
-{
-	struct thr_data* data = (struct thr_data*)arg;
-	FILE* fp;
-	char file[50];
-	struct timeval timestamp;
-	struct tm* today;
-	DumpMsg dumpmsg;
-
-	while (1)
-	{
-		if (msgrcv(data->msgq_id, &dumpmsg, sizeof(DumpMsg) - sizeof(long), DUMP_MSGQ_MSG_TYPE, 0) >= 0)
-		{
-			switch (dumpmsg.state_msg)
-			{
-			case DUMP_CMD:
-				gettimeofday(&timestamp, NULL);
-				today = localtime(&timestamp.tv_sec);
-				sprintf(file, "dump_%04d%02d%02d_%02d%02d%02d.%s", today->tm_year + 1900, today->tm_mon + 1, today->tm_mday, today->tm_hour, today->tm_min, today->tm_sec, VPE_OUTPUT_FORMAT);
-				data->dump_state = DUMP_READY;
-				MSG("file name:%s", file);
-				break;
-
-			case DUMP_WRITE_TO_FILE:
-				if ((fp = fopen(file, "w+")) == NULL)
-				{
-					ERROR("Fail to fopen");
-				}
-				else
-				{
-					fwrite(data->dump_img_data, VPE_OUTPUT_IMG_SIZE, 1, fp);
-				}
-				fclose(fp);
-				data->dump_state = DUMP_DONE;
-				break;
-
-			default:
-				MSG("dump msg wrong (%d)", dumpmsg.state_msg);
-				break;
-			}
-		}
-	}
-
-	return NULL;
 }
 
 
@@ -320,7 +270,6 @@ void* image_process_thread(void* arg)
 
 		img_process(vpe->disp, capt, data, map1, map2);
 
-
 		/*******************************************************
 		* 영상처리 종료
 		********************************************************/
@@ -330,42 +279,6 @@ void* image_process_thread(void* arg)
 			return NULL;
 		}
 		update_overlay_disp(vpe->disp);
-		if (data->dump_state == DUMP_READY)
-		{
-			DumpMsg dumpmsg;
-			unsigned char* pbuf[4];
-
-			if (get_framebuf(capt, pbuf) == 0)
-			{
-				switch (capt->fourcc)
-				{
-				case FOURCC('Y', 'U', 'Y', 'V'):
-				case FOURCC('B', 'G', 'R', '3'):
-					memcpy(data->dump_img_data, pbuf[0], VPE_OUTPUT_IMG_SIZE);
-					break;
-				case FOURCC('N', 'V', '1', '2'):
-					memcpy(data->dump_img_data, pbuf[0], VPE_OUTPUT_W * VPE_OUTPUT_H); // y data
-					memcpy(data->dump_img_data + VPE_OUTPUT_W * VPE_OUTPUT_H, pbuf[1], VPE_OUTPUT_W * VPE_OUTPUT_H / 2); // uv data
-					break;
-				default:
-					MSG("DUMP.. not yet support format : %.4s\n", (char*)&capt->fourcc);
-					break;
-				}
-			}
-			else
-			{
-				MSG("dump capture buf fail !");
-			}
-			// 이미지 포맷에 따라서 이미지를 YUYV 포맷으로 변환한다.
-
-			dumpmsg.type = DUMP_MSGQ_MSG_TYPE;
-			dumpmsg.state_msg = DUMP_WRITE_TO_FILE;
-			data->dump_state = DUMP_WRITE_TO_FILE;
-			if (-1 == msgsnd(data->msgq_id, &dumpmsg, sizeof(DumpMsg) - sizeof(long), 0))
-			{
-				MSG("state:%d, msg send fail\n", dumpmsg.state_msg);
-			}
-		}
 		vpe_output_qbuf(vpe, index);
 		index = vpe_input_dqbuf(vpe);
 		v4l2_qbuf(v4l2, vpe->input_buf_dmafd[index], index);
@@ -403,7 +316,6 @@ void* input_thread(void* arg)
 	printf("	space bar = Alarm									\n");
 	printf("----------------------------------------------------	\n");
 	MSG("\n\nInput command:");
-	MSG("\t dump  : display image(%s, %dx%d) dump", VPE_OUTPUT_FORMAT, VPE_OUTPUT_W, VPE_OUTPUT_H);
 	MSG("\t dist  : distance sensor check");
 	MSG("\t distc : distance sensor check by -cm-");
 	MSG("\t distloop : distance sensor check constantly");
@@ -422,24 +334,9 @@ void* input_thread(void* arg)
 		}
 		else
 		{
-			if (0 == strncmp(cmd_input, "dump", 4))
+			if (strlen(cmd_input) == 1)
 			{
-				DumpMsg dumpmsg;
-				dumpmsg.type = DUMP_MSGQ_MSG_TYPE;
-				dumpmsg.state_msg = DUMP_CMD;
-				data->dump_state = DUMP_CMD;
-				MSG("image dump start");
-				if (-1 == msgsnd(data->msgq_id, &dumpmsg, sizeof(DumpMsg) - sizeof(long), 0))
-				{
-					printf("dump cmd msg send fail\n");
-				}
-
-				while (data->dump_state != DUMP_DONE)
-				{
-					usleep(5 * 1000);
-				}
-				data->dump_state = DUMP_NONE;
-				MSG("image dump done");
+				manualControl(&(data->controlData), cmd_input[0]);
 			}
 			else if (0 == strncmp(cmd_input, "calib", 5))
 			{
@@ -496,10 +393,6 @@ void* input_thread(void* arg)
 					}
 				}
 			}
-			else if (strlen(cmd_input) == 1)
-			{
-				manualControl(&(data->controlData), cmd_input[0]);
-			}
 			else if (0 == strncmp(cmd_input, "distloop", 8))
 			{
 				int d_data;
@@ -555,7 +448,7 @@ void* input_thread(void* arg)
 				DesireSpeed_Write(30);
 				while (1) {
 					on_encoder = EncoderCounter_Read();
-					if(on_encoder != 65278) printf("encoder : %-3d\n", on_encoder);
+					if (on_encoder != 65278) printf("encoder : %-3d\n", on_encoder);
 					if (on_encoder >= desire_encoder && on_encoder != 65278) {
 						DesireSpeed_Write(0);
 						break;
@@ -581,6 +474,7 @@ void* input_thread(void* arg)
 void* mission_thread(void* arg)
 {
 	struct thr_data* data = (struct thr_data*)arg;
+	struct timeval st, et;
 
 	int c1, c2, c3, c4, c5, c6;
 	// 거리 센서의 정보를 받아 올 6개의 변수
@@ -591,6 +485,7 @@ void* mission_thread(void* arg)
 	bool stopLine;
 	// 정지선의 감지를 나타내는 변수, true = 감지
 	while (1) {
+		gettimeofday(&st, NULL);
 		c1 = DistanceSensor_cm(1);
 		c2 = DistanceSensor_cm(2);
 		c3 = DistanceSensor_cm(3);
@@ -646,6 +541,8 @@ void* mission_thread(void* arg)
 			data->missionData.on_processing = 1;
 		}
 		usleep(500000);
+		gettimeofday(&et, NULL);
+		data->missionData.loopTime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
 	}
 }
 
@@ -656,6 +553,7 @@ void* mission_thread(void* arg)
 void* control_thread(void* arg)
 {
 	struct thr_data* data = (struct thr_data*)arg;
+	struct timeval st, et;
 
 	int i;
 	int currentSpeed;
@@ -673,6 +571,8 @@ void* control_thread(void* arg)
 
 	while (1)
 	{
+		gettimeofday(&st, NULL);
+
 		if (data->missionData.verticalFlag == 1) {
 			DesiredDistance(-30, 500);
 			data->missionData.on_parkingFlag = 0;
@@ -731,6 +631,9 @@ void* control_thread(void* arg)
 			// switch case 문 이용하여 차량을 절차적으로 제어한다.
 
 		}
+
+		gettimeofday(&et, NULL);
+		data->controlData.loopTime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
 	}
 
 	return NULL;
@@ -912,36 +815,34 @@ int main(int argc, char** argv)
 	printf("-- 7_all_test Start --\n");
 
 	CarControlInit();
-	CameraYServoControl_Write(1660);
-	CameraXServoControl_Write(1500);
 	PositionControlOnOff_Write(UNCONTROL); // position controller must be OFF !!!
 	SpeedControlOnOff_Write(CONTROL);   // speed controller must be also ON !!!
-	tdata.bcalibration = true;
+
+	tdata.bcalibration = false;
 	tdata.btopview = true;
 	tdata.bauto = true;
 	tdata.topMode = 2;
+
 	tdata.controlData.settingSpeedVal = 30;
 	tdata.controlData.desireSpeedVal = 0;
 	tdata.controlData.lightFlag = 0x00;
+	CameraXServoControl_Write(1500);
 	tdata.controlData.steerVal = 1500;
+	CameraYServoControl_Write(1660);
 	tdata.controlData.cameraY = 1660;
-	tdata.controlData.stopFlag = 0;
-	tdata.controlData.steerWrite = 0;
-	tdata.controlData.speedWrite = 0;
-	tdata.missionData.bround = 0;
-	tdata.missionData.btunnel = 0;
-	tdata.missionData.horizontalFlag = 0;
-	tdata.missionData.verticalFlag = 0;
-	tdata.missionData.on_processing = 0;
-	tdata.missionData.on_parkingFlag = 0;
+	tdata.controlData.stopFlag = false;
+	tdata.controlData.steerWrite = false;
+	tdata.controlData.speedWrite = false;
+
+	tdata.missionData.bround = false;
+	tdata.missionData.btunnel = false;
+	tdata.missionData.horizontalFlag = false;
+	tdata.missionData.verticalFlag = false;
+	tdata.missionData.on_processing = false;
+	tdata.missionData.on_parkingFlag = false;
 	tdata.missionData.sparking.frontRight = 0;
 	tdata.missionData.sparking.rearRight = 0;
 
-	//캘리브레이션 활성화 상태로 동작.
-	tdata.dump_state = DUMP_NONE;
-	// Dump State를 키 입력 대기 상태로 초기화
-	memset(tdata.dump_img_data, 0, sizeof(tdata.dump_img_data));
-	// dump_img_data에 Dump 이미지 공간 할당 (1280x720x2)
 
 	// open vpe
 	vpe = vpe_open();
@@ -1006,34 +907,29 @@ int main(int argc, char** argv)
 	tdata.bfull_screen = true;
 	tdata.bstream_start = false;
 
-	if (-1 == (tdata.msgq_id = msgget((key_t)DUMP_MSGQ_KEY, IPC_CREAT | 0666))) {
-		fprintf(stderr, "%s msg create fail!!!\n", __func__);
-		return -1;
-	}
-
 	pexam_data = &tdata;
 
 	ret = pthread_create(&tdata.threads[0], NULL, image_process_thread, &tdata);
 	if (ret) {
-		MSG("Failed creating capture thread");
+		MSG("Failed creating image_process_thread");
 	}
 	pthread_detach(tdata.threads[0]);
 
 	ret = pthread_create(&tdata.threads[1], NULL, mission_thread, &tdata);
 	if (ret) {
-		MSG("Failed creating mission thread");
+		MSG("Failed creating mission_thread");
 	}
 	pthread_detach(tdata.threads[1]);
 
 	ret = pthread_create(&tdata.threads[2], NULL, input_thread, &tdata);
 	if (ret) {
-		MSG("Failed creating input thread");
+		MSG("Failed creating input_thread");
 	}
 	pthread_detach(tdata.threads[2]);
 
 	ret = pthread_create(&tdata.threads[3], NULL, control_thread, &tdata);
 	if (ret) {
-		MSG("Failed creating capture dump thread");
+		MSG("Failed creating control_thread");
 	}
 	pthread_detach(tdata.threads[3]);
 

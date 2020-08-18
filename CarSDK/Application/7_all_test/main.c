@@ -706,7 +706,7 @@ void* control_thread(void* arg)
 			usleep(70000); //70ms
 		}
 
-		if (data->controlData.horizontalFlag == 1) {
+		if (data->missionData.horizontalFlag == 1) {
 			// 주차 분기가 활성화 되었을 때 실행 할 부분
 			// switch case 문 이용하여 차량을 절차적으로 제어한다.
 

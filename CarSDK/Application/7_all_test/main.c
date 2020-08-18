@@ -59,9 +59,6 @@ typedef struct _DumpMsg {
 
 struct ControlData {
 	bool stopFlag;
-	bool verticalFlag; // 수직 주차 활성화를 나타내는 플래그
-	bool horizontalFlag; // 수평 주차 활성화를 나타내는 플래그
-	bool on_parkingFlag; // 주차 진행 중을 나타내는 플래그
 	bool steerWrite;
 	bool speedWrite;
 	int steerVal;
@@ -71,12 +68,26 @@ struct ControlData {
 	unsigned short lightFlag;
 };
 
+struct MissionData {
+	bool on_processing; // 어떠한 미션이 진행 중임을 나타내는 플래그 -> 미션 쓰레드에서 다른 미션을 활성화 시키지 않도록 한다.
+
+	bool btunnel; // 터널 플래그
+	bool verticalFlag; // 수직 주차 활성화를 나타내는 플래그
+	bool horizontalFlag; // 수평 주차 활성화를 나타내는 플래그
+	bool on_parkingFlag; // 주차 진행 중을 나타내는 플래그
+	bool bround; // 회전교차로 플래그
+
+
+
+};
+
 struct thr_data {
 	struct display* disp;
 	struct v4l2* v4l2;
 	struct vpe* vpe;
 	struct buffer** input_bufs;
 	struct ControlData controlData;
+	struct MissionData missionData;
 	// struct SensorData sensorData;
 
 	DumpState dump_state;
@@ -311,46 +322,6 @@ void* image_process_thread(void* arg)
 
 		img_process(vpe->disp, capt, data, map1, map2);
 
-		// 추후 미션 쓰레드에 추가 할 부분.
-		channel_1 = DistanceSensor_cm(1);
-		channel_2 = DistanceSensor_cm(2);
-		channel_3 = DistanceSensor_cm(3);
-		channel_4 = DistanceSensor_cm(4);
-		channel_5 = DistanceSensor_cm(5);
-		channel_6 = DistanceSensor_cm(6);
-		// 각 채널 변수에 거리 정보를 받아온다.
-
-		if (!data->controlData.on_parkingFlag) {
-			if (channel_1 <= 10) frontRight = true;
-			// 처음 벽이 감지되었을 경우
-			if ((channel_1 >= 20) && frontRight) {
-				rearRight = true;
-				/*
-				주차 폭에 대한 거리를 측정하기 위해 거리 측정 시작
-				*/
-			}
-			// 주차 공간이 감지되었을 경우
-			if ((channel_2 <= 10) && frontRight && rearRight) {
-				/*
-				거리 측정 종료 -> 측정 거리를 변수에 담는다.
-				*/
-				if (parking_width <= 45 && parking_width >= 25) {
-					data->controlData.verticalFlag = true;
-					frontRight = false;
-					rearRight = false;
-					data->controlData.on_parkingFlag = true;
-					// 주차 플래그가 on이 되면, 주차 진행을 나타내는 플래그를 on 시킨다.
-				}
-				if (parking_width <= 65 && parking_width >= 45) {
-					data->controlData.horizontalFlag = true;
-					frontRight = false;
-					rearRight = false;
-					data->controlData.on_parkingFlag = true;
-					// 주차 플래그가 on이 되면, 주차 진행을 나타내는 플래그를 on 시킨다.
-				}
-			}
-		}
-		// 주차 공간을 지나 우측 후방 거리 센서에 벽이 감지되었을 경우 주차 분기로 판단하고 주차 플래그를 활성화시킨다.
 
 		/*******************************************************
 		* 영상처리 종료
@@ -603,6 +574,61 @@ void* input_thread(void* arg)
 	}
 
 	return NULL;
+}
+
+/************************************************
+*	mission_thread
+*************************************************/
+void* mission_thread(void* arg)
+{
+	struct thr_data* data = (struct thr_data*)arg;
+
+	int c1, c2, c3, c4, c5, c6;
+	// 거리 센서의 정보를 받아 올 6개의 변수
+	bool stopLine;
+	// 정지선의 감지를 나타내는 변수, true = 감지
+	while (1) {
+		c1 = DistanceSensor_cm(1);
+		c2 = DistanceSensor_cm(2);
+		c3 = DistanceSensor_cm(3);
+		c4 = DistanceSensor_cm(4);
+		c5 = DistanceSensor_cm(5);
+		c6 = DistanceSensor_cm(6);
+		stopLine = StopLine(4);
+
+		if (!data->missionData.on_parkingFlag) {
+			if (channel_1 <= 10) frontRight = true;
+			// 처음 벽이 감지되었을 경우
+			if ((channel_1 >= 20) && frontRight) {
+				rearRight = true;
+				/*
+				주차 폭에 대한 거리를 측정하기 위해 거리 측정 시작
+				*/
+			}
+			// 주차 공간이 감지되었을 경우
+			if ((channel_2 <= 10) && frontRight && rearRight) {
+				/*
+				거리 측정 종료 -> 측정 거리를 변수에 담는다.
+				*/
+				if (parking_width <= 45 && parking_width >= 25) {
+					data->missionData.verticalFlag = true;
+					frontRight = false;
+					rearRight = false;
+					data->missionData.on_parkingFlag = true;
+					// 주차 플래그가 on이 되면, 주차 진행을 나타내는 플래그를 on 시킨다.
+				}
+				if (parking_width <= 65 && parking_width >= 45) {
+					data->missionData.horizontalFlag = true;
+					frontRight = false;
+					rearRight = false;
+					data->missionData.on_parkingFlag = true;
+					// 주차 플래그가 on이 되면, 주차 진행을 나타내는 플래그를 on 시킨다.
+				}
+			}
+		}
+		// 주차 공간을 지나 우측 후방 거리 센서에 벽이 감지되었을 경우 주차 분기로 판단하고 주차 플래그를 활성화시킨다.
+
+	}
 }
 
 

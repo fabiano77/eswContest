@@ -679,6 +679,7 @@ void* control_thread(void* arg)
 			data->missionData.on_processing = 0;
 			data->missionData.sparking.frontRight = 0;
 			data->missionData.sparking.rearRight = 0;
+			data->missionData.verticalFlag = 0;
 		}
 
 		if (data->controlData.steerWrite == 1)

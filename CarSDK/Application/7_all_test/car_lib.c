@@ -699,3 +699,19 @@ int StopLine(int Lineflag) {
 	}
 	return 0;
 }
+
+void DesiredDistance(int SettingSpeed, int SettingDistance) {
+	int init_encoder = 0;
+	int on_encoder = 0;
+	EncoderCounter_Write(init_encoder);
+	DesireSpeed_Write(SettingSpeed);
+	while (1) {
+		on_encoder = abs(EncoderCounter_Read());
+		if (on_encoder != 65278) printf("encoder : %-4d\n", on_encoder);
+		if (on_encoder >= desire_encoder && on_encoder != 65278) {
+			DesireSpeed_Write(0);
+			break;
+		}
+		usleep(100000);
+	}
+}

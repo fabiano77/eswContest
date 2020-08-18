@@ -75,13 +75,12 @@ struct Parking {
 
 struct MissionData {
 	bool on_processing; // 어떠한 미션이 진행 중임을 나타내는 플래그 -> 미션 쓰레드에서 다른 미션을 활성화 시키지 않도록 한다.
-
 	bool btunnel; // 터널 플래그
 	bool verticalFlag; // 수직 주차 활성화를 나타내는 플래그
 	bool horizontalFlag; // 수평 주차 활성화를 나타내는 플래그
 	bool on_parkingFlag; // 주차 진행 중을 나타내는 플래그
 	bool bround; // 회전교차로 플래그
-	struct Parking* sparking; // 주차에 필요한 플래그를 담는 구조체
+	struct Parking sparking; // 주차에 필요한 플래그를 담는 구조체
 
 
 };
@@ -604,16 +603,16 @@ void* mission_thread(void* arg)
 			continue;
 		}
 		if (!data->missionData.on_parkingFlag) {
-			if (c2 <= 10) data->missionData.sparking->frontRight = 1;
+			if (c2 <= 10) data->missionData.sparking.frontRight = 1;
 			// 처음 벽이 감지되었을 경우
-			if ((c2 >= 20) && data->missionData.sparking->frontRight) {
-				data->missionData.sparking->rearRight = 1;
+			if ((c2 >= 20) && data->missionData.sparking.frontRight) {
+				data->missionData.sparking.rearRight = 1;
 				/*
 				주차 폭에 대한 거리를 측정하기 위해 거리 측정 시작
 				*/
 			}
 			// 주차 공간이 감지되었을 경우
-			if ((c3 <= 10) && data->missionData.sparking->frontRight && data->missionData.sparking->rearRight) {
+			if ((c3 <= 10) && data->missionData.sparking.frontRight && data->missionData.sparking.rearRight) {
 				/*
 				거리 측정 종료 -> 측정 거리를 변수에 담는다.
 				*/
@@ -623,15 +622,15 @@ void* mission_thread(void* arg)
 				// test용 추가
 				if (parking_width <= 45 && parking_width >= 25) {
 					data->missionData.verticalFlag = 1;
-					frontRight = 0;
-					rearRight = 0;
+					data->missionData.sparking.frontRight = 0;
+					data->missionData.sparking.rearRight = 0;
 					data->missionData.on_parkingFlag = 1;
 					// 주차 플래그가 on이 되면, 주차 진행을 나타내는 플래그를 on 시킨다.
 				}
 				if (parking_width <= 65 && parking_width >= 45) {
 					data->missionData.horizontalFlag = 1;
-					frontRight = 0;
-					rearRight = 0;
+					data->missionData.sparking.frontRight = 0;
+					data->missionData.sparking.rearRight = 0;
 					data->missionData.on_parkingFlag = 1;
 					// 주차 플래그가 on이 되면, 주차 진행을 나타내는 플래그를 on 시킨다.
 				}
@@ -675,14 +674,11 @@ void* control_thread(void* arg)
 	while (1)
 	{
 		if (data->missionData.verticalFlag == 1) {
-			for (i = 0; i < 50; i++) {
-				printf("Vertical Parking!\n");
-				usleep(100000);
-			}
+			DesiredDistance(-30, 500);
 			data->missionData.on_parkingFlag = 0;
 			data->missionData.on_processing = 0;
-			data->missionData.sparking->frontRight = 0;
-			data->missionData.sparking->rearRight = 0;
+			data->missionData.sparking.frontRight = 0;
+			data->missionData.sparking.rearRight = 0;
 		}
 
 		if (data->controlData.steerWrite == 1)
@@ -931,6 +927,14 @@ int main(int argc, char** argv)
 	tdata.controlData.stopFlag = 0;
 	tdata.controlData.steerWrite = 0;
 	tdata.controlData.speedWrite = 0;
+	tdata.missionData.bround = 0;
+	tdata.missionData.btunnel = 0;
+	tdata.missionData.horizontalFlag = 0;
+	tdata.missionData.verticalFlag = 0;
+	tdata.missionData.on_processing = 0;
+	tdata.missionData.on_parkingFlag = 0;
+	tdata.missionData.sparking.frontRight = 0;
+	tdata.missionData.sparking.rearRight = 0;
 
 	//캘리브레이션 활성화 상태로 동작.
 	tdata.dump_state = DUMP_NONE;

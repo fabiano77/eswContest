@@ -583,14 +583,14 @@ void* input_thread(void* arg)
 				printf("Disired Speed : ");
 				scanf("%d", &desire_encoder);
 				EncoderCounter_Write(init_encoder);
-				DesireSpeed_Write(30);
+				//DesireSpeed_Write(30);
 				while (1) {
 					on_encoder = EncoderCounter_Read();
 					printf("encoder : %-3d\n", on_encoder);
-					if (on_encoder >= desire_encoder) {
+					/*if (on_encoder >= desire_encoder) {
 						DesireSpeed_Write(0);
 						break;
-					}
+					}*/
 				}
 				printf("Test End.\n");
 			}

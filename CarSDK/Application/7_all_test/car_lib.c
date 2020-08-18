@@ -708,7 +708,7 @@ void DesiredDistance(int SettingSpeed, int SettingDistance) {
 	while (1) {
 		on_encoder = abs(EncoderCounter_Read());
 		if (on_encoder != 65278) printf("encoder : %-4d\n", on_encoder);
-		if (on_encoder >= desire_encoder && on_encoder != 65278) {
+		if (on_encoder >= SettingDistance && on_encoder != 65278) {
 			DesireSpeed_Write(0);
 			break;
 		}

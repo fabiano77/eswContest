@@ -551,7 +551,7 @@ void* input_thread(void* arg)
 				DesireSpeed_Write(30);
 				while (1) {
 					on_encoder = EncoderCounter_Read();
-					printf("encoder : %-3d\n", on_encoder);
+					if(on_encoder != 65278) printf("encoder : %-3d\n", on_encoder);
 					if (on_encoder >= desire_encoder && on_encoder != 65278) {
 						DesireSpeed_Write(0);
 						break;
@@ -580,7 +580,7 @@ void* mission_thread(void* arg)
 
 	int c1, c2, c3, c4, c5, c6;
 	// 거리 센서의 정보를 받아 올 6개의 변수
-	bool frontRight = false, rearRight = false;
+	bool frontRight = 0, rearRight = 0;
 	// 우측 거리 센서의 주차 조건을 판단할 때 사용되는 변수
 	int parking_width = 0;
 	// 수직 및 수평 주차를 구분하기 위해 주차 공간의 폭을 측정할 때 사용되는 변수
@@ -595,7 +595,7 @@ void* mission_thread(void* arg)
 		c6 = DistanceSensor_cm(6);
 		stopLine = StopLine(4);
 
-		if (data->missionData.on_processing == true) {
+		if (data->missionData.on_processing == 1) {
 			continue;
 		}
 		if (!data->missionData.on_parkingFlag) {
@@ -612,30 +612,34 @@ void* mission_thread(void* arg)
 				/*
 				거리 측정 종료 -> 측정 거리를 변수에 담는다.
 				*/
+				data->missionData.verticalFlag = 1;
+				data->missionData.on_parkingFlag = 1;
+				data->missionData.on_processing = 1;
+				// test용 추가
 				if (parking_width <= 45 && parking_width >= 25) {
-					data->missionData.verticalFlag = true;
-					frontRight = false;
-					rearRight = false;
-					data->missionData.on_parkingFlag = true;
+					data->missionData.verticalFlag = 1;
+					frontRight = 0;
+					rearRight = 0;
+					data->missionData.on_parkingFlag = 1;
 					// 주차 플래그가 on이 되면, 주차 진행을 나타내는 플래그를 on 시킨다.
 				}
 				if (parking_width <= 65 && parking_width >= 45) {
-					data->missionData.horizontalFlag = true;
-					frontRight = false;
-					rearRight = false;
-					data->missionData.on_parkingFlag = true;
+					data->missionData.horizontalFlag = 1;
+					frontRight = 0;
+					rearRight = 0;
+					data->missionData.on_parkingFlag = 1;
 					// 주차 플래그가 on이 되면, 주차 진행을 나타내는 플래그를 on 시킨다.
 				}
 			}
 		}
 		// 주차 공간을 지나 우측 후방 거리 센서에 벽이 감지되었을 경우 주차 분기로 판단하고 주차 플래그를 활성화시킨다.
 		else if (/*on_tunnel()*/0) {
-			data->missionData.btunnel = true;
-			data->missionData.on_processing = true;
+			data->missionData.btunnel = 1;
+			data->missionData.on_processing = 1;
 		}
 		else if (/*on_RoundAbout()*/0) {
-			data->missionData.bround = true;
-			data->missionData.on_processing = true;
+			data->missionData.bround = 1;
+			data->missionData.on_processing = 1;
 		}
 	}
 }
@@ -648,6 +652,7 @@ void* control_thread(void* arg)
 {
 	struct thr_data* data = (struct thr_data*)arg;
 
+	int i;
 	int currentSpeed;
 	double err_P = 0;
 	double err_I = 0;
@@ -663,6 +668,15 @@ void* control_thread(void* arg)
 
 	while (1)
 	{
+		if (data->missionData.verticalFlag == 1) {
+			for (i = 0; i < 50; i++) {
+				printf("Vertical Parking!\n");
+				usleep(100000);
+			}
+			data->missionData.on_parkingFlag = 0;
+			data->missionData.on_processing = 0;
+		}
+
 		if (data->controlData.steerWrite == 1)
 		{
 			data->controlData.steerWrite = 0;
@@ -992,9 +1006,9 @@ int main(int argc, char** argv)
 	}
 	pthread_detach(tdata.threads[0]);
 
-	ret = pthread_create(&tdata.threads[1], NULL, capture_dump_thread, &tdata);
+	ret = pthread_create(&tdata.threads[1], NULL, mission_thread, &tdata);
 	if (ret) {
-		MSG("Failed creating capture dump thread");
+		MSG("Failed creating mission thread");
 	}
 	pthread_detach(tdata.threads[1]);
 

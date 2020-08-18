@@ -47,25 +47,24 @@ enum MissionState {
 	NONE,
 	READY,
 	REMAIN,
-	DONE = NONE;
+	DONE = NONE
 };
 
 enum ParkingState {
-	NONE,
+	NONE_P,
 	FIRST_WALL,
 	DISTANCE_CHECK,
-	DECISION,
 	SECOND_WALL,
 	PARKING_START,
-	DONE = NONE
+	DONE_P = NONE_P
 };
 
 enum OvertakeState {
-	NONE,
+	NONE_O,
 	FRONT_DETECT,
 	SIDE_ON,
 	SIDE_OFF,
-	DONE = NONE
+	DONE_O = NONE_O
 };
 
 struct Parking {
@@ -83,6 +82,7 @@ struct MissionData {
 
 	bool btunnel; // 터널 플래그
 	bool bround; // 회전교차로 플래그
+	bool overtakingFlag; // 추월차로 플래그 ->MS 이후 overtaking struct 추가할 것
 	struct Parking parkingData; // 주차에 필요한 플래그를 담는 구조체
 
 
@@ -370,8 +370,8 @@ void* input_thread(void* arg)
 			}
 			else if (0 == strncmp(cmd_input, "calib", 5))
 			{
-				data->bcalibration = !data->bcalibration;
-				if (data->bcalibration) printf("\t calibration ON\n");
+				data->imgData.bcalibration = !data->imgData.bcalibration;
+				if (data->imgData.bcalibration) printf("\t calibration ON\n");
 				else printf("\t calibration OFF\n");
 			}
 			else if (0 == strncmp(cmd_input, "parking", 7))
@@ -397,28 +397,28 @@ void* input_thread(void* arg)
 			}
 			else if (0 == strncmp(cmd_input, "auto", 4))
 			{
-				data->bauto = !data->bauto;
-				if (data->bauto) printf("\t auto steering ON\n");
+				data->imgData.bauto = !data->imgData.bauto;
+				if (data->imgData.bauto) printf("\t auto steering ON\n");
 				else printf("\t auto steering OFF\n");
 			}
 			else if (0 == strncmp(cmd_input, "top", 3))
 			{
-				if (!data->btopview)
+				if (!data->imgData.btopview)
 				{
-					data->btopview = !data->btopview;
+					data->imgData.btopview = !data->imgData.btopview;
 					printf("\t topview 1 ON\n");
 				}
 				else
 				{
-					if (data->topMode == 1)
+					if (data->imgData.topMode == 1)
 					{
-						data->topMode = 2;
+						data->imgData.topMode = 2;
 						printf("\t topview 2 ON\n");
 					}
 					else
 					{
-						data->topMode = 1;
-						data->btopview = !data->btopview;
+						data->imgData.topMode = 1;
+						data->imgData.btopview = !data->imgData.btopview;
 						printf("\t topview OFF\n");
 					}
 				}
@@ -445,7 +445,7 @@ void* input_thread(void* arg)
 				int j;
 				printf("channel(1~6) : ");
 				scanf("%d", &channel);
-				for (j = 0; j < 70; j)
+				for (j = 0; j < 70; j++)
 				{
 					d_data_cm = DistanceSensor_cm(channel);
 					d_data = DistanceSensor(channel);
@@ -584,11 +584,14 @@ void* mission_thread(void* arg)
 					case PARKING_START:
 						data->missionData.on_processing = true;
 						data->missionData.parkingData.on_parkingFlag = true;
-						state = END;
+						state = DONE;
 
 						if (parking == READY) parking = REMAIN;
 						else if (parking == REMAIN) parking = DONE;
 
+						break;
+
+					default:
 						break;
 					}
 					usleep(50000);
@@ -601,7 +604,7 @@ void* mission_thread(void* arg)
 			if (/*on_tunnel()*/0) {
 				data->missionData.on_processing = true;
 				data->missionData.btunnel = true;
-				cout << "tunnel" << endl;
+				printf("tunnel\n");
 				tunnel = DONE;
 			}
 		}
@@ -611,15 +614,17 @@ void* mission_thread(void* arg)
 			if (StopLine(4)) {
 				data->missionData.on_processing = true;
 				data->missionData.bround = true;
-				cout << "roundabout" << endl;
+				printf("roundabout\n");
 				roundabout = DONE;
 			}
 		}
 
 		if (overtake)
 		{
-			if (DistanceSensor_cm(1) < 0) //전방 장애물 감지
+			/*MS 분기진입 명령 지시*/
+			if (DistanceSensor_cm(1) < 30) //전방 장애물 감지 //주차 상황이 아닐때, 분기진입 가능
 			{
+				//30넘을 때 control thread 변환을 주어야함 MS
 				data->missionData.on_processing = true;
 				enum OvertakeState state = FRONT_DETECT;
 				bool obstacle = false;
@@ -629,6 +634,7 @@ void* mission_thread(void* arg)
 					{
 					case FRONT_DETECT:
 						/* 장애물 좌우 차선에 장애물이 있는지 판단하는 코드 */
+						data->missionData.overtakingFlag = true;
 
 						/* 비어있는 차선으로 전진하는 코드*/
 
@@ -643,9 +649,9 @@ void* mission_thread(void* arg)
 							else if (왼쪽)	obstacle = (DistanceSensor_cm(5) < 10) ? true : false;
 						*/
 
-						if (0/* obstacle == false */)
+						if (obstacle == false)
 						{
-							state = SIDE_OFF
+							state = SIDE_OFF;
 						}
 						break;
 
@@ -653,6 +659,9 @@ void* mission_thread(void* arg)
 						/*원래 차선으로 복귀하는 코드*/
 
 						overtake = DONE;
+						break;
+
+					default:
 						break;
 					}
 				}
@@ -663,7 +672,7 @@ void* mission_thread(void* arg)
 		{
 			if (roundabout == DONE && StopLine(4))
 			{
-				cout << "signalLight" << endl;
+				printf("signalLight\n");
 			}
 		}
 
@@ -671,7 +680,7 @@ void* mission_thread(void* arg)
 		{
 			if (0)
 			{
-				cout << "finish" << endl;
+				printf("finish\n");
 			}
 		}
 		usleep(500000);
@@ -690,7 +699,6 @@ void* control_thread(void* arg)
 	struct thr_data* data = (struct thr_data*)arg;
 	struct timeval st, et;
 
-	int i;
 	int currentSpeed;
 	double err_P = 0;
 	double err_I = 0;
@@ -708,7 +716,7 @@ void* control_thread(void* arg)
 	{
 		gettimeofday(&st, NULL);
 
-		if (data->missionData.verticalFlag == 1) {
+		if (data->missionData.parkingData.verticalFlag == 1) {
 			DesiredDistance(-30, 500);
 			data->missionData.on_processing = 0;
 			data->missionData.parkingData.on_parkingFlag = 0;
@@ -717,7 +725,7 @@ void* control_thread(void* arg)
 			data->missionData.parkingData.verticalFlag = 0;
 		}
 
-		if (data->missionData.horizontalFlag) {
+		if (data->missionData.parkingData.horizontalFlag) {
 			// 주차 분기가 활성화 되었을 때 실행 할 부분
 			// switch case 문 이용하여 차량을 절차적으로 제어한다.
 
@@ -963,15 +971,15 @@ int main(int argc, char** argv)
 	tdata.controlData.steerWrite = false;
 	tdata.controlData.speedWrite = false;
 
-	tdata.missionData.bparking = false;
+	tdata.missionData.on_processing = false;
 	tdata.missionData.bround = false;
 	tdata.missionData.btunnel = false;
-	tdata.missionData.horizontalFlag = false;
-	tdata.missionData.verticalFlag = false;
-	tdata.missionData.on_parkingFlag = false;
-	tdata.missionData.on_processing = false;
-	tdata.missionData.sparking.frontRight = false;
-	tdata.missionData.sparking.rearRight = false;
+	tdata.missionData.parkingData.bparking = false;
+	tdata.missionData.parkingData.horizontalFlag = false;
+	tdata.missionData.parkingData.verticalFlag = false;
+	tdata.missionData.parkingData.on_parkingFlag = false;
+	tdata.missionData.parkingData.frontRight = false;
+	tdata.missionData.parkingData.rearRight = false;
 
 
 	// open vpe

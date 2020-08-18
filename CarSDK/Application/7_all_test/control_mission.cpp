@@ -2,9 +2,21 @@
  *  INCLUDE FILES
  *******************************************************************************
  */
+#include <termios.h>
+#include <unistd.h> 
+#include <fcntl.h>
+#include <sys/signal.h>
+#include <sys/types.h>
+#include <time.h>
+#include <string.h>
+#include <pthread.h> 
+#include <dlfcn.h>
+#include <sys/ioctl.h>
+#include <linux/i2c-dev.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "control_mission.h"
 #include "car_lib.h"
-#include <stdio.h>
 
 extern "C" {
 

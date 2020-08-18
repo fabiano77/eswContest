@@ -272,12 +272,6 @@ void* image_process_thread(void* arg)
 	bool isFirst = true;
 	int index;
 	int i;
-	int channel_1, channel_2, channel_3, channel_4, channel_5, channel_6;
-	// 거리 센서에서 거리를 받아오는 변수
-	bool frontRight = false, rearRight = false;
-	// 우측 거리 센서의 주차 조건을 판단할 때 사용되는 변수
-	int parking_width = 0;
-	// 수직 및 수평 주차를 구분하기 위해 주차 공간의 폭을 측정할 때 사용되는 변수
 	float map1[VPE_OUTPUT_W * VPE_OUTPUT_H] = { 0, };
 	float map2[VPE_OUTPUT_W * VPE_OUTPUT_H] = { 0, };
 	memset(map1, 0, VPE_OUTPUT_W * VPE_OUTPUT_H);
@@ -585,6 +579,10 @@ void* mission_thread(void* arg)
 
 	int c1, c2, c3, c4, c5, c6;
 	// 거리 센서의 정보를 받아 올 6개의 변수
+	bool frontRight = false, rearRight = false;
+	// 우측 거리 센서의 주차 조건을 판단할 때 사용되는 변수
+	int parking_width = 0;
+	// 수직 및 수평 주차를 구분하기 위해 주차 공간의 폭을 측정할 때 사용되는 변수
 	bool stopLine;
 	// 정지선의 감지를 나타내는 변수, true = 감지
 	while (1) {
@@ -597,16 +595,16 @@ void* mission_thread(void* arg)
 		stopLine = StopLine(4);
 
 		if (!data->missionData.on_parkingFlag) {
-			if (channel_1 <= 10) frontRight = true;
+			if (c1 <= 10) frontRight = true;
 			// 처음 벽이 감지되었을 경우
-			if ((channel_1 >= 20) && frontRight) {
+			if ((c1 >= 20) && frontRight) {
 				rearRight = true;
 				/*
 				주차 폭에 대한 거리를 측정하기 위해 거리 측정 시작
 				*/
 			}
 			// 주차 공간이 감지되었을 경우
-			if ((channel_2 <= 10) && frontRight && rearRight) {
+			if ((c2 <= 10) && frontRight && rearRight) {
 				/*
 				거리 측정 종료 -> 측정 거리를 변수에 담는다.
 				*/

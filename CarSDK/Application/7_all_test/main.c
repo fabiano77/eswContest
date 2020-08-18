@@ -575,6 +575,27 @@ void* input_thread(void* arg)
 					usleep(100000);
 				}
 			}
+			else if (0 == strncmp(cmd_input, "encoder", 7))
+			{
+				int init_encoder = 0;
+				int desire_encoder = 0;
+				int on_encoder = 0;
+				printf("Disired Speed : ");
+				scanf("%d", &desire_encoder);
+				EncoderCounter_Write(init_encoder);
+				data->controlData.speedWrite = 1;
+				data->controlData.desireSpeedVal = 30;
+				while (1) {
+					on_encoder = EncoderCounter_Read();
+					printf("encoder : %-3d\n", on_encoder);
+					if (on_encoder >= desire_encoder) {
+						data->controlData.desireSpeedVal = 0;
+						data->controlData.speedWrite = 0;
+						break;
+					}
+				}
+				printf("Test End.\n");
+			}
 			else
 			{
 				printf("cmd_input:%s \n", cmd_input);

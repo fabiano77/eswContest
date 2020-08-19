@@ -13,6 +13,13 @@ extern "C" {
 
 	int autoSteering(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
 
+
+	/// <summary>
+    /// check where is obstacle
+	/// </summary>
+	/// <param name="src"></param> //Input img buf(한장의 이미지만 있으면 됨)
+	/// <returns></returns> true (left), false(right)
+	bool checkObstacle(unsigned char* inBuf,int w, int h, unsigned char* outBuf);
 #ifdef __cplusplus
 }
 #endif

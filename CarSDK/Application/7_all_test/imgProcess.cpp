@@ -47,6 +47,22 @@ string toString(double A);
 Point centerPoint(Vec4i line);
 
 
+/// <summary>
+/// 관심영역만 마스킹해서 나머지는 올 블랙으로 없애버림
+/// </summary>
+/// <param name="src"></param> //Input img
+/// <param name="dst"></param> //after masking image
+/// <param name="points"></param> //4points is needed
+void regionOfInterest(Mat& src, Mat& dst, Point* points);
+/// <summary>
+/// Count gray rate in roi
+/// </summary>
+/// <param name="src"></param> input img
+/// <param name="down"></param> down point
+/// <param name="up"></param> up point
+/// <param name="dydx"></param> slope degree of line
+/// <returns></returns> gray rate of img
+float countGray(Mat& src, Point down, Point up, const float dydx);
 
 extern "C" {
 
@@ -108,7 +124,7 @@ extern "C" {
 			image_point.push_back(corners);
 			object_point.push_back(obj);
 
-			cout << successes + 1 << "th snap stored!" << endl; 
+			cout << successes + 1 << "th snap stored!" << endl;
 
 
 			successes++;
@@ -195,6 +211,118 @@ extern "C" {
 		return steer;
 	}
 
+	bool checkObstacle(unsigned char* inBuf, int w, int h, unsigned char* outBuf) {
+		/*Capture from inBuf*/
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		Mat dstRGB(h, w, CV_8UC3, outBuf);
+
+		/*filtering value setting*/
+		Scalar upper_gray(255, 100, 160);
+		Scalar lower_gray(0, 0, 0);
+		/***************************************/
+		/*Convert Color*/
+		int color_convert = 1;
+		Mat img_white;
+		Point roi_points[4] = { Point(0,100),Point(0,360),Point(640,360),Point(640,100) };
+		Mat img_roi;
+		regionOfInterest(srcRGB, img_roi, roi_points);
+		lineFiltering(img_roi, img_white, 1);
+		/*Canny Image*/
+		Mat img_canny;
+		cannyEdge(img_white, img_canny);
+		imshow("img_white", img_white);
+		/*Hough Ransac*/
+		Mat img_ransac;
+		int line_type;
+
+		Vec8i ransac_points = hough_ransacLine(img_canny, srcRGB, 640, 360, 17, 1, line_type);
+
+		/*Line Splitting*/ //point로 바꿔야됨
+		Vec4i line_left(ransac_points[0], ransac_points[1], ransac_points[2], ransac_points[3]);
+		Vec4i line_right(ransac_points[4], ransac_points[5], ransac_points[6], ransac_points[7]);
+
+		/*Check Line Splitting*/
+		line(srcRGB, Point(line_left[0], line_left[1]), Point(line_left[2], line_left[3]), Scalar(0, 0, 255), 2);
+		line(srcRGB, Point(line_right[0], line_right[1]), Point(line_right[2], line_right[3]), Scalar(0, 0, 255), 2);
+		/*Check Line Upper Bound*/
+		line(srcRGB, Point(0, height_up), Point(width, height_up), Scalar(255, 0, 0), 2);
+		/*Calculate Gradient*/
+		double grad_right = slope(line_right);
+		double grad_left = slope(line_left);
+
+		/*Point that meets upper and lower bound*/
+		int rightup_x = getPointX_at_Y(line_right, height_up);
+		int rightdown_x = getPointX_at_Y(line_right, height_down);
+		int leftup_x = getPointX_at_Y(line_left, height_up);
+		int leftdown_x = getPointX_at_Y(line_left, height_down);
+		/*Calculate up or down point*/
+		Point point_rightup, point_rightdown, point_leftup, point_leftdown;
+		point_rightup = Point(rightup_x, height_up);
+		point_rightdown = Point(rightdown_x, height_down);
+		point_leftup = Point(leftup_x, height_up);
+		point_leftdown = Point(leftdown_x, height_down);
+
+		//for all roi points////////////////////////////////////////////
+		//if (line_left[1] > line_left[3]) {//left
+		//	point_leftup=Point (line_left[0], line_left[1]);
+		//	point_leftdown=Point(line_left[2], line_left[3]);
+		//}
+		//else {
+		//	point_leftup = Point(line_left[2], line_left[3]);
+		//	point_leftdown = Point(line_left[0], line_left[1]);
+		//}
+		//if (line_right[1] > line_right[3]) {//right
+		//	point_rightup = Point(line_right[0], line_right[1]);
+		//	point_rightdown = Point(line_left[2], line_right[3]);
+		//}
+		//else {
+		//	point_rightup = Point(line_right[2], line_right[3]);
+		//	point_rightdown = Point(line_right[0], line_right[1]);
+		//}
+		/////////////////////////////////////////////////////////////////////
+
+		/*Count Gray*/
+		float grayrate_left = 0;
+		float grayrate_right = 0;
+		Mat img_filtered, img_hsv;
+		cvtColor(img_roi, img_hsv, COLOR_BGR2HSV);
+		inRange(img_hsv, lower_gray, upper_gray, img_filtered);
+		line(img_filtered, Point(line_left[0], line_left[1]), Point(line_left[2], line_left[3]), Scalar(0, 0, 255), 2);
+		line(img_filtered, Point(line_right[0], line_right[1]), Point(line_right[2], line_right[3]), Scalar(0, 0, 255), 2);
+		grayrate_right = countGray(img_filtered, point_rightdown, point_rightup, grad_right);
+		grayrate_left = countGray(img_filtered, point_leftdown, point_leftup, grad_left);
+		/*Calculate Rate*/
+		/**************************************/
+
+		/*Show image*/
+		Point location(width / 2, height * 6 / 8);// Location that is Detected Sign 
+		Point location2(width / 2, height / 8);// Location that is time of calculation
+		Point location_left(width / 4, height * 7 / 8); // Location that is rate of gray detected(left)
+		Point location_right(width * 3 / 4, height * 7 / 8); //Location that is rate of gray detected(right)
+
+		int font = FONT_ITALIC; // italic font
+		double fontScale = 1;
+
+		string time_total = to_string(t1) + "sec";
+		string s_left = to_string(grayrate_left) + "%";
+		string s_right = to_string(grayrate_right) + "%";
+		putText(srcRGB, time_total, location2, font, fontScale, Scalar(255, 0, 0), 2);
+		putText(srcRGB, s_left, location_left, font, fontScale, Scalar(255, 0, 0), 2);
+		putText(srcRGB, s_right, location_right, font, fontScale, Scalar(255, 0, 0), 2);
+		/*Choose Left or Right*/
+		//선이 없는 경우 배제하는 것도 필요
+		if (grayrate_left > grayrate_right)
+		{
+			putText(srcRGB, "Left to go", location, font, fontScale, Scalar(0, 0, 255), 2);
+			return true;
+		}
+		else
+		{
+			putText(srcRGB, "Right to go", location, font, fontScale, Scalar(0, 0, 255), 2);
+			return false;
+		}
+
+	}
 }
 
 
@@ -690,4 +818,73 @@ string toString(double A)
 Point centerPoint(Vec4i line)
 {
 	return Point((line[0] + line[2]) / 2.0, (line[1] + line[3]) / 2.0);
+}
+
+void regionOfInterest(Mat& src, Mat& dst, Point* points)
+{ // points의 포인터인 이유-> 여러개의 꼭짓점 경우
+
+	Mat maskImg = Mat::zeros(src.size(), CV_8UC3);
+
+	Scalar ignore_mask_color = Scalar(255, 255, 255);
+	const Point* ppt[1] = { points }; //개의 꼭짓점 :n vertices
+	int npt[] = { 4 };
+
+	fillPoly(maskImg, ppt, npt, 1, Scalar(255, 255, 255), LINE_8);
+	Mat maskedImg;
+	bitwise_and(src, maskImg, maskedImg);
+	dst = maskedImg;
+}
+
+float countGray(Mat& src, Point down, Point up, const float dydx)
+{
+	CV_Assert(src.type() == CV_8UC1);
+	int count_left = 0;
+	int count_right = 0;
+	int count_total = 0;
+	float rate = 0;
+	/*check left side or right side*/
+	int width = src.cols;
+	if (down.x < width / 2) {//left
+		for (int y = up.y; y < down.y; y++)//up.y<down.y
+		{ //y
+			int lower_x;//lower bound for calculate rectangular form
+			if (dydx >= 1000) {
+				lower_x = 0;
+			}
+			else { lower_x = (y - up.y) / dydx + up.x; }
+
+			for (int x = 0; x < lower_x; x++) // left Gray detection
+			{ //x
+				uchar color_value = src.at<uchar>(y, x);
+				//img_filtered를 사용해야 회색의 범위를 찾음
+				if (color_value > 128)
+				{
+					count_left++;
+				}
+				count_total++;
+			}
+		}
+		rate = (float)count_left / count_total * 100.0;
+	}
+	else {//right
+		for (int y = up.y; y < down.y; y++)//up.y<down.y
+		{ //y
+			int upper_x;//upper bound for calculate rectangular form
+			if (dydx >= 1000) { upper_x = width; }
+			else { upper_x = (y - up.y) / dydx + up.x; }
+			for (int x = upper_x; x < width; x++) // left Gray detection
+			{ //x
+				uchar color_value = src.at<uchar>(y, x);
+				//img_filtered를 사용해야 회색의 범위를 찾음
+				if (color_value > 128)
+				{
+					count_right++;
+				}
+				count_total++;
+			}
+		}
+		rate = (float)count_right / count_total * 100.0;
+	}
+
+	return rate;
 }

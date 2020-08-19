@@ -67,6 +67,10 @@ enum OvertakeState {
 	DONE_O = NONE_O
 };
 
+enum CameraVerticalState {
+	CAMERA_UP, //장애물 인식을 위해 올린상태
+	CAMERA_DOWN //원래 상태 -->이 부분 조정 필요 MS
+};
 struct Parking {
 	bool frontRight;
 	bool rearRight;
@@ -75,7 +79,10 @@ struct Parking {
 	bool verticalFlag; // 수직 주차 활성화를 나타내는 플래그
 	bool horizontalFlag; // 수평 주차 활성화를 나타내는 플래그
 };
-
+struct Overtaking {
+	bool direction; //차량의 이동방향 결정
+	enum CameraVerticalState updownCamera; //카메라를 위로 올릴지 말지 결정하는 부분
+};
 struct MissionData {
 	uint32_t loopTime;	// mission 스레드 루프 시간
 	bool on_processing; // 어떠한 미션이 진행 중임을 나타내는 플래그 -> 미션 쓰레드에서 다른 미션을 활성화 시키지 않도록 한다.
@@ -84,7 +91,7 @@ struct MissionData {
 	bool bround; // 회전교차로 플래그
 	bool overtakingFlag; // 추월차로 플래그 ->MS 이후 overtaking struct 추가할 것
 	struct Parking parkingData; // 주차에 필요한 플래그를 담는 구조체
-
+	struct Overtaking overtakingData;//추월에 필요한 플래그 담는 구조체
 
 };
 
@@ -229,6 +236,8 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		/*MS 추월차로시에 사용*/
 		if (t_data->imgData.bcalibration && t_data->missionData.overtakingFlag)//camera 올라간 flag도 필요함
 		{
+			t_data->missionData.overtakingData.updownCamera = CAMERA_UP;
+
 			//srcbuf를 활용하여 capture한 영상을 변환
 		}
 
@@ -636,10 +645,11 @@ void* mission_thread(void* arg)
 					case FRONT_DETECT:
 						/* 장애물 좌우 차선에 장애물이 있는지 판단하는 코드 */
 						data->missionData.overtakingFlag = true;
+						bool direction = data
+							/*false 가 right, true가 left*/
+							/* 비어있는 차선으로 전진하는 코드*/
 
-						/* 비어있는 차선으로 전진하는 코드*/
-
-						state = SIDE_ON;
+							state = SIDE_ON;
 						break;
 
 					case SIDE_ON:
@@ -981,6 +991,9 @@ int main(int argc, char** argv)
 	tdata.missionData.parkingData.on_parkingFlag = false;
 	tdata.missionData.parkingData.frontRight = false;
 	tdata.missionData.parkingData.rearRight = false;
+	tdata.missionData.overtakingFlag = false;
+	tdata.missionData.overtakingData.updownCamera = CAMERA_DOWN;
+	tdata.missionData.overtakingData.direction = false;
 
 
 	// open vpe

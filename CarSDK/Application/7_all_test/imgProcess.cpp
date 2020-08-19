@@ -178,7 +178,13 @@ extern "C" {
 				Point2f(0 * (w / 640.0), 360 * (h / 360.0)) };
 			Hmatrix = getPerspectiveTransform(Hp, p);
 		}
+		else if (mode == 3)
+		{
+			dstRGB = srcRGB.rowRange(150, 360).clone();
+			resize(dstRGB, dstRGB, Size(640, 360));
 
+			return;
+		}
 		Size topviewSize(w, h);	//변환후 사이즈
 		warpPerspective(srcRGB, dstRGB, Hmatrix, topviewSize);
 

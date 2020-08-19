@@ -76,12 +76,18 @@ struct Parking {
 	bool horizontalFlag; // 수평 주차 활성화를 나타내는 플래그
 };
 
+
+struct ROUNDABOUT {
+	bool RAstart; // 분기의 시작을 알리는 변수
+	bool RAend; // 분기의 끝을 알리는 변수
+}
+
 struct MissionData {
 	uint32_t loopTime;	// mission 스레드 루프 시간
 	bool on_processing; // 어떠한 미션이 진행 중임을 나타내는 플래그 -> 미션 쓰레드에서 다른 미션을 활성화 시키지 않도록 한다.
 
 	bool btunnel; // 터널 플래그
-	bool bround; // 회전교차로 플래그
+	struct ROUNDABOUT roundabout; // 회전교차로 플래그
 	bool overtakingFlag; // 추월차로 플래그 ->MS 이후 overtaking struct 추가할 것
 	struct Parking parkingData; // 주차에 필요한 플래그를 담는 구조체
 

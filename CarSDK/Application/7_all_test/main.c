@@ -79,6 +79,13 @@ struct Parking {
 	bool verticalFlag; // 수직 주차 활성화를 나타내는 플래그
 	bool horizontalFlag; // 수평 주차 활성화를 나타내는 플래그
 };
+
+
+struct ROUNDABOUT {
+	bool RAstart; // 분기의 시작을 알리는 변수
+	bool RAend; // 분기의 끝을 알리는 변수
+}
+
 struct Overtaking {
 	bool direction; //차량의 이동방향 결정
 	enum CameraVerticalState updownCamera; //카메라를 위로 올릴지 말지 결정하는 부분
@@ -88,7 +95,7 @@ struct MissionData {
 	bool on_processing; // 어떠한 미션이 진행 중임을 나타내는 플래그 -> 미션 쓰레드에서 다른 미션을 활성화 시키지 않도록 한다.
 
 	bool btunnel; // 터널 플래그
-	bool bround; // 회전교차로 플래그
+	struct ROUNDABOUT roundabout; // 회전교차로 플래그
 	bool overtakingFlag; // 추월차로 플래그 ->MS 이후 overtaking struct 추가할 것
 	struct Parking parkingData; // 주차에 필요한 플래그를 담는 구조체
 	struct Overtaking overtakingData;//추월에 필요한 플래그 담는 구조체
@@ -361,6 +368,8 @@ void* input_thread(void* arg)
 	MSG("\t dist  : distance sensor check");
 	MSG("\t distc : distance sensor check by -cm-");
 	MSG("\t distl : distance sensor check constantly");
+	MSG("\t encoder : ");
+	MSG("\t parking : ");
 	MSG("\n");
 
 	while (1)
@@ -424,7 +433,12 @@ void* input_thread(void* arg)
 						data->imgData.topMode = 2;
 						printf("\t topview 2 ON\n");
 					}
-					else
+					else if(data->imgData.topMode == 2)
+					{
+						data->imgData.topMode = 3;
+						printf("\t topview 3 ON\n");
+					}
+					else if(data->imgData.topMode == 3)
 					{
 						data->imgData.topMode = 1;
 						data->imgData.btopview = !data->imgData.btopview;
@@ -645,7 +659,6 @@ void* mission_thread(void* arg)
 					case FRONT_DETECT:
 						/* 장애물 좌우 차선에 장애물이 있는지 판단하는 코드 */
 						data->missionData.overtakingFlag = true;
-						bool direction = data
 							/*false 가 right, true가 left*/
 							/* 비어있는 차선으로 전진하는 코드*/
 
@@ -761,8 +774,7 @@ void* control_thread(void* arg)
 				err_B = 0;
 				//usleep(100000); //100ms
 			}
-
-			if (data->controlData.speedWrite)
+			else if (data->controlData.speedWrite)
 			{
 				isStop = 0;
 				goal = data->controlData.desireSpeedVal;

@@ -18,6 +18,11 @@
 #include "control_mission.h"
 #include "car_lib.h"
 
+// TUNNEL
+int isDark(Mat& frame, const double percent);
+int Tunnel_isStart(Mat& frame, const double percent);
+
+
 extern "C" {
 
 	static int dist_table[6][28] = {
@@ -87,7 +92,8 @@ extern "C" {
 		return 0;
 	}
 
-	void DesiredDistance(int SettingSpeed, int SettingDistance) {
+	void DesiredDistance(int SettingSpeed, int SettingDistance)
+	{
 		int init_encoder = 0;
 		int on_encoder = 0;
 		EncoderCounter_Write(init_encoder);
@@ -103,4 +109,184 @@ extern "C" {
 		}
 	}
 
+	int Tunnel(unsigned char* inBuf, int w, int h, const double percent)
+	{
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+
+		// return Tunnel_isStart(srcRGB, percent);
+
+		if (Tunnel_isStart(srcRGB, percent)) {
+			printf("IN TUNNEL\n");
+			return 1;
+		}
+		return 0;
+	}
+	
+
+
 }//extern "C"
+
+
+/*/////////////////////////////
+		TUNNEL START
+*//////////////////////////////
+int flag_tunnel;
+int first_tunnel = 0;
+int MAXTHR_tunnel = 20;
+int MINTHR_tunnel = 10;
+
+int isDark(Mat& frame, const double percent) {
+
+	Mat grayFrame;
+
+	cvtColor(frame, grayFrame, COLOR_RGB2GRAY);
+
+	int pixelCnt(0);
+	int pixelValue(0);
+	for (int i = 0; i < grayFrame.cols; i += 10)
+	{
+		for (int j = 0; j < grayFrame.rows; j += 10)
+		{
+			pixelValue += grayFrame.at<uchar>(j, i);
+			pixelCnt++;
+		}
+	}
+	int totalValue = pixelCnt * 255;
+	double brightRate = ((double)pixelValue / totalValue) * 100.0;
+
+	if (brightRate < (100 - percent))
+	{
+		return 1;
+	}
+	return 0;
+}
+int Tunnel_isStart(Mat& frame, const double percent) {
+	if (!first_tunnel++) flag_tunnel = -1;
+
+	if (isDark(frame, percent)) {
+		if (flag_tunnel < MAXTHR_tunnel)
+			flag_tunnel++;
+	}
+	else {
+		if (flag_tunnel > 0)
+			flag_tunnel--;
+	}
+
+	if (flag_tunnel >= MINTHR_tunnel)
+		return 1;
+	return 0;
+}
+/*/////////////////////////////
+		TUNNEL END
+*//////////////////////////////
+
+
+
+/*/////////////////////////////
+		ROUNDABOUT START
+*//////////////////////////////
+int flag_go, flag_wait, flag_stop, flag_end;
+int check_start;
+int lower_StopDistance = 25;
+int uper_StopDistance = 40;
+int lower_RoundDistance = 20;
+int uper_RoundDistance = 40;
+int THR_RoundAbout_END = 200;
+int first_RoundAbout = 0;
+
+void RoundAbout_Init() {
+	flag_go = -1;
+	check_start = 0;
+	flag_wait = -1;
+	flag_stop = -1;
+	flag_end = -1;
+}
+
+int RoundAbout_isStart(const int Distance1) {
+	if (!first_RoundAbout++) RoundAbout_Init();
+
+	if (flag_go > 0) 
+	{
+		if (Distance1 >= uper_StopDistance)
+			flag_go--;
+	}
+	else if (flag_go == 0) 
+	{ 
+		if (!check_start) 
+		{
+			check_start = 1;
+			flag_wait = -1;
+		}
+	}
+	else
+	{
+		if (Distance1 < lower_StopDistance)
+			if (flag_wait < 2)
+				flag_wait++;
+		else
+			if (flag_wait > 0)
+				flag_wait--;
+
+		if (flag_wait == 2) {
+			flag_wait = -1;
+			flag_go = 35; // 해당 프레임이 지난 후 출발할 것임
+		}
+	}
+	return check_start;
+}
+
+int RoundAbout_isDelay(const int Distance1, int& speed) {
+	if (Distance1 < lower_RoundDistance) {
+		if (flag_wait < 2)
+			flag_wait++;
+
+		if (flag_wait == 2) {
+			flag_wait = -1;
+			flag_stop = 30; // 해당 프레임만큼 정지
+			return 1;
+		}
+		return 0;
+	}
+	else {
+		if (flag_wait > 0)
+			flag_wait--;
+		
+		if (flag_stop = 0) {
+			flag_stop = -1;
+			if (speed > 30) { // 일정 속도 이상일 경우 감속
+				speed -= 5;
+			}
+			return 0;
+		}
+		else if (flag_stop > 0) {
+			if (Distance1 >= uper_RoundDistance) {
+				flag_stop--;
+			}
+			return 1;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+}
+
+int RoundAbout_End(const int Distance1, const int Distance2) {
+	if ((Distance1 > 40) && (Distance2 > 40)) { // 거리 센서에 아무것도 잡히지 않을 때
+		if (flag_end < THR_RoundAbout_END) // 해당 프레임이 지나면 분기 벗어남
+			flag_end++;
+	}
+	else {
+		if (flag_end > 0)
+			flag_end--;
+	}
+
+	if (flag_end > THR_RoundAbout_END) {
+		flag_end = -1;
+		return 1;
+	}
+	return 0;
+}
+/*/////////////////////////////
+		ROUNDABOUT END
+*//////////////////////////////

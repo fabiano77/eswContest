@@ -352,6 +352,8 @@ void* input_thread(void* arg)
 	MSG("\t dist  : distance sensor check");
 	MSG("\t distc : distance sensor check by -cm-");
 	MSG("\t distl : distance sensor check constantly");
+	MSG("\t encoder : ");
+	MSG("\t parking : ");
 	MSG("\n");
 
 	while (1)
@@ -415,7 +417,12 @@ void* input_thread(void* arg)
 						data->imgData.topMode = 2;
 						printf("\t topview 2 ON\n");
 					}
-					else
+					else if(data->imgData.topMode == 2)
+					{
+						data->imgData.topMode = 3;
+						printf("\t topview 3 ON\n");
+					}
+					else if(data->imgData.topMode == 3)
 					{
 						data->imgData.topMode = 1;
 						data->imgData.btopview = !data->imgData.btopview;
@@ -751,8 +758,7 @@ void* control_thread(void* arg)
 				err_B = 0;
 				//usleep(100000); //100ms
 			}
-
-			if (data->controlData.speedWrite)
+			else if (data->controlData.speedWrite)
 			{
 				isStop = 0;
 				goal = data->controlData.desireSpeedVal;

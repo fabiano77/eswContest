@@ -7,6 +7,7 @@
 #include <string>
 #include <sstream>
 #include <opencv2/opencv.hpp>
+#include <opencv2/imgproc.hpp>
 
 #define PI 3.1415926
 
@@ -221,7 +222,11 @@ extern "C" {
 		/*Capture from inBuf*/
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
-
+		/*Declare usable variables*/
+		int height_up = 80;
+		int height_down = 150;
+		int width = w;
+		int height = h;
 		/*filtering value setting*/
 		Scalar upper_gray(255, 100, 160);
 		Scalar lower_gray(0, 0, 0);
@@ -232,7 +237,7 @@ extern "C" {
 		Point roi_points[4] = { Point(0,100),Point(0,360),Point(640,360),Point(640,100) };
 		Mat img_roi;
 		regionOfInterest(srcRGB, img_roi, roi_points);
-		lineFiltering(img_roi, img_white, 1);
+		lineFiltering(img_roi, img_white, color_convert);
 		/*Canny Image*/
 		Mat img_canny;
 		cannyEdge(img_white, img_canny);
@@ -268,24 +273,6 @@ extern "C" {
 		point_leftup = Point(leftup_x, height_up);
 		point_leftdown = Point(leftdown_x, height_down);
 
-		//for all roi points////////////////////////////////////////////
-		//if (line_left[1] > line_left[3]) {//left
-		//	point_leftup=Point (line_left[0], line_left[1]);
-		//	point_leftdown=Point(line_left[2], line_left[3]);
-		//}
-		//else {
-		//	point_leftup = Point(line_left[2], line_left[3]);
-		//	point_leftdown = Point(line_left[0], line_left[1]);
-		//}
-		//if (line_right[1] > line_right[3]) {//right
-		//	point_rightup = Point(line_right[0], line_right[1]);
-		//	point_rightdown = Point(line_left[2], line_right[3]);
-		//}
-		//else {
-		//	point_rightup = Point(line_right[2], line_right[3]);
-		//	point_rightdown = Point(line_right[0], line_right[1]);
-		//}
-		/////////////////////////////////////////////////////////////////////
 
 		/*Count Gray*/
 		float grayrate_left = 0;
@@ -309,10 +296,8 @@ extern "C" {
 		int font = FONT_ITALIC; // italic font
 		double fontScale = 1;
 
-		string time_total = to_string(t1) + "sec";
-		string s_left = to_string(grayrate_left) + "%";
-		string s_right = to_string(grayrate_right) + "%";
-		putText(srcRGB, time_total, location2, font, fontScale, Scalar(255, 0, 0), 2);
+		string s_left = toString((double)grayrate_left) + "%";
+		string s_right = toString((double)grayrate_right) + "%";
 		putText(srcRGB, s_left, location_left, font, fontScale, Scalar(255, 0, 0), 2);
 		putText(srcRGB, s_right, location_right, font, fontScale, Scalar(255, 0, 0), 2);
 		/*Choose Left or Right*/

@@ -71,6 +71,11 @@ enum CameraVerticalState {
 	CAMERA_UP, //장애물 인식을 위해 올린상태
 	CAMERA_DOWN //원래 상태 -->이 부분 조정 필요 MS
 };
+enum DirectionState {
+	LEFT,
+	RIGHT,
+	STOP //앞에 장애물이 있다면 스탑(overtaking이 on일 때만)
+};
 struct Parking {
 	bool frontRight;
 	bool rearRight;
@@ -80,16 +85,17 @@ struct Parking {
 	bool horizontalFlag; // 수평 주차 활성화를 나타내는 플래그
 };
 
+struct Overtaking {
+	enum DirectionState headingDirection; //차량의 이동방향 결정
+	bool sideSensorFlag; // 차량의 사이드 탐지 활성화 플래그
+	enum CameraVerticalState updownCamera; //카메라를 위로 올릴지 말지 결정하는 부분
+};
 
 struct ROUNDABOUT {
 	bool RAstart; // 분기의 시작을 알리는 변수
 	bool RAend; // 분기의 끝을 알리는 변수
 }
 
-struct Overtaking {
-	bool direction; //차량의 이동방향 결정
-	enum CameraVerticalState updownCamera; //카메라를 위로 올릴지 말지 결정하는 부분
-};
 struct MissionData {
 	uint32_t loopTime;	// mission 스레드 루프 시간
 	bool on_processing; // 어떠한 미션이 진행 중임을 나타내는 플래그 -> 미션 쓰레드에서 다른 미션을 활성화 시키지 않도록 한다.
@@ -648,9 +654,11 @@ void* mission_thread(void* arg)
 			/*MS 분기진입 명령 지시*/
 			if (DistanceSensor_cm(1) < 30) //전방 장애물 감지 //주차 상황이 아닐때, 분기진입 가능
 			{
+				bool farFront = false;
 				//30넘을 때 control thread 변환을 주어야함 MS
 				data->missionData.on_processing = true;
 				enum OvertakeState state = FRONT_DETECT;
+				data->missionData.overtakingData.headingDirection = STOP;
 				bool obstacle = false;
 				while (state)
 				{
@@ -659,13 +667,36 @@ void* mission_thread(void* arg)
 					case FRONT_DETECT:
 						/* 장애물 좌우 차선에 장애물이 있는지 판단하는 코드 */
 						data->missionData.overtakingFlag = true;
-							/*false 가 right, true가 left*/
+						data->missionData.overtakingData.updownCamera = CAMERA_UP;
 							/* 비어있는 차선으로 전진하는 코드*/
+						if (data->missionData.overtakingData.headingDirection == RIGHT) {
+							/*출발*/
+							int i_time = 0;//#TODO 변경예정
+							while (!farFront) {
+								/*일정시간마다 거리센서 측정하여 멀어지면 SIDE_ON진행*/
 
+								/*특정시간이 지났음에도 멀어지지 않는다면 BACK진행*/
+								i++;
+								if (i_time > 5000) {
+									break;
+									i_time = 0;
+								}
+							}
+							/*전진하는 동안 전방 센서가 30 이상 멀어지면 SIDE_ON으로 진행*/
+							if (farFront == true &&) { state = SIDE_ON; }
+
+						}
+						else if(data->missionData.overtakingData.headingDirection == LEFT) {
+
+							/*전진하는 동안 전방 센서가 30 이상 멀어지면 SIDE_ON으로 진행*/
 							state = SIDE_ON;
+						}
+						else { /*STOP이 유지되는 경우 멈춤*/ }
+
 						break;
 
 					case SIDE_ON:
+						data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
 						/* 현재 장애물이 어디있느냐에 따라 side 센서(2,3 or 4,5)로 감지하는 코드*/
 
 						/*

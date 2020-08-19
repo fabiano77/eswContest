@@ -329,7 +329,7 @@ extern "C" {
 		}
 
 	}
-}
+}	// extern "C"
 
 
 Scalar color[7];
@@ -548,11 +548,11 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 		}
 	}
 
-	// createTrackbar("H_thresh", "trackbar", &HLP_threshold, 120, on_trackbar);
-	// createTrackbar("H_minLen", "trackbar", &HLP_minLineLength, 200, on_trackbar);
-	// createTrackbar("H_maxGap", "trackbar", &HLP_maxLineGap, 500, on_trackbar);
-	// namedWindow("trackbar", WINDOW_NORMAL);
-	// moveWindow("trackbar", 320 * 5, 180 * 5);
+	createTrackbar("H_thresh", "trackbar", &HLP_threshold, 120, on_trackbar);
+	createTrackbar("H_minLen", "trackbar", &HLP_minLineLength, 200, on_trackbar);
+	createTrackbar("H_maxGap", "trackbar", &HLP_maxLineGap, 500, on_trackbar);
+	namedWindow("trackbar", WINDOW_NORMAL);
+	moveWindow("trackbar", 320 * 5, 180 * 5);
 
 	vector<Vec4i> lines;		//검출될 직선이 저장될 객체
 	HoughLinesP(src, lines, 1, CV_PI / 180, HLP_threshold, HLP_minLineLength, HLP_maxLineGap);
@@ -673,6 +673,37 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 	}
 	else //if (slopeSign(leftLine) == slopeSign(rightLine))	//좌우 직선의 기울기부호가 같으면
 	{
+		Point highest(-1, h);		//최상단 점
+		Point lowest(-1, 0);		//최하단 점
+		for (unsigned int i = 0; i < lines.size(); i++)
+		{
+			if (highest.y > lines[i][1])
+			{
+				highest = Point(lines[i][0], lines[i][1]);
+			}
+			if (highest.y > lines[i][3])
+			{
+				highest = Point(lines[i][2], lines[i][3]);
+			}
+			if (lowest.y < lines[i][1])
+			{
+				lowest = Point(lines[i][0], lines[i][1]);
+			}
+			if (lowest.y < lines[i][3])
+			{
+				lowest = Point(lines[i][2], lines[i][3]);
+			}
+		}
+		Rect lineRatio(highest, lowest);
+		if (((lineRatio.x < w / 2.0) && (lineRatio.x + lineRatio.width < w / 2.0)) ||
+			((lineRatio.x > w / 2.0) && (lineRatio.x + lineRatio.width > w / 2.0)))
+		{
+			detectedLineType = 0;
+			rectangle(dst, lineRatio, purple, 4);
+			putText(dst, "rect ratio = " + toString((double)lineRatio.height / lineRatio.width), printPoint + Point(0, 60), FONT_HERSHEY_SIMPLEX, 0.6, Scalar(255, 255, 255), 2);
+			return Vec8i();
+		}
+
 		detectedLineType = 1;
 		//가중치 영역 설정.
 		Rect weightingRect(w / 3, h / 2, w / 3, h / 2);
@@ -685,6 +716,7 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 		{
 			putText(dst, "inlier(%)  = " + toString((int)inlierPercent) + "%", printPoint + Point(0, 0), FONT_HERSHEY_SIMPLEX, 0.6, Scalar(255, 255, 255), 2);
 			putText(dst, "slope = " + toString(slope(firstLine)), printPoint + Point(0, 30), FONT_HERSHEY_SIMPLEX, 0.6, Scalar(255, 255, 255), 2);
+			putText(dst, "rect ratio = " + toString((double)lineRatio.height / lineRatio.width), printPoint + Point(0, 60), FONT_HERSHEY_SIMPLEX, 0.6, Scalar(255, 255, 255), 2);
 		}
 		//dst = temp;
 		return Vec8i(firstLine[0], firstLine[1], firstLine[2], firstLine[3],
@@ -800,7 +832,7 @@ int getPointY_at_X(Vec4i line, const int X)
 int lineDeviation(Mat& dst, Vec4i line1, Vec4i line2)
 {
 	//y = 10에서 직선끼리의 거리 비교.
-	return getPointX_at_Y(line1, 100) - getPointX_at_Y(line2, 100);
+	return getPointX_at_Y(line1, 60) - getPointX_at_Y(line2, 60);
 }
 
 string toString(int A)

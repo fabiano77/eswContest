@@ -59,6 +59,14 @@ enum ParkingState {
 	DONE_P = NONE_P
 };
 
+enum HorizentalStep {
+	FINISH,
+	FIRST_BACKWARD,
+	FIRST_FORWARD,
+	SECOND_BACKWARD,
+	SECOND_FORWARD
+};
+
 enum OvertakeState {
 	NONE_O,
 	FRONT_DETECT,
@@ -586,6 +594,8 @@ void* mission_thread(void* arg)
 				sprintf(data->imgData.missionString, "Parking");
 				int parking_width = 0;
 				enum ParkingState state = FIRST_WALL;
+				enum HorizentalStep step = FIRST_BACKWARD;
+
 				while (state)	// state == END가 아닌이상 루프 진행
 				{
 					data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 20) ? true : false;
@@ -617,7 +627,7 @@ void* mission_thread(void* arg)
 							*/
 							printf("Result Width : %-3d\n", parking_width);
 
-							if (parking_width <= 45)
+							if (parking_width <= 700)
 								data->missionData.parkingData.verticalFlag = true;
 							else
 								data->missionData.parkingData.horizontalFlag = true;
@@ -627,11 +637,12 @@ void* mission_thread(void* arg)
 					case SECOND_WALL:
 						sprintf(data->imgData.missionString, "Second Wall");
 						if (data->missionData.parkingData.rearRight == true) {
+							DesiredDistance(40, 200, 1500);
 							state = PARKING_START;
 							data->imgData.bmission = true;
 							break;
 							// 두번 째 벽에 차량 우측 후방 센서가 걸린 상태이다. -> 수직 또는 수평 주차 진행.
-
+						}
 					case PARKING_START:
 						sprintf(data->imgData.missionString, "Parking Start");
 						data->missionData.on_processing = true;
@@ -644,7 +655,48 @@ void* mission_thread(void* arg)
 							// 수직 주차 구문
 						}
 						else {
+							while (data->missionData.parkingData.horizontalFlag) {
+								switch (step)
+								{
+								case FIRST_BACKWARD:
+									SteeringServoControl_Write(1000);
+									DesireSpeed_Write(-30);
+									if (DistanceSensor_cm(4) <= 8) {
+										DesireSpeed_Write(0);
+										step = FIRST_FORWARD;
+									}
+									break;
 
+								case FIRST_FORWARD:
+									DesiredDistance(30, 200, 1500);
+									step = SECOND_BACKWARD;
+									break;
+
+								case SECOND_BACKWARD:
+									SteeringServoControl_Write(2000);
+									DesireSpeed_Write(-30);
+									if (DistanceSensor_cm(4) <= 5 || DistanceSensor_cm(3) <= 5) {
+										DesireSpeed_Write(0);
+										step = SECOND_FORWARD;
+									}
+									break;
+
+								case SECOND_FORWARD:
+									DesiredDistance(30, 250, 1200);
+									step = FINISH;
+									break;
+
+								case FINISH:
+									data->missionData.parkingData.horizontalFlag = 0;
+									data->missionData.on_processing = 0;
+									data->missionData.parkingData.on_parkingFlag = 0;
+									break;
+
+								default:
+									break;
+								}
+								usleep(50000);
+							}
 						}
 						state = DONE;
 
@@ -655,11 +707,10 @@ void* mission_thread(void* arg)
 
 					default:
 						break;
-						}
-						usleep(50000);
 					}
-					data->imgData.bmission = false;
+					usleep(50000);
 				}
+				data->imgData.bmission = false;
 			}
 		}
 
@@ -973,8 +1024,8 @@ void* control_thread(void* arg)
 	{
 		gettimeofday(&st, NULL);
 
-		if (data->missionData.parkingData.verticalFlag == 1) {
-			DesiredDistance(-30, 500);
+		if (0) {
+			DesiredDistance(-30, 500, 1500);
 			data->missionData.on_processing = 0;
 			data->missionData.parkingData.on_parkingFlag = 0;
 			data->missionData.parkingData.frontRight = 0;

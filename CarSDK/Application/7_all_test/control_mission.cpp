@@ -96,12 +96,13 @@ extern "C" {
 		return 0;
 	}
 
-	void DesiredDistance(int SettingSpeed, int SettingDistance)
+	void DesiredDistance(int SettingSpeed, int SettingDistance, int SettingSteering)
 	{
 		int init_encoder = 0;
 		int on_encoder = 0;
 		EncoderCounter_Write(init_encoder);
 		DesireSpeed_Write(SettingSpeed);
+		SteeringServoControl_Write(SettingSteering);
 		while (1) {
 			on_encoder = abs(EncoderCounter_Read());
 			if (on_encoder != 65278) printf("encoder : %-4d\n", on_encoder);

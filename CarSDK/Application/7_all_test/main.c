@@ -251,6 +251,20 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 
 		if (t_data->imgData.bmission)
 		{
+			/*추월차로시에 사용*/
+			if (t_data->missionData.overtakingFlag && t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
+			{
+				/*check를 위한 camera up*/
+				bool check_direction;
+				check_direction = checkObstacle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+				if (check_direction == true) {//true=>left
+					t_data->missionData.overtakingData.headingDirection = LEFT;
+				}
+				else {//false =>right
+					t_data->missionData.overtakingData.headingDirection = RIGHT;
+				}
+				//srcbuf를 활용하여 capture한 영상을 변환
+			}
 			displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
 		}
 		else
@@ -267,20 +281,6 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				}
 			}
 			if (t_data->missionData.parkingData.bparking) displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
-			/*추월차로시에 사용*/
-			if (t_data->imgData.bcalibration && t_data->missionData.overtakingFlag && t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
-			{
-				/*check를 위한 camera up*/
-				bool check_direction;
-				check_direction = checkObstacle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
-				if (check_direction == true) {//true=>left
-					t_data->missionData.overtakingData.headingDirection = LEFT;
-				}
-				else {//false =>right
-					t_data->missionData.overtakingData.headingDirection = RIGHT;
-				}
-				//srcbuf를 활용하여 capture한 영상을 변환
-			}
 			if (t_data->missionData.broundabout) {
 				// 추가로 흰색 차선 검출
 			}

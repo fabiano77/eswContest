@@ -134,6 +134,7 @@ struct ControlData {
 
 struct ImgProcessData {
 	bool bcalibration;
+	bool bdebug;
 	bool btopview;
 	bool bauto;
 	bool bmission;
@@ -249,6 +250,16 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		/*******************************************************
 		*	 우리가 만든 알고리즘 함수를 넣는 부분.
 		********************************************************/
+		printf("ssibal=%d \n",t_data->imgData.bwhiteLine);
+		if(t_data->imgData.bdebug)
+		{
+			debugFiltering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+			memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
+			gettimeofday(&et, NULL);
+			optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
+			draw_operatingtime(disp, optime, t_data->controlData.loopTime, t_data->missionData.loopTime);
+		}
+		else if (t_data->imgData.bmission)
 		if (t_data->imgData.bmission)
 		{
 			/*추월차로시에 사용*/
@@ -266,6 +277,10 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				//srcbuf를 활용하여 capture한 영상을 변환
 			}
 			if (t_data->imgData.bprintString) displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
+			memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
+			gettimeofday(&et, NULL);
+			optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
+			draw_operatingtime(disp, optime, t_data->controlData.loopTime, t_data->missionData.loopTime);
 		}
 		else
 		{
@@ -413,6 +428,7 @@ void* input_thread(void* arg)
 	printf("----------------------------------------------------	\n");
 	MSG("\n\nInput command:");
 	MSG("\t calib : calibration ON/OFF");
+	MSG("\t debug : debug ON/OFF");
 	MSG("\t top   : top view ON/OFF");
 	MSG("\t auto  : auto steering ON/OFF");
 	MSG("\t dist  : distance sensor check");
@@ -441,6 +457,12 @@ void* input_thread(void* arg)
 				data->imgData.bcalibration = !data->imgData.bcalibration;
 				if (data->imgData.bcalibration) printf("\t calibration ON\n");
 				else printf("\t calibration OFF\n");
+			}
+			else if (0 == strncmp(cmd_input, "debug", 5))
+			{
+				data->imgData.bdebug = !data->imgData.bdebug;
+				if (data->imgData.bdebug) printf("\t debug ON\n");
+				else printf("\t debug OFF\n");
 			}
 			else if (0 == strncmp(cmd_input, "auto", 4))
 			{
@@ -688,7 +710,7 @@ void* mission_thread(void* arg)
 										DesireSpeed_Write(0);
 										SteeringServoControl_Write(1500);
 										DesireSpeed_Write(-50);
-										if (DistanceSensor_cm(4) <= 6)
+										if (DistanceSensor_cm(4) <= 7)
 											step = FIRST_FORWARD;
 									}
 									break;
@@ -708,7 +730,8 @@ void* mission_thread(void* arg)
 									break;
 
 								case SECOND_FORWARD:
-									DesiredDistance(30, 600, 1200);
+									usleep(3000000);
+									DesiredDistance(30, 600, 1800);
 									step = FINISH;
 									break;
 
@@ -738,7 +761,10 @@ void* mission_thread(void* arg)
 				}
 				data->imgData.bmission = false;
 				data->imgData.bprintString = false;
-				if (parking == REMAIN) printf("First Parking is Done!\n");
+				if (parking == REMAIN) {
+					printf("First Parking is Done!\n");
+					usleep(5000000);
+				}
 				if (parking == DONE) printf("Second Parking is Dome!\n");
 			}
 		}
@@ -1288,6 +1314,7 @@ int main(int argc, char** argv)
 	DesireSpeed_Write(0);
 
 	tdata.imgData.bcalibration = false;
+	tdata.imgData.bdebug = false;
 	tdata.imgData.btopview = true;
 	tdata.imgData.topMode = 2;
 	tdata.imgData.bauto = true;

@@ -216,7 +216,7 @@ extern "C" {
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 		string str(name);
-		Point printPosition(230, 50);
+		Point printPosition(230, 25);
 
 		dstRGB = dstRGB;
 

@@ -257,6 +257,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 					t_data->controlData.steerWrite = 1;
 				}
 			}
+			if (t_data->missionData.parkingData.bparking) displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
 			/*MS 추월차로시에 사용*/
 			if (t_data->imgData.bcalibration && t_data->missionData.overtakingFlag && t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
 			{
@@ -432,27 +433,6 @@ void* input_thread(void* arg)
 				if (data->imgData.bcalibration) printf("\t calibration ON\n");
 				else printf("\t calibration OFF\n");
 			}
-			else if (0 == strncmp(cmd_input, "parking", 7))
-			{
-				int j;
-				int c1, c2, c3, c4, c5, c6;
-				data->missionData.parkingData.bparking = !data->missionData.parkingData.bparking;
-				if (data->missionData.parkingData.bparking) {
-					printf("\t parking ON\n");
-					for (j = 0; j < 50000; j++)
-					{
-						c1 = DistanceSensor_cm(1);
-						c2 = DistanceSensor_cm(2);
-						c3 = DistanceSensor_cm(3);
-						c4 = DistanceSensor_cm(4);
-						c5 = DistanceSensor_cm(5);
-						c6 = DistanceSensor_cm(6);
-						printf("1 : %-2d, 2 : %-2d, 3 : %-2d, 4: %-2d, 5 : %-2d, 6 : %-2d \n", c1, c2, c3, c4, c5, c6);
-						usleep(500000); // 0.5초 마다 출력
-					}
-				}
-				else printf("\t parking OFF\n");
-			}
 			else if (0 == strncmp(cmd_input, "auto", 4))
 			{
 				data->imgData.bauto = !data->imgData.bauto;
@@ -616,7 +596,7 @@ void* mission_thread(void* arg)
 		{
 			if (DistanceSensor_cm(2) <= 20) //처음 벽이 감지되었을 경우
 			{
-				data->imgData.bmission = true;
+				data->missionData.parkingData.bparking = true;
 				sprintf(data->imgData.missionString, "Parking");
 				int parking_width = 0;
 				enum ParkingState state = FIRST_WALL;
@@ -660,8 +640,9 @@ void* mission_thread(void* arg)
 
 					case SECOND_WALL:
 						sprintf(data->imgData.missionString, "Second Wall");
-						if (data->missionData.parkingData.rearRight == true)
+						if (data->missionData.parkingData.rearRight == true) {
 							state = PARKING_START;
+							data->imgData.bmission = true;
 						break;
 						// 두번 째 벽에 차량 우측 후방 센서가 걸린 상태이다. -> 수직 또는 수평 주차 진행.
 

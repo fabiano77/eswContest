@@ -614,7 +614,7 @@ void* mission_thread(void* arg)
 						*/
 						if (EncoderCounter_Read() != 65278) {
 							parking_width = EncoderCounter_Read();
-							sprintf(data->imgData.missionString, toString(parking_width);
+							sprintf(data->imgData.missionString, toString(parking_width));
 						}
 						if (data->missionData.parkingData.frontRight == true)
 						{

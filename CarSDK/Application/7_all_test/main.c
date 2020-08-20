@@ -612,8 +612,8 @@ void *mission_thread(void *arg)
 	enum MissionState start = NONE;
 	enum MissionState flyover = NONE;
 	enum MissionState parking = READY;
-	enum MissionState roundabout = NONE;
-	enum MissionState tunnel = NONE;
+	enum MissionState roundabout = READY;
+	enum MissionState tunnel = READY;
 	enum MissionState overtake = READY;
 	enum MissionState signalLight = NONE;
 	enum MissionState finish = NONE;

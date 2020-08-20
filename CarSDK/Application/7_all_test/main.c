@@ -271,20 +271,6 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				}
 				//srcbuf를 활용하여 capture한 영상을 변환
 			}
-			if (t_data->missionData.tunnel.btunnel) {
-				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65)) {
-					t_data->missionData.tunnel.Tstart = true;
-					t_data->missionData.tunnel.Tend = true;
-				}
-				else {
-					t_data->missionData.tunnel.Tstart = false;
-					if (t_data->missionData.tunnel.Tend) {
-						t_data->missionData.tunnel.Tend = false;
-						t_data->missionData.tunnel.btunnel = false;
-					}
-				}
-
-			}
 			if (t_data->missionData.broundabout) {
 				// 추가로 흰색 차선 검출
 			}
@@ -698,6 +684,7 @@ void* mission_thread(void* arg)
 		if (tunnel)
 		{
 			if (data->missionData.tunnel.Tstart) {
+				data->imgData.bmission = true;
 				while (data->missionData.tunnel.btunnel) {
 					// 동작 수행 + 전조등
 
@@ -720,24 +707,20 @@ void* mission_thread(void* arg)
 						break;
 					}
 					else {
-						// stop : speed = 0;
+						DesireSpeed_Write(0);
 					}					
 				}
 				while (!RoundAbout_End(DistanceSensor_cm(1), DistanceSensor_cm(4))) {
 					if (RoundAbout_isDelay(DistanceSensor_cm(1))) {
-						/* 
-						stop : speed = 0;
-						delay = true;;
-						*/
+						DesireSpeed_Write(0);
+						delay = true;						
 					}
 					else {
-						/* 
-						if(delay && (speed>30)){
+						if (delay && (speed > 30)) {
 							speed = speed - 5;
 							delay = false;
 						}
-						go : speed;
-						*/
+						DesireSpeed_Write(speed);						
 					}
 				}
 				// speed 원상복구

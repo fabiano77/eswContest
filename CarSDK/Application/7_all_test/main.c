@@ -734,7 +734,7 @@ void *mission_thread(void *arg)
 								case FIRST_BACKWARD:
 									SteeringServoControl_Write(1000);
 									DesireSpeed_Write(-50);
-									if (DistanceSensor_cm(4) <= 15)
+									if (DistanceSensor_cm(4) <= 17)
 									{
 										DesireSpeed_Write(0);
 										SteeringServoControl_Write(1500);
@@ -747,7 +747,7 @@ void *mission_thread(void *arg)
 									break;
 
 								case FIRST_FORWARD:
-									DesiredDistance(50, 800, 1400);
+									DesiredDistance(50, 700, 1300);
 									step = SECOND_BACKWARD;
 									break;
 
@@ -757,13 +757,14 @@ void *mission_thread(void *arg)
 									if (DistanceSensor_cm(4) <= 6 || DistanceSensor_cm(3) <= 6)
 									{
 										DesireSpeed_Write(0);
+										usleep(3000000);
 										step = SECOND_FORWARD;
 									}
 									break;
 
 								case SECOND_FORWARD:
 									DesiredDistance(30, 600, 1800);
-									usleep(1000000);
+									usleep(3000000);
 									step = FINISH;
 									break;
 
@@ -776,7 +777,7 @@ void *mission_thread(void *arg)
 								default:
 									break;
 								}
-								usleep(150000);
+								usleep(200000);
 							}
 						}
 						state = DONE;
@@ -791,7 +792,7 @@ void *mission_thread(void *arg)
 					default:
 						break;
 					}
-					usleep(150000);
+					usleep(200000);
 				}
 				data->imgData.bmission = false;
 				data->imgData.bprintString = false;

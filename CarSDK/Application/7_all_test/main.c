@@ -554,6 +554,8 @@ void* mission_thread(void* arg)
 	enum MissionState signalLight = NONE;
 	enum MissionState finish = NONE;
 
+	int i = 0;
+
 
 	//각 미션이 수행되고나면 detect를 하지 않도록 변수설정.
 
@@ -642,8 +644,11 @@ void* mission_thread(void* arg)
 
 					case SECOND_WALL:
 						sprintf(data->imgData.missionString, "Second Wall");
-						printf("Sensor 3 : %d cm", DistanceSensor_cm(3));
+						printf("Sensor 3 : %d\n", DistanceSensor_cm(3));
 						if (data->missionData.parkingData.rearRight) {
+							for (i = 0; i < 50; i++) {
+								printf("SECOND WALL IF CONTEXT\n");
+							}
 							DesiredDistance(40, 200, 1500);
 							state = PARKING_START;
 							data->imgData.bmission = true;

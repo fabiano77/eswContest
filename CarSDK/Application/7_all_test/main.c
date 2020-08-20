@@ -252,6 +252,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		if (t_data->imgData.bmission)
 		{
 			/*추월차로시에 사용*/
+			displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
 			if (t_data->missionData.overtakingFlag && t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
 			{
 				/*check를 위한 camera up*/
@@ -265,7 +266,6 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				}
 				//srcbuf를 활용하여 capture한 영상을 변환
 			}
-			displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
 		}
 		else
 		{
@@ -822,7 +822,10 @@ void* mission_thread(void* arg)
 							}
 							else { farFront = true; /*전방 미탐지*/}
 							/*전진하는 동안 전방 센서가 30 이상 멀어지면 SIDE_ON으로 진행*/
-							if (farFront == true) { state = SIDE_ON; }
+							if (farFront == true) {
+								state = SIDE_ON;
+								DesireSpeed_Write(50);
+							}
 							else {
 								/*정지, 후진 및 방향 전환*/
 								DesiredDistance(-50, thresDistance, 1900);
@@ -841,7 +844,10 @@ void* mission_thread(void* arg)
 							}
 							else { farFront = true; }
 							/*전진하는 동안 전방 센서가 30 이상 멀어지면 SIDE_ON으로 진행*/
-							if (farFront == true) { state = SIDE_ON; }
+							if (farFront == true) { 
+								state = SIDE_ON;
+								DesireSpeed_Write(50);
+							}
 							else {
 								/*정지, 후진 및 방향 전환*/
 								DesiredDistance(-50,thresDistance,1100);
@@ -914,6 +920,7 @@ void* mission_thread(void* arg)
 					default:
 						break;
 					}
+					usleep(1500000);
 				}
 				data->imgData.bmission = false;
 			}

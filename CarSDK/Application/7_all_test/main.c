@@ -738,23 +738,23 @@ void *mission_thread(void *arg)
 								case FIRST_BACKWARD:
 									DesiredDistance(-30, 300, 1000);
 									DesireSpeed_Write(-40);
-									if (abs(DistanceSensor_cm(2)-DistanceSensor_cm(3))<=2)
+									if (abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2)
 									{
 										DesireSpeed_Write(0);
 										SteeringServoControl_Write(1500);
-<<<<<<< HEAD
-										DesireSpeed_Write(-50);
+										<<<<<< < HEAD
+											DesireSpeed_Write(-50);
 										if (DistanceSensor_cm(4) <= 6)
 										{
-=======
-										DesireSpeed_Write(-40);
-										if (DistanceSensor_cm(4) <= 6) {
->>>>>>> ee6839b990dc31aea8ff2a5a0734e7db69ac633d
-											step = FIRST_FORWARD;
-											DesireSpeed_Write(0);
+											====== =
+												DesireSpeed_Write(-40);
+											if (DistanceSensor_cm(4) <= 6) {
+												>>>>>> > ee6839b990dc31aea8ff2a5a0734e7db69ac633d
+													step = FIRST_FORWARD;
+												DesireSpeed_Write(0);
+											}
 										}
-									}
-									break;
+										break;
 
 								case FIRST_FORWARD:
 									DesiredDistance(50, 700, 1350);
@@ -786,33 +786,34 @@ void *mission_thread(void *arg)
 
 								default:
 									break;
+									}
+									usleep(200000);
 								}
-								usleep(200000);
 							}
-						}
-						state = DONE;
+							state = DONE;
 
-						if (parking == READY)
-							parking = REMAIN;
-						else if (parking == REMAIN)
-							parking = DONE;
+							if (parking == READY)
+								parking = REMAIN;
+							else if (parking == REMAIN)
+								parking = DONE;
 
-						break;
+							break;
 
 					default:
 						break;
+						}
+						usleep(200000);
 					}
-					usleep(200000);
+					data->imgData.bmission = false;
+					data->imgData.bprintString = false;
+					if (parking == REMAIN)
+					{
+						printf("First Parking is Done!\n");
+						usleep(10000000);
+					}
+					if (parking == DONE)
+						printf("Second Parking is Dome!\n");
 				}
-				data->imgData.bmission = false;
-				data->imgData.bprintString = false;
-				if (parking == REMAIN)
-				{
-					printf("First Parking is Done!\n");
-					usleep(10000000);
-				}
-				if (parking == DONE)
-					printf("Second Parking is Dome!\n");
 			}
 		}
 

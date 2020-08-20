@@ -629,7 +629,6 @@ void* mission_thread(void* arg)
 						}
 						if (data->missionData.parkingData.frontRight == true)
 						{
-							state = SECOND_WALL;
 							/*
 							거리 측정 종료 -> 측정 거리를 변수에 담는다.
 							*/
@@ -639,22 +638,25 @@ void* mission_thread(void* arg)
 								data->missionData.parkingData.verticalFlag = true;
 							else
 								data->missionData.parkingData.horizontalFlag = true;
+
+							state = SECOND_WALL;
 						}
 						break;
 
 					case SECOND_WALL:
 						sprintf(data->imgData.missionString, "Second Wall");
 						printf("Sensor 3 : %d\n", DistanceSensor_cm(3));
-						if (data->missionData.parkingData.rearRight) {
+						if (data->missionData.parkingData.rearRight == true) {
 							for (i = 0; i < 50; i++) {
 								printf("SECOND WALL IF CONTEXT\n");
 							}
 							DesiredDistance(40, 200, 1500);
 							state = PARKING_START;
 							data->imgData.bmission = true;
-							break;
 							// 두번 째 벽에 차량 우측 후방 센서가 걸린 상태이다. -> 수직 또는 수평 주차 진행.
 						}
+						break;
+
 					case PARKING_START:
 						sprintf(data->imgData.missionString, "Parking Start");
 						data->missionData.on_processing = true;

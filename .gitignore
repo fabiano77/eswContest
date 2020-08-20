@@ -52,3 +52,5 @@ CarSDK/Application/0/all_control_camera_test
 CarSDK/Application/7_all_test/control_mission.lo
 CarSDK/Application/7_all_test/all_control_camera_test
 CarSDK/Application/7_all_test/all_control_camera_test
+CarSDK/Application/7_all_test/all_control_camera_test
+CarSDK/Application/7_all_test/imgProcess.lo

@@ -43,6 +43,7 @@
 #define FPS_TEXT_Y 260			  //240
 #define FPS_TEXT_COLOR 0xffffffff //while
 
+/******************** enumerator ********************/
 enum MissionState
 {
 	NONE,
@@ -84,12 +85,16 @@ enum CameraVerticalState
 	CAMERA_UP,	//장애물 인식을 위해 올린상태
 	CAMERA_DOWN //원래 상태 -->이 부분 조정 필요 MS
 };
+
 enum DirectionState
 {
 	LEFT,
 	RIGHT,
 	STOP //앞에 장애물이 있다면 스탑(overtaking이 on일 때만)
 };
+
+
+/******************** mission struct ********************/
 struct Parking
 {
 	bool frontRight;
@@ -114,6 +119,8 @@ struct TUNNEL
 	bool Tend;	  // 분기의 끝을 알리는 변수
 };
 
+
+/******************** thread struct ********************/
 struct MissionData
 {
 	uint32_t loopTime;	// mission 스레드 루프 시간
@@ -154,10 +161,10 @@ struct ImgProcessData
 
 struct thr_data
 {
-	struct display *disp;
-	struct v4l2 *v4l2;
-	struct vpe *vpe;
-	struct buffer **input_bufs;
+	struct display* disp;
+	struct v4l2* v4l2;
+	struct vpe* vpe;
+	struct buffer** input_bufs;
 	struct ControlData controlData;
 	struct MissionData missionData;
 	struct ImgProcessData imgData;
@@ -169,12 +176,15 @@ struct thr_data
 	pthread_t threads[4];
 };
 
-static void manualControl(struct ControlData *cdata, char key);
+/******************** function ********************/
+static void manualControl(struct ControlData* cdata, char key);
 
-static int allocate_input_buffers(struct thr_data *data)
+static uint32_t timeCheck(struct timeval* tempTime);
+
+static int allocate_input_buffers(struct thr_data* data)
 {
 	int i;
-	struct vpe *vpe = data->vpe;
+	struct vpe* vpe = data->vpe;
 
 	data->input_bufs = calloc(NUMBUF, sizeof(*data->input_bufs));
 	for (i = 0; i < NUMBUF; i++)
@@ -193,7 +203,7 @@ static int allocate_input_buffers(struct thr_data *data)
 	return 0;
 }
 
-static void free_input_buffers(struct buffer **buffer, uint32_t n, bool bmultiplanar)
+static void free_input_buffers(struct buffer** buffer, uint32_t n, bool bmultiplanar)
 {
 	uint32_t i;
 	for (i = 0; i < n; i++)
@@ -212,10 +222,10 @@ static void free_input_buffers(struct buffer **buffer, uint32_t n, bool bmultipl
 	free(buffer);
 }
 
-static void draw_operatingtime(struct display *disp, uint32_t time, uint32_t ctime, uint32_t mtime)
+static void draw_operatingtime(struct display* disp, uint32_t time, uint32_t ctime, uint32_t mtime)
 {
 	FrameBuffer tmpFrame;
-	unsigned char *pbuf[4];
+	unsigned char* pbuf[4];
 	char strtime[128];
 	char strctime[128];
 	char strmtime[128];
@@ -244,15 +254,15 @@ static void draw_operatingtime(struct display *disp, uint32_t time, uint32_t cti
 	}
 }
 
-/************************************************
-*	img_process
-*************************************************/
-static void img_process(struct display *disp, struct buffer *cambuf, struct thr_data *t_data, float *map1, float *map2)
+/************************************************/
+/*	Function - img_process						*/
+/************************************************/
+static void img_process(struct display* disp, struct buffer* cambuf, struct thr_data* t_data, float* map1, float* map2)
 {
 	unsigned char srcbuf[VPE_OUTPUT_W * VPE_OUTPUT_H * 3];
 	uint32_t optime;
 	struct timeval st, et;
-	unsigned char *cam_pbuf[4];
+	unsigned char* cam_pbuf[4];
 	if (get_framebuf(cambuf, cam_pbuf) == 0)
 	{
 		memcpy(srcbuf, cam_pbuf[0], VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
@@ -263,16 +273,14 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		********************************************************/
 		if (t_data->imgData.bdebug)
 		{
+			/* 라인 필터링이나 canny 결과를 확인할 때*/
 			debugFiltering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
-
-			memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
-			gettimeofday(&et, NULL);
-			optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
-			draw_operatingtime(disp, optime, t_data->controlData.loopTime, t_data->missionData.loopTime);
 		}
 		else if (t_data->imgData.bmission)
 		{
-			/*추월차로시에 사용*/
+			/* 미션 진행중에 처리하는 영상처리 */
+
+			/* 추월차로시에 사용 */
 			if (t_data->missionData.overtakingFlag && t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
 			{
 				usleep(50000);
@@ -290,6 +298,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				t_data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
 				//srcbuf를 활용하여 capture한 영상을 변환
 			}
+
 			if (t_data->missionData.tunnel.btunnel)
 			{
 				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65))
@@ -307,20 +316,20 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					}
 				}
 			}
-			if (t_data->imgData.bprintString)
-				displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
-
-			memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
-			gettimeofday(&et, NULL);
-			optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
-			draw_operatingtime(disp, optime, t_data->controlData.loopTime, t_data->missionData.loopTime);
 		}
 		else
 		{
+			/* 기본 상태에서 처리되는 영상처리 */
 			if (t_data->imgData.bcalibration)
+			{
 				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
+			}
+
 			if (t_data->imgData.btopview)
+			{
 				OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
+			}
+
 			if (t_data->imgData.bauto)
 			{
 				int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.bwhiteLine);
@@ -330,29 +339,34 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					t_data->controlData.steerWrite = 1;
 				}
 			}
-			if (t_data->imgData.bprintString)
-				displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
-			/*******************************************************
-			*			 영상처리 종료
-			********************************************************/
-
-			memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
-			gettimeofday(&et, NULL);
-			optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
-			draw_operatingtime(disp, optime, t_data->controlData.loopTime, t_data->missionData.loopTime);
 		}
+		/*******************************************************
+		*			 영상처리 종료
+		********************************************************/
+
+		/* 영상 상단에 문자열을 출력해주는 함수  */
+		if (t_data->imgData.bprintString)
+		{
+			displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
+		}
+
+		memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
+		gettimeofday(&et, NULL);
+		optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
+		draw_operatingtime(disp, optime, t_data->controlData.loopTime, t_data->missionData.loopTime);
 	}
 }
 
-/************************************************
-*	image_process_thread
-*************************************************/
-void *image_process_thread(void *arg)
+
+/************************************************/
+/*	Thread - image_process_thread				*/
+/************************************************/
+void* image_process_thread(void* arg)
 {
-	struct thr_data *data = (struct thr_data *)arg;
-	struct v4l2 *v4l2 = data->v4l2;
-	struct vpe *vpe = data->vpe;
-	struct buffer *capt;
+	struct thr_data* data = (struct thr_data*)arg;
+	struct v4l2* v4l2 = data->v4l2;
+	struct vpe* vpe = data->vpe;
+	struct buffer* capt;
 	bool isFirst = true;
 	int index;
 	int i;
@@ -421,12 +435,13 @@ void *image_process_thread(void *arg)
 	return NULL;
 }
 
-/************************************************
-*	input_thread
-*************************************************/
-void *input_thread(void *arg)
+
+/************************************************/
+/*	Thread - input_thread						*/
+/************************************************/
+void* input_thread(void* arg)
 {
-	struct thr_data *data = (struct thr_data *)arg;
+	struct thr_data* data = (struct thr_data*)arg;
 
 	char cmd_input[128];
 	char cmd_ready = true;
@@ -603,13 +618,15 @@ void *input_thread(void *arg)
 	return NULL;
 }
 
-/************************************************
-*	mission_thread
-*************************************************/
-void *mission_thread(void *arg)
+
+/************************************************/
+/*	Thread - mission_thread						*/
+/************************************************/
+void* mission_thread(void* arg)
 {
-	struct thr_data *data = (struct thr_data *)arg;
-	struct timeval st, et;
+	struct thr_data* data = (struct thr_data*)arg;
+	struct timeval time;
+	time.tv_sec = 0;
 
 	enum MissionState start = NONE;
 	enum MissionState flyover = NONE;
@@ -626,7 +643,7 @@ void *mission_thread(void *arg)
 
 	while (1)
 	{
-		gettimeofday(&st, NULL);
+		data->missionData.loopTime = timeCheck(&time);
 
 		if (start)
 		{
@@ -669,6 +686,7 @@ void *mission_thread(void *arg)
 
 				while (state) // state == END가 아닌이상 루프 진행
 				{
+					data->missionData.loopTime = timeCheck(&time);
 					data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 18) ? true : false;
 					data->missionData.parkingData.rearRight = (DistanceSensor_cm(3) <= 18) ? true : false;
 
@@ -735,6 +753,7 @@ void *mission_thread(void *arg)
 							DesiredDistance(50, 100, 1500);
 							while (data->missionData.parkingData.horizontalFlag)
 							{
+								data->missionData.loopTime = timeCheck(&time);
 								switch (step)
 								{
 								case FIRST_BACKWARD:
@@ -826,6 +845,7 @@ void *mission_thread(void *arg)
 
 				while (Tunnel_isEnd(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5)))
 				{
+					data->missionData.loopTime = timeCheck(&time);
 					steerVal = Tunnel_SteerVal(DistanceSensor_cm(2), DistanceSensor_cm(6));
 					SteeringServoControl_Write(steerVal);
 				}
@@ -857,6 +877,7 @@ void *mission_thread(void *arg)
 				DesireSpeed_Write(0);
 				while (1)
 				{
+					data->missionData.loopTime = timeCheck(&time);
 					if (RoundAbout_isStart(DistanceSensor_cm(1)))
 					{
 						data->missionData.broundabout = true;
@@ -869,6 +890,7 @@ void *mission_thread(void *arg)
 				}
 				while (!RoundAbout_isEnd(DistanceSensor_cm(1), DistanceSensor_cm(4)))
 				{
+					data->missionData.loopTime = timeCheck(&time);
 					if (RoundAbout_isDelay(DistanceSensor_cm(1)))
 					{
 						DesireSpeed_Write(0);
@@ -919,6 +941,7 @@ void *mission_thread(void *arg)
 				DesireSpeed_Write(0);
 				while (state)
 				{
+					data->missionData.loopTime = timeCheck(&time);
 					switch (state)
 					{
 					case FRONT_DETECT:
@@ -933,6 +956,7 @@ void *mission_thread(void *arg)
 						/* 장애물 좌우 판단 및 비어있는 차선으로 전진하려는 코드*/
 						while (data->missionData.overtakingData.headingDirection == STOP)
 						{
+							data->missionData.loopTime = timeCheck(&time);
 							usleep(50000);
 						}
 						/*판단 받으면 Camera 원래 위치로 돌림*/
@@ -1125,20 +1149,22 @@ void *mission_thread(void *arg)
 				data->imgData.bprintString = false;
 			}
 		}
+
 		usleep(500000);
-		gettimeofday(&et, NULL);
-		data->missionData.loopTime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
+		data->missionData.loopTime = timeCheck(&time);
 		//시간측정
 	}
 }
 
-/************************************************
-*	control_thread
-*************************************************/
-void *control_thread(void *arg)
+
+/************************************************/
+/*	Thread - control_thread						*/
+/************************************************/
+void* control_thread(void* arg)
 {
-	struct thr_data *data = (struct thr_data *)arg;
-	struct timeval st, et;
+	struct thr_data* data = (struct thr_data*)arg;
+	struct timeval time;
+	time.tv_sec = 0;
 
 	int currentSpeed;
 	double err_P = 0;
@@ -1155,7 +1181,7 @@ void *control_thread(void *arg)
 
 	while (1)
 	{
-		gettimeofday(&st, NULL);
+		data->missionData.loopTime = timeCheck(&time);
 
 		if (0)
 		{
@@ -1221,14 +1247,12 @@ void *control_thread(void *arg)
 			}
 		}
 
-		gettimeofday(&et, NULL);
-		data->controlData.loopTime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
 	}
 
 	return NULL;
 }
 
-static struct thr_data *pexam_data = NULL;
+static struct thr_data* pexam_data = NULL;
 
 void signal_handler(int sig)
 {
@@ -1257,7 +1281,7 @@ void signal_handler(int sig)
 	}
 }
 
-void manualControl(struct ControlData *cdata, char key)
+void manualControl(struct ControlData* cdata, char key)
 {
 	int i;
 	switch (key)
@@ -1380,16 +1404,31 @@ void manualControl(struct ControlData *cdata, char key)
 	}
 }
 
-/************************************************
-*	main
-*************************************************/
-int main(int argc, char **argv)
+uint32_t timeCheck(struct timeval* tempTime)
 {
-	struct v4l2 *v4l2;
-	struct vpe *vpe;
+	struct timeval prevTime = *tempTime;
+	struct timeval nowTime;
+	gettimeofday(&nowTime, NULL);
+
+	uint32_t retVal = ((nowTime.tv_sec - prevTime.tv_sec) * 1000) + ((int)nowTime.tv_usec / 1000 - (int)prevTime.tv_usec / 1000);
+	if (*tempTime.tv_sec == 0) retVal = 0;
+
+	*tempTime = nowTime;
+
+	return retVal;
+}
+
+
+/************************************************/
+/*	MAIN	main	MAIN	main				*/
+/************************************************/
+int main(int argc, char** argv)
+{
+	struct v4l2* v4l2;
+	struct vpe* vpe;
 	struct thr_data tdata;
 	int disp_argc = 3;
-	char *disp_argv[] = {"dummy", "-s", "4:480x272", "\0"}; // 추후 변경 여부 확인 후 처리..
+	char* disp_argv[] = { "dummy", "-s", "4:480x272", "\0" }; // 추후 변경 여부 확인 후 처리..
 	int ret = 0;
 
 	printf("-- 7_all_test Start --\n");
@@ -1474,8 +1513,8 @@ int main(int argc, char **argv)
 	vpe->translen = 1;
 
 	MSG("Input(Camera) = %d x %d (%.4s)\nOutput(LCD) = %d x %d (%.4s)",
-		vpe->src.width, vpe->src.height, (char *)&vpe->src.fourcc,
-		vpe->dst.width, vpe->dst.height, (char *)&vpe->dst.fourcc);
+		vpe->src.width, vpe->src.height, (char*)&vpe->src.fourcc,
+		vpe->dst.width, vpe->dst.height, (char*)&vpe->dst.fourcc);
 	// 입출력 이미지의 크기 및 포맷정보 출력
 	// 입력 이미지 : 1280x720, Format = UYUV422
 	// 출력 이미지 : 320x180. Format = BGR24

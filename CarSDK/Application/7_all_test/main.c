@@ -813,7 +813,6 @@ void* mission_thread(void* arg)
 						/*판단 이후 해당 방향 전진*/
 						if (data->missionData.overtakingData.headingDirection == RIGHT && data->missionData.overtakingData.updownCamera == CAMERA_DOWN) {
 							/*출발*/
-							EncoderCounter_Write(0);
 							DesiredDistance(50, thresDistance, 1100);
 							/*thresDistance이상 가서 전방 거리 재확인*/
 							if (DistanceSensor_cm(1) < 30) {
@@ -833,7 +832,6 @@ void* mission_thread(void* arg)
 						else if (data->missionData.overtakingData.headingDirection == LEFT && data->missionData.overtakingData.updownCamera == CAMERA_DOWN) {
 
 							/*출발*/
-							EncoderCounter_Write(0);
 							DesiredDistance(50, thresDistance, 1900);
 							/*thresDistance이상 가서 전방 거리 재확인*/
 							if (DistanceSensor_cm(1) < 30) {

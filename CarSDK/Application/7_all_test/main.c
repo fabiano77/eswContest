@@ -600,7 +600,7 @@ void* mission_thread(void* arg)
 				while (state)	// state == END가 아닌이상 루프 진행
 				{
 					data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 15) ? true : false;
-					data->missionData.parkingData.rearRight = (DistanceSensor_cm(3) <= 150) ? true : false;
+					data->missionData.parkingData.rearRight = (DistanceSensor_cm(3) <= 15) ? true : false;
 
 					switch (state)
 					{
@@ -638,7 +638,7 @@ void* mission_thread(void* arg)
 					case SECOND_WALL:
 						sprintf(data->imgData.missionString, "Second Wall");
 						printf("Sensor 3 : %d cm", DistanceSensor_cm(3));
-						if (DistanceSensor_cm(3) <= 15) {
+						if (data->missionData.parkingData.rearRight) {
 							DesiredDistance(40, 200, 1500);
 							state = PARKING_START;
 							data->imgData.bmission = true;

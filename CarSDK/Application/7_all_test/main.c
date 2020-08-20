@@ -795,6 +795,7 @@ void* mission_thread(void* arg)
 					{
 					case FRONT_DETECT:
 						/* 장애물 좌우판단을 위한 카메라 각도조절 */
+						sprintf(data->imgData.missionString, "Front Detect");
 						if (data->missionData.overtakingData.headingDirection == STOP) {
 							data->controlData.cameraY = 1610;
 							CameraYServoControl_Write(data->controlData.cameraY);
@@ -814,6 +815,7 @@ void* mission_thread(void* arg)
 						else { break; }
 						/*판단 이후 해당 방향 전진*/
 						if (data->missionData.overtakingData.headingDirection == RIGHT && data->missionData.overtakingData.updownCamera == CAMERA_DOWN) {
+							sprintf(data->imgData.missionString, "Right to go");
 							/*출발*/
 							DesiredDistance(50, thresDistance, 1100);
 							/*thresDistance이상 가서 전방 거리 재확인*/
@@ -827,6 +829,7 @@ void* mission_thread(void* arg)
 								DesireSpeed_Write(50);
 							}
 							else {
+								sprintf(data->imgData.missionString, "Detect Error");
 								/*정지, 후진 및 방향 전환*/
 								DesiredDistance(-50, thresDistance, 1900);
 								/*정지 및 방향 전환 명령*/
@@ -836,6 +839,7 @@ void* mission_thread(void* arg)
 						}
 						else if (data->missionData.overtakingData.headingDirection == LEFT && data->missionData.overtakingData.updownCamera == CAMERA_DOWN) {
 
+							sprintf(data->imgData.missionString, "Left to go");
 							/*출발*/
 							DesiredDistance(50, thresDistance, 1900);
 							/*thresDistance이상 가서 전방 거리 재확인*/
@@ -850,6 +854,7 @@ void* mission_thread(void* arg)
 							}
 							else {
 								/*정지, 후진 및 방향 전환*/
+								sprintf(data->imgData.missionString, "Detect Error");
 								DesiredDistance(-50,thresDistance,1100);
 								/*정지 후 방향 전환 명령*/
 								data->missionData.overtakingData.headingDirection = RIGHT;
@@ -862,6 +867,7 @@ void* mission_thread(void* arg)
 						break;
 
 					case SIDE_ON:
+						sprintf(data->imgData.missionString, "Detect Side");
 						/*Auto Steering 동작*/
 						data->imgData.bmission = false;
 						/* 현재 장애물이 어디있느냐에 따라 side 센서(2,3 or 4,5)로 감지하는 코드*/
@@ -900,6 +906,7 @@ void* mission_thread(void* arg)
 						break;
 
 					case SIDE_OFF:
+						sprintf(data->imgData.missionString, "Side OFF");
 						/*원래 차선으로 복귀하는 코드*/
 						data->imgData.bmission = true;//Auto Steering off
 						//right

@@ -685,38 +685,39 @@ void* mission_thread(void* arg)
 							// 수직 주차 구문
 						}
 						else {
-							DesiredDistance(50, 200, 1500);
+							DesiredDistance(50, 100, 1500);
 							while (data->missionData.parkingData.horizontalFlag) {
 								switch (step)
 								{
 								case FIRST_BACKWARD:
 									SteeringServoControl_Write(1000);
 									DesireSpeed_Write(-50);
-									if (DistanceSensor_cm(4) <= 12) {
+									if (DistanceSensor_cm(4) <= 15) {
 										DesireSpeed_Write(0);
 										SteeringServoControl_Write(1500);
 										DesireSpeed_Write(-50);
-										if (DistanceSensor_cm(4) <= 6)
+										if (DistanceSensor_cm(4) <= 7)
 											step = FIRST_FORWARD;
 									}
 									break;
 
 								case FIRST_FORWARD:
-									DesiredDistance(50, 400, 1500);
+									DesiredDistance(50, 800, 1400);
 									step = SECOND_BACKWARD;
 									break;
 
 								case SECOND_BACKWARD:
 									SteeringServoControl_Write(2000);
 									DesireSpeed_Write(-50);
-									if (DistanceSensor_cm(4) <= 7 || DistanceSensor_cm(3) <= 7) {
+									if (DistanceSensor_cm(4) <= 6 || DistanceSensor_cm(3) <= 6) {
 										DesireSpeed_Write(0);
 										step = SECOND_FORWARD;
 									}
 									break;
 
 								case SECOND_FORWARD:
-									DesiredDistance(30, 250, 1200);
+									usleep(3000000);
+									DesiredDistance(30, 600, 1800);
 									step = FINISH;
 									break;
 
@@ -746,6 +747,8 @@ void* mission_thread(void* arg)
 				}
 				data->imgData.bmission = false;
 				data->imgData.bprintString = false;
+				if (parking == REMAIN) printf("First Parking is Done!\n");
+				if (parking == DONE) printf("Second Parking is Dome!\n");
 			}
 		}
 

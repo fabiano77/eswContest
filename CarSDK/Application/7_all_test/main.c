@@ -288,6 +288,19 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				}
 				//srcbuf를 활용하여 capture한 영상을 변환
 			}
+			if (t_data->missionData.tunnel.btunnel) {
+				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65)) {
+					t_data->missionData.tunnel.Tstart = true;
+					t_data->missionData.tunnel.Tend = true;
+				}
+				else {
+					t_data->missionData.tunnel.Tstart = false;
+					if (t_data->missionData.tunnel.Tend) {
+						t_data->missionData.tunnel.Tend = false;
+						t_data->missionData.tunnel.btunnel = false;
+					}
+				}
+			}
 			if (t_data->imgData.bprintString)
 				displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
 		}
@@ -807,12 +820,12 @@ void *mission_thread(void *arg)
 				data->controlData.lightFlag = data->controlData.lightFlag ^ 0x01;
 				CarLight_Write(data->controlData.lightFlag);
 
+				data->imgData.bmission = false;
 				data->missionData.tunnel.btunnel = false;
 				usleep(150000);
 
 				DesireSpeed_Write(40);
-				tunnel = DONE;
-				data->imgData.bmission = false;
+				tunnel = DONE;				
 				data->imgData.bprintString = false;
 			}
 		}

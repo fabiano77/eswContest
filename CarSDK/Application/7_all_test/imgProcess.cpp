@@ -283,9 +283,15 @@ extern "C" {
 		/*Check Line Upper Bound*/
 		line(srcRGB, Point(0, height_up), Point(width, height_up), Scalar(255, 0, 0), 2);
 		/*Calculate Gradient*/
-		double grad_right = slope(line_right);
-		double grad_left = slope(line_left);
-
+		double grad_right, grad_left;
+		if (line_type == 0) {//미탐지 시
+			grad_right = 1000;
+			grad_left = -1000;
+		}
+		else {
+			grad_right = slope(line_right);
+			grad_left = slope(line_left);
+		}
 		/*Point that meets upper and lower bound*/
 		int rightup_x = getPointX_at_Y(line_right, height_up);
 		int rightdown_x = getPointX_at_Y(line_right, height_down);
@@ -900,9 +906,6 @@ void regionOfInterest(Mat& src, Mat& dst, Point* points)
 
 float countGray(Mat& src, Point down, Point up, const float dydx)
 {
-	if (down.x == 0 && down.y == 0) {
-		down=Point(0,)
-	}
 	CV_Assert(src.type() == CV_8UC1);
 	int count_left = 0;
 	int count_right = 0;
@@ -914,7 +917,7 @@ float countGray(Mat& src, Point down, Point up, const float dydx)
 		for (int y = up.y; y < down.y; y++)//up.y<down.y
 		{ //y
 			int lower_x;//lower bound for calculate rectangular form
-			if (dydx >= 1000) {
+			if (dydx >= 1000) {//무의미한 값 제거
 				lower_x = 0;
 			}
 			else { lower_x = (y - up.y) / dydx + up.x; }
@@ -937,7 +940,7 @@ float countGray(Mat& src, Point down, Point up, const float dydx)
 		for (int y = up.y; y < down.y; y++)//up.y<down.y
 		{ //y
 			int upper_x;//upper bound for calculate rectangular form
-			if (dydx >= 1000) { upper_x = width; }
+			if (dydx >= 1000) { upper_x = width; }//무의미한 값 제거
 			else { upper_x = (y - up.y) / dydx + up.x; }
 			for (int x = upper_x; x < width; x++) // left Gray detection
 			{ //x

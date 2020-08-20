@@ -858,9 +858,9 @@ void *mission_thread(void *arg)
 				printf("RoundAbout_ON\n");
 				int speed = 30;
 				bool delay = false;
+				DesireSpeed_Write(0);
 				while (1)
 				{
-					DesireSpeed_Write(0);
 					if (RoundAbout_isStart(DistanceSensor_cm(1)))
 					{
 						data->missionData.broundabout = true;

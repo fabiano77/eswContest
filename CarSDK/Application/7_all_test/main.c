@@ -594,7 +594,7 @@ void* mission_thread(void* arg)
 				sprintf(data->imgData.missionString, "Parking");
 				int parking_width = 0;
 				enum ParkingState state = FIRST_WALL;
-				enum HorizentalStep step = FIRST_STEP;
+				enum HorizentalStep step = FIRST_BACKWARD;
 				while (state)	// state == END가 아닌이상 루프 진행
 				{
 					data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 20) ? true : false;

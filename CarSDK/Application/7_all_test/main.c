@@ -777,7 +777,6 @@ void* mission_thread(void* arg)
 				sprintf(data->imgData.missionString, "overtake");
 				printf("overtake \n");
 				bool farFront = false;
-				//30넘을 때 control thread 변환을 주어야함 MS
 				data->missionData.on_processing = true;
 				enum OvertakeState state = FRONT_DETECT;
 				data->missionData.overtakingData.headingDirection = STOP;
@@ -808,43 +807,25 @@ void* mission_thread(void* arg)
 							data->controlData.cameraY = 1660;
 							CameraYServoControl_Write(data->controlData.cameraY);
 							data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
-							data->imgData.btopview = true;
+							data->imgData.btopview = true;//top view on
 						}
 						else { break; }
 						/*판단 이후 해당 방향 전진*/
 						if (data->missionData.overtakingData.headingDirection == RIGHT && data->missionData.overtakingData.updownCamera == CAMERA_DOWN) {
 							/*출발*/
-							SteeringServoControl_Write(1100);
-							DesireSpeed_Write(50);
-							data->controlData.speedWrite = 1;
 							EncoderCounter_Write(0);
-							/*몇이상 갈때까지 반복*/
-							while (dist_encoder <= thresDistance) {//가는 거리
-								dist_encoder = EncoderCounter_Read();
-								usleep(50000);
-							}
+							DesiredDistance(50, thresDistance, 1100);
+							/*thresDistance이상 가서 전방 거리 재확인*/
 							if (DistanceSensor_cm(1) < 30) {
 								farFront = false;
 							}
-							else { farFront = true; }
+							else { farFront = true; /*전방 미탐지*/}
 							/*전진하는 동안 전방 센서가 30 이상 멀어지면 SIDE_ON으로 진행*/
 							if (farFront == true) { state = SIDE_ON; }
 							else {
-								/*정지*/
-								DesireSpeed_Write(0);
-								data->controlData.speedWrite = 1;
-								EncoderCounter_Write(0);
-								dist_encoder = 0;
-								/*후진 및 방향 전환*/
-								DesireSpeed_Write(-50);
-								data->controlData.speedWrite = 1;
-								while (dist_encoder <= thresDistance) {
-									dist_encoder = EncoderCounter_Read();
-									usleep(50000);
-								}
+								/*정지, 후진 및 방향 전환*/
+								DesiredDistance(-50, thresDistance, 1900);
 								/*정지 및 방향 전환 명령*/
-								DesireSpeed_Write(0);
-								data->controlData.speedWrite = 1;
 								data->missionData.overtakingData.headingDirection = LEFT;
 							}
 
@@ -852,15 +833,9 @@ void* mission_thread(void* arg)
 						else if (data->missionData.overtakingData.headingDirection == LEFT && data->missionData.overtakingData.updownCamera == CAMERA_DOWN) {
 
 							/*출발*/
-							SteeringServoControl_Write(1900);
-							DesireSpeed_Write(50);
-							data->controlData.speedWrite = 1;
 							EncoderCounter_Write(0);
-							/*몇이상 갈때까지 반복*/
-							while (dist_encoder <= thresDistance) {//가는 거리
-								dist_encoder = EncoderCounter_Read();
-								usleep(50000);
-							}
+							DesiredDistance(50, thresDistance, 1900);
+							/*thresDistance이상 가서 전방 거리 재확인*/
 							if (DistanceSensor_cm(1) < 30) {
 								farFront = false;
 							}
@@ -868,21 +843,9 @@ void* mission_thread(void* arg)
 							/*전진하는 동안 전방 센서가 30 이상 멀어지면 SIDE_ON으로 진행*/
 							if (farFront == true) { state = SIDE_ON; }
 							else {
-								/*정지*/
-								DesireSpeed_Write(0);
-								data->controlData.speedWrite = 1;
-								EncoderCounter_Write(0);
-								dist_encoder = 0;
-								/*후진 및 방향 전환*/
-								DesireSpeed_Write(-50);
-								data->controlData.speedWrite = 1;
-								while (dist_encoder <= thresDistance) {
-									dist_encoder = EncoderCounter_Read();
-									usleep(50000);
-								}
+								/*정지, 후진 및 방향 전환*/
+								DesiredDistance(-50,thresDistance,1100);
 								/*정지 후 방향 전환 명령*/
-								DesireSpeed_Write(0);
-								data->controlData.speedWrite = 1;
 								data->missionData.overtakingData.headingDirection = RIGHT;
 							}
 						}
@@ -893,9 +856,8 @@ void* mission_thread(void* arg)
 						break;
 
 					case SIDE_ON:
+						/*Auto Steering 동작*/
 						data->imgData.bmission = false;
-						data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
-						data->controlData.cameraY = 1660;
 						/* 현재 장애물이 어디있느냐에 따라 side 센서(2,3 or 4,5)로 감지하는 코드*/
 						//right
 						if (data->missionData.overtakingData.headingDirection == RIGHT) {
@@ -933,23 +895,16 @@ void* mission_thread(void* arg)
 
 					case SIDE_OFF:
 						/*원래 차선으로 복귀하는 코드*/
-						data->imgData.bmission = true;
+						data->imgData.bmission = true;//Auto Steering off
 						//right
 						if (data->missionData.overtakingData.headingDirection == RIGHT) {
-							/*복귀 좌회전 방향 설정*/
-							SteeringServoControl_Write(1900);
+							/*복귀 좌회전 방향 설정 및 전진*/
+							DesiredDistance(50, thresDistance, 1900);
 						}
 						//left
 						else if (data->missionData.overtakingData.headingDirection == LEFT) {
 							/*복귀 우회전 방향 설정*/
-							SteeringServoControl_Write(1100);
-						}
-						/*복귀 전진*/
-						EncoderCounter_Write(0);
-						dist_encoder = 0;
-						while (dist_encoder <= thresDistance) {
-							dist_encoder = EncoderCounter_Read();
-							usleep(50000);
+							DesiredDistance(50, thresDistance, 1100);
 						}
 						/*알고리즘 전진*/
 						data->imgData.bmission = false;

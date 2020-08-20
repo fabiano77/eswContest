@@ -201,14 +201,26 @@ extern "C" {
 		}
 		else if (mode == 3)
 		{
-			dstRGB = srcRGB.rowRange(150, 360).clone();
-			resize(dstRGB, dstRGB, Size(640, 360));
-
+			Mat temp;
+			temp = srcRGB.rowRange(h*(15/36.0), h).clone();
+			resize(temp, dstRGB, Size(w, h));
 			return;
 		}
 		Size topviewSize(w, h);	//변환후 사이즈
 		warpPerspective(srcRGB, dstRGB, Hmatrix, topviewSize);
 
+	}
+
+	void displayPrint(unsigned char* inBuf, int w, int h, unsigned char* outBuf, char* name)
+	{
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		Mat dstRGB(h, w, CV_8UC3, outBuf);
+		string str(name);
+		Point printPosition(230, 50);
+
+		dstRGB = dstRGB;
+
+		putText(dstRGB, str, printPosition, 0, 0.8, Scalar(255, 153, 0), 2);
 	}
 
 	int autoSteering(unsigned char* inBuf, int w, int h, unsigned char* outBuf)

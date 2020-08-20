@@ -35,7 +35,7 @@
 #define OVERLAY_DISP_W          480
 #define OVERLAY_DISP_H          272
 
-#define TIME_TEXT_X             385 //320
+#define TIME_TEXT_X             350 //320
 #define TIME_TEXT_Y             260 //240
 #define TIME_TEXT_COLOR         0xffffffff //while
 
@@ -124,6 +124,8 @@ struct ImgProcessData {
 	bool bcalibration;
 	bool btopview;
 	bool bauto;
+	bool bmission;
+	char missionString[20];
 	int topMode;
 };
 
@@ -234,10 +236,15 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		*	 우리가 만든 알고리즘 함수를 넣는 부분.
 		********************************************************/
 
-
-		if (t_data->imgData.bcalibration) OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
-		if (t_data->imgData.btopview) OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
-		if (t_data->imgData.bauto)
+		if (t_data->imgData.bmission)
+		{
+			displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
+		}
+		else
+		{
+			if (t_data->imgData.bcalibration) OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
+			if (t_data->imgData.btopview) OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
+			if (t_data->imgData.bauto)
 		{
 			int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
 			if (steerVal != 0)
@@ -260,7 +267,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 			}
 			//srcbuf를 활용하여 capture한 영상을 변환
 		}
-
+		}
 		/*******************************************************
 		*			 영상처리 종료
 		********************************************************/
@@ -545,7 +552,7 @@ void* mission_thread(void* arg)
 	enum MissionState start = NONE;
 	enum MissionState flyover = NONE;
 	enum MissionState parking = READY;
-	enum MissionState roundabout = READY;
+	enum MissionState roundabout = NONE;
 	enum MissionState tunnel = NONE;
 	enum MissionState overtake = READY;
 	enum MissionState signalLight = NONE;
@@ -562,7 +569,12 @@ void* mission_thread(void* arg)
 		{
 			if (0)
 			{
+				data->imgData.bmission = true;
+				sprintf(data->imgData.missionString, "start");
+
+
 				start = DONE;
+				data->imgData.bmission = false;
 			}
 		}
 
@@ -570,26 +582,33 @@ void* mission_thread(void* arg)
 		{
 			if (0)
 			{
+				data->imgData.bmission = true;
+				sprintf(data->imgData.missionString, "flyover");
 				data->missionData.on_processing = true;
 
+
 				flyover = DONE;
+				data->imgData.bmission = false;
 			}
 		}
 
 		if (parking)
 		{
-			if (DistanceSensor_cm(2) <= 10) //처음 벽이 감지되었을 경우
+			if (DistanceSensor_cm(2) <= 20) //처음 벽이 감지되었을 경우
 			{
+				data->imgData.bmission = true;
+				sprintf(data->imgData.missionString, "Parking");
 				int parking_width = 0;
 				enum ParkingState state = FIRST_WALL;
 				while (state)	// state == END가 아닌이상 루프 진행
 				{
-					data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 10) ? true : false;
-					data->missionData.parkingData.rearRight = (DistanceSensor_cm(3) <= 10) ? true : false;
+					data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 20) ? true : false;
+					data->missionData.parkingData.rearRight = (DistanceSensor_cm(3) <= 20) ? true : false;
 
 					switch (state)
 					{
 					case FIRST_WALL:
+						sprintf(data->imgData.missionString, "First Wall");
 						if (data->missionData.parkingData.frontRight == false) {
 							state = DISTANCE_CHECK;
 							EncoderCounter_Write(0);
@@ -600,15 +619,17 @@ void* mission_thread(void* arg)
 						/*
 						주차 폭에 대한 거리를 측정하기 위해 거리 측정 시작
 						*/
-						if (EncoderCounter_Read() != 65278)
+						if (EncoderCounter_Read() != 65278) {
 							parking_width = EncoderCounter_Read();
+							sprintf(data->imgData.missionString, toString(parking_width));
+						}
 						if (data->missionData.parkingData.frontRight == true)
 						{
 							state = SECOND_WALL;
 							/*
 							거리 측정 종료 -> 측정 거리를 변수에 담는다.
 							*/
-							cout << "Result Width : " << parking_width << endl;
+							printf("Result Width : %-3d\n",parking_width);
 
 							if (parking_width <= 45)
 								data->missionData.parkingData.verticalFlag = true;
@@ -618,12 +639,14 @@ void* mission_thread(void* arg)
 						break;
 
 					case SECOND_WALL:
+						sprintf(data->imgData.missionString, "Second Wall");
 						if (data->missionData.parkingData.rearRight == true)
 							state = PARKING_START;
 						break;
 						// 두번 째 벽에 차량 우측 후방 센서가 걸린 상태이다. -> 수직 또는 수평 주차 진행.
 
 					case PARKING_START:
+						sprintf(data->imgData.missionString, "Parking Start");
 						data->missionData.on_processing = true;
 						data->missionData.parkingData.on_parkingFlag = true;
 						/*
@@ -648,27 +671,37 @@ void* mission_thread(void* arg)
 					}
 					usleep(50000);
 				}
+				data->imgData.bmission = false;
 			}
 		}
 
 		if (tunnel)
 		{
 			if (/*on_tunnel()*/0) {
+				data->imgData.bmission = true;
+				sprintf(data->imgData.missionString, "tunnel");
 				data->missionData.on_processing = true;
 				data->missionData.btunnel = true;
 				printf("tunnel\n");
+
+
 				tunnel = DONE;
+				data->imgData.bmission = false;
 			}
 		}
 
 		if (roundabout)
 		{
 			if (StopLine(4)) {
+				data->imgData.bmission = true;
+				sprintf(data->imgData.missionString, "roundabout");
 				data->missionData.on_processing = true;
 				//data->missionData.bround = true;
 				printf("roundabout\n");
+
 				roundabout = DONE;
 				signalLight = READY;
+				data->imgData.bmission = false;
 			}
 		}
 
@@ -677,6 +710,9 @@ void* mission_thread(void* arg)
 			/*MS 분기진입 명령 지시*/
 			if (DistanceSensor_cm(1) < 30) //전방 장애물 감지 //주차 상황이 아닐때, 분기진입 가능
 			{
+				data->imgData.bmission = true;
+				sprintf(data->imgData.missionString, "overtake");
+				printf("overtake \n");
 				bool farFront = false;
 				//30넘을 때 control thread 변환을 주어야함 MS
 				data->missionData.on_processing = true;
@@ -833,6 +869,7 @@ void* mission_thread(void* arg)
 						break;
 					}
 				}
+				data->imgData.bmission = false;
 			}
 		}
 
@@ -840,15 +877,25 @@ void* mission_thread(void* arg)
 		{
 			if (roundabout == DONE && StopLine(4))
 			{
+				data->imgData.bmission = true;
+				sprintf(data->imgData.missionString, "signalLight");
 				printf("signalLight\n");
+
+
+				data->imgData.bmission = false;
 			}
 		}
 
 		if (finish)
 		{
 			if (0)
-			{
+			{	
+				data->imgData.bmission = true;
+				sprintf(data->imgData.missionString, "finish");
 				printf("finish\n");
+
+
+				data->imgData.bmission = false;
 			}
 		}
 		usleep(500000);
@@ -1126,6 +1173,8 @@ int main(int argc, char** argv)
 	tdata.imgData.btopview = true;
 	tdata.imgData.topMode = 2;
 	tdata.imgData.bauto = true;
+	tdata.imgData.bmission = false;
+	sprintf(tdata.imgData.missionString, "0");
 
 	tdata.controlData.settingSpeedVal = 30;
 	tdata.controlData.desireSpeedVal = 0;

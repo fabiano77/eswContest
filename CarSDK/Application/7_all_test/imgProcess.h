@@ -11,6 +11,8 @@ extern "C" {
 
 	void OpenCV_topview_transform(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int mode);
 
+	void displayPrint(unsigned char* inBuf, int w, int h, unsigned char* outBuf, char* name);
+
 	int autoSteering(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
 
 	int Tunnel(unsigned char* inBuf, int w, int h, const double percent);
@@ -18,7 +20,7 @@ extern "C" {
 	/// <summary>
     /// check where is obstacle
 	/// </summary>
-	/// <param name="src"></param> //Input img buf(ÇÑÀåÀÇ ÀÌ¹ÌÁö¸¸ ÀÖÀ¸¸é µÊ)
+	/// <param name="src"></param> //Input img buf(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½)
 	/// <returns></returns> true (left), false(right)
 	bool checkObstacle(unsigned char* inBuf,int w, int h, unsigned char* outBuf);
 #ifdef __cplusplus

@@ -587,7 +587,7 @@ void* mission_thread(void* arg)
 
 		if (parking)
 		{
-			if (DistanceSensor_cm(2) <= 10) //처음 벽이 감지되었을 경우
+			if (DistanceSensor_cm(2) <= 20) //처음 벽이 감지되었을 경우
 			{
 				data->imgData.bmission = true;
 				sprintf(data->imgData.missionString, "Parking");
@@ -595,12 +595,13 @@ void* mission_thread(void* arg)
 				enum ParkingState state = FIRST_WALL;
 				while (state)	// state == END가 아닌이상 루프 진행
 				{
-					data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 10) ? true : false;
-					data->missionData.parkingData.rearRight = (DistanceSensor_cm(3) <= 10) ? true : false;
+					data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 20) ? true : false;
+					data->missionData.parkingData.rearRight = (DistanceSensor_cm(3) <= 20) ? true : false;
 
 					switch (state)
 					{
 					case FIRST_WALL:
+						sprintf(data->imgData.missionString, "First Wall");
 						if (data->missionData.parkingData.frontRight == false) {
 							state = DISTANCE_CHECK;
 							EncoderCounter_Write(0);
@@ -611,15 +612,17 @@ void* mission_thread(void* arg)
 						/*
 						주차 폭에 대한 거리를 측정하기 위해 거리 측정 시작
 						*/
-						if (EncoderCounter_Read() != 65278)
+						if (EncoderCounter_Read() != 65278) {
 							parking_width = EncoderCounter_Read();
+							sprintf(data->imgData.missionString, toString(parking_width);
+						}
 						if (data->missionData.parkingData.frontRight == true)
 						{
 							state = SECOND_WALL;
 							/*
 							거리 측정 종료 -> 측정 거리를 변수에 담는다.
 							*/
-							printf("Result Width : %d",parking_width);
+							printf("Result Width : %-3d\n",parking_width);
 
 							if (parking_width <= 45)
 								data->missionData.parkingData.verticalFlag = true;
@@ -629,12 +632,14 @@ void* mission_thread(void* arg)
 						break;
 
 					case SECOND_WALL:
+						sprintf(data->imgData.missionString, "Second Wall");
 						if (data->missionData.parkingData.rearRight == true)
 							state = PARKING_START;
 						break;
 						// 두번 째 벽에 차량 우측 후방 센서가 걸린 상태이다. -> 수직 또는 수평 주차 진행.
 
 					case PARKING_START:
+						sprintf(data->imgData.missionString, "Parking Start");
 						data->missionData.on_processing = true;
 						data->missionData.parkingData.on_parkingFlag = true;
 						/*

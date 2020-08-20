@@ -732,7 +732,7 @@ void* mission_thread(void* arg)
 				data->missionData.overtakingFlag = true;
 				bool obstacle = false;
 				int dist_encoder = 0;
-				int thresDistance = 300;
+				int thresDistance = 500;
 				/*차량 정지*/
 				DesireSpeed_Write(0);
 				while (state)
@@ -743,10 +743,9 @@ void* mission_thread(void* arg)
 						/* 장애물 좌우판단을 위한 카메라 각도조절 */
 						if (data->missionData.overtakingData.headingDirection == STOP) {
 							data->missionData.overtakingFlag = true;
-							data->controlData.cameraY = 1500;
+							data->controlData.cameraY = 1610;
 							CameraYServoControl_Write(data->controlData.cameraY);
 							data->missionData.overtakingData.updownCamera = CAMERA_UP;
-							/* 차량 정지*/
 						}
 						/* 장애물 좌우 판단 및 비어있는 차선으로 전진하려는 코드*/
 						while (data->missionData.overtakingData.headingDirection == STOP) {
@@ -762,8 +761,8 @@ void* mission_thread(void* arg)
 						/*판단 이후 해당 방향 전진*/
 						if (data->missionData.overtakingData.headingDirection == RIGHT && data->missionData.overtakingData.updownCamera == CAMERA_DOWN) {
 							/*출발*/
-							SteeringServoControl_Write(1900);
-							DesireSpeed_Write(40);
+							SteeringServoControl_Write(1100);
+							DesireSpeed_Write(50);
 							EncoderCounter_Write(0);
 							/*몇이상 갈때까지 반복*/
 							while (dist_encoder <= thresDistance) {//가는 거리
@@ -782,7 +781,7 @@ void* mission_thread(void* arg)
 								EncoderCounter_Write(0);
 								dist_encoder = 0;
 								/*후진 및 방향 전환*/
-								DesireSpeed_Write(-40);
+								DesireSpeed_Write(-50);
 								while (dist_encoder <= thresDistance) {
 									dist_encoder = EncoderCounter_Read();
 									usleep(50000);
@@ -796,8 +795,8 @@ void* mission_thread(void* arg)
 						else if (data->missionData.overtakingData.headingDirection == LEFT && data->missionData.overtakingData.updownCamera == CAMERA_DOWN) {
 
 							/*출발*/
-							SteeringServoControl_Write(1100);
-							DesireSpeed_Write(40);
+							SteeringServoControl_Write(1900);
+							DesireSpeed_Write(50);
 							EncoderCounter_Write(0);
 							/*몇이상 갈때까지 반복*/
 							while (dist_encoder <= thresDistance) {//가는 거리
@@ -816,7 +815,7 @@ void* mission_thread(void* arg)
 								EncoderCounter_Write(0);
 								dist_encoder = 0;
 								/*후진 및 방향 전환*/
-								DesireSpeed_Write(-40);
+								DesireSpeed_Write(-50);
 								while (dist_encoder <= thresDistance) {
 									dist_encoder = EncoderCounter_Read();
 									usleep(50000);
@@ -877,12 +876,12 @@ void* mission_thread(void* arg)
 						//right
 						if (data->missionData.overtakingData.headingDirection == RIGHT) {
 							/*복귀 좌회전 방향 설정*/
-							SteeringServoControl_Write(1100);
+							SteeringServoControl_Write(1900);
 						}
 						//left
 						else if (data->missionData.overtakingData.headingDirection == LEFT) {
 							/*복귀 우회전 방향 설정*/
-							SteeringServoControl_Write(1900);
+							SteeringServoControl_Write(1100);
 						}
 						/*복귀 전진*/
 						EncoderCounter_Write(0);

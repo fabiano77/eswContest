@@ -645,11 +645,7 @@ void* mission_thread(void* arg)
 
 					case SECOND_WALL:
 						sprintf(data->imgData.missionString, "Second Wall");
-						printf("Sensor 3 : %d\n", DistanceSensor_cm(3));
 						if (data->missionData.parkingData.rearRight == true) {
-							for (i = 0; i < 50; i++) {
-								printf("SECOND WALL IF CONTEXT\n");
-							}
 							DesiredDistance(40, 200, 1500);
 							state = PARKING_START;
 							data->imgData.bmission = true;

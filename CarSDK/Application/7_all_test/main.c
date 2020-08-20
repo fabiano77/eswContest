@@ -1068,6 +1068,7 @@ void manualControl(struct ControlData* cdata, char key)
 	case 'a':	//steering left		: servo 조향값 (2000(좌) ~ 1500(중) ~ 1000(우)
 		cdata->steerVal += 50;
 		SteeringServoControl_Write(cdata->steerVal);
+		cdata->steerWrite = true;
 		printf("angle_steering = %d\n", cdata->steerVal);
 		printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read());    //default = 1500, 0x5dc
 		break;
@@ -1075,6 +1076,7 @@ void manualControl(struct ControlData* cdata, char key)
 	case 'd':	//steering right	: servo 조향값 (2000(좌) ~ 1500(중) ~ 1000(우)
 		cdata->steerVal -= 50;
 		SteeringServoControl_Write(cdata->steerVal);
+		cdata->steerWrite = true;
 		printf("angle_steering = %d\n", cdata->steerVal);
 		printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read());    //default = 1500, 0x5dc
 		break;

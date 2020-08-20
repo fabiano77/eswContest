@@ -242,24 +242,8 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 
 		if (t_data->imgData.bmission)
 		{
-			displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
-		}
-		else
-		{
-			if (t_data->imgData.bcalibration) OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
-			if (t_data->imgData.btopview) OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
-			if (t_data->imgData.bauto)
-			{
-				int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
-				if (steerVal != 0)
-				{
-					t_data->controlData.steerVal = 1500 - steerVal;
-					t_data->controlData.steerWrite = 1;
-				}
-			}
-			if (t_data->missionData.parkingData.bparking) displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
-			/*MS 추월차로시에 사용*/
-			if (t_data->imgData.bcalibration && t_data->missionData.overtakingFlag && t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
+			/*추월차로시에 사용*/
+			if (t_data->missionData.overtakingFlag && t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
 			{
 				/*check를 위한 camera up*/
 				bool check_direction;
@@ -272,6 +256,21 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				}
 				//srcbuf를 활용하여 capture한 영상을 변환
 			}
+			if (t_data->imgData.bprintString) displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
+		}
+		else
+		{
+			if (t_data->imgData.bcalibration) OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
+			if (t_data->imgData.btopview) OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
+			if (t_data->imgData.bauto)
+			{
+				int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.bwhiteLine);
+				if (steerVal != 9999)
+				{
+					t_data->controlData.steerVal = 1500 - steerVal;
+					t_data->controlData.steerWrite = 1;
+				}
+			}		
 			if (t_data->missionData.tunnel.btunnel) {
 				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65)) {
 					t_data->missionData.tunnel.Tstart = true;
@@ -289,6 +288,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 			if (t_data->missionData.broundabout) {
 				// 추가로 흰색 차선 검출
 			}
+			if (t_data->imgData.bprintString) displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
 			/*******************************************************
 			*			 영상처리 종료
 			********************************************************/
@@ -682,6 +682,7 @@ void* mission_thread(void* arg)
 			if (data->missionData.tunnel.Tstart) {
 				int steerVal;
 				data->imgData.bmission = true;
+				data->imgData.bprintString = true;
 
 				cdata->lightFlag = cdata->lightFlag ^ 0x01;
 				CarLight_Write(cdata->lightFlag);
@@ -702,12 +703,15 @@ void* mission_thread(void* arg)
 				DesireSpeed_Write(40);
 				tunnel = DONE;
 				data->imgData.bmission = false;
+				data->imgData.bprintString = false;
 			}
 		}
 
 		if (roundabout)
 		{
 			if (StopLine(4)) {
+				data->imgData.bprintString = true;
+				sprintf(data->imgData.missionString, "roundabout");
 				int speed = 30;
 				bool delay = false;
 				while (1) {
@@ -740,6 +744,7 @@ void* mission_thread(void* arg)
 				roundabout = DONE;
 				signalLight = READY;
 				data->imgData.bmission = false;
+				data->imgData.bprintString = false;
 			}
 		}
 

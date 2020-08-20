@@ -880,6 +880,7 @@ void* mission_thread(void* arg)
 
 					case SIDE_ON:
 						sprintf(data->imgData.missionString, "Detect Side");
+						data->missionData.on_processing = false;
 						/*Auto Steering 동작*/
 						data->imgData.bmission = false;
 						/* 현재 장애물이 어디있느냐에 따라 side 센서(2,3 or 4,5)로 감지하는 코드*/
@@ -1250,12 +1251,14 @@ int main(int argc, char** argv)
 	PositionControlOnOff_Write(UNCONTROL); // position controller must be OFF !!!
 	SpeedControlOnOff_Write(CONTROL);   // speed controller must be also ON !!!
 
+	DesireSpeed_Write(0);
+
 	tdata.imgData.bcalibration = false;
 	tdata.imgData.btopview = true;
 	tdata.imgData.topMode = 2;
 	tdata.imgData.bauto = true;
 	tdata.imgData.bmission = false;
-	tdata.imgData.bwhiteLine = false;
+	tdata.imgData.bwhiteLine = true;
 	tdata.imgData.bprintString = false;
 	sprintf(tdata.imgData.missionString, "0");
 

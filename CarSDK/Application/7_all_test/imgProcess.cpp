@@ -7,7 +7,6 @@
 #include <string>
 #include <sstream>
 #include <opencv2/opencv.hpp>
-#include <opencv2/imgproc.hpp>
 
 #define PI 3.1415926
 
@@ -852,7 +851,7 @@ void regionOfInterest(Mat& src, Mat& dst, Point* points)
 	const Point* ppt[1] = { points }; //개의 꼭짓점 :n vertices
 	int npt[] = { 4 };
 
-	fillPoly(maskImg, ppt, npt, 1, Scalar(255, 255, 255), LINE_8);
+	fillPoly(maskImg, ppt, npt, 1, Scalar(255, 255, 255), 8);
 	Mat maskedImg;
 	bitwise_and(src, maskImg, maskedImg);
 	dst = maskedImg;

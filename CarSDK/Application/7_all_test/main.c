@@ -642,7 +642,7 @@ void* mission_thread(void* arg)
 		{
 			if (StopLine(4)) {
 				data->missionData.on_processing = true;
-				data->missionData.bround = true;
+				//data->missionData.bround = true;
 				printf("roundabout\n");
 				roundabout = DONE;
 				signalLight = READY;
@@ -1026,7 +1026,7 @@ int main(int argc, char** argv)
 	tdata.controlData.speedWrite = false;
 
 	tdata.missionData.on_processing = false;
-	tdata.missionData.bround = false;
+	//tdata.missionData.bround = false;
 	tdata.missionData.btunnel = false;
 	tdata.missionData.parkingData.bparking = false;
 	tdata.missionData.parkingData.horizontalFlag = false;

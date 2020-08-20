@@ -793,7 +793,7 @@ void* mission_thread(void* arg)
 							else {
 								/*정지*/
 								EncoderCounter_Write(0);
-								time_encoder = 0;
+								dist_encoder = 0;
 								/*후진 및 방향 전환*/
 								while (dist_encoder <= thresDistance) {
 									dist_encoder = EncoderCounter_Read();
@@ -821,7 +821,7 @@ void* mission_thread(void* arg)
 							else {
 								/*정지*/
 								EncoderCounter_Write(0);
-								time_encoder = 0;
+								dist_encoder = 0;
 								/*후진 및 방향 전환*/
 								while (dist_encoder <= thresDistance) {
 									dist_encoder = EncoderCounter_Read();
@@ -886,7 +886,7 @@ void* mission_thread(void* arg)
 						}
 						/*복귀 전진*/
 						EncoderCounter_Write(0);
-						time_encoder = 0;
+						dist_encoder = 0;
 						while (dist_encoder <= thresDistance) {
 							dist_encoder = EncoderCounter_Read();
 							usleep(50000);

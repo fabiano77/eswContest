@@ -91,17 +91,21 @@ struct Overtaking {
 	enum CameraVerticalState updownCamera; //카메라를 위로 올릴지 말지 결정하는 부분
 };
 
-struct ROUNDABOUT {
-	bool RAstart; // 분기의 시작을 알리는 변수
-	bool RAend; // 분기의 끝을 알리는 변수
+struct TUNNEL {
+	bool btunnel; // 터널 플래그
+	bool Tstart; // 분기의 시작을 알리는 변수
+	bool Tend; // 분기의 끝을 알리는 변수
 };
+
 
 struct MissionData {
 	uint32_t loopTime;	// mission 스레드 루프 시간
 	bool on_processing; // 어떠한 미션이 진행 중임을 나타내는 플래그 -> 미션 쓰레드에서 다른 미션을 활성화 시키지 않도록 한다.
 
-	bool btunnel; // 터널 플래그
-	struct ROUNDABOUT roundabout; // 회전교차로 플래그
+
+	
+	struct TUNNEL tunnel;
+	bool broundabout;
 	bool overtakingFlag; // 추월차로 플래그 ->MS 이후 overtaking struct 추가할 것
 	struct Parking parkingData; // 주차에 필요한 플래그를 담는 구조체
 	struct Overtaking overtakingData;//추월에 필요한 플래그 담는 구조체
@@ -252,6 +256,23 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 			t_data->missionData.overtakingData.updownCamera = CAMERA_UP;
 
 			//srcbuf를 활용하여 capture한 영상을 변환
+		}
+		if (t_data->missionData.tunnel.btunnel) {
+			if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65)) {
+				t_data->missionData.tunnel.Tstart = true;			
+				t_data->missionData.tunnel.Tend = true;
+			}
+			else {
+				t_data->missionData.tunnel.Tstart = false;
+				if (t_data->missionData.tunnel.Tend) {
+					t_data->missionData.tunnel.Tend = false;
+					t_data->missionData.tunnel.btunnel = false;
+				}
+			}
+
+		}
+		if (t_data->missionData.broundabout) {
+			// 추가로 흰색 차선 검출
 		}
 
 		/*******************************************************
@@ -630,10 +651,13 @@ void* mission_thread(void* arg)
 
 		if (tunnel)
 		{
-			if (/*on_tunnel()*/0) {
-				data->missionData.on_processing = true;
-				data->missionData.btunnel = true;
-				printf("tunnel\n");
+			if (data->missionData.tunnel.Tstart) {
+				while (data->missionData.tunnel.btunnel) {
+					// 동작 수행 + 전조등
+
+					
+				}
+				printf("tunnel_OFF\n");
 				tunnel = DONE;
 			}
 		}
@@ -641,9 +665,39 @@ void* mission_thread(void* arg)
 		if (roundabout)
 		{
 			if (StopLine(4)) {
-				data->missionData.on_processing = true;
-				//data->missionData.bround = true;
-				printf("roundabout\n");
+				int speed = 40;
+				bool delay = false;
+				while (1) {					
+					if (RoundAbout_isStart(DistanceSensor_cm(1))) {
+						data->missionData.broundabout = true;
+						break;
+					}
+					else {
+						// stop : speed = 0;
+					}					
+				}
+				while (!RoundAbout_End(DistanceSensor_cm(1), DistanceSensor_cm(4))) {
+					if (RoundAbout_isDelay(DistanceSensor_cm(1))) {
+						/* 
+						stop : speed = 0;
+						delay = true;;
+						*/
+					}
+					else {
+						/* 
+						if(delay && (speed>30)){
+							speed = speed - 5;
+							delay = false;
+						}
+						go : speed;
+						*/
+					}
+				}
+				// speed 원상복구
+
+				printf("ROUNDABOUT_OFF\n");
+
+				data->missionData.broundabout = false;
 				roundabout = DONE;
 				signalLight = READY;
 			}
@@ -1027,8 +1081,10 @@ int main(int argc, char** argv)
 	tdata.controlData.speedWrite = false;
 
 	tdata.missionData.on_processing = false;
-	//tdata.missionData.bround = false;
-	tdata.missionData.btunnel = false;
+	tdata.missionData.tunnel.btunnel = true;
+	tdata.missionData.tunnel.Tstart = false;
+	tdata.missionData.tunnel.Tend = false;
+	tdata.missionData.broundabout = false;
 	tdata.missionData.parkingData.bparking = false;
 	tdata.missionData.parkingData.horizontalFlag = false;
 	tdata.missionData.parkingData.verticalFlag = false;

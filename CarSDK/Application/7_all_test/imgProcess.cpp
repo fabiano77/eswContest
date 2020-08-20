@@ -67,7 +67,7 @@ float countGray(Mat& src, Point down, Point up, const float dydx);
 // TUNNEL
 int isDark(Mat& frame, const double percent);
 int Tunnel_isStart(Mat& frame, const double percent);
-
+int return_go;
 
 extern "C" {
 
@@ -323,13 +323,15 @@ extern "C" {
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 
-		// return Tunnel_isStart(srcRGB, percent);
+		return_go = Tunnel_isStart(srcRGB, percent);
 
-		if (Tunnel_isStart(srcRGB, percent)) {
+		return return_go;
+
+		/*if (Tunnel_isStart(srcRGB, percent)) {
 			printf("IN TUNNEL\n");
 			return 1;
 		}
-		return 0;
+		return 0;*/
 	}
 }	// extern "C"
 
@@ -935,8 +937,8 @@ float countGray(Mat& src, Point down, Point up, const float dydx)
 *//////////////////////////////
 int flag_tunnel;
 int first_tunnel = 0;
-int MAXTHR_tunnel = 20;
-int MINTHR_tunnel = 10;
+int MAXTHR_tunnel = 10;
+int MINTHR_tunnel = 5;
 
 int isDark(Mat& frame, const double percent) {
 

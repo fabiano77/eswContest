@@ -341,12 +341,6 @@ extern "C" {
 		return_go = Tunnel_isStart(srcRGB, percent);
 
 		return return_go;
-
-		/*if (Tunnel_isStart(srcRGB, percent)) {
-			printf("IN TUNNEL\n");
-			return 1;
-		}
-		return 0;*/
 	}
 }	// extern "C"
 
@@ -982,6 +976,7 @@ int isDark(Mat& frame, const double percent) {
 	}
 	return 0;
 }
+
 int Tunnel_isStart(Mat& frame, const double percent) {
 	if (!first_tunnel++) flag_tunnel = -1;
 

@@ -23,14 +23,19 @@
 int flag_go, flag_wait, flag_stop, flag_end;
 int check_start;
 int lower_StopDistance = 25;
-int uper_StopDistance = 40;
+int uper_StopDistance = 30;
 int lower_RoundDistance = 20;
-int uper_RoundDistance = 40;
-int THR_RoundAbout_END = 200;
+int uper_RoundDistance = 30;
+int THR_RoundAbout_END = 70;
 int first_RoundAbout = 0;
 
 void RoundAbout_Init();
 
+int flag_Tunnel;
+int first_Tunnel = 0;
+int absDist;
+int steerVal = 0;
+int flag_steer[5];
 
 extern "C" {
 
@@ -118,7 +123,7 @@ extern "C" {
 
 		if (flag_go > 0)
 		{
-			if (Distance1 >= uper_StopDistance)
+			if (Distance1 > uper_StopDistance)
 				flag_go--;
 		}
 		else if (flag_go == 0)
@@ -140,7 +145,7 @@ extern "C" {
 
 			if (flag_wait == 2) {
 				flag_wait = -1;
-				flag_go = 35; // 해당 프레임이 지난 후 출발할 것임
+				flag_go = 25; // 해당 프레임이 지난 후 출발할 것임
 			}
 		}
 		return check_start;
@@ -153,7 +158,7 @@ extern "C" {
 
 			if (flag_wait == 2) {
 				flag_wait = -1;
-				flag_stop = 30; // 해당 프레임만큼 정지
+				flag_stop = 25; // 해당 프레임만큼 정지
 				return 1;
 			}
 			return 0;
@@ -179,7 +184,7 @@ extern "C" {
 		}
 	}
 
-	int RoundAbout_End(const int Distance1, const int Distance2) {
+	int RoundAbout_isEnd(const int Distance1, const int Distance2) {
 		if ((Distance1 > 40) && (Distance2 > 40)) { // 거리 센서에 아무것도 잡히지 않을 때
 			if (flag_end < THR_RoundAbout_END) // 해당 프레임이 지나면 분기 벗어남
 				flag_end++;
@@ -196,7 +201,146 @@ extern "C" {
 		return 0;
 	}
 
+	/*int Tunnel_isTunnel(const int Distance1, const int Distance2, const int Distance3, const int Distance4) {
+		if (!first_Tunnel++) flag_Tunnel = 0;
 
+		if ((Distance1 < 30) && (Distance2 < 30)) {
+			if(flag_Tunnel < 2)
+				flag_Tunnel++;
+		}
+		else {
+			if (flag_Tunnel > 0)
+				flag_Tunnel--;
+		}
+
+		if ((Distance3 < 30) && (Distance4 < 30)) {
+			if ((flag_Tunnel >= 2) && (flag_Tunnel < 4))
+				flag_Tunnel++;
+		}
+		else {
+			if (flag_Tunnel >= 2)
+				flag_Tunnel--;
+		}
+
+		if (flag_Tunnel == 4) {
+			return 1;
+		}
+		return 0;
+	}*/
+
+	int Tunnel_isEnd(const int Distance1, const int Distance2, const int Distance3, const int Distance4) {
+		/* 2,6 - 3,5 (1,2 - 3,4)
+		1. 앞(2, 6)
+		2. 뒤(3, 5)
+		*/
+		if (!first_Tunnel++) flag_Tunnel = 0;
+
+		if ((Distance1 > 30) && (Distance2 > 30)) {
+			if (flag_Tunnel < 2)
+				flag_Tunnel++;
+		}
+		else {
+			if (flag_Tunnel > 0)
+				flag_Tunnel--;
+		}
+
+		if ((Distance3 > 30) && (Distance4 > 30)) {
+			if ((flag_Tunnel >= 2) && (flag_Tunnel < 4))
+				flag_Tunnel++;
+		}
+		else {
+			if (flag_Tunnel >= 2)
+				flag_Tunnel--;
+		}
+
+		if (flag_Tunnel == 4) {
+			return 1;
+		}
+		return 0;
+	}
+
+	int Tunnel_SteerVal(const int Distance1, const int Distance2) {
+		// 차량 19 , 도로 40
+		// 중앙은 10, 10이 나와야함
+		int i;
+		if (!first_Tunnel++) {
+			for (i = 0; i < 5; i++) {
+				flag_steer[i] = 0;
+			}
+		}
+		
+		absDist = abs(Distance1 - Distance2);
+
+		if (absDist < 2) {
+			if (flag_steer[0] == 2) {
+				steerVal = 0;
+				flag_steer[0] = 0;
+			}
+			flag_steer[0]++;	
+			for (i = 0; i < 5; i++) {
+				if ((flag_steer[i] > 0) && (i != 0))
+					flag_steer[i]--;
+			}
+		}
+		else if (absDist < 4) {
+			if (flag_steer[1] == 2) {
+				steerVal = 80;
+				flag_steer[1] = 0;
+				if (Distance1 < Distance2) {
+					steerVal = -steerVal;
+				}				
+			}
+			flag_steer[1]++; 
+			for (i = 0; i < 5; i++) {
+				if ((flag_steer[i] > 0) && (i != 1))
+					flag_steer[i]--;
+			}
+		}
+		else if (absDist < 6) {
+			if (flag_steer[2] == 2) {
+				steerVal = 180;
+				flag_steer[2] = 0;
+				if (Distance1 < Distance2) {
+					steerVal = -steerVal;
+				}
+			}
+			flag_steer[2]++;
+			for (i = 0; i < 5; i++) {
+				if ((flag_steer[i] > 0) && (i != 2))
+					flag_steer[i]--;
+			}
+		}
+		else if (absDist < 8) {
+			if (flag_steer[3] == 2) {
+				steerVal = 300;
+				flag_steer[3] = 0;
+				if (Distance1 < Distance2) {
+					steerVal = -steerVal;
+				}
+			}
+			flag_steer[3]++;
+			for (i = 0; i < 5; i++) {
+				if ((flag_steer[i] > 0) && (i != 3))
+					flag_steer[i]--;
+			}
+		}
+		else {
+			if (flag_steer[4] == 2) {
+				steerVal = 420;
+				flag_steer[4] = 0;
+				if (Distance1 < Distance2) {
+					steerVal = -steerVal;
+				}
+			}
+			flag_steer[4]++;
+			for (i = 0; i < 5; i++) {
+				if ((flag_steer[i] > 0) && (i != 4))
+					flag_steer[i]--;
+			}
+		}
+
+		return steerVal + 1500;
+	}
 
 }//extern "C"
 

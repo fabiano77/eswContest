@@ -272,6 +272,20 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				}
 				//srcbuf를 활용하여 capture한 영상을 변환
 			}
+			if (t_data->missionData.tunnel.btunnel) {
+				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65)) {
+					t_data->missionData.tunnel.Tstart = true;
+					t_data->missionData.tunnel.Tend = true;
+				}
+				else {
+					t_data->missionData.tunnel.Tstart = false;
+					if (t_data->missionData.tunnel.Tend) {
+						t_data->missionData.tunnel.Tend = false;
+						t_data->missionData.tunnel.btunnel = false;
+					}
+				}
+
+			}
 			if (t_data->missionData.broundabout) {
 				// 추가로 흰색 차선 검출
 			}
@@ -666,13 +680,26 @@ void* mission_thread(void* arg)
 		if (tunnel)
 		{
 			if (data->missionData.tunnel.Tstart) {
+				int steerVal;
 				data->imgData.bmission = true;
-				while (data->missionData.tunnel.btunnel) {
-					// 동작 수행 + 전조등
 
+				cdata->lightFlag = cdata->lightFlag ^ 0x01;
+				CarLight_Write(cdata->lightFlag);
 
+				while (Tunnel_isEnd(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5))) {
+					steerVal = Tunnel_SteerVal(DistanceSensor_cm(2), DistanceSensor_cm(6));
+					SteeringServoControl_Write(steerVal);
 				}
+				DesireSpeed_Write(0);				
 				printf("tunnel_OFF\n");
+
+				cdata->lightFlag = cdata->lightFlag ^ 0x01;
+				CarLight_Write(cdata->lightFlag);
+
+				data->missionData.tunnel.btunnel = false;
+				usleep(150000);
+
+				DesireSpeed_Write(40);
 				tunnel = DONE;
 				data->imgData.bmission = false;
 			}
@@ -681,7 +708,7 @@ void* mission_thread(void* arg)
 		if (roundabout)
 		{
 			if (StopLine(4)) {
-				int speed = 40;
+				int speed = 30;
 				bool delay = false;
 				while (1) {
 					if (RoundAbout_isStart(DistanceSensor_cm(1))) {
@@ -689,23 +716,23 @@ void* mission_thread(void* arg)
 						break;
 					}
 					else {
-						DesireSpeed_Write(0);
+						DesireSpeed_Write(0);						
 					}
 				}
-				while (!RoundAbout_End(DistanceSensor_cm(1), DistanceSensor_cm(4))) {
+				while (!RoundAbout_isEnd(DistanceSensor_cm(1), DistanceSensor_cm(4))) {
 					if (RoundAbout_isDelay(DistanceSensor_cm(1))) {
 						DesireSpeed_Write(0);
 						delay = true;
 					}
 					else {
-						if (delay && (speed > 30)) {
+						if (delay && (speed > 20)) {
 							speed = speed - 5;
 							delay = false;
 						}
 						DesireSpeed_Write(speed);
 					}
 				}
-				// speed 원상복구
+				DesireSpeed_Write(50);
 
 				printf("ROUNDABOUT_OFF\n");
 

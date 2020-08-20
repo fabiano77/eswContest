@@ -674,7 +674,7 @@ void* mission_thread(void* arg)
 										DesireSpeed_Write(0);
 										SteeringServoControl_Write(1500);
 										DesireSpeed_Write(-50);
-										if (DistanceSensor_cm(4) <= 6)
+										if (DistanceSensor_cm(4) <= 7)
 											step = FIRST_FORWARD;
 									}
 									break;
@@ -694,7 +694,8 @@ void* mission_thread(void* arg)
 									break;
 
 								case SECOND_FORWARD:
-									DesiredDistance(30, 600, 1200);
+									usleep(3000000);
+									DesiredDistance(30, 600, 1800);
 									step = FINISH;
 									break;
 

@@ -218,7 +218,7 @@ extern "C" {
 		string str(name);
 		Point printPosition(230, 25);
 
-		dstRGB = srcRGB.clone();
+		dstRGB = srcRGB;
 
 		putText(dstRGB, str, printPosition, 0, 0.8, Scalar(255, 153, 0), 2);
 	}

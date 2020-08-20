@@ -137,6 +137,7 @@ struct ImgProcessData {
 	bool btopview;
 	bool bauto;
 	bool bmission;
+	bool bwhiteLine;
 	char missionString[20];
 	int topMode;
 };
@@ -258,7 +259,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 			if (t_data->imgData.btopview) OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
 			if (t_data->imgData.bauto)
 			{
-				int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+				int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.bwhiteLine);
 				if (steerVal != 9999)
 				{
 					t_data->controlData.steerVal = 1500 - steerVal;
@@ -1269,6 +1270,7 @@ int main(int argc, char** argv)
 	tdata.imgData.topMode = 2;
 	tdata.imgData.bauto = true;
 	tdata.imgData.bmission = false;
+	tdata.imgData.bwhiteLine = false;
 	sprintf(tdata.imgData.missionString, "0");
 
 	tdata.controlData.settingSpeedVal = 30;

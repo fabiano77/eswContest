@@ -725,7 +725,10 @@ void* mission_thread(void* arg)
 				}
 				data->imgData.bmission = false;
 				data->imgData.bprintString = false;
-				if (parking == REMAIN) printf("First Parking is Done!\n");
+				if (parking == REMAIN) {
+					printf("First Parking is Done!\n");
+					usleep(5000000);
+				}
 				if (parking == DONE) printf("Second Parking is Dome!\n");
 			}
 		}

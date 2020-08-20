@@ -820,6 +820,7 @@ void *mission_thread(void *arg)
 				{
 					steerVal = Tunnel_SteerVal(DistanceSensor_cm(2), DistanceSensor_cm(6));
 					SteeringServoControl_Write(steerVal);
+					usleep(100000);
 				}
 				DesireSpeed_Write(0);
 				printf("tunnel_OFF\n");
@@ -829,7 +830,7 @@ void *mission_thread(void *arg)
 
 				data->imgData.bmission = false;
 				data->missionData.tunnel.btunnel = false;
-				usleep(150000);
+				usleep(1500000);
 
 				DesireSpeed_Write(40);
 				tunnel = DONE;				
@@ -839,25 +840,25 @@ void *mission_thread(void *arg)
 
 		if (roundabout)
 		{
-			if (StopLine(4))
+			if (StopLine(5))
 			{
 				data->imgData.bwhiteLine = true;
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "roundabout");
+				printf("RoundAbout_ON\n");
 				int speed = 30;
 				bool delay = false;
 				while (1)
 				{
+					DesireSpeed_Write(0);					
 					if (RoundAbout_isStart(DistanceSensor_cm(1)))
 					{
 						data->missionData.broundabout = true;
 						break;
 					}
-					else
-					{
-						DesireSpeed_Write(0);
-					}
+					usleep(100000);
 				}
+				printf("go!");
 				while (!RoundAbout_isEnd(DistanceSensor_cm(1), DistanceSensor_cm(4)))
 				{
 					if (RoundAbout_isDelay(DistanceSensor_cm(1)))
@@ -874,8 +875,9 @@ void *mission_thread(void *arg)
 						}
 						DesireSpeed_Write(speed);
 					}
+					usleep(100000);
 				}
-				DesireSpeed_Write(50);
+				DesireSpeed_Write(40);
 
 				printf("ROUNDABOUT_OFF\n");
 

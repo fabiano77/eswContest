@@ -324,10 +324,6 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					t_data->controlData.steerWrite = 1;
 				}
 			}
-			if (t_data->missionData.broundabout)
-			{
-				// 추가로 흰색 차선 검출
-			}
 			if (t_data->imgData.bprintString)
 				displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
 			/*******************************************************
@@ -839,6 +835,7 @@ void *mission_thread(void *arg)
 		{
 			if (StopLine(4))
 			{
+				data->imgData.bwhiteLine = true;
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "roundabout");
 				int speed = 30;

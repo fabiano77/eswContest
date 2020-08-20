@@ -721,6 +721,7 @@ void* mission_thread(void* arg)
 			/*MS 분기진입 명령 지시*/
 			if (DistanceSensor_cm(1) < 30) //전방 장애물 감지 //주차 상황이 아닐때, 분기진입 가능
 			{
+				data->imgData.btopview = false;
 				data->imgData.bmission = true;//영상처리 X
 				sprintf(data->imgData.missionString, "overtake");
 				printf("overtake \n");
@@ -754,8 +755,10 @@ void* mission_thread(void* arg)
 						/*판단 받으면 Camera 원래 위치로 돌림*/
 						if (data->missionData.overtakingData.headingDirection != STOP) {
 							data->controlData.cameraY = 1660;
+							DesiredDistance();
 							CameraYServoControl_Write(data->controlData.cameraY);
 							data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
+							data->imgData.btopview = true;
 						}
 						else { break; }
 						/*판단 이후 해당 방향 전진*/
@@ -763,6 +766,7 @@ void* mission_thread(void* arg)
 							/*출발*/
 							SteeringServoControl_Write(1100);
 							DesireSpeed_Write(50);
+							data->controlData.speedWrite = 1;
 							EncoderCounter_Write(0);
 							/*몇이상 갈때까지 반복*/
 							while (dist_encoder <= thresDistance) {//가는 거리
@@ -778,16 +782,19 @@ void* mission_thread(void* arg)
 							else {
 								/*정지*/
 								DesireSpeed_Write(0);
+								data->controlData.speedWrite = 1;
 								EncoderCounter_Write(0);
 								dist_encoder = 0;
 								/*후진 및 방향 전환*/
 								DesireSpeed_Write(-50);
+								data->controlData.speedWrite = 1;
 								while (dist_encoder <= thresDistance) {
 									dist_encoder = EncoderCounter_Read();
 									usleep(50000);
 								}
 								/*정지 및 방향 전환 명령*/
 								DesireSpeed_Write(0);
+								data->controlData.speedWrite = 1;
 								data->missionData.overtakingData.headingDirection = LEFT;
 							}
 
@@ -797,6 +804,7 @@ void* mission_thread(void* arg)
 							/*출발*/
 							SteeringServoControl_Write(1900);
 							DesireSpeed_Write(50);
+							data->controlData.speedWrite = 1;
 							EncoderCounter_Write(0);
 							/*몇이상 갈때까지 반복*/
 							while (dist_encoder <= thresDistance) {//가는 거리
@@ -812,16 +820,19 @@ void* mission_thread(void* arg)
 							else {
 								/*정지*/
 								DesireSpeed_Write(0);
+								data->controlData.speedWrite = 1;
 								EncoderCounter_Write(0);
 								dist_encoder = 0;
 								/*후진 및 방향 전환*/
 								DesireSpeed_Write(-50);
+								data->controlData.speedWrite = 1;
 								while (dist_encoder <= thresDistance) {
 									dist_encoder = EncoderCounter_Read();
 									usleep(50000);
 								}
 								/*정지 후 방향 전환 명령*/
 								DesireSpeed_Write(0);
+								data->controlData.speedWrite = 1;
 								data->missionData.overtakingData.headingDirection = RIGHT;
 							}
 						}

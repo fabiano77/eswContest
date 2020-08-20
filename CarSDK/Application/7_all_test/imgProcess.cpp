@@ -223,12 +223,12 @@ extern "C" {
 		putText(dstRGB, str, printPosition, 0, 0.8, Scalar(255, 153, 0), 2);
 	}
 
-	int autoSteering(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
+	int autoSteering(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int whiteMode)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
-		int steer = calculSteer(srcRGB, w, h, 0);
+		int steer = calculSteer(srcRGB, w, h, whiteMode);
 		dstRGB = srcRGB;
 
 		return steer;
@@ -236,6 +236,7 @@ extern "C" {
 
 	bool checkObstacle(unsigned char* inBuf, int w, int h, unsigned char* outBuf) {
 		/*Capture from inBuf*/
+		printf("check");
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 		dstRGB = srcRGB;
@@ -258,7 +259,6 @@ extern "C" {
 		/*Canny Image*/
 		Mat img_canny;
 		cannyEdge(img_white, img_canny);
-		imshow("img_white", img_white);
 		/*Hough Ransac*/
 		Mat img_ransac;
 		int line_type;
@@ -275,9 +275,15 @@ extern "C" {
 		/*Check Line Upper Bound*/
 		line(srcRGB, Point(0, height_up), Point(width, height_up), Scalar(255, 0, 0), 2);
 		/*Calculate Gradient*/
-		double grad_right = slope(line_right);
-		double grad_left = slope(line_left);
-
+		double grad_right, grad_left;
+		if (line_type == 0) {//미탐지 시
+			grad_right = 1000;
+			grad_left = -1000;
+		}
+		else {
+			grad_right = slope(line_right);
+			grad_left = slope(line_left);
+		}
 		/*Point that meets upper and lower bound*/
 		int rightup_x = getPointX_at_Y(line_right, height_up);
 		int rightdown_x = getPointX_at_Y(line_right, height_down);
@@ -313,10 +319,8 @@ extern "C" {
 		int font = FONT_ITALIC; // italic font
 		double fontScale = 1;
 
-		string s_left = toString((double)grayrate_left) + "%";
-		string s_right = toString((double)grayrate_right) + "%";
-		putText(srcRGB, s_left, location_left, font, fontScale, Scalar(255, 0, 0), 2);
-		putText(srcRGB, s_right, location_right, font, fontScale, Scalar(255, 0, 0), 2);
+		putText(srcRGB, toString((double)grayrate_left) + "%", location_left, font, fontScale, Scalar(255, 0, 0), 2);
+		putText(srcRGB, toString((double)grayrate_right) + "%", location_right, font, fontScale, Scalar(255, 0, 0), 2);
 		/*Choose Left or Right*/
 		//선이 없는 경우 배제하는 것도 필요
 		if (grayrate_left > grayrate_right)
@@ -899,7 +903,7 @@ float countGray(Mat& src, Point down, Point up, const float dydx)
 		for (int y = up.y; y < down.y; y++)//up.y<down.y
 		{ //y
 			int lower_x;//lower bound for calculate rectangular form
-			if (dydx >= 1000) {
+			if (dydx >= 1000) {//무의미한 값 제거
 				lower_x = 0;
 			}
 			else { lower_x = (y - up.y) / dydx + up.x; }
@@ -916,13 +920,13 @@ float countGray(Mat& src, Point down, Point up, const float dydx)
 			}
 		}
 		rate = (float)count_left / count_total * 100.0;
-		printf("Left rate is %f %%", rate);
+		printf("Left rate is %f %% \n", rate);
 	}
 	else {//right
 		for (int y = up.y; y < down.y; y++)//up.y<down.y
 		{ //y
 			int upper_x;//upper bound for calculate rectangular form
-			if (dydx >= 1000) { upper_x = width; }
+			if (dydx >= 1000) { upper_x = width; }//무의미한 값 제거
 			else { upper_x = (y - up.y) / dydx + up.x; }
 			for (int x = upper_x; x < width; x++) // left Gray detection
 			{ //x
@@ -936,7 +940,7 @@ float countGray(Mat& src, Point down, Point up, const float dydx)
 			}
 		}
 		rate = (float)count_right / count_total * 100.0;
-		printf("Left rate is %f %%", rate);
+		printf("Right rate is %f %% \n", rate);
 	}
 
 	return rate;

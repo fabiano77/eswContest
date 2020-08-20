@@ -993,6 +993,7 @@ void* mission_thread(void* arg)
 						/*알고리즘 전진*/
 						data->imgData.bmission = false;
 						sprintf(data->imgData.missionString, "End Overtaking");
+						DesireSpeed_Write(40);
 						state = DONE;
 						overtake = DONE;
 						data->missionData.overtakingFlag = false;

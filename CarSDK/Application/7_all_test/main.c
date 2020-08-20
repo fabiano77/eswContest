@@ -921,6 +921,7 @@ void* mission_thread(void* arg)
 						}
 						/*알고리즘 전진*/
 						data->imgData.bmission = false;
+						sprintf(data->imgData.missionString, "End Overtaking");
 						overtake = DONE;
 						break;
 

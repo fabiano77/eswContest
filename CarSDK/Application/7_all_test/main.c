@@ -595,6 +595,7 @@ void* mission_thread(void* arg)
 				int parking_width = 0;
 				enum ParkingState state = FIRST_WALL;
 				enum HorizentalStep step = FIRST_BACKWARD;
+
 				while (state)	// state == END가 아닌이상 루프 진행
 				{
 					data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 20) ? true : false;
@@ -626,7 +627,7 @@ void* mission_thread(void* arg)
 							*/
 							printf("Result Width : %-3d\n", parking_width);
 
-							if (parking_width <= 1000)
+							if (parking_width <= 700)
 								data->missionData.parkingData.verticalFlag = true;
 							else
 								data->missionData.parkingData.horizontalFlag = true;
@@ -636,6 +637,7 @@ void* mission_thread(void* arg)
 					case SECOND_WALL:
 						sprintf(data->imgData.missionString, "Second Wall");
 						if (data->missionData.parkingData.rearRight == true) {
+							DesiredDistance(40, 200, 1500);
 							state = PARKING_START;
 							data->imgData.bmission = true;
 							break;

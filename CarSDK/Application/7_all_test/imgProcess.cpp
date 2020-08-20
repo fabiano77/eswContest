@@ -313,10 +313,8 @@ extern "C" {
 		int font = FONT_ITALIC; // italic font
 		double fontScale = 1;
 
-		string s_left = toString((double)grayrate_left) + "%";
-		string s_right = toString((double)grayrate_right) + "%";
-		putText(srcRGB, s_left, location_left, font, fontScale, Scalar(255, 0, 0), 2);
-		putText(srcRGB, s_right, location_right, font, fontScale, Scalar(255, 0, 0), 2);
+		putText(srcRGB, toString((double)grayrate_left) + "%", location_left, font, fontScale, Scalar(255, 0, 0), 2);
+		putText(srcRGB, toString((double)grayrate_right) + "%", location_right, font, fontScale, Scalar(255, 0, 0), 2);
 		/*Choose Left or Right*/
 		//선이 없는 경우 배제하는 것도 필요
 		if (grayrate_left > grayrate_right)
@@ -894,6 +892,9 @@ void regionOfInterest(Mat& src, Mat& dst, Point* points)
 
 float countGray(Mat& src, Point down, Point up, const float dydx)
 {
+	if (down.x == 0 && down.y == 0) {
+		down=Point(0,)
+	}
 	CV_Assert(src.type() == CV_8UC1);
 	int count_left = 0;
 	int count_right = 0;
@@ -922,7 +923,7 @@ float countGray(Mat& src, Point down, Point up, const float dydx)
 			}
 		}
 		rate = (float)count_left / count_total * 100.0;
-		printf("Left rate is %f %%", rate);
+		printf("Left rate is %f %% \n", rate);
 	}
 	else {//right
 		for (int y = up.y; y < down.y; y++)//up.y<down.y
@@ -942,7 +943,7 @@ float countGray(Mat& src, Point down, Point up, const float dydx)
 			}
 		}
 		rate = (float)count_right / count_total * 100.0;
-		printf("Left rate is %f %%", rate);
+		printf("Right rate is %f %% \n", rate);
 	}
 
 	return rate;

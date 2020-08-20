@@ -259,7 +259,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 			if (t_data->imgData.bauto)
 			{
 				int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
-				if (steerVal != 0)
+				if (steerVal != 9999)
 				{
 					t_data->controlData.steerVal = 1500 - steerVal;
 					t_data->controlData.steerWrite = 1;
@@ -781,7 +781,7 @@ void* mission_thread(void* arg)
 				data->missionData.overtakingFlag = true;
 				bool obstacle = false;
 				int dist_encoder = 0;
-				int thresDistance = 300;
+				int thresDistance = 500;
 				/*차량 정지*/
 				DesireSpeed_Write(0);
 				while (state)
@@ -792,10 +792,9 @@ void* mission_thread(void* arg)
 						/* 장애물 좌우판단을 위한 카메라 각도조절 */
 						if (data->missionData.overtakingData.headingDirection == STOP) {
 							data->missionData.overtakingFlag = true;
-							data->controlData.cameraY = 1500;
+							data->controlData.cameraY = 1610;
 							CameraYServoControl_Write(data->controlData.cameraY);
 							data->missionData.overtakingData.updownCamera = CAMERA_UP;
-							/* 차량 정지*/
 						}
 						/* 장애물 좌우 판단 및 비어있는 차선으로 전진하려는 코드*/
 						while (data->missionData.overtakingData.headingDirection == STOP) {
@@ -811,8 +810,8 @@ void* mission_thread(void* arg)
 						/*판단 이후 해당 방향 전진*/
 						if (data->missionData.overtakingData.headingDirection == RIGHT && data->missionData.overtakingData.updownCamera == CAMERA_DOWN) {
 							/*출발*/
-							SteeringServoControl_Write(1900);
-							DesireSpeed_Write(40);
+							SteeringServoControl_Write(1100);
+							DesireSpeed_Write(50);
 							EncoderCounter_Write(0);
 							/*몇이상 갈때까지 반복*/
 							while (dist_encoder <= thresDistance) {//가는 거리
@@ -831,7 +830,7 @@ void* mission_thread(void* arg)
 								EncoderCounter_Write(0);
 								dist_encoder = 0;
 								/*후진 및 방향 전환*/
-								DesireSpeed_Write(-40);
+								DesireSpeed_Write(-50);
 								while (dist_encoder <= thresDistance) {
 									dist_encoder = EncoderCounter_Read();
 									usleep(50000);
@@ -845,8 +844,8 @@ void* mission_thread(void* arg)
 						else if (data->missionData.overtakingData.headingDirection == LEFT && data->missionData.overtakingData.updownCamera == CAMERA_DOWN) {
 
 							/*출발*/
-							SteeringServoControl_Write(1100);
-							DesireSpeed_Write(40);
+							SteeringServoControl_Write(1900);
+							DesireSpeed_Write(50);
 							EncoderCounter_Write(0);
 							/*몇이상 갈때까지 반복*/
 							while (dist_encoder <= thresDistance) {//가는 거리
@@ -865,7 +864,7 @@ void* mission_thread(void* arg)
 								EncoderCounter_Write(0);
 								dist_encoder = 0;
 								/*후진 및 방향 전환*/
-								DesireSpeed_Write(-40);
+								DesireSpeed_Write(-50);
 								while (dist_encoder <= thresDistance) {
 									dist_encoder = EncoderCounter_Read();
 									usleep(50000);
@@ -926,12 +925,12 @@ void* mission_thread(void* arg)
 						//right
 						if (data->missionData.overtakingData.headingDirection == RIGHT) {
 							/*복귀 좌회전 방향 설정*/
-							SteeringServoControl_Write(1100);
+							SteeringServoControl_Write(1900);
 						}
 						//left
 						else if (data->missionData.overtakingData.headingDirection == LEFT) {
 							/*복귀 우회전 방향 설정*/
-							SteeringServoControl_Write(1900);
+							SteeringServoControl_Write(1100);
 						}
 						/*복귀 전진*/
 						EncoderCounter_Write(0);
@@ -1117,6 +1116,7 @@ void manualControl(struct ControlData* cdata, char key)
 	case 'a':	//steering left		: servo 조향값 (2000(좌) ~ 1500(중) ~ 1000(우)
 		cdata->steerVal += 50;
 		SteeringServoControl_Write(cdata->steerVal);
+		cdata->steerWrite = true;
 		printf("angle_steering = %d\n", cdata->steerVal);
 		printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read());    //default = 1500, 0x5dc
 		break;
@@ -1124,6 +1124,7 @@ void manualControl(struct ControlData* cdata, char key)
 	case 'd':	//steering right	: servo 조향값 (2000(좌) ~ 1500(중) ~ 1000(우)
 		cdata->steerVal -= 50;
 		SteeringServoControl_Write(cdata->steerVal);
+		cdata->steerWrite = true;
 		printf("angle_steering = %d\n", cdata->steerVal);
 		printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read());    //default = 1500, 0x5dc
 		break;

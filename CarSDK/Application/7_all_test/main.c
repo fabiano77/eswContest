@@ -642,7 +642,7 @@ void* mission_thread(void* arg)
 		{
 			if (StopLine(4)) {
 				data->missionData.on_processing = true;
-				data->missionData.bround = true;
+				//data->missionData.bround = true;
 				printf("roundabout\n");
 				roundabout = DONE;
 				signalLight = READY;
@@ -674,6 +674,7 @@ void* mission_thread(void* arg)
 							int i_time = 0;//#TODO 변경예정
 							while (!farFront) {
 								/*일정시간마다 거리센서 측정하여 멀어지면 SIDE_ON진행*/
+								
 
 								/*특정시간이 지났음에도 멀어지지 않는다면 BACK진행*/
 								i++;
@@ -1026,7 +1027,7 @@ int main(int argc, char** argv)
 	tdata.controlData.speedWrite = false;
 
 	tdata.missionData.on_processing = false;
-	tdata.missionData.bround = false;
+	//tdata.missionData.bround = false;
 	tdata.missionData.btunnel = false;
 	tdata.missionData.parkingData.bparking = false;
 	tdata.missionData.parkingData.horizontalFlag = false;

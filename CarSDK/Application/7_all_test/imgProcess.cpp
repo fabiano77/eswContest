@@ -892,9 +892,6 @@ void regionOfInterest(Mat& src, Mat& dst, Point* points)
 
 float countGray(Mat& src, Point down, Point up, const float dydx)
 {
-	if (down.x == 0 && down.y == 0) {
-		down=Point(0,)
-	}
 	CV_Assert(src.type() == CV_8UC1);
 	int count_left = 0;
 	int count_right = 0;

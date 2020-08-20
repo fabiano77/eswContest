@@ -238,6 +238,7 @@ extern "C" {
 		/*Capture from inBuf*/
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
+		dstRGB = srcRGB;
 		/*Declare usable variables*/
 		int height_up = 80;
 		int height_down = 150;
@@ -321,11 +322,13 @@ extern "C" {
 		if (grayrate_left > grayrate_right)
 		{
 			putText(srcRGB, "Left to go", location, font, fontScale, Scalar(0, 0, 255), 2);
+			printf("Going left");
 			return true;
 		}
 		else
 		{
 			putText(srcRGB, "Right to go", location, font, fontScale, Scalar(0, 0, 255), 2);
+			printf("Going Right");
 			return false;
 		}
 
@@ -919,6 +922,7 @@ float countGray(Mat& src, Point down, Point up, const float dydx)
 			}
 		}
 		rate = (float)count_left / count_total * 100.0;
+		printf("Left rate is %f %%", rate);
 	}
 	else {//right
 		for (int y = up.y; y < down.y; y++)//up.y<down.y
@@ -938,6 +942,7 @@ float countGray(Mat& src, Point down, Point up, const float dydx)
 			}
 		}
 		rate = (float)count_right / count_total * 100.0;
+		printf("Left rate is %f %%", rate);
 	}
 
 	return rate;

@@ -257,11 +257,18 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				t_data->controlData.steerWrite = 1;
 			}
 		}
-			/*MS 추월차로시에 사용*/
-			if (t_data->imgData.bcalibration && t_data->missionData.overtakingFlag)//camera 올라간 flag도 필요함
+		/*MS 추월차로시에 사용*/
+		if (t_data->imgData.bcalibration && t_data->missionData.overtakingFlag&& t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
 		{
-			t_data->missionData.overtakingData.updownCamera = CAMERA_UP;
-
+			/*check를 위한 camera up*/
+			bool check_direction;
+			check_direction = checkObstacle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+			if (check_direction == true) {//true=>left
+				t_data->missionData.overtakingData.headingDirection = LEFT;
+			}
+			else {//false =>right
+				t_data->missionData.overtakingData.headingDirection = RIGHT;
+			}
 			//srcbuf를 활용하여 capture한 영상을 변환
 		}
 
@@ -554,7 +561,7 @@ void* mission_thread(void* arg)
 	enum MissionState overtake = READY;
 	enum MissionState signalLight = NONE;
 	enum MissionState finish = NONE;
-	
+
 
 	//각 미션이 수행되고나면 detect를 하지 않도록 변수설정.
 
@@ -653,7 +660,7 @@ void* mission_thread(void* arg)
 						if (data->missionData.parkingData.verticalFlag && data->missionData.parkingData.horizontalFlag == false) {
 							// 수직 주차 구문
 						}
-						else  {
+						else {
 
 						}
 						state = DONE;
@@ -742,7 +749,8 @@ void* mission_thread(void* arg)
 				enum OvertakeState state = FRONT_DETECT;
 				data->missionData.overtakingData.headingDirection = STOP;
 				bool obstacle = false;
-				int time_encoder = 0;
+				int dist_encoder = 0;
+				int thresDistance = 300;
 				while (state)
 				{
 					switch (state)
@@ -750,20 +758,30 @@ void* mission_thread(void* arg)
 					case FRONT_DETECT:
 						/* 장애물 좌우판단을 위한 카메라 각도조절 */
 						if (data->missionData.overtakingData.headingDirection == STOP) {
-
 							data->missionData.overtakingFlag = true;
 							data->controlData.cameraY = 1500;
 							CameraYServoControl_Write(data->controlData.cameraY);
 							data->missionData.overtakingData.updownCamera = CAMERA_UP;
-							//camera_down으로 바꿔줘야함
+							/* 차량 정지*/
 						}
 						/* 장애물 좌우 판단 및 비어있는 차선으로 전진하는 코드*/
+						while (data->missionData.overtakingData.headingDirection == STOP) {
+							usleep(50000);
+						}
+						/*판단 받으면 Camera 원래 위치로 돌림*/
+						if (data->missionData.overtakingData.headingDirection != STOP) {
+							data->controlData.cameraY = 1660;
+							CameraYServoControl_Write(data->controlData.cameraY);
+							data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
+						}
+						else { break; }
+						/*판단 이후*/
 						if (data->missionData.overtakingData.headingDirection == RIGHT && data->missionData.overtakingData.updownCamera == CAMERA_DOWN) {
 							/*출발*/
 							EncoderCounter_Write(0);
 							/*몇이상 갈때까지 반복*/
-							while (time_encoder <= 300) {//가는 거리
-								time_encoder = EncoderCounter_Read();
+							while (dist_encoder <= thresDistance) {//가는 거리
+								dist_encoder = EncoderCounter_Read();
 								usleep(50000);
 							}
 							if (DistanceSensor_cm(1) < 30) {
@@ -774,8 +792,14 @@ void* mission_thread(void* arg)
 							if (farFront == true) { state = SIDE_ON; }
 							else {
 								/*정지*/
+								EncoderCounter_Write(0);
+								time_encoder = 0;
 								/*후진 및 방향 전환*/
-								data->missionData.overtakingData.headingDirection = RIGHT;
+								while (dist_encoder <= thresDistance) {
+									dist_encoder = EncoderCounter_Read();
+									usleep(50000);
+								}
+								data->missionData.overtakingData.headingDirection = LEFT;
 							}
 
 						}
@@ -784,8 +808,8 @@ void* mission_thread(void* arg)
 							/*출발*/
 							EncoderCounter_Write(0);
 							/*몇이상 갈때까지 반복*/
-							while (time_encoder <= 400) {
-								time_encoder = EncoderCounter_Read();
+							while (dist_encoder <= thresDistance) {//가는 거리
+								dist_encoder = EncoderCounter_Read();
 								usleep(50000);
 							}
 							if (DistanceSensor_cm(1) < 30) {
@@ -796,35 +820,79 @@ void* mission_thread(void* arg)
 							if (farFront == true) { state = SIDE_ON; }
 							else {
 								/*정지*/
+								EncoderCounter_Write(0);
+								time_encoder = 0;
 								/*후진 및 방향 전환*/
+								while (dist_encoder <= thresDistance) {
+									dist_encoder = EncoderCounter_Read();
+									usleep(50000);
+								}
 								data->missionData.overtakingData.headingDirection = RIGHT;
 							}
 						}
-						else { /*STOP이 유지되는 경우 멈춤*/ }
+						else { /*STOP이 유지되는 경우 멈춤*/
+							dist_encoder = 0;
+						}
 
 						break;
 
 					case SIDE_ON:
 						data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
+						data->controlData.cameraY = 1660;
 						/* 현재 장애물이 어디있느냐에 따라 side 센서(2,3 or 4,5)로 감지하는 코드*/
-
-						/*
-							if(오른쪽)		obstacle = (DistanceSensor_cm(2) < 10) ? true : false;
-							else if (왼쪽)	obstacle = (DistanceSensor_cm(5) < 10) ? true : false;
-						*/
-
-						if (obstacle == false)
-						{
-							state = SIDE_OFF;
+						//right
+						if (data->missionData.overtakingData.headingDirection == RIGHT) {
+							/*장애물 통과 확인*/
+							if (DistanceSensor_cm(5) < 30 && DistanceSensor_cm(6) < 30) {
+								obstacle = true;
+							}
+							else if (obstacle == true) {
+								/*장애물 통과*/
+								if (DistanceSensor_cm(5) < 30 && DistanceSensor_cm(6) > 30) {
+									obstacle = false;
+									state = SIDE_OFF;
+								}
+							}
+						}
+						//left
+						else if (data->missionData.overtakingData.headingDirection == LEFT) {
+							/*장애물 통과 확인*/
+							if (DistanceSensor_cm(2) < 30 && DistanceSensor_cm(2) < 30) {
+								obstacle = true;
+							}
+							else if (obstacle == true) {
+								/*장애물 통과*/
+								if (DistanceSensor_cm(3) < 30 && DistanceSensor_cm(2) > 30) {
+									obstacle = false;
+									state = SIDE_OFF;
+								}
+							}
+						}
+						//error and go back step
+						else {
+							state = FRONT_DETECT;
 						}
 						break;
 
 					case SIDE_OFF:
 						/*원래 차선으로 복귀하는 코드*/
-
+						//right
+						if (data->missionData.overtakingData.headingDirection == RIGHT) {
+							/*복귀 좌회전 방향 설정*/
+						}
+						//left
+						else if (data->missionData.overtakingData.headingDirection == LEFT) {
+							/*복귀 우회전 방향 설정*/
+						}
+						/*복귀 전진*/
+						EncoderCounter_Write(0);
+						time_encoder = 0;
+						while (dist_encoder <= thresDistance) {
+							dist_encoder = EncoderCounter_Read();
+							usleep(50000);
+						}
+						/*알고리즘 전진*/
 						overtake = DONE;
-						data->controlData.cameraY = 1660;
-						CameraYServoControl_Write(data->controlData.cameraY);
 						break;
 
 					default:

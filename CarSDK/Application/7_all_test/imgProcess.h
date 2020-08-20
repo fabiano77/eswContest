@@ -13,6 +13,7 @@ extern "C" {
 
 	int autoSteering(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
 
+	int Tunnel(unsigned char* inBuf, int w, int h, const double percent);
 
 	/// <summary>
     /// check where is obstacle

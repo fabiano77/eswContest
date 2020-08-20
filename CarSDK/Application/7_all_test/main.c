@@ -288,18 +288,14 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				}
 				//srcbuf를 활용하여 capture한 영상을 변환
 			}
-			if (t_data->missionData.tunnel.btunnel)
-			{
-				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65))
-				{
+			if (t_data->missionData.tunnel.btunnel) {
+				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65)) {
 					t_data->missionData.tunnel.Tstart = true;
 					t_data->missionData.tunnel.Tend = true;
 				}
-				else
-				{
+				else {
 					t_data->missionData.tunnel.Tstart = false;
-					if (t_data->missionData.tunnel.Tend)
-					{
+					if (t_data->missionData.tunnel.Tend) {
 						t_data->missionData.tunnel.Tend = false;
 						t_data->missionData.tunnel.btunnel = false;
 					}
@@ -612,8 +608,8 @@ void *mission_thread(void *arg)
 	enum MissionState start = NONE;
 	enum MissionState flyover = NONE;
 	enum MissionState parking = READY;
-	enum MissionState roundabout = READY;
-	enum MissionState tunnel = READY;
+	enum MissionState roundabout = NONE;
+	enum MissionState tunnel = NONE;
 	enum MissionState overtake = READY;
 	enum MissionState signalLight = NONE;
 	enum MissionState finish = NONE;
@@ -736,82 +732,76 @@ void *mission_thread(void *arg)
 								switch (step)
 								{
 								case FIRST_BACKWARD:
-									DesiredDistance(-30, 300, 1000);
+									SteeringServoControl_Write(1000);
 									DesireSpeed_Write(-40);
-									if (abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2)
+									if (DistanceSensor_cm(4) <= 18)
 									{
 										DesireSpeed_Write(0);
 										SteeringServoControl_Write(1500);
-										DesireSpeed_Write(-50);
-										if (DistanceSensor_cm(4) <= 6)
-										{
-											DesireSpeed_Write(-40);
-											if (DistanceSensor_cm(4) <= 6)
-											{
-												step = FIRST_FORWARD;
-												DesireSpeed_Write(0);
-											}
-										}
-										break;
-
-									case FIRST_FORWARD:
-										DesiredDistance(50, 700, 1350);
-										step = SECOND_BACKWARD;
-										break;
-
-									case SECOND_BACKWARD:
-										SteeringServoControl_Write(2000);
-										DesireSpeed_Write(-50);
-										if (DistanceSensor_cm(4) <= 6 && DistanceSensor_cm(3) <= 6 && DistanceSensor_cm(2) <= 6)
-										{
+										DesireSpeed_Write(-40);
+										if (DistanceSensor_cm(4) <= 7) {
+											step = FIRST_FORWARD;
 											DesireSpeed_Write(0);
-											usleep(3000000);
-											step = SECOND_FORWARD;
 										}
-										break;
-
-									case SECOND_FORWARD:
-										DesiredDistance(30, 600, 1800);
-										usleep(3000000);
-										step = FINISH;
-										break;
-
-									case FINISH:
-										data->missionData.parkingData.horizontalFlag = 0;
-										data->missionData.on_processing = 0;
-										data->missionData.parkingData.on_parkingFlag = 0;
-										break;
-
-									default:
-										break;
 									}
-									usleep(200000);
+									break;
+
+								case FIRST_FORWARD:
+									DesiredDistance(50, 700, 1350);
+									step = SECOND_BACKWARD;
+									break;
+
+								case SECOND_BACKWARD:
+									SteeringServoControl_Write(2000);
+									DesireSpeed_Write(-50);
+									if (DistanceSensor_cm(4) <= 6 && DistanceSensor_cm(3) <= 6 && DistanceSensor_cm(2) <= 6)
+									{
+										DesireSpeed_Write(0);
+										usleep(3000000);
+										step = SECOND_FORWARD;
+									}
+									break;
+
+								case SECOND_FORWARD:
+									DesiredDistance(30, 600, 1800);
+									usleep(3000000);
+									step = FINISH;
+									break;
+
+								case FINISH:
+									data->missionData.parkingData.horizontalFlag = 0;
+									data->missionData.on_processing = 0;
+									data->missionData.parkingData.on_parkingFlag = 0;
+									break;
+
+								default:
+									break;
 								}
+								usleep(200000);
 							}
-							state = DONE;
-
-							if (parking == READY)
-								parking = REMAIN;
-							else if (parking == REMAIN)
-								parking = DONE;
-
-							break;
-
-						default:
-							break;
 						}
-						usleep(200000);
+						state = DONE;
+
+						if (parking == READY)
+							parking = REMAIN;
+						else if (parking == REMAIN)
+							parking = DONE;
+
+						break;
+
+					default:
+						break;
 					}
-					data->imgData.bmission = false;
-					data->imgData.bprintString = false;
-					if (parking == REMAIN)
-					{
-						printf("First Parking is Done!\n");
-						usleep(10000000);
-					}
-					if (parking == DONE)
-						printf("Second Parking is Dome!\n");
+					usleep(200000);
 				}
+				data->imgData.bmission = false;
+				data->imgData.bprintString = false;
+				if (parking == REMAIN) {
+					printf("First Parking is Done!\n");
+					usleep(10000000);
+				}
+				if (parking == DONE)
+					printf("Second Parking is Dome!\n");
 			}
 		}
 
@@ -830,7 +820,6 @@ void *mission_thread(void *arg)
 				{
 					steerVal = Tunnel_SteerVal(DistanceSensor_cm(2), DistanceSensor_cm(6));
 					SteeringServoControl_Write(steerVal);
-					usleep(100000);
 				}
 				DesireSpeed_Write(0);
 				printf("tunnel_OFF\n");
@@ -840,35 +829,35 @@ void *mission_thread(void *arg)
 
 				data->imgData.bmission = false;
 				data->missionData.tunnel.btunnel = false;
-				usleep(1500000);
+				usleep(150000);
 
 				DesireSpeed_Write(40);
-				tunnel = DONE;
+				tunnel = DONE;				
 				data->imgData.bprintString = false;
 			}
 		}
 
 		if (roundabout)
 		{
-			if (StopLine(5))
+			if (StopLine(4))
 			{
 				data->imgData.bwhiteLine = true;
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "roundabout");
-				printf("RoundAbout_ON\n");
 				int speed = 30;
 				bool delay = false;
 				while (1)
 				{
-					DesireSpeed_Write(0);
 					if (RoundAbout_isStart(DistanceSensor_cm(1)))
 					{
 						data->missionData.broundabout = true;
 						break;
 					}
-					usleep(100000);
+					else
+					{
+						DesireSpeed_Write(0);
+					}
 				}
-				printf("go!");
 				while (!RoundAbout_isEnd(DistanceSensor_cm(1), DistanceSensor_cm(4)))
 				{
 					if (RoundAbout_isDelay(DistanceSensor_cm(1)))
@@ -885,9 +874,8 @@ void *mission_thread(void *arg)
 						}
 						DesireSpeed_Write(speed);
 					}
-					usleep(100000);
 				}
-				DesireSpeed_Write(40);
+				DesireSpeed_Write(50);
 
 				printf("ROUNDABOUT_OFF\n");
 
@@ -1074,13 +1062,13 @@ void *mission_thread(void *arg)
 						if (data->missionData.overtakingData.headingDirection == RIGHT)
 						{
 							/*복귀 좌회전 방향 설정 및 전진*/
-							DesiredDistance(50, thresDistance + 500, 1900);
+							DesiredDistance(50, thresDistance, 1900);
 						}
 						//left
 						else if (data->missionData.overtakingData.headingDirection == LEFT)
 						{
 							/*복귀 우회전 방향 설정*/
-							DesiredDistance(50, thresDistance + 500, 1100);
+							DesiredDistance(50, thresDistance, 1100);
 						}
 						/*알고리즘 전진*/
 						data->imgData.bmission = false;
@@ -1409,7 +1397,7 @@ int main(int argc, char **argv)
 	tdata.imgData.topMode = 2;
 	tdata.imgData.bauto = true;
 	tdata.imgData.bmission = false;
-	tdata.imgData.bwhiteLine = false;
+	tdata.imgData.bwhiteLine = true;
 	tdata.imgData.bprintString = false;
 	sprintf(tdata.imgData.missionString, "0");
 

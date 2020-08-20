@@ -250,17 +250,16 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		/*******************************************************
 		*	 우리가 만든 알고리즘 함수를 넣는 부분.
 		********************************************************/
-		printf("ssibal=%d \n",t_data->imgData.bwhiteLine);
 		if(t_data->imgData.bdebug)
 		{
 			debugFiltering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+
 			memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
 			gettimeofday(&et, NULL);
 			optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
 			draw_operatingtime(disp, optime, t_data->controlData.loopTime, t_data->missionData.loopTime);
 		}
 		else if (t_data->imgData.bmission)
-		if (t_data->imgData.bmission)
 		{
 			/*추월차로시에 사용*/
 			if (t_data->missionData.overtakingFlag && t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
@@ -995,7 +994,9 @@ void* mission_thread(void* arg)
 						/*알고리즘 전진*/
 						data->imgData.bmission = false;
 						sprintf(data->imgData.missionString, "End Overtaking");
+						state = DONE;
 						overtake = DONE;
+						data->missionData.overtakingFlag = false;
 						break;
 
 					default:

@@ -271,7 +271,23 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 			}
 			//srcbuf를 활용하여 capture한 영상을 변환
 		}
+		if (t_data->missionData.tunnel.btunnel) {
+			if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65)) {
+				t_data->missionData.tunnel.Tstart = true;
+				t_data->missionData.tunnel.Tend = true;
+			}
+			else {
+				t_data->missionData.tunnel.Tstart = false;
+				if (t_data->missionData.tunnel.Tend) {
+					t_data->missionData.tunnel.Tend = false;
+					t_data->missionData.tunnel.btunnel = false;
+				}
+			}
 
+		}
+		if (t_data->missionData.broundabout) {
+			// 추가로 흰색 차선 검출
+		}
 		/*******************************************************
 		*			 영상처리 종료
 		********************************************************/

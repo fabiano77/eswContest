@@ -605,8 +605,8 @@ void* mission_thread(void* arg)
 
 				while (state)	// state == END가 아닌이상 루프 진행
 				{
-					data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 15) ? true : false;
-					data->missionData.parkingData.rearRight = (DistanceSensor_cm(3) <= 15) ? true : false;
+					data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 18) ? true : false;
+					data->missionData.parkingData.rearRight = (DistanceSensor_cm(3) <= 18) ? true : false;
 
 					switch (state)
 					{
@@ -628,7 +628,6 @@ void* mission_thread(void* arg)
 						}
 						if (data->missionData.parkingData.frontRight == true)
 						{
-							state = SECOND_WALL;
 							/*
 							거리 측정 종료 -> 측정 거리를 변수에 담는다.
 							*/
@@ -638,22 +637,20 @@ void* mission_thread(void* arg)
 								data->missionData.parkingData.verticalFlag = true;
 							else
 								data->missionData.parkingData.horizontalFlag = true;
+
+							state = SECOND_WALL;
 						}
 						break;
 
 					case SECOND_WALL:
 						sprintf(data->imgData.missionString, "Second Wall");
-						printf("Sensor 3 : %d\n", DistanceSensor_cm(3));
-						if (data->missionData.parkingData.rearRight) {
-							for (i = 0; i < 50; i++) {
-								printf("SECOND WALL IF CONTEXT\n");
-							}
-							DesiredDistance(40, 200, 1500);
+						if (data->missionData.parkingData.rearRight == true) {
 							state = PARKING_START;
 							data->imgData.bmission = true;
-							break;
 							// 두번 째 벽에 차량 우측 후방 센서가 걸린 상태이다. -> 수직 또는 수평 주차 진행.
 						}
+						break;
+
 					case PARKING_START:
 						sprintf(data->imgData.missionString, "Parking Start");
 						data->missionData.on_processing = true;
@@ -666,27 +663,31 @@ void* mission_thread(void* arg)
 							// 수직 주차 구문
 						}
 						else {
+							DesiredDistance(50, 200, 1500);
 							while (data->missionData.parkingData.horizontalFlag) {
 								switch (step)
 								{
 								case FIRST_BACKWARD:
 									SteeringServoControl_Write(1000);
-									DesireSpeed_Write(-30);
-									if (DistanceSensor_cm(4) <= 8) {
+									DesireSpeed_Write(-50);
+									if (DistanceSensor_cm(4) <= 12) {
 										DesireSpeed_Write(0);
-										step = FIRST_FORWARD;
+										SteeringServoControl_Write(1500);
+										DesireSpeed_Write(-50);
+										if (DistanceSensor_cm(4) <= 6)
+											step = FIRST_FORWARD;
 									}
 									break;
 
 								case FIRST_FORWARD:
-									DesiredDistance(30, 200, 1500);
+									DesiredDistance(50, 400, 1500);
 									step = SECOND_BACKWARD;
 									break;
 
 								case SECOND_BACKWARD:
 									SteeringServoControl_Write(2000);
-									DesireSpeed_Write(-30);
-									if (DistanceSensor_cm(4) <= 5 || DistanceSensor_cm(3) <= 5) {
+									DesireSpeed_Write(-50);
+									if (DistanceSensor_cm(4) <= 7 || DistanceSensor_cm(3) <= 7) {
 										DesireSpeed_Write(0);
 										step = SECOND_FORWARD;
 									}

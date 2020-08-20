@@ -249,7 +249,6 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		/*******************************************************
 		*	 우리가 만든 알고리즘 함수를 넣는 부분.
 		********************************************************/
-		printf("ssibal=%d \n",t_data->imgData.bwhiteLine);
 		if (t_data->imgData.bmission)
 		{
 			/*추월차로시에 사용*/

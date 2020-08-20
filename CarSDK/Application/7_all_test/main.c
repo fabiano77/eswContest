@@ -732,13 +732,13 @@ void *mission_thread(void *arg)
 								switch (step)
 								{
 								case FIRST_BACKWARD:
-									SteeringServoControl_Write(1000);
-									DesireSpeed_Write(-50);
-									if (DistanceSensor_cm(4) <= 17)
+									DesiredDistance(-30, 300, 1000);
+									DesireSpeed_Write(-40);
+									if (abs(DistanceSensor_cm(2)-DistanceSensor_cm(3))<=2)
 									{
 										DesireSpeed_Write(0);
 										SteeringServoControl_Write(1500);
-										DesireSpeed_Write(-50);
+										DesireSpeed_Write(-40);
 										if (DistanceSensor_cm(4) <= 6) {
 											step = FIRST_FORWARD;
 											DesireSpeed_Write(0);
@@ -747,14 +747,14 @@ void *mission_thread(void *arg)
 									break;
 
 								case FIRST_FORWARD:
-									DesiredDistance(50, 700, 1300);
+									DesiredDistance(50, 700, 1350);
 									step = SECOND_BACKWARD;
 									break;
 
 								case SECOND_BACKWARD:
 									SteeringServoControl_Write(2000);
 									DesireSpeed_Write(-50);
-									if (DistanceSensor_cm(4) <= 6 || DistanceSensor_cm(3) <= 6)
+									if (DistanceSensor_cm(4) <= 6 && DistanceSensor_cm(3) <= 6 && DistanceSensor_cm(2) <= 6)
 									{
 										DesireSpeed_Write(0);
 										usleep(3000000);

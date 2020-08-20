@@ -249,56 +249,56 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 			if (t_data->imgData.bcalibration) OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
 			if (t_data->imgData.btopview) OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
 			if (t_data->imgData.bauto)
-		{
-			int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
-			if (steerVal != 0)
 			{
-				t_data->controlData.steerVal = 1500 - steerVal;
-				t_data->controlData.steerWrite = 1;
-			}
-		}
-		/*MS 추월차로시에 사용*/
-		if (t_data->imgData.bcalibration && t_data->missionData.overtakingFlag&& t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
-		{
-			/*check를 위한 camera up*/
-			bool check_direction;
-			check_direction = checkObstacle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
-			if (check_direction == true) {//true=>left
-				t_data->missionData.overtakingData.headingDirection = LEFT;
-			}
-			else {//false =>right
-				t_data->missionData.overtakingData.headingDirection = RIGHT;
-			}
-			//srcbuf를 활용하여 capture한 영상을 변환
-		}
-		if (t_data->missionData.tunnel.btunnel) {
-			if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65)) {
-				t_data->missionData.tunnel.Tstart = true;
-				t_data->missionData.tunnel.Tend = true;
-			}
-			else {
-				t_data->missionData.tunnel.Tstart = false;
-				if (t_data->missionData.tunnel.Tend) {
-					t_data->missionData.tunnel.Tend = false;
-					t_data->missionData.tunnel.btunnel = false;
+				int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+				if (steerVal != 0)
+				{
+					t_data->controlData.steerVal = 1500 - steerVal;
+					t_data->controlData.steerWrite = 1;
 				}
 			}
+			/*MS 추월차로시에 사용*/
+			if (t_data->imgData.bcalibration && t_data->missionData.overtakingFlag && t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
+			{
+				/*check를 위한 camera up*/
+				bool check_direction;
+				check_direction = checkObstacle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+				if (check_direction == true) {//true=>left
+					t_data->missionData.overtakingData.headingDirection = LEFT;
+				}
+				else {//false =>right
+					t_data->missionData.overtakingData.headingDirection = RIGHT;
+				}
+				//srcbuf를 활용하여 capture한 영상을 변환
+			}
+			if (t_data->missionData.tunnel.btunnel) {
+				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65)) {
+					t_data->missionData.tunnel.Tstart = true;
+					t_data->missionData.tunnel.Tend = true;
+				}
+				else {
+					t_data->missionData.tunnel.Tstart = false;
+					if (t_data->missionData.tunnel.Tend) {
+						t_data->missionData.tunnel.Tend = false;
+						t_data->missionData.tunnel.btunnel = false;
+					}
+				}
 
-		}
-		if (t_data->missionData.broundabout) {
-			// 추가로 흰색 차선 검출
-		}
-		/*******************************************************
-		*			 영상처리 종료
-		********************************************************/
+			}
+			if (t_data->missionData.broundabout) {
+				// 추가로 흰색 차선 검출
+			}
+			/*******************************************************
+			*			 영상처리 종료
+			********************************************************/
 
-		memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
-		gettimeofday(&et, NULL);
-		optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
-		draw_operatingtime(disp, optime, t_data->controlData.loopTime, t_data->missionData.loopTime);
+			memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
+			gettimeofday(&et, NULL);
+			optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
+			draw_operatingtime(disp, optime, t_data->controlData.loopTime, t_data->missionData.loopTime);
+		}
 	}
 }
-
 
 /************************************************
 *	image_process_thread

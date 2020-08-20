@@ -288,14 +288,18 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				}
 				//srcbuf를 활용하여 capture한 영상을 변환
 			}
-			if (t_data->missionData.tunnel.btunnel) {
-				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65)) {
+			if (t_data->missionData.tunnel.btunnel)
+			{
+				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65))
+				{
 					t_data->missionData.tunnel.Tstart = true;
 					t_data->missionData.tunnel.Tend = true;
 				}
-				else {
+				else
+				{
 					t_data->missionData.tunnel.Tstart = false;
-					if (t_data->missionData.tunnel.Tend) {
+					if (t_data->missionData.tunnel.Tend)
+					{
 						t_data->missionData.tunnel.Tend = false;
 						t_data->missionData.tunnel.btunnel = false;
 					}
@@ -739,7 +743,8 @@ void *mission_thread(void *arg)
 										DesireSpeed_Write(0);
 										SteeringServoControl_Write(1500);
 										DesireSpeed_Write(-40);
-										if (DistanceSensor_cm(4) <= 7) {
+										if (DistanceSensor_cm(4) <= 7)
+										{
 											step = FIRST_FORWARD;
 											DesireSpeed_Write(0);
 										}
@@ -796,7 +801,8 @@ void *mission_thread(void *arg)
 				}
 				data->imgData.bmission = false;
 				data->imgData.bprintString = false;
-				if (parking == REMAIN) {
+				if (parking == REMAIN)
+				{
 					printf("First Parking is Done!\n");
 					usleep(10000000);
 				}
@@ -832,7 +838,7 @@ void *mission_thread(void *arg)
 				usleep(150000);
 
 				DesireSpeed_Write(40);
-				tunnel = DONE;				
+				tunnel = DONE;
 				data->imgData.bprintString = false;
 			}
 		}
@@ -1398,7 +1404,7 @@ int main(int argc, char **argv)
 	tdata.imgData.topMode = 2;
 	tdata.imgData.bauto = true;
 	tdata.imgData.bmission = false;
-	tdata.imgData.bwhiteLine = true;
+	tdata.imgData.bwhiteLine = false;
 	tdata.imgData.bprintString = false;
 	sprintf(tdata.imgData.missionString, "0");
 

@@ -742,50 +742,48 @@ void *mission_thread(void *arg)
 									{
 										DesireSpeed_Write(0);
 										SteeringServoControl_Write(1500);
-										<<<<<< < HEAD
-											DesireSpeed_Write(-50);
+										DesireSpeed_Write(-50);
 										if (DistanceSensor_cm(4) <= 6)
 										{
-											====== =
-												DesireSpeed_Write(-40);
-											if (DistanceSensor_cm(4) <= 6) {
-												>>>>>> > ee6839b990dc31aea8ff2a5a0734e7db69ac633d
-													step = FIRST_FORWARD;
+											DesireSpeed_Write(-40);
+											if (DistanceSensor_cm(4) <= 6)
+											{
+												step = FIRST_FORWARD;
 												DesireSpeed_Write(0);
 											}
 										}
 										break;
 
-								case FIRST_FORWARD:
-									DesiredDistance(50, 700, 1350);
-									step = SECOND_BACKWARD;
-									break;
+									case FIRST_FORWARD:
+										DesiredDistance(50, 700, 1350);
+										step = SECOND_BACKWARD;
+										break;
 
-								case SECOND_BACKWARD:
-									SteeringServoControl_Write(2000);
-									DesireSpeed_Write(-50);
-									if (DistanceSensor_cm(4) <= 6 && DistanceSensor_cm(3) <= 6 && DistanceSensor_cm(2) <= 6)
-									{
-										DesireSpeed_Write(0);
+									case SECOND_BACKWARD:
+										SteeringServoControl_Write(2000);
+										DesireSpeed_Write(-50);
+										if (DistanceSensor_cm(4) <= 6 && DistanceSensor_cm(3) <= 6 && DistanceSensor_cm(2) <= 6)
+										{
+											DesireSpeed_Write(0);
+											usleep(3000000);
+											step = SECOND_FORWARD;
+										}
+										break;
+
+									case SECOND_FORWARD:
+										DesiredDistance(30, 600, 1800);
 										usleep(3000000);
-										step = SECOND_FORWARD;
-									}
-									break;
+										step = FINISH;
+										break;
 
-								case SECOND_FORWARD:
-									DesiredDistance(30, 600, 1800);
-									usleep(3000000);
-									step = FINISH;
-									break;
+									case FINISH:
+										data->missionData.parkingData.horizontalFlag = 0;
+										data->missionData.on_processing = 0;
+										data->missionData.parkingData.on_parkingFlag = 0;
+										break;
 
-								case FINISH:
-									data->missionData.parkingData.horizontalFlag = 0;
-									data->missionData.on_processing = 0;
-									data->missionData.parkingData.on_parkingFlag = 0;
-									break;
-
-								default:
-									break;
+									default:
+										break;
 									}
 									usleep(200000);
 								}
@@ -799,8 +797,8 @@ void *mission_thread(void *arg)
 
 							break;
 
-					default:
-						break;
+						default:
+							break;
 						}
 						usleep(200000);
 					}
@@ -862,7 +860,7 @@ void *mission_thread(void *arg)
 				bool delay = false;
 				while (1)
 				{
-					DesireSpeed_Write(0);					
+					DesireSpeed_Write(0);
 					if (RoundAbout_isStart(DistanceSensor_cm(1)))
 					{
 						data->missionData.broundabout = true;

@@ -201,14 +201,26 @@ extern "C" {
 		}
 		else if (mode == 3)
 		{
-			dstRGB = srcRGB.rowRange(150, 360).clone();
-			resize(dstRGB, dstRGB, Size(640, 360));
-
+			Mat temp;
+			temp = srcRGB.rowRange(h*(15/36.0), h).clone();
+			resize(temp, dstRGB, Size(w, h));
 			return;
 		}
 		Size topviewSize(w, h);	//변환후 사이즈
 		warpPerspective(srcRGB, dstRGB, Hmatrix, topviewSize);
 
+	}
+
+	void displayPrint(unsigned char* inBuf, int w, int h, unsigned char* outBuf, char* name)
+	{
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		Mat dstRGB(h, w, CV_8UC3, outBuf);
+		string str(name);
+		Point printPosition(230, 50);
+
+		dstRGB = dstRGB;
+
+		putText(dstRGB, str, printPosition, 0, 0.8, Scalar(255, 153, 0), 2);
 	}
 
 	int autoSteering(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
@@ -552,11 +564,11 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 		}
 	}
 
-	createTrackbar("H_thresh", "trackbar", &HLP_threshold, 120, on_trackbar);
-	createTrackbar("H_minLen", "trackbar", &HLP_minLineLength, 200, on_trackbar);
-	createTrackbar("H_maxGap", "trackbar", &HLP_maxLineGap, 500, on_trackbar);
-	namedWindow("trackbar", WINDOW_NORMAL);
-	moveWindow("trackbar", 320 * 5, 180 * 5);
+	// createTrackbar("H_thresh", "trackbar", &HLP_threshold, 120, on_trackbar);
+	// createTrackbar("H_minLen", "trackbar", &HLP_minLineLength, 200, on_trackbar);
+	// createTrackbar("H_maxGap", "trackbar", &HLP_maxLineGap, 500, on_trackbar);
+	// namedWindow("trackbar", WINDOW_NORMAL);
+	// moveWindow("trackbar", 320 * 5, 180 * 5);
 
 	vector<Vec4i> lines;		//검출될 직선이 저장될 객체
 	HoughLinesP(src, lines, 1, CV_PI / 180, HLP_threshold, HLP_minLineLength, HLP_maxLineGap);

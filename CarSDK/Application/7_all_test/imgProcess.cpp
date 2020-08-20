@@ -533,7 +533,7 @@ void lineFiltering(Mat& src, Mat& dst, int mode)
 
 	if (mode == 1)//흰색차선 인식 모드
 	{
-		Scalar lower_white(220, 220, 220); // bgr white
+		Scalar lower_white(200, 200, 200); // bgr white
 		Scalar upper_white(255, 255, 255);
 		Mat whiteBinMat;
 

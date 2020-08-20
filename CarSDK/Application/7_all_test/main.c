@@ -251,7 +251,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 			if (t_data->imgData.bauto)
 			{
 				int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
-				if (steerVal != 0)
+				if (steerVal != 9999)
 				{
 					t_data->controlData.steerVal = 1500 - steerVal;
 					t_data->controlData.steerWrite = 1;

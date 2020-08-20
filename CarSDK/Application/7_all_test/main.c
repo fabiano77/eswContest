@@ -806,7 +806,6 @@ void* mission_thread(void* arg)
 						/*판단 받으면 Camera 원래 위치로 돌림*/
 						if (data->missionData.overtakingData.headingDirection != STOP) {
 							data->controlData.cameraY = 1660;
-							DesiredDistance();
 							CameraYServoControl_Write(data->controlData.cameraY);
 							data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
 							data->imgData.btopview = true;

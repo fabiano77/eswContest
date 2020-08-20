@@ -783,6 +783,7 @@ void* mission_thread(void* arg)
 				enum OvertakeState state = FRONT_DETECT;
 				data->missionData.overtakingData.headingDirection = STOP;
 				data->missionData.overtakingFlag = true;
+				data->imgData.bwhiteLine = true;
 				bool obstacle = false;
 				int dist_encoder = 0;
 				int thresDistance = 500;
@@ -795,7 +796,6 @@ void* mission_thread(void* arg)
 					case FRONT_DETECT:
 						/* 장애물 좌우판단을 위한 카메라 각도조절 */
 						if (data->missionData.overtakingData.headingDirection == STOP) {
-							data->missionData.overtakingFlag = true;
 							data->controlData.cameraY = 1610;
 							CameraYServoControl_Write(data->controlData.cameraY);
 							data->missionData.overtakingData.updownCamera = CAMERA_UP;

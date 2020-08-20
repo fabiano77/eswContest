@@ -236,6 +236,7 @@ extern "C" {
 
 	bool checkObstacle(unsigned char* inBuf, int w, int h, unsigned char* outBuf) {
 		/*Capture from inBuf*/
+		printf("check");
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 		dstRGB = srcRGB;
@@ -258,7 +259,6 @@ extern "C" {
 		/*Canny Image*/
 		Mat img_canny;
 		cannyEdge(img_white, img_canny);
-		imshow("img_white", img_white);
 		/*Hough Ransac*/
 		Mat img_ransac;
 		int line_type;

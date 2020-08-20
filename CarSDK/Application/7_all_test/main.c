@@ -94,7 +94,7 @@ struct Overtaking {
 struct ROUNDABOUT {
 	bool RAstart; // 분기의 시작을 알리는 변수
 	bool RAend; // 분기의 끝을 알리는 변수
-}
+};
 
 struct MissionData {
 	uint32_t loopTime;	// mission 스레드 루프 시간
@@ -677,14 +677,14 @@ void* mission_thread(void* arg)
 								
 
 								/*특정시간이 지났음에도 멀어지지 않는다면 BACK진행*/
-								i++;
+								//i++;
 								if (i_time > 5000) {
 									break;
 									i_time = 0;
 								}
 							}
 							/*전진하는 동안 전방 센서가 30 이상 멀어지면 SIDE_ON으로 진행*/
-							if (farFront == true &&) { state = SIDE_ON; }
+							if (farFront == true ) { state = SIDE_ON; }
 
 						}
 						else if(data->missionData.overtakingData.headingDirection == LEFT) {
@@ -1037,7 +1037,7 @@ int main(int argc, char** argv)
 	tdata.missionData.parkingData.rearRight = false;
 	tdata.missionData.overtakingFlag = false;
 	tdata.missionData.overtakingData.updownCamera = CAMERA_DOWN;
-	tdata.missionData.overtakingData.direction = false;
+	tdata.missionData.overtakingData.headingDirection = STOP;
 
 
 	// open vpe

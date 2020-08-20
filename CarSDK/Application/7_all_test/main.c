@@ -739,8 +739,10 @@ void *mission_thread(void *arg)
 										DesireSpeed_Write(0);
 										SteeringServoControl_Write(1500);
 										DesireSpeed_Write(-50);
-										if (DistanceSensor_cm(4) <= 6)
+										if (DistanceSensor_cm(4) <= 6) {
 											step = FIRST_FORWARD;
+											DesireSpeed_Write(0);
+										}
 									}
 									break;
 
@@ -760,7 +762,8 @@ void *mission_thread(void *arg)
 									break;
 
 								case SECOND_FORWARD:
-									DesiredDistance(30, 600, 1200);
+									DesiredDistance(30, 600, 1800);
+									usleep(1000000);
 									step = FINISH;
 									break;
 
@@ -792,8 +795,10 @@ void *mission_thread(void *arg)
 				}
 				data->imgData.bmission = false;
 				data->imgData.bprintString = false;
-				if (parking == REMAIN)
+				if (parking == REMAIN) {
 					printf("First Parking is Done!\n");
+					usleep(10000000);
+				}
 				if (parking == DONE)
 					printf("Second Parking is Dome!\n");
 			}

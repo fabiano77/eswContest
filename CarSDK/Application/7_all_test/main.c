@@ -606,8 +606,8 @@ void* mission_thread(void* arg)
 
 				while (state)	// state == END가 아닌이상 루프 진행
 				{
-					data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 15) ? true : false;
-					data->missionData.parkingData.rearRight = (DistanceSensor_cm(3) <= 15) ? true : false;
+					data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 18) ? true : false;
+					data->missionData.parkingData.rearRight = (DistanceSensor_cm(3) <= 18) ? true : false;
 
 					switch (state)
 					{
@@ -664,7 +664,7 @@ void* mission_thread(void* arg)
 							// 수직 주차 구문
 						}
 						else {
-							DesiredDistance(40, 400, 1500);
+							DesiredDistance(50, 200, 1500);
 							while (data->missionData.parkingData.horizontalFlag) {
 								switch (step)
 								{
@@ -681,14 +681,14 @@ void* mission_thread(void* arg)
 									break;
 
 								case FIRST_FORWARD:
-									DesiredDistance(30, 400, 1500);
+									DesiredDistance(50, 400, 1500);
 									step = SECOND_BACKWARD;
 									break;
 
 								case SECOND_BACKWARD:
 									SteeringServoControl_Write(2000);
 									DesireSpeed_Write(-50);
-									if (DistanceSensor_cm(4) <= 5 || DistanceSensor_cm(3) <= 5) {
+									if (DistanceSensor_cm(4) <= 7 || DistanceSensor_cm(3) <= 7) {
 										DesireSpeed_Write(0);
 										step = SECOND_FORWARD;
 									}

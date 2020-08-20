@@ -912,10 +912,12 @@ void* mission_thread(void* arg)
 						//right
 						if (data->missionData.overtakingData.headingDirection == RIGHT) {
 							/*복귀 좌회전 방향 설정*/
+							SteeringServoControl_Write(1100);
 						}
 						//left
 						else if (data->missionData.overtakingData.headingDirection == LEFT) {
 							/*복귀 우회전 방향 설정*/
+							SteeringServoControl_Write(1900);
 						}
 						/*복귀 전진*/
 						EncoderCounter_Write(0);

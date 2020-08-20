@@ -81,7 +81,7 @@ extern "C" {
 		return position;
 	}
 
-	int StopLine(int Lineflag) {
+	int StopLine(int Lineflag) { // Èò»ö 0
 		char sensor;
 		char byte = 0x80;
 		sensor = LineSensor_Read();
@@ -89,8 +89,11 @@ extern "C" {
 		int i;
 		for (i = 0; i < 8; i++)
 		{
-			if ((i % 4) == 0) printf(" ");
-			if ((sensor & byte)) {
+			if ((i % 4) == 0)
+			if ((sensor & byte)) { // 1
+				
+			}
+			else { // 0
 				flag++;
 			}
 			sensor = sensor << 1;

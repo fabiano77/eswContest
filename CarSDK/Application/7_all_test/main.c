@@ -266,7 +266,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				}
 			}
 			if (t_data->missionData.parkingData.bparking) displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
-			/*MS 추월차로시에 사용*/
+			/*추월차로시에 사용*/
 			if (t_data->imgData.bcalibration && t_data->missionData.overtakingFlag && t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
 			{
 				/*check를 위한 camera up*/
@@ -773,7 +773,7 @@ void* mission_thread(void* arg)
 			/*MS 분기진입 명령 지시*/
 			if (DistanceSensor_cm(1) < 30) //전방 장애물 감지 //주차 상황이 아닐때, 분기진입 가능
 			{
-				data->imgData.btopview = false;
+				data->imgData.btopview = false;//topview off
 				data->imgData.bmission = true;//영상처리 X
 				sprintf(data->imgData.missionString, "overtake");
 				printf("overtake \n");

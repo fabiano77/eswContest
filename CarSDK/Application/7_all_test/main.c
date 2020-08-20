@@ -275,6 +275,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 			/*추월차로시에 사용*/
 			if (t_data->missionData.overtakingFlag && t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
 			{
+				usleep(50000);
 				/*check를 위한 camera up*/
 				bool check_direction;
 				check_direction = checkObstacle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
@@ -286,6 +287,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				{ //false =>right
 					t_data->missionData.overtakingData.headingDirection = RIGHT;
 				}
+				t_data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
 				//srcbuf를 활용하여 capture한 영상을 변환
 			}
 			if (t_data->missionData.tunnel.btunnel)

@@ -646,7 +646,6 @@ void* mission_thread(void* arg)
 					case SECOND_WALL:
 						sprintf(data->imgData.missionString, "Second Wall");
 						if (data->missionData.parkingData.rearRight == true) {
-							DesiredDistance(40, 200, 1500);
 							state = PARKING_START;
 							data->imgData.bmission = true;
 							// 두번 째 벽에 차량 우측 후방 센서가 걸린 상태이다. -> 수직 또는 수평 주차 진행.
@@ -665,26 +664,30 @@ void* mission_thread(void* arg)
 							// 수직 주차 구문
 						}
 						else {
+							DesiredDistance(40, 400, 1500);
 							while (data->missionData.parkingData.horizontalFlag) {
 								switch (step)
 								{
 								case FIRST_BACKWARD:
 									SteeringServoControl_Write(1000);
-									DesireSpeed_Write(-30);
-									if (DistanceSensor_cm(4) <= 8) {
+									DesireSpeed_Write(-50);
+									if (DistanceSensor_cm(4) <= 12) {
 										DesireSpeed_Write(0);
-										step = FIRST_FORWARD;
+										SteeringServoControl_Write(1500);
+										DesireSpeed_Write(-50);
+										if (DistanceSensor_cm(4) <= 6)
+											step = FIRST_FORWARD;
 									}
 									break;
 
 								case FIRST_FORWARD:
-									DesiredDistance(30, 200, 1500);
+									DesiredDistance(30, 400, 1500);
 									step = SECOND_BACKWARD;
 									break;
 
 								case SECOND_BACKWARD:
 									SteeringServoControl_Write(2000);
-									DesireSpeed_Write(-30);
+									DesireSpeed_Write(-50);
 									if (DistanceSensor_cm(4) <= 5 || DistanceSensor_cm(3) <= 5) {
 										DesireSpeed_Write(0);
 										step = SECOND_FORWARD;

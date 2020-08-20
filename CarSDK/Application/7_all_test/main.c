@@ -303,6 +303,11 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 			}
 			if (t_data->imgData.bprintString)
 				displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
+
+			memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
+			gettimeofday(&et, NULL);
+			optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
+			draw_operatingtime(disp, optime, t_data->controlData.loopTime, t_data->missionData.loopTime);
 		}
 		else
 		{

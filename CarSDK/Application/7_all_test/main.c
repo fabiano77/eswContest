@@ -94,7 +94,7 @@ struct Overtaking {
 struct ROUNDABOUT {
 	bool RAstart; // 분기의 시작을 알리는 변수
 	bool RAend; // 분기의 끝을 알리는 변수
-}
+};
 
 struct MissionData {
 	uint32_t loopTime;	// mission 스레드 루프 시간
@@ -658,7 +658,7 @@ void* mission_thread(void* arg)
 		{
 			if (StopLine(4)) {
 				data->missionData.on_processing = true;
-				data->missionData.bround = true;
+				//data->missionData.bround = true;
 				printf("roundabout\n");
 				roundabout = DONE;
 				signalLight = READY;
@@ -681,25 +681,28 @@ void* mission_thread(void* arg)
 					switch (state)
 					{
 					case FRONT_DETECT:
-						/* 장애물 좌우 차선에 장애물이 있는지 판단하는 코드 */
+						/* 장애물 좌우판단을 위한 카메라 각도조절 */
 						data->missionData.overtakingFlag = true;
+						data->controlData.cameraY = 1500;
+						CameraYServoControl_Write(data->controlData.cameraY);
 						data->missionData.overtakingData.updownCamera = CAMERA_UP;
-							/* 비어있는 차선으로 전진하는 코드*/
+						/* 장애물 좌우 판단 및 비어있는 차선으로 전진하는 코드*/
 						if (data->missionData.overtakingData.headingDirection == RIGHT) {
 							/*출발*/
-							int i_time = 0;//#TODO 변경예정
+							//#TODO 변경예정
+							int i_time = 0;
 							while (!farFront) {
 								/*일정시간마다 거리센서 측정하여 멀어지면 SIDE_ON진행*/
+								
 
 								/*특정시간이 지났음에도 멀어지지 않는다면 BACK진행*/
-								i++;
 								if (i_time > 5000) {
 									break;
 									i_time = 0;
 								}
 							}
 							/*전진하는 동안 전방 센서가 30 이상 멀어지면 SIDE_ON으로 진행*/
-							if (farFront == true &&) { state = SIDE_ON; }
+							if (farFront == true ) { state = SIDE_ON; }
 
 						}
 						else if(data->missionData.overtakingData.headingDirection == LEFT) {
@@ -1042,7 +1045,7 @@ int main(int argc, char** argv)
 	tdata.controlData.speedWrite = false;
 
 	tdata.missionData.on_processing = false;
-	tdata.missionData.bround = false;
+	//tdata.missionData.bround = false;
 	tdata.missionData.btunnel = false;
 	tdata.missionData.parkingData.bparking = false;
 	tdata.missionData.parkingData.horizontalFlag = false;
@@ -1052,7 +1055,7 @@ int main(int argc, char** argv)
 	tdata.missionData.parkingData.rearRight = false;
 	tdata.missionData.overtakingFlag = false;
 	tdata.missionData.overtakingData.updownCamera = CAMERA_DOWN;
-	tdata.missionData.overtakingData.direction = false;
+	tdata.missionData.overtakingData.headingDirection = STOP;
 
 
 	// open vpe

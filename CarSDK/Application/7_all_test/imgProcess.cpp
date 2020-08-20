@@ -7,7 +7,6 @@
 #include <string>
 #include <sstream>
 #include <opencv2/opencv.hpp>
-#include <opencv2/imgproc.hpp>
 
 #define PI 3.1415926
 
@@ -64,6 +63,11 @@ void regionOfInterest(Mat& src, Mat& dst, Point* points);
 /// <param name="dydx"></param> slope degree of line
 /// <returns></returns> gray rate of img
 float countGray(Mat& src, Point down, Point up, const float dydx);
+
+// TUNNEL
+int isDark(Mat& frame, const double percent);
+int Tunnel_isStart(Mat& frame, const double percent);
+
 
 extern "C" {
 
@@ -313,6 +317,19 @@ extern "C" {
 			return false;
 		}
 
+	}
+
+	int Tunnel(unsigned char* inBuf, int w, int h, const double percent)
+	{
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+
+		// return Tunnel_isStart(srcRGB, percent);
+
+		if (Tunnel_isStart(srcRGB, percent)) {
+			printf("IN TUNNEL\n");
+			return 1;
+		}
+		return 0;
 	}
 }	// extern "C"
 
@@ -852,7 +869,7 @@ void regionOfInterest(Mat& src, Mat& dst, Point* points)
 	const Point* ppt[1] = { points }; //개의 꼭짓점 :n vertices
 	int npt[] = { 4 };
 
-	fillPoly(maskImg, ppt, npt, 1, Scalar(255, 255, 255), LINE_8);
+	fillPoly(maskImg, ppt, npt, 1, Scalar(255, 255, 255), 8);
 	Mat maskedImg;
 	bitwise_and(src, maskImg, maskedImg);
 	dst = maskedImg;
@@ -911,3 +928,59 @@ float countGray(Mat& src, Point down, Point up, const float dydx)
 
 	return rate;
 }
+
+
+/*/////////////////////////////
+		TUNNEL START
+*//////////////////////////////
+int flag_tunnel;
+int first_tunnel = 0;
+int MAXTHR_tunnel = 20;
+int MINTHR_tunnel = 10;
+
+int isDark(Mat& frame, const double percent) {
+
+	Mat grayFrame;
+
+	cvtColor(frame, grayFrame, COLOR_RGB2GRAY);
+
+	int pixelCnt(0);
+	int pixelValue(0);
+	for (int i = 0; i < grayFrame.cols; i += 10)
+	{
+		for (int j = 0; j < grayFrame.rows; j += 10)
+		{
+			pixelValue += grayFrame.at<uchar>(j, i);
+			pixelCnt++;
+		}
+	}
+	int totalValue = pixelCnt * 255;
+	double brightRate = ((double)pixelValue / totalValue) * 100.0;
+
+	if (brightRate < (100 - percent))
+	{
+		return 1;
+	}
+	return 0;
+}
+int Tunnel_isStart(Mat& frame, const double percent) {
+	if (!first_tunnel++) flag_tunnel = -1;
+
+	if (isDark(frame, percent)) {
+		if (flag_tunnel < MAXTHR_tunnel)
+			flag_tunnel++;
+	}
+	else {
+		if (flag_tunnel > 0)
+			flag_tunnel--;
+	}
+
+	if (flag_tunnel >= MINTHR_tunnel)
+		return 1;
+	return 0;
+}
+/*/////////////////////////////
+		TUNNEL END
+*//////////////////////////////
+
+

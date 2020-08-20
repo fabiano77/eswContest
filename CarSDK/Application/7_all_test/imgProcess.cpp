@@ -67,7 +67,7 @@ float countGray(Mat& src, Point down, Point up, const float dydx);
 // TUNNEL
 int isDark(Mat& frame, const double percent);
 int Tunnel_isStart(Mat& frame, const double percent);
-
+int return_go;
 
 extern "C" {
 
@@ -238,6 +238,7 @@ extern "C" {
 		/*Capture from inBuf*/
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
+		dstRGB = srcRGB;
 		/*Declare usable variables*/
 		int height_up = 80;
 		int height_down = 150;
@@ -321,11 +322,13 @@ extern "C" {
 		if (grayrate_left > grayrate_right)
 		{
 			putText(srcRGB, "Left to go", location, font, fontScale, Scalar(0, 0, 255), 2);
+			printf("Going left");
 			return true;
 		}
 		else
 		{
 			putText(srcRGB, "Right to go", location, font, fontScale, Scalar(0, 0, 255), 2);
+			printf("Going Right");
 			return false;
 		}
 
@@ -335,13 +338,15 @@ extern "C" {
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 
-		// return Tunnel_isStart(srcRGB, percent);
+		return_go = Tunnel_isStart(srcRGB, percent);
 
-		if (Tunnel_isStart(srcRGB, percent)) {
+		return return_go;
+
+		/*if (Tunnel_isStart(srcRGB, percent)) {
 			printf("IN TUNNEL\n");
 			return 1;
 		}
-		return 0;
+		return 0;*/
 	}
 }	// extern "C"
 
@@ -917,6 +922,7 @@ float countGray(Mat& src, Point down, Point up, const float dydx)
 			}
 		}
 		rate = (float)count_left / count_total * 100.0;
+		printf("Left rate is %f %%", rate);
 	}
 	else {//right
 		for (int y = up.y; y < down.y; y++)//up.y<down.y
@@ -936,6 +942,7 @@ float countGray(Mat& src, Point down, Point up, const float dydx)
 			}
 		}
 		rate = (float)count_right / count_total * 100.0;
+		printf("Left rate is %f %%", rate);
 	}
 
 	return rate;
@@ -947,8 +954,8 @@ float countGray(Mat& src, Point down, Point up, const float dydx)
 *//////////////////////////////
 int flag_tunnel;
 int first_tunnel = 0;
-int MAXTHR_tunnel = 20;
-int MINTHR_tunnel = 10;
+int MAXTHR_tunnel = 10;
+int MINTHR_tunnel = 5;
 
 int isDark(Mat& frame, const double percent) {
 

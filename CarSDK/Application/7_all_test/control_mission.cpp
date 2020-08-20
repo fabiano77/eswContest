@@ -18,6 +18,18 @@
 #include "control_mission.h"
 #include "car_lib.h"
 
+///////////////////////////////////////////////////////////////////////////////////
+
+int flag_go, flag_wait, flag_stop, flag_end;
+int check_start;
+int lower_StopDistance = 25;
+int uper_StopDistance = 40;
+int lower_RoundDistance = 20;
+int uper_RoundDistance = 40;
+int THR_RoundAbout_END = 200;
+int first_RoundAbout = 0;
+
+void RoundAbout_Init();
 
 
 extern "C" {
@@ -67,22 +79,17 @@ extern "C" {
 	int StopLine(int Lineflag) {
 		char sensor;
 		char byte = 0x80;
-		sensor = LineSensor_Read();        // black:1, white:0
-	//	printf("LineSensor_Read() = ");
+		sensor = LineSensor_Read();
 		int flag = 0;
 		int i;
 		for (i = 0; i < 8; i++)
 		{
 			if ((i % 4) == 0) printf(" ");
 			if ((sensor & byte)) {
-				//			printf("1");
 				flag++;
-			}//byte == 0x80 == 0111 0000 (2)
-	//		else printf("0");
+			}
 			sensor = sensor << 1;
 		}
-		//	printf("\n");
-		//	printf("LineSensor_Read() = %d \n", sensor);
 		if (flag > Lineflag) {
 			return 1;
 		}
@@ -106,24 +113,93 @@ extern "C" {
 		}
 	}
 
-	
-	
+	int RoundAbout_isStart(const int Distance1) {
+		if (!first_RoundAbout++) RoundAbout_Init();
+
+		if (flag_go > 0)
+		{
+			if (Distance1 >= uper_StopDistance)
+				flag_go--;
+		}
+		else if (flag_go == 0)
+		{
+			if (!check_start)
+			{
+				check_start = 1;
+				flag_wait = -1;
+			}
+		}
+		else
+		{
+			if (Distance1 < lower_StopDistance)
+				if (flag_wait < 2)
+					flag_wait++;
+				else
+					if (flag_wait > 0)
+						flag_wait--;
+
+			if (flag_wait == 2) {
+				flag_wait = -1;
+				flag_go = 35; // 해당 프레임이 지난 후 출발할 것임
+			}
+		}
+		return check_start;
+	}
+
+	int RoundAbout_isDelay(const int Distance1) {
+		if (Distance1 < lower_RoundDistance) {
+			if (flag_wait < 2)
+				flag_wait++;
+
+			if (flag_wait == 2) {
+				flag_wait = -1;
+				flag_stop = 30; // 해당 프레임만큼 정지
+				return 1;
+			}
+			return 0;
+		}
+		else {
+			if (flag_wait > 0)
+				flag_wait--;
+
+			if (flag_stop = 0) {
+				flag_stop = -1;
+				return 0;
+			}
+			else if (flag_stop > 0) {
+				if (Distance1 >= uper_RoundDistance) {
+					flag_stop--;
+				}
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		}
+	}
+
+	int RoundAbout_End(const int Distance1, const int Distance2) {
+		if ((Distance1 > 40) && (Distance2 > 40)) { // 거리 센서에 아무것도 잡히지 않을 때
+			if (flag_end < THR_RoundAbout_END) // 해당 프레임이 지나면 분기 벗어남
+				flag_end++;
+		}
+		else {
+			if (flag_end > 0)
+				flag_end--;
+		}
+
+		if (flag_end > THR_RoundAbout_END) {
+			flag_end = -1;
+			return 1;
+		}
+		return 0;
+	}
+
 
 
 }//extern "C"
 
-
-/*/////////////////////////////
-		ROUNDABOUT START
-*//////////////////////////////
-int flag_go, flag_wait, flag_stop, flag_end;
-int check_start;
-int lower_StopDistance = 25;
-int uper_StopDistance = 40;
-int lower_RoundDistance = 20;
-int uper_RoundDistance = 40;
-int THR_RoundAbout_END = 200;
-int first_RoundAbout = 0;
 
 void RoundAbout_Init() {
 	flag_go = -1;
@@ -133,91 +209,3 @@ void RoundAbout_Init() {
 	flag_end = -1;
 }
 
-int RoundAbout_isStart(const int Distance1) {
-	if (!first_RoundAbout++) RoundAbout_Init();
-
-	if (flag_go > 0) 
-	{
-		if (Distance1 >= uper_StopDistance)
-			flag_go--;
-	}
-	else if (flag_go == 0) 
-	{ 
-		if (!check_start) 
-		{
-			check_start = 1;
-			flag_wait = -1;
-		}
-	}
-	else
-	{
-		if (Distance1 < lower_StopDistance)
-			if (flag_wait < 2)
-				flag_wait++;
-		else
-			if (flag_wait > 0)
-				flag_wait--;
-
-		if (flag_wait == 2) {
-			flag_wait = -1;
-			flag_go = 35; // 해당 프레임이 지난 후 출발할 것임
-		}
-	}
-	return check_start;
-}
-
-int RoundAbout_isDelay(const int Distance1, int& speed) {
-	if (Distance1 < lower_RoundDistance) {
-		if (flag_wait < 2)
-			flag_wait++;
-
-		if (flag_wait == 2) {
-			flag_wait = -1;
-			flag_stop = 30; // 해당 프레임만큼 정지
-			return 1;
-		}
-		return 0;
-	}
-	else {
-		if (flag_wait > 0)
-			flag_wait--;
-		
-		if (flag_stop = 0) {
-			flag_stop = -1;
-			if (speed > 30) { // 일정 속도 이상일 경우 감속
-				speed -= 5;
-			}
-			return 0;
-		}
-		else if (flag_stop > 0) {
-			if (Distance1 >= uper_RoundDistance) {
-				flag_stop--;
-			}
-			return 1;
-		}
-		else
-		{
-			return 0;
-		}
-	}
-}
-
-int RoundAbout_End(const int Distance1, const int Distance2) {
-	if ((Distance1 > 40) && (Distance2 > 40)) { // 거리 센서에 아무것도 잡히지 않을 때
-		if (flag_end < THR_RoundAbout_END) // 해당 프레임이 지나면 분기 벗어남
-			flag_end++;
-	}
-	else {
-		if (flag_end > 0)
-			flag_end--;
-	}
-
-	if (flag_end > THR_RoundAbout_END) {
-		flag_end = -1;
-		return 1;
-	}
-	return 0;
-}
-/*/////////////////////////////
-		ROUNDABOUT END
-*//////////////////////////////

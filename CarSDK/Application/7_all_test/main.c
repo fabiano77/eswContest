@@ -543,6 +543,7 @@ void* mission_thread(void* arg)
 	enum MissionState overtake = READY;
 	enum MissionState signalLight = NONE;
 	enum MissionState finish = NONE;
+	
 
 	//각 미션이 수행되고나면 detect를 하지 않도록 변수설정.
 
@@ -572,7 +573,7 @@ void* mission_thread(void* arg)
 		{
 			if (DistanceSensor_cm(2) <= 10) //처음 벽이 감지되었을 경우
 			{
-				int parking_width;
+				int parking_width = 0;
 				enum ParkingState state = FIRST_WALL;
 				while (state)	// state == END가 아닌이상 루프 진행
 				{
@@ -582,21 +583,25 @@ void* mission_thread(void* arg)
 					switch (state)
 					{
 					case FIRST_WALL:
-						if (data->missionData.parkingData.frontRight == false)
+						if (data->missionData.parkingData.frontRight == false) {
 							state = DISTANCE_CHECK;
+							EncoderCounter_Write(0);
+						}
 						break;
 
 					case DISTANCE_CHECK:
 						/*
 						주차 폭에 대한 거리를 측정하기 위해 거리 측정 시작
 						*/
+						if (EncoderCounter_Read() != 65278)
+							parking_width = EncoderCounter_Read();
 						if (data->missionData.parkingData.frontRight == true)
 						{
 							state = SECOND_WALL;
 							/*
 							거리 측정 종료 -> 측정 거리를 변수에 담는다.
 							*/
-							parking_width = -1;
+							cout << "Result Width : " << parking_width << endl;
 
 							if (parking_width <= 45)
 								data->missionData.parkingData.verticalFlag = true;
@@ -609,10 +614,21 @@ void* mission_thread(void* arg)
 						if (data->missionData.parkingData.rearRight == true)
 							state = PARKING_START;
 						break;
+						// 두번 째 벽에 차량 우측 후방 센서가 걸린 상태이다. -> 수직 또는 수평 주차 진행.
 
 					case PARKING_START:
 						data->missionData.on_processing = true;
 						data->missionData.parkingData.on_parkingFlag = true;
+						/*
+						수직 및 수평 주차 구문 추가.
+						*/
+
+						if (data->missionData.parkingData.verticalFlag && data->missionData.parkingData.horizontalFlag == false) {
+							// 수직 주차 구문
+						}
+						else  {
+
+						}
 						state = DONE;
 
 						if (parking == READY) parking = REMAIN;

@@ -103,7 +103,7 @@ struct MissionData {
 	bool on_processing; // 어떠한 미션이 진행 중임을 나타내는 플래그 -> 미션 쓰레드에서 다른 미션을 활성화 시키지 않도록 한다.
 
 
-	
+
 	struct TUNNEL tunnel;
 	bool broundabout;
 	bool overtakingFlag; // 추월차로 플래그 ->MS 이후 overtaking struct 추가할 것
@@ -615,7 +615,7 @@ void* mission_thread(void* arg)
 							/*
 							거리 측정 종료 -> 측정 거리를 변수에 담는다.
 							*/
-							printf("Result Width : %-3d\n",parking_width);
+							printf("Result Width : %-3d\n", parking_width);
 
 							if (parking_width <= 45)
 								data->missionData.parkingData.verticalFlag = true;
@@ -629,8 +629,8 @@ void* mission_thread(void* arg)
 						if (data->missionData.parkingData.rearRight == true) {
 							state = PARKING_START;
 							data->imgData.bmission = true;
-						break;
-						// 두번 째 벽에 차량 우측 후방 센서가 걸린 상태이다. -> 수직 또는 수평 주차 진행.
+							break;
+							// 두번 째 벽에 차량 우측 후방 센서가 걸린 상태이다. -> 수직 또는 수평 주차 진행.
 
 					case PARKING_START:
 						sprintf(data->imgData.missionString, "Parking Start");
@@ -655,10 +655,11 @@ void* mission_thread(void* arg)
 
 					default:
 						break;
+						}
+						usleep(50000);
 					}
-					usleep(50000);
+					data->imgData.bmission = false;
 				}
-				data->imgData.bmission = false;
 			}
 		}
 
@@ -669,7 +670,7 @@ void* mission_thread(void* arg)
 				while (data->missionData.tunnel.btunnel) {
 					// 동작 수행 + 전조등
 
-					
+
 				}
 				printf("tunnel_OFF\n");
 				tunnel = DONE;
@@ -682,26 +683,26 @@ void* mission_thread(void* arg)
 			if (StopLine(4)) {
 				int speed = 40;
 				bool delay = false;
-				while (1) {					
+				while (1) {
 					if (RoundAbout_isStart(DistanceSensor_cm(1))) {
 						data->missionData.broundabout = true;
 						break;
 					}
 					else {
 						DesireSpeed_Write(0);
-					}					
+					}
 				}
 				while (!RoundAbout_End(DistanceSensor_cm(1), DistanceSensor_cm(4))) {
 					if (RoundAbout_isDelay(DistanceSensor_cm(1))) {
 						DesireSpeed_Write(0);
-						delay = true;						
+						delay = true;
 					}
 					else {
 						if (delay && (speed > 30)) {
 							speed = speed - 5;
 							delay = false;
 						}
-						DesireSpeed_Write(speed);						
+						DesireSpeed_Write(speed);
 					}
 				}
 				// speed 원상복구
@@ -899,7 +900,7 @@ void* mission_thread(void* arg)
 		if (finish)
 		{
 			if (0)
-			{	
+			{
 				data->imgData.bmission = true;
 				sprintf(data->imgData.missionString, "finish");
 				printf("finish\n");
@@ -912,6 +913,7 @@ void* mission_thread(void* arg)
 		gettimeofday(&et, NULL);
 		data->missionData.loopTime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
 		//시간측정
+
 	}
 }
 

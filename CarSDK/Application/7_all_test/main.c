@@ -103,7 +103,7 @@ struct MissionData {
 	bool on_processing; // 어떠한 미션이 진행 중임을 나타내는 플래그 -> 미션 쓰레드에서 다른 미션을 활성화 시키지 않도록 한다.
 
 
-	
+
 	struct TUNNEL tunnel;
 	bool broundabout;
 	bool overtakingFlag; // 추월차로 플래그 ->MS 이후 overtaking struct 추가할 것
@@ -257,6 +257,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 					t_data->controlData.steerWrite = 1;
 				}
 			}
+			if (t_data->missionData.parkingData.bparking) displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
 			/*MS 추월차로시에 사용*/
 			if (t_data->imgData.bcalibration && t_data->missionData.overtakingFlag && t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
 			{
@@ -270,20 +271,6 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 					t_data->missionData.overtakingData.headingDirection = RIGHT;
 				}
 				//srcbuf를 활용하여 capture한 영상을 변환
-			}
-			if (t_data->missionData.tunnel.btunnel) {
-				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65)) {
-					t_data->missionData.tunnel.Tstart = true;
-					t_data->missionData.tunnel.Tend = true;
-				}
-				else {
-					t_data->missionData.tunnel.Tstart = false;
-					if (t_data->missionData.tunnel.Tend) {
-						t_data->missionData.tunnel.Tend = false;
-						t_data->missionData.tunnel.btunnel = false;
-					}
-				}
-
 			}
 			if (t_data->missionData.broundabout) {
 				// 추가로 흰색 차선 검출
@@ -431,27 +418,6 @@ void* input_thread(void* arg)
 				data->imgData.bcalibration = !data->imgData.bcalibration;
 				if (data->imgData.bcalibration) printf("\t calibration ON\n");
 				else printf("\t calibration OFF\n");
-			}
-			else if (0 == strncmp(cmd_input, "parking", 7))
-			{
-				int j;
-				int c1, c2, c3, c4, c5, c6;
-				data->missionData.parkingData.bparking = !data->missionData.parkingData.bparking;
-				if (data->missionData.parkingData.bparking) {
-					printf("\t parking ON\n");
-					for (j = 0; j < 50000; j++)
-					{
-						c1 = DistanceSensor_cm(1);
-						c2 = DistanceSensor_cm(2);
-						c3 = DistanceSensor_cm(3);
-						c4 = DistanceSensor_cm(4);
-						c5 = DistanceSensor_cm(5);
-						c6 = DistanceSensor_cm(6);
-						printf("1 : %-2d, 2 : %-2d, 3 : %-2d, 4: %-2d, 5 : %-2d, 6 : %-2d \n", c1, c2, c3, c4, c5, c6);
-						usleep(500000); // 0.5초 마다 출력
-					}
-				}
-				else printf("\t parking OFF\n");
 			}
 			else if (0 == strncmp(cmd_input, "auto", 4))
 			{
@@ -616,7 +582,7 @@ void* mission_thread(void* arg)
 		{
 			if (DistanceSensor_cm(2) <= 20) //처음 벽이 감지되었을 경우
 			{
-				data->imgData.bmission = true;
+				data->missionData.parkingData.bparking = true;
 				sprintf(data->imgData.missionString, "Parking");
 				int parking_width = 0;
 				enum ParkingState state = FIRST_WALL;
@@ -649,7 +615,7 @@ void* mission_thread(void* arg)
 							/*
 							거리 측정 종료 -> 측정 거리를 변수에 담는다.
 							*/
-							printf("Result Width : %-3d\n",parking_width);
+							printf("Result Width : %-3d\n", parking_width);
 
 							if (parking_width <= 45)
 								data->missionData.parkingData.verticalFlag = true;
@@ -660,10 +626,11 @@ void* mission_thread(void* arg)
 
 					case SECOND_WALL:
 						sprintf(data->imgData.missionString, "Second Wall");
-						if (data->missionData.parkingData.rearRight == true)
+						if (data->missionData.parkingData.rearRight == true) {
 							state = PARKING_START;
-						break;
-						// 두번 째 벽에 차량 우측 후방 센서가 걸린 상태이다. -> 수직 또는 수평 주차 진행.
+							data->imgData.bmission = true;
+							break;
+							// 두번 째 벽에 차량 우측 후방 센서가 걸린 상태이다. -> 수직 또는 수평 주차 진행.
 
 					case PARKING_START:
 						sprintf(data->imgData.missionString, "Parking Start");
@@ -688,20 +655,22 @@ void* mission_thread(void* arg)
 
 					default:
 						break;
+						}
+						usleep(50000);
 					}
-					usleep(50000);
+					data->imgData.bmission = false;
 				}
-				data->imgData.bmission = false;
 			}
 		}
 
 		if (tunnel)
 		{
 			if (data->missionData.tunnel.Tstart) {
+				data->imgData.bmission = true;
 				while (data->missionData.tunnel.btunnel) {
 					// 동작 수행 + 전조등
 
-					
+
 				}
 				printf("tunnel_OFF\n");
 				tunnel = DONE;
@@ -714,30 +683,26 @@ void* mission_thread(void* arg)
 			if (StopLine(4)) {
 				int speed = 40;
 				bool delay = false;
-				while (1) {					
+				while (1) {
 					if (RoundAbout_isStart(DistanceSensor_cm(1))) {
 						data->missionData.broundabout = true;
 						break;
 					}
 					else {
-						// stop : speed = 0;
-					}					
+						DesireSpeed_Write(0);
+					}
 				}
 				while (!RoundAbout_End(DistanceSensor_cm(1), DistanceSensor_cm(4))) {
 					if (RoundAbout_isDelay(DistanceSensor_cm(1))) {
-						/* 
-						stop : speed = 0;
-						delay = true;;
-						*/
+						DesireSpeed_Write(0);
+						delay = true;
 					}
 					else {
-						/* 
-						if(delay && (speed>30)){
+						if (delay && (speed > 30)) {
 							speed = speed - 5;
 							delay = false;
 						}
-						go : speed;
-						*/
+						DesireSpeed_Write(speed);
 					}
 				}
 				// speed 원상복구
@@ -955,7 +920,7 @@ void* mission_thread(void* arg)
 		if (finish)
 		{
 			if (0)
-			{	
+			{
 				data->imgData.bmission = true;
 				sprintf(data->imgData.missionString, "finish");
 				printf("finish\n");
@@ -968,6 +933,7 @@ void* mission_thread(void* arg)
 		gettimeofday(&et, NULL);
 		data->missionData.loopTime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
 		//시간측정
+
 	}
 }
 

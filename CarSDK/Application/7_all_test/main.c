@@ -665,19 +665,21 @@ void* mission_thread(void* arg)
 					switch (state)
 					{
 					case FRONT_DETECT:
-						/* 장애물 좌우 차선에 장애물이 있는지 판단하는 코드 */
+						/* 장애물 좌우판단을 위한 카메라 각도조절 */
 						data->missionData.overtakingFlag = true;
+						data->controlData.cameraY = 1500;
+						CameraYServoControl_Write(data->controlData.cameraY);
 						data->missionData.overtakingData.updownCamera = CAMERA_UP;
-							/* 비어있는 차선으로 전진하는 코드*/
+						/* 장애물 좌우 판단 및 비어있는 차선으로 전진하는 코드*/
 						if (data->missionData.overtakingData.headingDirection == RIGHT) {
 							/*출발*/
-							int i_time = 0;//#TODO 변경예정
+							//#TODO 변경예정
+							int i_time = 0;
 							while (!farFront) {
 								/*일정시간마다 거리센서 측정하여 멀어지면 SIDE_ON진행*/
 								
 
 								/*특정시간이 지났음에도 멀어지지 않는다면 BACK진행*/
-								i++;
 								if (i_time > 5000) {
 									break;
 									i_time = 0;

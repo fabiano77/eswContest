@@ -756,7 +756,7 @@ void* mission_thread(void* arg)
 			/*MS 분기진입 명령 지시*/
 			if (DistanceSensor_cm(1) < 30) //전방 장애물 감지 //주차 상황이 아닐때, 분기진입 가능
 			{
-				data->imgData.bmission = true;
+				data->imgData.bmission = true;//영상처리 X
 				sprintf(data->imgData.missionString, "overtake");
 				printf("overtake \n");
 				bool farFront = false;
@@ -764,9 +764,12 @@ void* mission_thread(void* arg)
 				data->missionData.on_processing = true;
 				enum OvertakeState state = FRONT_DETECT;
 				data->missionData.overtakingData.headingDirection = STOP;
+				data->missionData.overtakingFlag = true;
 				bool obstacle = false;
 				int dist_encoder = 0;
 				int thresDistance = 300;
+				/*차량 정지*/
+				DesireSpeed_Write(0);
 				while (state)
 				{
 					switch (state)
@@ -780,7 +783,7 @@ void* mission_thread(void* arg)
 							data->missionData.overtakingData.updownCamera = CAMERA_UP;
 							/* 차량 정지*/
 						}
-						/* 장애물 좌우 판단 및 비어있는 차선으로 전진하는 코드*/
+						/* 장애물 좌우 판단 및 비어있는 차선으로 전진하려는 코드*/
 						while (data->missionData.overtakingData.headingDirection == STOP) {
 							usleep(50000);
 						}
@@ -791,9 +794,11 @@ void* mission_thread(void* arg)
 							data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
 						}
 						else { break; }
-						/*판단 이후*/
+						/*판단 이후 해당 방향 전진*/
 						if (data->missionData.overtakingData.headingDirection == RIGHT && data->missionData.overtakingData.updownCamera == CAMERA_DOWN) {
 							/*출발*/
+							SteeringServoControl_Write(1900);
+							DesireSpeed_Write(40);
 							EncoderCounter_Write(0);
 							/*몇이상 갈때까지 반복*/
 							while (dist_encoder <= thresDistance) {//가는 거리
@@ -808,13 +813,17 @@ void* mission_thread(void* arg)
 							if (farFront == true) { state = SIDE_ON; }
 							else {
 								/*정지*/
+								DesireSpeed_Write(0);
 								EncoderCounter_Write(0);
 								dist_encoder = 0;
 								/*후진 및 방향 전환*/
+								DesireSpeed_Write(-40);
 								while (dist_encoder <= thresDistance) {
 									dist_encoder = EncoderCounter_Read();
 									usleep(50000);
 								}
+								/*정지 및 방향 전환 명령*/
+								DesireSpeed_Write(0);
 								data->missionData.overtakingData.headingDirection = LEFT;
 							}
 
@@ -822,6 +831,8 @@ void* mission_thread(void* arg)
 						else if (data->missionData.overtakingData.headingDirection == LEFT && data->missionData.overtakingData.updownCamera == CAMERA_DOWN) {
 
 							/*출발*/
+							SteeringServoControl_Write(1100);
+							DesireSpeed_Write(40);
 							EncoderCounter_Write(0);
 							/*몇이상 갈때까지 반복*/
 							while (dist_encoder <= thresDistance) {//가는 거리
@@ -836,13 +847,17 @@ void* mission_thread(void* arg)
 							if (farFront == true) { state = SIDE_ON; }
 							else {
 								/*정지*/
+								DesireSpeed_Write(0);
 								EncoderCounter_Write(0);
 								dist_encoder = 0;
 								/*후진 및 방향 전환*/
+								DesireSpeed_Write(-40);
 								while (dist_encoder <= thresDistance) {
 									dist_encoder = EncoderCounter_Read();
 									usleep(50000);
 								}
+								/*정지 후 방향 전환 명령*/
+								DesireSpeed_Write(0);
 								data->missionData.overtakingData.headingDirection = RIGHT;
 							}
 						}
@@ -853,6 +868,7 @@ void* mission_thread(void* arg)
 						break;
 
 					case SIDE_ON:
+						data->imgData.bmission = false;
 						data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
 						data->controlData.cameraY = 1660;
 						/* 현재 장애물이 어디있느냐에 따라 side 센서(2,3 or 4,5)로 감지하는 코드*/
@@ -892,6 +908,7 @@ void* mission_thread(void* arg)
 
 					case SIDE_OFF:
 						/*원래 차선으로 복귀하는 코드*/
+						data->imgData.bmission = true;
 						//right
 						if (data->missionData.overtakingData.headingDirection == RIGHT) {
 							/*복귀 좌회전 방향 설정*/
@@ -908,6 +925,7 @@ void* mission_thread(void* arg)
 							usleep(50000);
 						}
 						/*알고리즘 전진*/
+						data->imgData.bmission = false;
 						overtake = DONE;
 						break;
 

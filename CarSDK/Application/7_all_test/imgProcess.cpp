@@ -520,7 +520,8 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 
 void lineFiltering(Mat& src, Mat& dst, int mode)
 {
-	dst = Mat();
+	//dst = Mat();
+	//debug추가하면서 고침. 08/21 12시33분.
 	int h1(14), s(60), v(100); // 예선영상 14, 0, 240
 	int h2(46);
 	Scalar lower_yellow(h1, s, v);

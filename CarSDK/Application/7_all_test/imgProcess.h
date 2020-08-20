@@ -13,7 +13,7 @@ extern "C" {
 
 	void displayPrint(unsigned char* inBuf, int w, int h, unsigned char* outBuf, char* name);
 
-	int autoSteering(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
+	int autoSteering(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int whiteMode);
 
 	int Tunnel(unsigned char* inBuf, int w, int h, const double percent);
 

@@ -223,12 +223,12 @@ extern "C" {
 		putText(dstRGB, str, printPosition, 0, 0.8, Scalar(255, 153, 0), 2);
 	}
 
-	int autoSteering(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
+	int autoSteering(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int whiteMode)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
-		int steer = calculSteer(srcRGB, w, h, 0);
+		int steer = calculSteer(srcRGB, w, h, whiteMode);
 		dstRGB = srcRGB;
 
 		return steer;

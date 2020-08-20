@@ -907,11 +907,19 @@ float countGray(Mat& src, Point down, Point up, const float dydx)
 	float rate = 0;
 	/*check left side or right side*/
 	int width = src.cols;
+	if (dydx == -1000) {
+		down.x = 0;
+		up.x = 0;
+	}
+	else if (dydx == 1000) {
+		down.x = width;
+		up.x = width;
+	}
 	if (down.x < width / 2) {//left
 		for (int y = up.y; y < down.y; y++)//up.y<down.y
 		{ //y
 			int lower_x;//lower bound for calculate rectangular form
-			if (dydx >= 1000) {//무의미한 값 제거
+			if (dydx >= 1000&&dydx==-1000) {//무의미한 값 제거
 				lower_x = 0;
 			}
 			else { lower_x = (y - up.y) / dydx + up.x; }

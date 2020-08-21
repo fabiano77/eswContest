@@ -765,7 +765,7 @@ void* mission_thread(void* arg)
 								case FIRST_BACKWARD:
 									SteeringServoControl_Write(1000);
 									DesireSpeed_Write(-40);
-									if (DistanceSensor_cm(4) <= 18)
+									if (DistanceSensor_cm(4) <= 20)
 									{
 										DesireSpeed_Write(0);
 										SteeringServoControl_Write(1500);
@@ -785,7 +785,7 @@ void* mission_thread(void* arg)
 
 								case SECOND_BACKWARD:
 									SteeringServoControl_Write(2000);
-									DesireSpeed_Write(-50);
+									DesireSpeed_Write(-40);
 									if (DistanceSensor_cm(4) <= 6 && DistanceSensor_cm(3) <= 6 && DistanceSensor_cm(2) <= 6)
 									{
 										DesireSpeed_Write(0);

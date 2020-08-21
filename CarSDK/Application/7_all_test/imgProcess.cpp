@@ -373,7 +373,7 @@ int guideCnt = 5;
 bool first = 0;
 int HLP_threshold = 30;	//105
 int HLP_minLineLength = 90;//115
-int HLP_maxLineGap = 500;	//260
+int HLP_maxLineGap = 125;	//260
 
 static void on_trackbar(int, void*)
 {
@@ -409,8 +409,8 @@ void settingStatic(int w, int h)
 		centerGuide[i][3] *= (h / 360.0);
 	}
 
-	leftGuide = Vec4i(0, 180, 150, 0) * (w / 640.0);
-	rightGuide = Vec4i(490, 0, 640, 180) * (w / 640.0);
+	leftGuide = Vec4i(0, 200, 160, 0) * (w / 640.0);
+	rightGuide = Vec4i(480, 0, 640, 200) * (w / 640.0);
 
 	cout << "settingStatic" << endl;
 }
@@ -421,7 +421,7 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 	int retval(0);
 	Mat src_yel;
 	Mat src_can;
-	Point printPosition(230, 50);
+	Point printPosition(230, 70);
 
 	lineFiltering(src, src_yel, whiteMode);
 	cannyEdge(src_yel, src_can);
@@ -452,16 +452,16 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 			{
 				rectangle(src, Point(centerGuide[i][0] - 5 + bias, centerGuide[i][1]), Point(centerGuide[i][2] + 5 + bias, centerGuide[i][3]), Scalar(70, 70, 70), -1);
 				//5단계로 나누어 조향.
-				proximity += 500.0 / guideCnt;
+				//proximity += 500.0 / guideCnt;
 			}
 			else
 				rectangle(src, Point(centerGuide[i][0] - 5 + bias, centerGuide[i][1]), Point(centerGuide[i][2] + 5 + bias, centerGuide[i][3]), color[i], -1);
 		}
-		//if (linePointY_atCenter > centerGuide[0][1])	// 선형적으로 조향.
-		//	proximity = 500 * (linePointY_atCenter - centerGuide[0][1]) / (h - centerGuide[0][1]);
+		if (linePointY_atCenter > centerGuide[0][1])	// 선형적으로 조향.
+			proximity = 500 * (linePointY_atCenter - centerGuide[0][1]) / (h - centerGuide[0][1]);
 
 		if (proximity == 0)
-			retval = 9999; //(조향하지말라는 뜻)
+			retval = 0; //9999 이면 조향하지않음.
 		else if (slopeSign(firstLine) < 0)
 			retval = proximity;
 		else
@@ -499,6 +499,13 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 			//직선 1개만 보이는 직진구간 보정.
 		}
 		retval = Deviation;
+
+		/* 로타리 진입구간 예외처리 */
+		if (abs(slope(firstLine)) < 0.5 && abs(slope(secondLine)) > 1.0)
+		{
+			retval = 0;
+			putText(src, "prepare Rotary", printPosition + Point(0, -30), 0, 0.8, Scalar(255, 255, 255), 2);
+		}
 	}
 
 	line(src, Point(firstLine[0], firstLine[1]), Point(firstLine[2], firstLine[3]), pink, 5);
@@ -574,11 +581,11 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 		}
 	}
 
-	// createTrackbar("H_thresh", "trackbar", &HLP_threshold, 120, on_trackbar);
-	// createTrackbar("H_minLen", "trackbar", &HLP_minLineLength, 200, on_trackbar);
-	// createTrackbar("H_maxGap", "trackbar", &HLP_maxLineGap, 500, on_trackbar);
-	// namedWindow("trackbar", WINDOW_NORMAL);
-	// moveWindow("trackbar", 320 * 5, 180 * 5);
+	//createTrackbar("H_thresh", "trackbar", &HLP_threshold, 120, on_trackbar);
+	//createTrackbar("H_minLen", "trackbar", &HLP_minLineLength, 200, on_trackbar);
+	//createTrackbar("H_maxGap", "trackbar", &HLP_maxLineGap, 500, on_trackbar);
+	//namedWindow("trackbar", WINDOW_NORMAL);
+	//moveWindow("trackbar", 320 * 5, 180 * 5);
 
 	vector<Vec4i> lines;		//검출될 직선이 저장될 객체
 	HoughLinesP(src, lines, 1, CV_PI / 180, HLP_threshold, HLP_minLineLength, HLP_maxLineGap);
@@ -721,8 +728,8 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 			}
 		}
 		Rect lineRatio(highest, lowest);
-		if (((lineRatio.x < w / 2.0) && (lineRatio.x + lineRatio.width < w / 2.0)) ||
-			((lineRatio.x > w / 2.0) && (lineRatio.x + lineRatio.width > w / 2.0)))
+		if (((lineRatio.x < w / 2.0) && (lineRatio.x + lineRatio.width < w / 2.0)) && slopeSign(leftLine) == 1 ||
+			((lineRatio.x > w / 2.0) && (lineRatio.x + lineRatio.width > w / 2.0)) && slopeSign(leftLine) == -1)
 		{
 			detectedLineType = 0;
 			rectangle(dst, lineRatio, purple, 4);
@@ -858,7 +865,7 @@ int getPointY_at_X(Vec4i line, const int X)
 int lineDeviation(Mat& dst, Vec4i line1, Vec4i line2)
 {
 	//y = 10에서 직선끼리의 거리 비교.
-	return getPointX_at_Y(line1, 60) - getPointX_at_Y(line2, 60);
+	return getPointX_at_Y(line1, 50) - getPointX_at_Y(line2, 50);
 }
 
 string toString(int A)
@@ -920,7 +927,7 @@ float countGray(Mat& src, Point down, Point up, const float dydx)
 		for (int y = up.y; y < down.y; y++)//up.y<down.y
 		{ //y
 			int lower_x;//lower bound for calculate rectangular form
-			if (dydx >= 1000&&dydx==-1000) {//무의미한 값 제거
+			if (dydx >= 1000 && dydx == -1000) {//무의미한 값 제거
 				lower_x = 0;
 			}
 			else { lower_x = (y - up.y) / dydx + up.x; }
@@ -964,9 +971,9 @@ float countGray(Mat& src, Point down, Point up, const float dydx)
 }
 
 
-/*/////////////////////////////
-		TUNNEL START
-*//////////////////////////////
+/**/////////////////////////////
+/*		TUNNEL START		  */
+/**/////////////////////////////
 int flag_tunnel;
 int first_tunnel = 0;
 int MAXTHR_tunnel = 10;
@@ -1017,5 +1024,3 @@ int Tunnel_isStart(Mat& frame, const double percent) {
 /*/////////////////////////////
 		TUNNEL END
 *//////////////////////////////
-
-

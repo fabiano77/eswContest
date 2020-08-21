@@ -107,8 +107,8 @@ struct Parking
 
 struct Overtaking
 {
-	enum DirectionState headingDirection;  //차량의 이동방향 결정
 	bool sideSensorFlag;				   // 차량의 사이드 탐지 활성화 플래그
+	enum DirectionState headingDirection;  //차량의 이동방향 결정
 	enum CameraVerticalState updownCamera; //카메라를 위로 올릴지 말지 결정하는 부분
 };
 
@@ -124,21 +124,16 @@ struct TUNNEL
 struct MissionData
 {
 	uint32_t loopTime;	// mission 스레드 루프 시간
-	bool on_processing; // 어떠한 미션이 진행 중임을 나타내는 플래그 -> 미션 쓰레드에서 다른 미션을 활성화 시키지 않도록 한다.
-
-	struct TUNNEL tunnel;
 	bool broundabout;
 	bool overtakingFlag;			  // 추월차로 플래그 ->MS 이후 overtaking struct 추가할 것
+
+	struct TUNNEL tunnel;
 	struct Parking parkingData;		  // 주차에 필요한 플래그를 담는 구조체
 	struct Overtaking overtakingData; //추월에 필요한 플래그 담는 구조체
 };
 
 struct ControlData
 {
-	uint32_t loopTime; //control 스레드 루프 시간
-	bool stopFlag;
-	bool steerWrite;
-	bool speedWrite;
 	int steerVal;
 	int cameraY;
 	int desireSpeedVal;
@@ -148,11 +143,12 @@ struct ControlData
 
 struct ImgProcessData
 {
+	uint32_t loopTime; //img 스레드 루프 시간
 	bool bcalibration;
 	bool bdebug;
 	bool btopview;
-	bool bauto;
 	bool bmission;
+	bool bauto;
 	bool bwhiteLine;
 	bool bprintString;
 	char missionString[20];
@@ -173,7 +169,7 @@ struct thr_data
 
 	bool bfull_screen;
 	bool bstream_start;
-	pthread_t threads[4];
+	pthread_t threads[3];
 };
 
 /******************** function ********************/
@@ -222,24 +218,24 @@ static void free_input_buffers(struct buffer** buffer, uint32_t n, bool bmultipl
 	free(buffer);
 }
 
-static void draw_operatingtime(struct display* disp, uint32_t time, uint32_t ctime, uint32_t mtime)
+static void draw_operatingtime(struct display* disp, uint32_t time, uint32_t itime, uint32_t mtime)
 {
 	FrameBuffer tmpFrame;
 	unsigned char* pbuf[4];
-	char strtime[128];
-	char strctime[128];
 	char strmtime[128];
+	char strtime[128];
+	char stritime[128];
 	char strfps[128];
 
-	memset(strtime, 0, sizeof(strtime));
-	memset(strctime, 0, sizeof(strctime));
 	memset(strmtime, 0, sizeof(strmtime));
+	memset(strtime, 0, sizeof(strtime));
+	memset(stritime, 0, sizeof(stritime));
 	memset(strfps, 0, sizeof(strfps));
 
-	sprintf(strctime, "c thr : %03d(ms)", ctime);
-	sprintf(strmtime, "m thr : %03d(ms)", mtime);
-	sprintf(strtime, "i thr : %03d(ms)", time);
-	sprintf(strfps, "%4d(fps)", (time == 0) ? 1000 : 1000 / time);
+	sprintf(strmtime, "m thrd : %03d(ms)", mtime);
+	sprintf(strtime,  "optime : %03d(ms)", time);
+	sprintf(stritime, "i thrd : %03d(ms)", itime);
+	sprintf(strfps, "%4d(fps)", (itime == 0) ? 1000 : 1000 / itime);
 
 	if (get_framebuf(disp->overlay_p_bo, pbuf) == 0)
 	{
@@ -247,9 +243,9 @@ static void draw_operatingtime(struct display* disp, uint32_t time, uint32_t cti
 		tmpFrame.format = draw_get_pixel_foramt(disp->overlay_p_bo->fourcc); //FORMAT_RGB888; //alloc_overlay_plane() -- FOURCC('R','G','2','4');
 		tmpFrame.stride = disp->overlay_p_bo->pitches[0];					 //tmpFrame.width*3;
 
-		drawString(&tmpFrame, strctime, TIME_TEXT_X, TIME_TEXT_Y - 40, 0, TIME_TEXT_COLOR);
-		drawString(&tmpFrame, strmtime, TIME_TEXT_X, TIME_TEXT_Y - 20, 0, TIME_TEXT_COLOR);
-		drawString(&tmpFrame, strtime, TIME_TEXT_X, TIME_TEXT_Y, 0, TIME_TEXT_COLOR);
+		drawString(&tmpFrame, strmtime, TIME_TEXT_X, TIME_TEXT_Y - 40, 0, TIME_TEXT_COLOR);
+		drawString(&tmpFrame, strtime, TIME_TEXT_X, TIME_TEXT_Y - 20, 0, TIME_TEXT_COLOR);
+		drawString(&tmpFrame, stritime, TIME_TEXT_X, TIME_TEXT_Y , 0, TIME_TEXT_COLOR);
 		drawString(&tmpFrame, strfps, FPS_TEXT_X, FPS_TEXT_Y, 0, FPS_TEXT_COLOR);
 	}
 }
@@ -268,18 +264,20 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		memcpy(srcbuf, cam_pbuf[0], VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
 		gettimeofday(&st, NULL);
 
-		/*******************************************************
-		*	 우리가 만든 알고리즘 함수를 넣는 부분.
-		********************************************************/
+		/********************************************************/
+		/*			우리가 만든 알고리즘 함수를 넣는 부분		*/
+		/********************************************************/
+
+
+		/* 라인 필터링이나 canny 결과 확인 */
 		if (t_data->imgData.bdebug)
 		{
-			/* 라인 필터링이나 canny 결과를 확인할 때*/
 			debugFiltering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
 		}
+
+		/* 미션 진행중에 처리하는 영상처리 */
 		else if (t_data->imgData.bmission)
 		{
-			/* 미션 진행중에 처리하는 영상처리 */
-
 			/* 추월차로시에 사용 */
 			if (t_data->missionData.overtakingFlag && t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
 			{
@@ -317,9 +315,10 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				}
 			}
 		}
+
+		/* 기본 상태에서 처리되는 영상처리 */
 		else
 		{
-			/* 기본 상태에서 처리되는 영상처리 */
 			if (t_data->imgData.bcalibration)
 			{
 				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
@@ -336,24 +335,27 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				if (steerVal != 9999)
 				{
 					t_data->controlData.steerVal = 1500 - steerVal;
-					t_data->controlData.steerWrite = 1;
+					SteeringServoControl_Write(data->controlData.steerVal);
 				}
 			}
 		}
-		/*******************************************************
-		*			 영상처리 종료
-		********************************************************/
 
-		/* 영상 상단에 문자열을 출력해주는 함수  */
+
+		/********************************************************/
+		/*			영상처리 종료								*/
+		/********************************************************/
+
+		/* 상단에 문자열(missionStr) 출력 */
 		if (t_data->imgData.bprintString)
 		{
 			displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
 		}
 
+
 		memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
 		gettimeofday(&et, NULL);
 		optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
-		draw_operatingtime(disp, optime, t_data->controlData.loopTime, t_data->missionData.loopTime);
+		draw_operatingtime(disp, optime, t_data->imgData.loopTime, t_data->missionData.loopTime);
 	}
 }
 
@@ -367,6 +369,7 @@ void* image_process_thread(void* arg)
 	struct v4l2* v4l2 = data->v4l2;
 	struct vpe* vpe = data->vpe;
 	struct buffer* capt;
+	struct timeval st, et;
 	bool isFirst = true;
 	int index;
 	int i;
@@ -399,6 +402,7 @@ void* image_process_thread(void* arg)
 
 	while (1)
 	{
+		gettimeofday(&st, NULL);
 		index = v4l2_dqbuf(v4l2, &vpe->field);
 		vpe_input_qbuf(vpe, index);
 		if (isFirst)
@@ -411,15 +415,16 @@ void* image_process_thread(void* arg)
 		index = vpe_output_dqbuf(vpe);
 		capt = vpe->disp_bufs[index];
 
-		/*******************************************************
-		* 영상처리 시작.
-		********************************************************/
+		/********************************************************/
+		/* 영상처리 시작										*/
+		/********************************************************/
 
 		img_process(vpe->disp, capt, data, map1, map2);
 
-		/*******************************************************
-		* 영상처리 종료
-		********************************************************/
+		/********************************************************/
+		/* 영상처리 종료										*/
+		/********************************************************/
+
 		if (disp_post_vid_buffer(vpe->disp, capt, 0, 0, vpe->dst.width, vpe->dst.height))
 		{
 			ERROR("Post buffer failed");
@@ -429,6 +434,8 @@ void* image_process_thread(void* arg)
 		vpe_output_qbuf(vpe, index);
 		index = vpe_input_dqbuf(vpe);
 		v4l2_qbuf(v4l2, vpe->input_buf_dmafd[index], index);
+		gettimeofday(&et, NULL);
+		data->imgData.loopTime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
 	}
 
 	MSG("Ok!");
@@ -631,7 +638,7 @@ void* mission_thread(void* arg)
 	enum MissionState start = NONE;
 	enum MissionState flyover = NONE;
 	enum MissionState parking = READY;
-	enum MissionState roundabout = NONE;
+	enum MissionState roundabout = READY;
 	enum MissionState tunnel = NONE;
 	enum MissionState overtake = READY;
 	enum MissionState signalLight = NONE;
@@ -666,7 +673,6 @@ void* mission_thread(void* arg)
 				data->imgData.bmission = true;
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "flyover");
-				data->missionData.on_processing = true;
 
 				flyover = DONE;
 				data->imgData.bmission = false;
@@ -738,7 +744,6 @@ void* mission_thread(void* arg)
 
 					case PARKING_START:
 						sprintf(data->imgData.missionString, "Parking Start");
-						data->missionData.on_processing = true;
 						data->missionData.parkingData.on_parkingFlag = true;
 						/*
 						수직 및 수평 주차 구문 추가.
@@ -796,7 +801,6 @@ void* mission_thread(void* arg)
 
 								case FINISH:
 									data->missionData.parkingData.horizontalFlag = 0;
-									data->missionData.on_processing = 0;
 									data->missionData.parkingData.on_parkingFlag = 0;
 									break;
 
@@ -929,7 +933,6 @@ void* mission_thread(void* arg)
 				sprintf(data->imgData.missionString, "overtake");
 				printf("overtake \n");
 				bool farFront = false;
-				data->missionData.on_processing = true;
 				enum OvertakeState state = FRONT_DETECT;
 				data->missionData.overtakingData.headingDirection = STOP;
 				data->missionData.overtakingFlag = true;
@@ -1040,7 +1043,6 @@ void* mission_thread(void* arg)
 
 					case SIDE_ON:
 						sprintf(data->imgData.missionString, "Detect Side");
-						data->missionData.on_processing = false;
 						/*Auto Steering 동작*/
 						data->imgData.bmission = false;
 						/* 현재 장애물이 어디있느냐에 따라 side 센서(2,3 or 4,5)로 감지하는 코드*/
@@ -1156,102 +1158,6 @@ void* mission_thread(void* arg)
 	}
 }
 
-
-/************************************************/
-/*	Thread - control_thread						*/
-/************************************************/
-void* control_thread(void* arg)
-{
-	struct thr_data* data = (struct thr_data*)arg;
-	struct timeval time;
-	time.tv_sec = 0;
-
-	int currentSpeed;
-	double err_P = 0;
-	double err_I = 0;
-	double err_D = 0;
-	double err_B = 0;
-	int goal;
-	int writeVal;
-	bool isStop = 1;
-
-	SpeedPIDProportional_Write(20);
-	SpeedPIDIntegral_Write(20);
-	SpeedPIDProportional_Write(20);
-
-	while (1)
-	{
-		data->missionData.loopTime = timeCheck(&time);
-
-		if (0)
-		{
-			DesiredDistance(-30, 500, 1500);
-			data->missionData.on_processing = 0;
-			data->missionData.parkingData.on_parkingFlag = 0;
-			data->missionData.parkingData.frontRight = 0;
-			data->missionData.parkingData.rearRight = 0;
-			data->missionData.parkingData.verticalFlag = 0;
-		}
-
-		if (data->missionData.parkingData.horizontalFlag)
-		{
-			// 주차 분기가 활성화 되었을 때 실행 할 부분
-			// switch case 문 이용하여 차량을 절차적으로 제어한다.
-		}
-
-		if (!data->missionData.on_processing) //미션 수행중이 아닐 때
-		{
-			if (data->controlData.steerWrite)
-			{
-				data->controlData.steerWrite = 0;
-				SteeringServoControl_Write(data->controlData.steerVal);
-				//usleep(100000); //100ms
-			}
-
-			if (data->controlData.stopFlag)
-			{
-				if (!isStop)
-					DesireSpeed_Write(0);
-				isStop = 1;
-				err_P = 0;
-				err_I = 0;
-				err_D = 0;
-				err_B = 0;
-				//usleep(100000); //100ms
-			}
-			else if (data->controlData.speedWrite)
-			{
-				isStop = 0;
-				goal = data->controlData.desireSpeedVal;
-				currentSpeed = DesireSpeed_Read();
-				usleep(10000); //10ms
-
-				if (abs(currentSpeed - goal) < 3)
-				{
-					data->controlData.speedWrite = 0;
-					continue;
-				}
-				if (currentSpeed < -500 || currentSpeed > 500)
-					continue;
-				err_P = currentSpeed - goal;
-				err_I += err_P;
-				err_D = err_B - err_P;
-				err_B = err_P;
-
-				writeVal = goal - (err_P * 0.11 + err_I * 0.08 + err_D * 0.15);
-				// printf("currentSpeed = %d, writeVal = %d\n", currentSpeed, writeVal);
-				// printf("errP = %4.1f, errI = %4.1f, errD = %4.1f\n\n",err_P, err_I, err_D);
-				DesireSpeed_Write(writeVal);
-
-				usleep(70000); //70ms
-			}
-		}
-
-	}
-
-	return NULL;
-}
-
 static struct thr_data* pexam_data = NULL;
 
 void signal_handler(int sig)
@@ -1289,7 +1195,6 @@ void manualControl(struct ControlData* cdata, char key)
 	case 'a': //steering left		: servo 조향값 (2000(좌) ~ 1500(중) ~ 1000(우)
 		cdata->steerVal += 50;
 		SteeringServoControl_Write(cdata->steerVal);
-		cdata->steerWrite = true;
 		printf("angle_steering = %d\n", cdata->steerVal);
 		printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read()); //default = 1500, 0x5dc
 		break;
@@ -1297,25 +1202,24 @@ void manualControl(struct ControlData* cdata, char key)
 	case 'd': //steering right	: servo 조향값 (2000(좌) ~ 1500(중) ~ 1000(우)
 		cdata->steerVal -= 50;
 		SteeringServoControl_Write(cdata->steerVal);
-		cdata->steerWrite = true;
 		printf("angle_steering = %d\n", cdata->steerVal);
 		printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read()); //default = 1500, 0x5dc
 		break;
 
 	case 's':
-		cdata->stopFlag = 1;
+		DesireSpeed_Write(0);
 		break;
 
 	case 'w': //go forward
-		cdata->stopFlag = 0;
-		cdata->speedWrite = 1;
+
 		cdata->desireSpeedVal = cdata->settingSpeedVal;
+		DesireSpeed_Write(cdata->desireSpeedVal);
 		break;
 
 	case 'x': //go backward	speed 음수 인가하면 후진.
-		cdata->stopFlag = 0;
-		cdata->speedWrite = 1;
+
 		cdata->desireSpeedVal = -cdata->settingSpeedVal;
+		DesireSpeed_Write(cdata->desireSpeedVal);
 		break;
 
 		// case 'j':	//cam left
@@ -1431,24 +1335,29 @@ int main(int argc, char** argv)
 	char* disp_argv[] = { "dummy", "-s", "4:480x272", "\0" }; // 추후 변경 여부 확인 후 처리..
 	int ret = 0;
 
-	printf("-- 7_all_test Start --\n");
+	printf("------ main start ------\n");
 
 	CarControlInit();
 	PositionControlOnOff_Write(UNCONTROL); // position controller must be OFF !!!
 	SpeedControlOnOff_Write(CONTROL);	   // speed controller must be also ON !!!
 
 	DesireSpeed_Write(0);
+	SpeedPIDProportional_Write(40);
+	SpeedPIDIntegral_Write(40);
+	SpeedPIDProportional_Write(40);
 
+	/******************** imgProcess Data ********************/
 	tdata.imgData.bcalibration = false;
 	tdata.imgData.bdebug = false;
 	tdata.imgData.btopview = true;
-	tdata.imgData.topMode = 2;
+	tdata.imgData.topMode = 3;
 	tdata.imgData.bauto = true;
 	tdata.imgData.bmission = false;
 	tdata.imgData.bwhiteLine = false;
 	tdata.imgData.bprintString = false;
-	sprintf(tdata.imgData.missionString, "0");
+	sprintf(tdata.imgData.missionString, "(null)");
 
+	/******************** Control Data ********************/
 	tdata.controlData.settingSpeedVal = 30;
 	tdata.controlData.desireSpeedVal = 0;
 	tdata.controlData.lightFlag = 0x00;
@@ -1456,11 +1365,8 @@ int main(int argc, char** argv)
 	tdata.controlData.steerVal = 1500;
 	CameraYServoControl_Write(1660);
 	tdata.controlData.cameraY = 1660;
-	tdata.controlData.stopFlag = false;
-	tdata.controlData.steerWrite = false;
-	tdata.controlData.speedWrite = false;
 
-	tdata.missionData.on_processing = false;
+	/******************** Mission Data ********************/
 	tdata.missionData.tunnel.btunnel = true;
 	tdata.missionData.tunnel.Tstart = false;
 	tdata.missionData.tunnel.Tend = false;
@@ -1474,6 +1380,7 @@ int main(int argc, char** argv)
 	tdata.missionData.overtakingFlag = false;
 	tdata.missionData.overtakingData.updownCamera = CAMERA_DOWN;
 	tdata.missionData.overtakingData.headingDirection = STOP;
+
 
 	// open vpe
 	vpe = vpe_open();
@@ -1564,13 +1471,6 @@ int main(int argc, char** argv)
 		MSG("Failed creating input_thread");
 	}
 	pthread_detach(tdata.threads[2]);
-
-	ret = pthread_create(&tdata.threads[3], NULL, control_thread, &tdata);
-	if (ret)
-	{
-		MSG("Failed creating control_thread");
-	}
-	pthread_detach(tdata.threads[3]);
 
 	/* register signal handler for <CTRL>+C in order to clean up */
 	if (signal(SIGINT, signal_handler) == SIG_ERR)

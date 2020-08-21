@@ -99,7 +99,6 @@ struct Parking
 {
 	bool frontRight;
 	bool rearRight;
-	bool on_parkingFlag; // 주차 진행 중을 나타내는 플래그
 	bool bparking;		 // 주차 중 거리 정보 출력을 위한 변수
 	bool verticalFlag;	 // 수직 주차 활성화를 나타내는 플래그
 	bool horizontalFlag; // 수평 주차 활성화를 나타내는 플래그
@@ -137,6 +136,7 @@ struct ControlData
 	int steerVal;
 	int cameraY;
 	int desireSpeedVal;
+	int beforeSpeedVal;
 	int settingSpeedVal;
 	unsigned short lightFlag;
 };
@@ -337,6 +337,14 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				{
 					t_data->controlData.steerVal = 1500 - steerVal;
 					SteeringServoControl_Write(data->controlData.steerVal);
+
+					t_data->controlData.desireSpeedVal = auto_speedMapping(steerVal, 40);
+				}
+				if (t_data->controlData.desireSpeedVal != t_data->controlData.beforeSpeedVal)
+				{
+					//이전 속도와 달라졌을 때만 속도값 인가.
+					DesireSpeed_Write(t_data->controlData.desireSpeedVal);
+					t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
 				}
 			}
 		}
@@ -745,7 +753,6 @@ void* mission_thread(void* arg)
 
 					case PARKING_START:
 						sprintf(data->imgData.missionString, "Parking Start");
-						data->missionData.parkingData.on_parkingFlag = true;
 						/*
 						수직 및 수평 주차 구문 추가.
 						*/
@@ -796,13 +803,13 @@ void* mission_thread(void* arg)
 
 								case SECOND_FORWARD:
 									DesiredDistance(30, 600, 1800);
+									buzzer(2, 200000, 200000);
 									usleep(3000000);
 									step = FINISH;
 									break;
 
 								case FINISH:
 									data->missionData.parkingData.horizontalFlag = 0;
-									data->missionData.parkingData.on_parkingFlag = 0;
 									break;
 
 								default:
@@ -1135,7 +1142,7 @@ void* mission_thread(void* arg)
 
 		if (signalLight)
 		{
-			if (roundabout == DONE && StopLine(4))
+			if ((roundabout != READY) && StopLine(4))
 			{
 				data->imgData.bmission = true;
 				data->imgData.bprintString = true;
@@ -1161,7 +1168,7 @@ void* mission_thread(void* arg)
 			}
 		}
 
-		usleep(500000);
+		usleep(200000);
 		data->missionData.loopTime = timeCheck(&time);
 		//시간측정
 	}
@@ -1360,15 +1367,16 @@ int main(int argc, char** argv)
 	tdata.imgData.bdebug = false;
 	tdata.imgData.btopview = true;
 	tdata.imgData.topMode = 3;
-	tdata.imgData.bauto = true;
+	tdata.imgData.bauto = false;
 	tdata.imgData.bmission = false;
 	tdata.imgData.bwhiteLine = false;
 	tdata.imgData.bprintString = false;
 	sprintf(tdata.imgData.missionString, "(null)");
 
 	/******************** Control Data ********************/
-	tdata.controlData.settingSpeedVal = 30;
+	tdata.controlData.settingSpeedVal = 40;
 	tdata.controlData.desireSpeedVal = 0;
+	tdata.controlData.beforeSpeedVal = 0;
 	tdata.controlData.lightFlag = 0x00;
 	CameraXServoControl_Write(1500);
 	tdata.controlData.steerVal = 1500;
@@ -1383,7 +1391,6 @@ int main(int argc, char** argv)
 	tdata.missionData.parkingData.bparking = false;
 	tdata.missionData.parkingData.horizontalFlag = false;
 	tdata.missionData.parkingData.verticalFlag = false;
-	tdata.missionData.parkingData.on_parkingFlag = false;
 	tdata.missionData.parkingData.frontRight = false;
 	tdata.missionData.parkingData.rearRight = false;
 	tdata.missionData.overtakingFlag = false;

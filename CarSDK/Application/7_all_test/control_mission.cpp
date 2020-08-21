@@ -383,6 +383,31 @@ extern "C" {
 		CarLight_Write(lightFlag);
 	}
 
+	int auto_speedMapping(int steerVal, const int basicSpeed)
+	{
+		int absSteer = abs(steerVal);
+
+		if (absSteer < 200)
+			return basicSpeed;
+		else if (absSteer < 300)
+			return int(basicSpeed * 1.15_;
+		else if (absSteer < 400)
+			return basicSpeed * 1.25;
+		else if (absSteer <= 500)
+			return basicSpeed * 1.35;
+	}
+
+	void buzzer(int numOfTimes, int interval_us, int pulseWidth_us)
+	{
+		for (int i = 0; i < numOfTimes; i++)
+		{
+			Alarm_Write(ON);
+			usleep(pulseWidth);
+			Alarm_Write(OFF);
+			usleep(interval);
+		}
+	}
+
 }//extern "C"
 
 

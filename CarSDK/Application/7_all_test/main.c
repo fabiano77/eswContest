@@ -845,8 +845,7 @@ void* mission_thread(void* arg)
 				data->imgData.bmission = true;
 				data->imgData.bprintString = true;
 
-				data->controlData.lightFlag = data->controlData.lightFlag ^ 0x01;
-				CarLight_Write(data->controlData.lightFlag);
+				frontLightOnOff(data->controlData.lightFlag, true);
 
 				while (Tunnel_isEnd(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5)))
 				{
@@ -857,8 +856,7 @@ void* mission_thread(void* arg)
 				DesireSpeed_Write(0);
 				printf("tunnel_OFF\n");
 
-				data->controlData.lightFlag = data->controlData.lightFlag ^ 0x01;
-				CarLight_Write(data->controlData.lightFlag);
+				frontLightOnOff(data->controlData.lightFlag, false);
 
 				data->imgData.bmission = false;
 				data->missionData.tunnel.btunnel = false;

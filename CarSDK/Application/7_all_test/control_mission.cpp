@@ -18,7 +18,7 @@
 #include "control_mission.h"
 #include "car_lib.h"
 
-///////////////////////////////////////////////////////////////////////////////////
+ ///////////////////////////////////////////////////////////////////////////////////
 
 int flag_go, flag_wait, flag_stop, flag_end;
 int check_start;
@@ -90,12 +90,12 @@ extern "C" {
 		for (i = 0; i < 8; i++)
 		{
 			if ((i % 4) == 0)
-			if ((sensor & byte)) { // 1
-				
-			}
-			else { // 0
-				flag++;
-			}
+				if ((sensor & byte)) { // 1
+
+				}
+				else { // 0
+					flag++;
+				}
 			sensor = sensor << 1;
 		}
 		if (flag > Lineflag) {
@@ -111,15 +111,22 @@ extern "C" {
 		EncoderCounter_Write(init_encoder);
 		DesireSpeed_Write(SettingSpeed);
 		SteeringServoControl_Write(SettingSteering);
-		while (1) {
+		if (SettingSpeed < 0)	CarLight_Write(0x02);
+		while (1)
+		{
 			on_encoder = abs(EncoderCounter_Read());
-			if (on_encoder != 65278) printf("encoder : %-4d\n", on_encoder);
-			if (on_encoder >= SettingDistance && on_encoder != 65278) {
-				DesireSpeed_Write(0);
-				break;
+			if (on_encoder != 65278)
+			{
+				printf("encoder : %-4d\n", on_encoder);
+				if (on_encoder >= SettingDistance)
+				{
+					DesireSpeed_Write(0);
+					break;
+				}
 			}
 			usleep(100000);
 		}
+		if (SettingSpeed < 0)	CarLight_Write(0x00);
 	}
 
 	int RoundAbout_isStart(const int Distance1) {
@@ -272,7 +279,7 @@ extern "C" {
 				flag_steer[i] = 0;
 			}
 		}
-		
+
 		absDist = abs(Distance1 - Distance2);
 
 		if (absDist < 2) {
@@ -280,7 +287,7 @@ extern "C" {
 				steerVal = 0;
 				flag_steer[0] = 0;
 			}
-			flag_steer[0]++;	
+			flag_steer[0]++;
 			for (i = 0; i < 5; i++) {
 				if ((flag_steer[i] > 0) && (i != 0))
 					flag_steer[i]--;
@@ -292,9 +299,9 @@ extern "C" {
 				flag_steer[1] = 0;
 				if (Distance1 < Distance2) {
 					steerVal = -steerVal;
-				}				
+				}
 			}
-			flag_steer[1]++; 
+			flag_steer[1]++;
 			for (i = 0; i < 5; i++) {
 				if ((flag_steer[i] > 0) && (i != 1))
 					flag_steer[i]--;
@@ -344,6 +351,36 @@ extern "C" {
 		}
 
 		return steerVal + 1500;
+	}
+
+	void frontLightOnOff(unsigned short lightFlag, int on)
+	{
+		if (on == 1)
+		{
+			if (!(lightFlag & 0x01))			//1번 비트가 1이 아닐경우
+				lightFlag = lightFlag ^ 0x01;	//XOR연산으로 1으로 만들어준다.
+		}
+		else if (on == 0)
+		{
+			if (lightFlag & 0x01)				//1번 비트가 1일경우
+				lightFlag = lightFlag ^ 0x01;	//XOR연산으로 0으로 만들어준다.
+		}
+		CarLight_Write(lightFlag);
+	}
+
+	void rearLightOnOff(unsigned short lightFlag, int on)
+	{
+		if (on == 1)
+		{
+			if (!(lightFlag & 0x02))			//2번 비트가 1이 아닐경우
+				lightFlag = lightFlag ^ 0x02;	//XOR연산으로 1으로 만들어준다.
+		}
+		else if (on == 0)
+		{
+			if (lightFlag & 0x02)				//2번 비트가 1일경우
+				lightFlag = lightFlag ^ 0x02;	//XOR연산으로 0으로 만들어준다.
+		}
+		CarLight_Write(lightFlag);
 	}
 
 }//extern "C"

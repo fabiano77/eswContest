@@ -279,7 +279,8 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		else if (t_data->imgData.bmission)
 		{
 			/* 추월차로시에 사용 */
-			if (t_data->missionData.overtakingFlag && t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
+			if (t_data->missionData.overtakingFlag &&
+				t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
 			{
 				usleep(50000);
 				/*check를 위한 camera up*/
@@ -975,11 +976,14 @@ void* mission_thread(void* arg)
 							break;
 						}
 						/*판단 이후 해당 방향 전진*/
-						if (data->missionData.overtakingData.headingDirection == RIGHT && data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
+						if (data->missionData.overtakingData.headingDirection == RIGHT &&
+							data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
 						{
 							sprintf(data->imgData.missionString, "Right to go");
 							/*출발*/
+							Winker_Write(RIGHT_ON);
 							DesiredDistance(50, thresDistance, 1100);
+							Winker_Write(ALL_OFF);
 							/*thresDistance이상 가서 전방 거리 재확인*/
 							if (DistanceSensor_cm(1) < 30)
 							{
@@ -1004,12 +1008,15 @@ void* mission_thread(void* arg)
 								data->missionData.overtakingData.headingDirection = LEFT;
 							}
 						}
-						else if (data->missionData.overtakingData.headingDirection == LEFT && data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
+						else if (data->missionData.overtakingData.headingDirection == LEFT &&
+								data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
 						{
 
 							sprintf(data->imgData.missionString, "Left to go");
 							/*출발*/
+							Winker_Write(LEFT_ON);
 							DesiredDistance(50, thresDistance, 1900);
+							Winker_Write(ALL_OFF);
 							/*thresDistance이상 가서 전방 거리 재확인*/
 							if (DistanceSensor_cm(1) < 30)
 							{
@@ -1097,13 +1104,17 @@ void* mission_thread(void* arg)
 						if (data->missionData.overtakingData.headingDirection == RIGHT)
 						{
 							/*복귀 좌회전 방향 설정 및 전진*/
+							Winker_Write(LEFT_ON);
 							DesiredDistance(50, thresDistance, 1900);
+							Winker_Write(ALL_OFF);
 						}
 						//left
 						else if (data->missionData.overtakingData.headingDirection == LEFT)
 						{
 							/*복귀 우회전 방향 설정*/
+							Winker_Write(RIGHT_ON);
 							DesiredDistance(50, thresDistance, 1100);
+							Winker_Write(ALL_OFF);
 						}
 						/*알고리즘 전진*/
 						data->imgData.bmission = false;

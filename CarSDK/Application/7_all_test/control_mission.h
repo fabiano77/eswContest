@@ -40,6 +40,14 @@ void frontLightOnOff(unsigned short lightFlag, int on);
 void rearLightOnOff(unsigned short lightFlag, int on);
 // Postcondition : 인자가 1일경우 후미등 on, 0일경우 off
 
+int auto_speedMapping(int steerVal, const int basicSpeed);
+// Return :autoSteer 로 도출한 조향값에 따라 속도를 반환해준다.
+
+void buzzer(int numOfTimes, int interval_us, int pulseWidth_us);
+// numOfTimes		: 부저가 울리는 횟수
+// interval_us		: 부저 사이의 시간간격
+// pulseWidth_us	: 부저하나당 울리는 시간
+
 #ifdef __cplusplus
 }
 

@@ -20,6 +20,17 @@ extern "C" {
 	int Tunnel(unsigned char* inBuf, int w, int h, const double percent);
 
 	/// <summary>
+	/// check where is the end line in front of the car
+	/// need get img that is already topview transformed
+	/// </summary>
+	/// <param name="inBuf"></param>
+	/// <param name="w"></param>
+	/// <param name="h"></param>
+	/// <returns></returns>
+	int checkFront(unsigned char* inBuf, int w, int h,unsigned char* outBuf);
+
+
+	/// <summary>
     /// check where is obstacle
 	/// </summary>
 	/// <param name="src"></param> //Input img buf(������ �̹����� ������ ��)

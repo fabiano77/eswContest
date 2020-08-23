@@ -118,7 +118,7 @@ struct TUNNEL
 	bool Tend;	  // 분기의 끝을 알리는 변수
 };
 
-struct Finish{
+struct Finish {
 	bool checkFront;//앞의 수직 노란선 파악
 	int distEndLine;//결승선까지의 거리
 };
@@ -238,7 +238,7 @@ static void draw_operatingtime(struct display* disp, uint32_t time, uint32_t iti
 	memset(strfps, 0, sizeof(strfps));
 
 	sprintf(strmtime, "m thrd : %03d(ms)", mtime);
-	sprintf(strtime,  "optime : %03d(ms)", time);
+	sprintf(strtime, "optime : %03d(ms)", time);
 	sprintf(stritime, "i thrd : %03d(ms)", itime);
 	sprintf(strfps, "%4d(fps)", (itime == 0) ? 1000 : 1000 / itime);
 
@@ -250,7 +250,7 @@ static void draw_operatingtime(struct display* disp, uint32_t time, uint32_t iti
 
 		drawString(&tmpFrame, strmtime, TIME_TEXT_X, TIME_TEXT_Y - 40, 0, TIME_TEXT_COLOR);
 		drawString(&tmpFrame, strtime, TIME_TEXT_X, TIME_TEXT_Y - 20, 0, TIME_TEXT_COLOR);
-		drawString(&tmpFrame, stritime, TIME_TEXT_X, TIME_TEXT_Y , 0, TIME_TEXT_COLOR);
+		drawString(&tmpFrame, stritime, TIME_TEXT_X, TIME_TEXT_Y, 0, TIME_TEXT_COLOR);
 		drawString(&tmpFrame, strfps, FPS_TEXT_X, FPS_TEXT_Y, 0, FPS_TEXT_COLOR);
 	}
 }
@@ -318,6 +318,31 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 						t_data->missionData.tunnel.Tend = false;
 						t_data->missionData.tunnel.btunnel = false;
 					}
+				}
+			}
+			if (t_data->missionData.finishData.checkFront == true)
+			{
+				OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
+				t_data->missionData.finishData.distEndLine = checkFront(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+				/*무의미한 값인 경우 알고리즘에 맞게 steering 진행*/
+				if (t_data->missionData.finishData.distEndLine == -1000) {
+					int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.bwhiteLine);
+					if (steerVal != 9999)
+					{
+						t_data->controlData.steerVal = 1500 - steerVal;
+						SteeringServoControl_Write(data->controlData.steerVal);
+
+						t_data->controlData.desireSpeedVal = auto_speedMapping(steerVal, 40);
+					}
+					if (t_data->controlData.desireSpeedVal != t_data->controlData.beforeSpeedVal)
+					{
+						//이전 속도와 달라졌을 때만 속도값 인가.
+						DesireSpeed_Write(t_data->controlData.desireSpeedVal);
+						t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
+					}
+				}
+				else {/*거리가 탐지된 경우 영상처리 종료*/
+					t_data->missionData.finishData.checkFront = false;
 				}
 			}
 		}
@@ -1020,7 +1045,7 @@ void* mission_thread(void* arg)
 							}
 						}
 						else if (data->missionData.overtakingData.headingDirection == LEFT &&
-								data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
+							data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
 						{
 
 							sprintf(data->imgData.missionString, "Left to go");
@@ -1165,6 +1190,7 @@ void* mission_thread(void* arg)
 			if (0)/*노란색 가로 직선이 일정이하로 떨어지면 입력*/
 			{//Encoder 사용해서 일정 직진하면 종료하게 설정
 				//끝나고 삐소리 
+				data->missionData.finishData.distEndLine = -1000;
 				data->imgData.bmission = true;
 				data->imgData.bprintString = true;
 				/*box filtering*/
@@ -1172,26 +1198,30 @@ void* mission_thread(void* arg)
 				/*encoding을 이용한 전진*/
 				data->missionData.finishData.encodingStart = false;
 				/*check front signal waiting*/
-				while (data->missionData.finishData.checkFront == true&&) {
+				while (data->missionData.finishData.checkFront == true || data->missionData.finishData.distEndLine == -1000) {
 					usleep(500000);
-					if (data->missionData.finishData.encodingStart == true) {
+					/*checkFront 가 false가 되어 종료 됐거나 distEndline값이 무의미하지 않을경우 종료*/
+					if (data->missionData.finishData.checkFront == false || data->missionData.finishData.distEndLine != -1000) {
+						sprintf(data->imgData.missionString, "End Check Front");
+						printf("need to go %d", (360 - data->missionData.finishData.distEndLine) * 6);
 						break; /*앞에 탐지시 종료*/
 					}
 					sprintf(data->imgData.missionString, "Check Front");
 				}
-				/*더이상 확인하지 않도록 종료*/
+				/*더이상 확인하지 않도록 종료(double check)*/
 				data->missionData.finishData.checkFront = false;
-				
+
 				/*현재 주행상태 유지 및 이동*/
+				sprintf(data->imgData.missionString, "Finish is comming");
 				int dist_go = data->missionData.finishData.distEndLine;
-				DesiredDistance(40, (360-dist_go)*6, 1500);
+				DesiredDistance(40, (360 - dist_go) * 6, 1500);
 				/*이동 후 종료*/
-				
+
 				/*밑에 흰색이 하나라도 탐지되는지 확인 후 있다면 정지*/
 				///추가필요/////
 
 
-				sprintf(data->imgData.missionString, "finish");
+				sprintf(data->imgData.missionString, "Finish Driving");
 				printf("finish\n");
 
 				data->imgData.bmission = false;

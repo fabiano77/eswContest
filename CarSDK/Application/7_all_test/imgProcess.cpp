@@ -244,7 +244,6 @@ extern "C" {
 
 	bool checkObstacle(unsigned char* inBuf, int w, int h, unsigned char* outBuf) {
 		/*Capture from inBuf*/
-		printf("check");
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 		dstRGB = srcRGB;
@@ -353,6 +352,70 @@ extern "C" {
 		return_go = Tunnel_isStart(srcRGB, percent);
 
 		return return_go;
+	}
+
+	int checkFront(unsigned char* inBuf, int w, int h,unsigned char* outBuf) {
+		//need alread top view transformed
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		Mat dstRGB(h, w, CV_8UC3, outBuf);
+		dstRGB = srcRGB;
+		int width = w;
+		int height = h;
+		int font = FONT_ITALIC; // italic font
+		double fontScale = 1;
+		int thresDistance = 260;//이때부터 값 리턴
+		Scalar upper_yellow(255, 100, 160);
+		Scalar lower_yellow(0, 0, 0);
+
+		/*convert color to hsv*/
+		cvtColor(srcRGB, img_hsv, COLOR_BGR2HSV);
+		int roi_upY=80;
+		line(dstRGB, Point(0, roi_upY), Point(640, roi_upY), Scalar(0, 0, 255), 2);
+		putText(dstRGB, "ROI Section", Point(15, 80), font,fontScale,Scalar(0,0,255),2);
+		/*roi img and filtering*/
+		Mat img_roi(img_hsv, Rect(0, 80, 640, 280));// roi 지정(선으로 변화 시킬것)
+		Mat img_filtered;
+		inRange(img_roi, upper_yellow, lower_yellow, img_filtered); //color filtering
+		/*canny img*/
+		Mat img_canny;
+		Canny(img_filtered, img_canny, 0, 150);
+		vector<Vec4f> lines;
+		vector<Point> points_filtered;
+		/*line detect*/
+		HoughLinesP(img_canny, lines, 1, CV_PI / 180, 80, 10, 300);
+		for (int i = 0; i < lines.size(); i++) {
+			if (abs(slope(lines[i])) < 0.05 && lines[i][1] > 80 && lines[i][3] > 80) {
+				points_filtered.push_back(Point(lines[i][0], lines[i][1]));
+				points_filtered.push_back(Point(lines[i][2], lines[i][3]));
+				line(dstRGB, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(255, 0, 0), 1);
+			}
+		}
+		/*line fitting to one*/
+		Vec4f line_fit;
+		if (points_filtered.size() > 0) {
+			fitLine(points_filtered, line_fit, DIST_L2, 0, 0.01, 0.01);
+			float dydx = line_fit[1] / line_fit[0];
+			/*find point y at x*/
+			Point leftPoint(0, dydx * (0 - line_fit[2]) + line_fit[3]);
+			Point rightPoint(640, dydx * (640 - line_fit[2]) + line_fit[3]); //y=dydx*(x-a)+b
+
+			line(dstRGB, leftPoint, rightPoint, Scalar(0, 255, 0), 2);
+			if (leftPoint.y > thresDistance && rightPoint.y > thresDistance) {
+				putText(dstRGB, "Detect", Point(width / 2, height / 4), font, fontScale, Scalar(255, 0, 0), 2);
+				/*return avg value of point*/
+				return (leftPoint.y + rightPoint.y) / 2;
+			}
+			else {
+				putText(dstRGB, "Non-Detect", Point(width / 2, height / 4), font, fontScale, Scalar(255, 0, 0), 2);
+				/*meaningless value is returned*/
+				return -1000;
+			}
+		}
+		else {
+			putText(dstRGB, "Non-Detect", Point(width / 2, height / 4), font, fontScale, Scalar(255, 0, 0), 2);
+			/*meaningless value is returned*/
+			return -1000;
+		}
 	}
 }	// extern "C"
 

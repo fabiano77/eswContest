@@ -363,9 +363,10 @@ extern "C" {
 		int height = h;
 		int font = FONT_ITALIC; // italic font
 		double fontScale = 1;
+		/* hyper params */
 		int thresDistance = 260;//이때부터 값 리턴
-		Scalar upper_yellow(255, 100, 160);
-		Scalar lower_yellow(0, 0, 0);
+		Scalar upper_yellow(120, 100, 255);
+		Scalar lower_yellow(50, 0, 120);
 
 		/*convert color to hsv*/
 		cvtColor(srcRGB, img_hsv, COLOR_BGR2HSV);

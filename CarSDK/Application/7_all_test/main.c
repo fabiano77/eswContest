@@ -118,6 +118,10 @@ struct TUNNEL
 	bool Tend;	  // 분기의 끝을 알리는 변수
 };
 
+struct Finish{
+	bool checkFront;//앞의 수직 노란선 파악
+	int distEndLine;//결승선까지의 거리
+};
 
 /******************** thread struct ********************/
 struct MissionData
@@ -129,6 +133,7 @@ struct MissionData
 	struct TUNNEL tunnel;
 	struct Parking parkingData;		  // 주차에 필요한 플래그를 담는 구조체
 	struct Overtaking overtakingData; //추월에 필요한 플래그 담는 구조체
+	struct Finish finishData;
 };
 
 struct ControlData
@@ -948,6 +953,7 @@ void* mission_thread(void* arg)
 				int thresDistance = 500;
 				/*차량 정지*/
 				DesireSpeed_Write(0);
+
 				while (state)
 				{
 					data->missionData.loopTime = timeCheck(&time);
@@ -1161,6 +1167,30 @@ void* mission_thread(void* arg)
 				//끝나고 삐소리 
 				data->imgData.bmission = true;
 				data->imgData.bprintString = true;
+				/*box filtering*/
+				data->missionData.finishData.checkFront = true;
+				/*encoding을 이용한 전진*/
+				data->missionData.finishData.encodingStart = false;
+				/*check front signal waiting*/
+				while (data->missionData.finishData.checkFront == true&&) {
+					usleep(500000);
+					if (data->missionData.finishData.encodingStart == true) {
+						break; /*앞에 탐지시 종료*/
+					}
+					sprintf(data->imgData.missionString, "Check Front");
+				}
+				/*더이상 확인하지 않도록 종료*/
+				data->missionData.finishData.checkFront = false;
+				
+				/*현재 주행상태 유지 및 이동*/
+				int dist_go = data->missionData.finishData.distEndLine;
+				DesiredDistance(40, (360-dist_go)*6, 1500);
+				/*이동 후 종료*/
+				
+				/*밑에 흰색이 하나라도 탐지되는지 확인 후 있다면 정지*/
+				///추가필요/////
+
+
 				sprintf(data->imgData.missionString, "finish");
 				printf("finish\n");
 

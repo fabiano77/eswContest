@@ -965,7 +965,7 @@ void* mission_thread(void* arg)
 					steerVal = Tunnel_SteerVal(DistanceSensor_cm(2), DistanceSensor_cm(6));
 					SteeringServoControl_Write(steerVal);
 					ENDFLAG = Tunnel_isEnd(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5));
-					usleep(100000);
+					usleep(150000);
 				}
 				DesireSpeed_Write(0);
 				printf("Tunnel OUT\n");
@@ -989,9 +989,10 @@ void* mission_thread(void* arg)
 				data->imgData.bwhiteLine = true;
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "roundabout");
-				int speed = 30;
+				int speed = 40;
 				bool delay = false;
 				DesireSpeed_Write(0);
+				printf("roundabout IN\n");
 				while (1)
 				{
 					data->missionData.loopTime = timeCheck(&time);
@@ -1000,11 +1001,9 @@ void* mission_thread(void* arg)
 						data->missionData.broundabout = true;
 						break;
 					}
-					else
-					{
-						DesireSpeed_Write(0);
-					}
+					usleep(150000);
 				}
+				printf("go\n");
 				while (!RoundAbout_isEnd(DistanceSensor_cm(1), DistanceSensor_cm(4)))
 				{
 					data->missionData.loopTime = timeCheck(&time);
@@ -1015,13 +1014,14 @@ void* mission_thread(void* arg)
 					}
 					else
 					{
-						if (delay && (speed > 20))
+						if (delay && (speed > 30))
 						{
-							speed = speed - 5;
+							speed = speed - 10;
 							delay = false;
 						}
 						DesireSpeed_Write(speed);
 					}
+					usleep(100000);
 				}
 				DesireSpeed_Write(50);
 

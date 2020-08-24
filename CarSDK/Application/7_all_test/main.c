@@ -921,12 +921,14 @@ void* mission_thread(void* arg)
 								switch (step_v)
 								{
 								case FIRST_BACKWARD_V:
+									sprintf(data->imgData.missionString, "FIRST_BACKWARD_V");
 									DesiredDistance(-30, 850, 1110);
 									DesiredDistance(-30, 200, 1500);
 									step_v = SECOND_BACKWARD_V;
 									break;
 
 								case SECOND_BACKWARD_V:
+									sprintf(data->imgData.missionString, "SECOND_BACKWARD_V");
 									dist_difference = DistanceSensor_cm(3) - DistanceSensor_cm(5);
 									SteeringServoControl_Write(1500 - dist_difference * 20);
 									DesireSpeed_Write(-25);
@@ -938,6 +940,7 @@ void* mission_thread(void* arg)
 										break;
 									}
 								case FIRST_FORWARD_V:
+									sprintf(data->imgData.missionString, "FIRST_FORWARD_V");
 									dist_difference = DistanceSensor_cm(3) - DistanceSensor_cm(5);
 									SteeringServoControl_Write(1500 - dist_difference * 20);
 									DesireSpeed_Write(25);
@@ -947,12 +950,14 @@ void* mission_thread(void* arg)
 										break;
 									}
 								case SECOND_FORWARD_V:
+									sprintf(data->imgData.missionString, "SECOND_FORWARD_V");
 									DesiredDistance(25, 300, 1500);
 									DesiredDistance(25, 500, 1110);
 									step_v = FINISH_V;
-									break;
-								case FINISH_V:
 									data->missionData.parkingData.verticalFlag = 0;
+									break;
+
+								case FINISH_V:
 									break;
 
 								default:
@@ -970,19 +975,23 @@ void* mission_thread(void* arg)
 								switch (step_h)
 								{
 								case FIRST_BACKWARD:
+									sprintf(data->imgData.missionString, "FIRST_BACKWARD");
 									first_error_flag = 1;
 									EncoderCounter_Write(0);
 									DesiredDistance(-30, 800, 1050);
 									first_error_distance = EncoderCounter_Read();
 									EncoderCounter_Write(0);
-									DesiredDistance(-30, 100, 1500);
+									usleep(200000);
+									DesiredDistance(-30, 250, 1500);
 									second_error_distance = EncoderCounter_Read();
 									step_h = SECOND_BACKWARD;
 									break;
 
 								case SECOND_BACKWARD:
+									sprintf(data->imgData.missionString, "SECOND_BACKWARD");
 									if (DistanceSensor_cm(4) <= 5 && first_error_flag)
 									{
+										sprintf(data->imgData.missionString, "ERROR");
 										DesiredDistance(30, (second_error_distance - 30), 1500);
 										DesiredDistance(30, (first_error_distance - 30), 1110);
 										// Error 발생 시 다시 초기 상태로 만들어 주기 위한 구문
@@ -990,13 +999,17 @@ void* mission_thread(void* arg)
 									}
 									first_error_flag = 0;
 									DesiredDistance(-30, 400, 1950);
-									usleep(10000);
+									usleep(200000);
 									SteeringServoControl_Write(1110);
 									DesireSpeed_Write(25);
+									sprintf(data->imgData.missionString, "2nd_ d1=%d, d2=%d, d3=%d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
 									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2) || DistanceSensor_cm(1) <= 5) {
+										sprintf(data->imgData.missionString, "sibal_ d1=%d, d2=%d, d3=%d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
+										DesireSpeed_Write(0);
+										usleep(5000000);
 										step_h = SECOND_FORWARD;
 										Winker_Write(ALL_ON);
-										buzzer(5, 500000, 500000);
+										buzzer(2, 500000, 500000);
 										break;
 									}
 
@@ -1006,14 +1019,15 @@ void* mission_thread(void* arg)
 									//	break;
 
 								case SECOND_FORWARD:
+									sprintf(data->imgData.missionString, "SECOND_FORWARD");
 									DesiredDistance(-25, 300, 1110);
 									DesiredDistance(25, 500, 1800);
 
 									step_h = FINISH;
+									data->missionData.parkingData.horizontalFlag = 0;
 									break;
 
 								case FINISH:
-									data->missionData.parkingData.horizontalFlag = 0;
 									break;
 
 								default:

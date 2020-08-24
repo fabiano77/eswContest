@@ -54,15 +54,6 @@ Point centerPoint(Vec4i line);
 /// <param name="dst"></param> //after masking image
 /// <param name="points"></param> //4points is needed
 void regionOfInterest(Mat& src, Mat& dst, Point* points);
-/// <summary>
-/// Count gray rate in roi
-/// </summary>
-/// <param name="src"></param> input img
-/// <param name="down"></param> down point
-/// <param name="up"></param> up point
-/// <param name="dydx"></param> slope degree of line
-/// <returns></returns> gray rate of img
-float countGray(Mat& src, Point down, Point up, const float dydx);
 
 // TUNNEL
 int isDark(Mat& frame, const double percent);
@@ -253,7 +244,7 @@ extern "C" {
 		int height = h;
 		/*filtering value setting*/
 		Scalar upper_gray(255, 100, 160);
-		Scalar lower_gray(0, 0, 0);
+		Scalar lower_gray(90, 0, 0);
 		/***************************************/
 		/*Convert Color*/
 		int color_convert = 1;
@@ -327,8 +318,6 @@ extern "C" {
 		point_rightdown = Point(rightdown_x, height_down);
 		point_leftup = Point(leftup_x, height_up);
 		point_leftdown = Point(leftdown_x, height_down);
-		cout << point_rightup << point_rightdown;
-		cout << point_leftup << point_leftdown;
 
 		/*Count Gray*/
 		float grayrate_left = 0;
@@ -1049,71 +1038,6 @@ void regionOfInterest(Mat& src, Mat& dst, Point* points)
 	bitwise_and(src, maskImg, maskedImg);
 	dst = maskedImg;
 }
-
-float countGray(Mat& src, Point down, Point up, const float dydx)
-{
-	CV_Assert(src.type() == CV_8UC1);
-	int count_left = 0;
-	int count_right = 0;
-	int count_total = 0;
-	float rate = 0;
-	/*check left side or right side*/
-	int width = src.cols;
-	if (dydx == -1000) {
-		down.x = 0;
-		up.x = 0;
-	}
-	else if (dydx == 1000) {
-		down.x = width;
-		up.x = width;
-	}
-	if (down.x < width / 2) {//left
-		for (int y = up.y; y < down.y; y++)//up.y<down.y
-		{ //y
-			int lower_x;//lower bound for calculate rectangular form
-			if (dydx >= 1000 && dydx == -1000) {//무의미한 값 제거
-				lower_x = width/2;
-			}
-			else { lower_x = (y - up.y) / dydx + up.x; }
-
-			for (int x = 0; x < lower_x; x++) // left Gray detection
-			{ //x
-				uchar color_value = src.at<uchar>(y, x);
-				//img_filtered를 사용해야 회색의 범위를 찾음
-				if (color_value > 128)
-				{
-					count_left++;
-				}
-				count_total++;
-			}
-		}
-		rate = (float)count_left / count_total * 100.0;
-		printf("Left rate is %f %% \n", rate);
-	}
-	else {//right
-		for (int y = up.y; y < down.y; y++)//up.y<down.y
-		{ //y
-			int upper_x;//upper bound for calculate rectangular form
-			if (dydx >= 1000&&dydx<=-1000) { upper_x = width; }//무의미한 값 제거
-			else { upper_x = (y - up.y) / dydx + up.x; }
-			for (int x = upper_x; x < width; x++) // left Gray detection
-			{ //x
-				uchar color_value = src.at<uchar>(y, x);
-				//img_filtered를 사용해야 회색의 범위를 찾음
-				if (color_value > 128)
-				{
-					count_right++;
-				}
-				count_total++;
-			}
-		}
-		rate = (float)count_right / count_total * 100.0;
-		printf("Right rate is %f %% \n", rate);
-	}
-
-	return rate;
-}
-
 
 /**/////////////////////////////
 /*		TUNNEL START		  */

@@ -1067,7 +1067,7 @@ void* mission_thread(void* arg)
 
 				DesireSpeed_Write(0);
 
-				frontLightOnOff(data->ntrolData.lightFlag, false);
+				frontLightOnOff(data->controlData.lightFlag, false);
 
 				DesiredDistance(-40, 150, 1500);
 				buzzer(1, 500000, 500000);

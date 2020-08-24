@@ -659,7 +659,7 @@ void* input_thread(void* arg)
 				DesireSpeed_Write(-40);
 				while (1)
 				{
-					on_encoder = EncoderCounter_Read();
+					on_encoder = abs(EncoderCounter_Read());
 					if (on_encoder != 65278)
 						printf("encoder : %-3d\n", on_encoder);
 					if (on_encoder >= desire_encoder && on_encoder != 65278)
@@ -669,6 +669,7 @@ void* input_thread(void* arg)
 					}
 					usleep(100000);
 				}
+				total_encoder += on_encoder;
 				printf("Total encoder : %d\n", total_encoder);
 			}
 			else
@@ -695,9 +696,9 @@ void* mission_thread(void* arg)
 	enum MissionState start = NONE;
 	enum MissionState flyover = NONE;
 	enum MissionState parking = READY;
-	enum MissionState roundabout = READY;
-	enum MissionState tunnel = READY;
-	enum MissionState overtake = READY;
+	enum MissionState roundabout = NONE;
+	enum MissionState tunnel = NONE;
+	enum MissionState overtake = NONE;
 	enum MissionState signalLight = NONE;
 	enum MissionState finish = NONE;
 

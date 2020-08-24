@@ -1300,6 +1300,18 @@ void* mission_thread(void* arg)
 			}
 		}
 
+		if(true)
+		{
+			start = data->missionData.ms[0];
+			flyover =  data->missionData.ms[1];
+			parking =  data->missionData.ms[2];
+			tunnel =  data->missionData.ms[3];
+			roundabout =  data->missionData.ms[4];
+			overtake =  data->missionData.ms[5];
+			signalLight =  data->missionData.ms[6];
+			finish =  data->missionData.ms[7];
+		}
+
 		usleep(200000);
 		data->missionData.loopTime = timeCheck(&time);
 		//시간측정

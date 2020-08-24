@@ -1005,12 +1005,12 @@ void* mission_thread(void* arg)
 										step_h = FIRST_BACKWARD;
 									}
 									first_error_flag = 0;
-									DesiredDistance(-23, 200, 1900);
+									DesiredDistance(-23, 400, 1900);
 									usleep(200000);
-									DesiredDistance(23, 200, 1100);
+									DesiredDistance(23, 400, 1100);
 									usleep(200000);
 									sprintf(data->imgData.missionString, "2nd_ d1=%d, d2=%d, d3=%d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 3)) 
+									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2)) 
 									{
 										sprintf(data->imgData.missionString, "sibal_ d1=%d, d2=%d, d3=%d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
 										DesireSpeed_Write(0);

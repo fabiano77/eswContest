@@ -923,7 +923,7 @@ void* mission_thread(void* arg)
 						}
 						else if (data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
 						{
-							DesiredDistance(30, 75, 1500);
+							DesiredDistance(30, 50, 1500);
 							while (data->missionData.parkingData.horizontalFlag)
 							{
 								data->missionData.loopTime = timeCheck(&time);
@@ -932,10 +932,10 @@ void* mission_thread(void* arg)
 								case FIRST_BACKWARD:
 									first_error_flag = 1;
 									EncoderCounter_Write(0);
-									DesiredDistance(-30, 850, 1110);
+									DesiredDistance(-30, 800, 1050);
 									first_error_distance = EncoderCounter_Read();
 									EncoderCounter_Write(0);
-									DesiredDistance(-30, 300, 1500);
+									DesiredDistance(-30, 100, 1500);
 									second_error_distance = EncoderCounter_Read();
 									step_h = SECOND_BACKWARD;
 									break;
@@ -949,7 +949,7 @@ void* mission_thread(void* arg)
 										step_h = FIRST_BACKWARD;
 									}
 									first_error_flag = 0;
-									DesiredDistance(-30, 450, 1950);
+									DesiredDistance(-30, 400, 1950);
 									usleep(10000);
 									SteeringServoControl_Write(1110);
 									DesireSpeed_Write(25);

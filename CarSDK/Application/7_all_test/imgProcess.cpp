@@ -429,7 +429,11 @@ extern "C" {
 		Point location_right(width * 3 / 4, height * 7 / 8); //Location that is rate of gray detected(right)
 
 		int font = FONT_ITALIC; // italic font
-		double fontScale = 1;
+		double fontScale = 0.8;
+
+		/*gray 픽셀 좌우 검사범위 확인*/
+		rectangle(srcRGB, Point(0, point_leftup.y), Point(lower_x, point_leftdown.y), purple, 3);
+		rectangle(srcRGB, Point(upper_x, point_rightup.y), Point(width, point_rightdown.y), mint, 3);
 
 		putText(srcRGB, toString((double)grayrate_left) + "%", location_left, font, fontScale, Scalar(255, 0, 0), 2);
 		putText(srcRGB, toString((double)grayrate_right) + "%", location_right, font, fontScale, Scalar(255, 0, 0), 2);

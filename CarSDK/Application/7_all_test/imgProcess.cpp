@@ -238,7 +238,7 @@ extern "C" {
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 		dstRGB = srcRGB;
 		/*Declare usable variables*/
-		int height_up = 100;
+		int height_up = 80;
 		int height_down = 150;
 		int width = w;
 		int height = h;

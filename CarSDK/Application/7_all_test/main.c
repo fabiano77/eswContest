@@ -1225,7 +1225,7 @@ void* mission_thread(void* arg)
 				data->missionData.overtakingFlag = true;
 				data->imgData.bwhiteLine = true;
 				bool obstacle = false;
-				int thresDistance = 300;
+				int thresDistance = 400;
 				/*차량 정지*/
 				DesireSpeed_Write(0);
 

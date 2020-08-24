@@ -81,7 +81,7 @@ extern "C" {
 		return position;
 	}
 
-	int StopLine(int Lineflag) { // Èò»ö 0
+	int StopLine(int Lineflag) { // ï¿½ï¿½ï¿½ 0
 		char sensor;
 		char byte = 0x80;
 		sensor = LineSensor_Read();
@@ -156,7 +156,7 @@ extern "C" {
 
 			if (flag_wait == 2) {
 				flag_wait = -1;
-				flag_go = 25; // ÇØ´ç ÇÁ·¹ÀÓÀÌ Áö³­ ÈÄ Ãâ¹ßÇÒ °ÍÀÓ
+				flag_go = 25; // ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			}
 		}
 		return check_start;
@@ -169,7 +169,7 @@ extern "C" {
 
 			if (flag_wait == 2) {
 				flag_wait = -1;
-				flag_stop = 25; // ÇØ´ç ÇÁ·¹ÀÓ¸¸Å­ Á¤Áö
+				flag_stop = 25; // ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ó¸ï¿½Å­ ï¿½ï¿½ï¿½ï¿½
 				return 1;
 			}
 			return 0;
@@ -196,8 +196,8 @@ extern "C" {
 	}
 
 	int RoundAbout_isEnd(const int Distance1, const int Distance2) {
-		if ((Distance1 > 40) && (Distance2 > 40)) { // °Å¸® ¼¾¼­¿¡ ¾Æ¹«°Íµµ ÀâÈ÷Áö ¾ÊÀ» ¶§
-			if (flag_end < THR_RoundAbout_END) // ÇØ´ç ÇÁ·¹ÀÓÀÌ Áö³ª¸é ºÐ±â ¹þ¾î³²
+		if ((Distance1 > 40) && (Distance2 > 40)) { // ï¿½Å¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Æ¹ï¿½ï¿½Íµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
+			if (flag_end < THR_RoundAbout_END) // ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ð±ï¿½ ï¿½ï¿½ï¿½î³²
 				flag_end++;
 		}
 		else {
@@ -241,8 +241,8 @@ extern "C" {
 
 	int Tunnel_isEnd(const int Distance1, const int Distance2, const int Distance3, const int Distance4) {
 		/* 2,6 - 3,5 (1,2 - 3,4)
-		1. ¾Õ(2, 6)
-		2. µÚ(3, 5)
+		1. ï¿½ï¿½(2, 6)
+		2. ï¿½ï¿½(3, 5)
 		*/
 		if (!first_Tunnel++) flag_Tunnel = 0;
 
@@ -271,8 +271,8 @@ extern "C" {
 	}
 
 	int Tunnel_SteerVal(const int Distance1, const int Distance2) {
-		// Â÷·® 19 , µµ·Î 40
-		// Áß¾ÓÀº 10, 10ÀÌ ³ª¿Í¾ßÇÔ
+		// ï¿½ï¿½ï¿½ï¿½ 19 , ï¿½ï¿½ï¿½ï¿½ 40
+		// ï¿½ß¾ï¿½ï¿½ï¿½ 10, 10ï¿½ï¿½ ï¿½ï¿½ï¿½Í¾ï¿½ï¿½ï¿½
 		int i;
 		if (!first_Tunnel++) {
 			for (i = 0; i < 5; i++) {
@@ -357,13 +357,13 @@ extern "C" {
 	{
 		if (on == 1)
 		{
-			if (!(lightFlag & 0x01))			//1¹ø ºñÆ®°¡ 1ÀÌ ¾Æ´Ò°æ¿ì
-				lightFlag = lightFlag ^ 0x01;	//XOR¿¬»êÀ¸·Î 1À¸·Î ¸¸µé¾îÁØ´Ù.
+			if (!(lightFlag & 0x01))			//1ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ 1ï¿½ï¿½ ï¿½Æ´Ò°ï¿½ï¿½
+				lightFlag = lightFlag ^ 0x01;	//XORï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 1ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø´ï¿½.
 		}
 		else if (on == 0)
 		{
-			if (lightFlag & 0x01)				//1¹ø ºñÆ®°¡ 1ÀÏ°æ¿ì
-				lightFlag = lightFlag ^ 0x01;	//XOR¿¬»êÀ¸·Î 0À¸·Î ¸¸µé¾îÁØ´Ù.
+			if (lightFlag & 0x01)				//1ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ 1ï¿½Ï°ï¿½ï¿½
+				lightFlag = lightFlag ^ 0x01;	//XORï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 0ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø´ï¿½.
 		}
 		CarLight_Write(lightFlag);
 	}
@@ -372,13 +372,13 @@ extern "C" {
 	{
 		if (on == 1)
 		{
-			if (!(lightFlag & 0x02))			//2¹ø ºñÆ®°¡ 1ÀÌ ¾Æ´Ò°æ¿ì
-				lightFlag = lightFlag ^ 0x02;	//XOR¿¬»êÀ¸·Î 1À¸·Î ¸¸µé¾îÁØ´Ù.
+			if (!(lightFlag & 0x02))			//2ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ 1ï¿½ï¿½ ï¿½Æ´Ò°ï¿½ï¿½
+				lightFlag = lightFlag ^ 0x02;	//XORï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 1ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø´ï¿½.
 		}
 		else if (on == 0)
 		{
-			if (lightFlag & 0x02)				//2¹ø ºñÆ®°¡ 1ÀÏ°æ¿ì
-				lightFlag = lightFlag ^ 0x02;	//XOR¿¬»êÀ¸·Î 0À¸·Î ¸¸µé¾îÁØ´Ù.
+			if (lightFlag & 0x02)				//2ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ 1ï¿½Ï°ï¿½ï¿½
+				lightFlag = lightFlag ^ 0x02;	//XORï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 0ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø´ï¿½.
 		}
 		CarLight_Write(lightFlag);
 	}
@@ -390,11 +390,11 @@ extern "C" {
 		if (absSteer < 200)
 			return basicSpeed;
 		else if (absSteer < 300)
-			return int(basicSpeed * 1.15_;
+			return int(basicSpeed * 1.15);
 		else if (absSteer < 400)
-			return basicSpeed * 1.25;
+			return int(basicSpeed * 1.25);
 		else if (absSteer <= 500)
-			return basicSpeed * 1.35;
+			return int(basicSpeed * 1.35);
 	}
 
 	void buzzer(int numOfTimes, int interval_us, int pulseWidth_us)
@@ -402,9 +402,9 @@ extern "C" {
 		for (int i = 0; i < numOfTimes; i++)
 		{
 			Alarm_Write(ON);
-			usleep(pulseWidth);
+			usleep(pulseWidth_us);
 			Alarm_Write(OFF);
-			usleep(interval);
+			usleep(interval_us);
 		}
 	}
 

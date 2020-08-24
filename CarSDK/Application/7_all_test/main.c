@@ -684,6 +684,10 @@ void* input_thread(void* arg)
 			}
 			else if (0 == strncmp(cmd_input, "ms", 2)) {
 				int num;
+				int i = 0;
+				for (i = 0; i < 8; i++) {
+					data->missionData.ms[i] = NONE;
+				}
 				printf("0. start \n");
 				printf("1. fly over \n");
 				printf("2. parking \n");

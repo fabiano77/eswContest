@@ -2,6 +2,7 @@
  *  INCLUDE FILES
  *******************************************************************************
  */
+#include <iostream>
 #include <termios.h>
 #include <unistd.h> 
 #include <fcntl.h>
@@ -18,6 +19,7 @@
 #include "control_mission.h"
 #include "car_lib.h"
 
+using namespace std;
  ///////////////////////////////////////////////////////////////////////////////////
 int flag_line;
 int flag_go, flag_wait, flag_stop, flag_end;
@@ -91,6 +93,7 @@ extern "C" {
 			if (!(sensor & byte)) 	flag++;			
 			sensor = sensor << 1;
 		}
+		cout << "flag = " << flag << endl;
 		if (flag > Lineflag) {
 			return 1;
 		}
@@ -115,11 +118,12 @@ extern "C" {
 
 	void DesiredDistance(int SettingSpeed, int SettingDistance, int SettingSteering)
 	{
+		DesireSpeed_Write(0);
 		int init_encoder = 0;
 		int on_encoder = 0;
 		EncoderCounter_Write(init_encoder);
 		SteeringServoControl_Write(SettingSteering);
-		usleep(50000);
+		usleep(500000);
 		DesireSpeed_Write(SettingSpeed);
 		if (SettingSpeed < 0)	CarLight_Write(0x02);
 		while (1)

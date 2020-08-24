@@ -981,11 +981,11 @@ void* mission_thread(void* arg)
 									sprintf(data->imgData.missionString, "FIRST_BACKWARD");
 									first_error_flag = 1;
 									EncoderCounter_Write(0);
-									DesiredDistance(-30, 800, 1050);
+									DesiredDistance(-23, 800, 1100);
 									first_error_distance = EncoderCounter_Read();
 									EncoderCounter_Write(0);
 									usleep(200000);
-									DesiredDistance(-30, 250, 1500);
+									DesiredDistance(-23, 330, 1500);
 									second_error_distance = EncoderCounter_Read();
 									step_h = SECOND_BACKWARD;
 									break;
@@ -1005,12 +1005,12 @@ void* mission_thread(void* arg)
 										step_h = FIRST_BACKWARD;
 									}
 									first_error_flag = 0;
-									DesiredDistance(-23, 200, 1900);
+									DesiredDistance(-23, 400, 1900);
 									usleep(200000);
-									DesiredDistance(23, 200, 1100);
+									DesiredDistance(23, 400, 1100);
 									usleep(200000);
 									sprintf(data->imgData.missionString, "2nd_ d1=%d, d2=%d, d3=%d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 3) || DistanceSensor_cm(1) <= 5) 
+									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2)) 
 									{
 										sprintf(data->imgData.missionString, "sibal_ d1=%d, d2=%d, d3=%d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
 										DesireSpeed_Write(0);
@@ -1063,6 +1063,12 @@ void* mission_thread(void* arg)
 										step_h = FINISH;
 									}
 									data->missionData.parkingData.horizontalFlag = 0;
+									break;
+
+								case ESCAPE_3:
+									sprintf(data->imgData.missionString, "ESCAPE_3");
+									DesiredDistance(20, 500, 1900);
+									step_h = FINISH;
 									break;
 
 								case ESCAPE_3:

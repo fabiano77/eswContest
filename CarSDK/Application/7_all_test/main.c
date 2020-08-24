@@ -669,10 +669,8 @@ void* input_thread(void* arg)
 
 					if (on_encoder != 65278)
 						printf("encoder : %-3d\n", on_encoder);
-=======
 					//if (on_encoder != 65278)
 					//	printf("encoder : %-3d\n", on_encoder);
->>>>>>> 5c2b2009167a4c016d8ce9370a1dcd7950465df4
 					if (on_encoder >= desire_encoder && on_encoder != 65278)
 					{
 						DesireSpeed_Write(0);

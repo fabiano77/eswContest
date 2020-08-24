@@ -167,8 +167,7 @@ extern "C" {
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
-		Mat Hmatrix;
-
+		
 		if (mode == 1)
 		{
 			Point2f Hp[4] = {	//변환전 좌표
@@ -182,7 +181,9 @@ extern "C" {
 				Point2f(540 * (w / 640.0), -100 * (h / 360.0)),
 				Point2f(550 * (w / 640.0), 270 * (h / 360.0)),
 				Point2f(90 * (w / 640.0), 270 * (h / 360.0)) };
-			Hmatrix = getPerspectiveTransform(Hp, p);
+			Mat Hmatrix = getPerspectiveTransform(Hp, p);
+			Size topviewSize(w, h);	//변환후 사이즈
+			warpPerspective(srcRGB, dstRGB, Hmatrix, topviewSize);
 		}
 		else if (mode == 2)
 		{
@@ -197,18 +198,16 @@ extern "C" {
 				Point2f(610 * (w / 640.0), 100 * (h / 360.0)),
 				Point2f(640 * (w / 640.0), 360 * (h / 360.0)),
 				Point2f(0 * (w / 640.0), 360 * (h / 360.0)) };
-			Hmatrix = getPerspectiveTransform(Hp, p);
+			Mat Hmatrix = getPerspectiveTransform(Hp, p);
+			Size topviewSize(w, h);	//변환후 사이즈
+			warpPerspective(srcRGB, dstRGB, Hmatrix, topviewSize);
 		}
 		else if (mode == 3)
 		{
 			Mat temp;
 			temp = srcRGB.rowRange(h*(15/36.0), h).clone();
 			resize(temp, dstRGB, Size(w, h));
-			return;
 		}
-		Size topviewSize(w, h);	//변환후 사이즈
-		warpPerspective(srcRGB, dstRGB, Hmatrix, topviewSize);
-
 	}
 
 	void displayPrint(unsigned char* inBuf, int w, int h, unsigned char* outBuf, char* name)

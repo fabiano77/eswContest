@@ -981,11 +981,11 @@ void* mission_thread(void* arg)
 									sprintf(data->imgData.missionString, "FIRST_BACKWARD");
 									first_error_flag = 1;
 									EncoderCounter_Write(0);
-									DesiredDistance(-23, 800, 1100);
+									DesiredDistance(-30, 800, 1050);
 									first_error_distance = EncoderCounter_Read();
 									EncoderCounter_Write(0);
 									usleep(200000);
-									DesiredDistance(-23, 330, 1500);
+									DesiredDistance(-30, 330, 1500);
 									second_error_distance = EncoderCounter_Read();
 									step_h = SECOND_BACKWARD;
 									break;
@@ -1005,12 +1005,12 @@ void* mission_thread(void* arg)
 										step_h = FIRST_BACKWARD;
 									}
 									first_error_flag = 0;
-									DesiredDistance(-23, 400, 1900);
+									DesiredDistance(-23, 200, 1900);
 									usleep(200000);
-									DesiredDistance(23, 400, 1100);
+									DesiredDistance(23, 200, 1100);
 									usleep(200000);
 									sprintf(data->imgData.missionString, "2nd_ d1=%d, d2=%d, d3=%d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2)) 
+									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 3) || DistanceSensor_cm(1) <= 5) 
 									{
 										sprintf(data->imgData.missionString, "sibal_ d1=%d, d2=%d, d3=%d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
 										DesireSpeed_Write(0);

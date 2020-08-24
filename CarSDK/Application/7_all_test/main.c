@@ -282,7 +282,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 			if (t_data->missionData.overtakingFlag &&
 				t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
 			{
-				usleep(50000);
+				usleep(500000);
 				/*check를 위한 camera up*/
 				bool check_direction;
 				check_direction = checkObstacle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
@@ -1096,7 +1096,7 @@ void* mission_thread(void* arg)
 							sprintf(data->imgData.missionString, "Right to go");
 							/*출발*/
 							Winker_Write(RIGHT_ON);
-							DesiredDistance(50, thresDistance, 1100);
+							DesiredDistance(50, thresDistance, 500);
 							Winker_Write(ALL_OFF);
 							/*thresDistance이상 가서 전방 거리 재확인*/
 							if (DistanceSensor_cm(1) < 30)
@@ -1226,7 +1226,7 @@ void* mission_thread(void* arg)
 						{
 							/*복귀 우회전 방향 설정*/
 							Winker_Write(RIGHT_ON);
-							DesiredDistance(50, thresDistance, 1100);
+							DesiredDistance(50, thresDistance, 500);
 							Winker_Write(ALL_OFF);
 						}
 						/*알고리즘 전진*/

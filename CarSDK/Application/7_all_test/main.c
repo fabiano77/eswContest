@@ -361,7 +361,8 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65))
 				{
 					printf("Tunnel IN\n");
-					t_data->missionData.btunnel = true;
+					t_data->missionData.btunnel = true;	
+					t_data->imgData.bdark = false;
 				}
 			}
 		}
@@ -794,6 +795,9 @@ void* mission_thread(void* arg)
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "Parking");
 				int parking_width = 0;
+				int first_error_distance = 0;
+				int second_error_distance = 0;
+				int first_error_flag = 1;
 				enum ParkingState state = FIRST_WALL;
 				enum HorizentalStep step = FIRST_BACKWARD;
 
@@ -861,50 +865,45 @@ void* mission_thread(void* arg)
 						}
 						else if(data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
 						{
-							DesiredDistance(50, 100, 1500);
+							DesiredDistance(30, 75, 1500);
 							while (data->missionData.parkingData.horizontalFlag)
 							{
 								data->missionData.loopTime = timeCheck(&time);
 								switch (step)
 								{
 								case FIRST_BACKWARD:
-									SteeringServoControl_Write(1000);
-									usleep(500000000);
-									// 100초 대기
-									DesireSpeed_Write(-40);
-									if (DistanceSensor_cm(4) <= 20)
-									{
-										DesireSpeed_Write(0);
-										SteeringServoControl_Write(1500);
-										DesireSpeed_Write(-40);
-										if (DistanceSensor_cm(4) <= 7)
-										{
-											step = FIRST_FORWARD;
-											DesireSpeed_Write(0);
-										}
-									}
-									break;
-
-								case FIRST_FORWARD:
-									DesiredDistance(50, 700, 1350);
+									first_error_flag = 1;
+									EncoderCounter_Write(0);
+									DesiredDistance(-30, 850, 1100);
+									first_error_distance = EncoderCounter_Read();
+									EncoderCounter_Write(0);
+									DesiredDistance(-30, 180, 1500);
+									second_error_distance = EncoderCounter_Read();
 									step = SECOND_BACKWARD;
 									break;
 
 								case SECOND_BACKWARD:
-									SteeringServoControl_Write(2000);
-									DesireSpeed_Write(-40);
-									if (DistanceSensor_cm(4) <= 6 && DistanceSensor_cm(3) <= 6 && DistanceSensor_cm(2) <= 6)
+									if (DistanceSensor_cm(4) <= 4 && first_error_flag)
 									{
-										DesireSpeed_Write(0);
-										usleep(3000000);
-										step = SECOND_FORWARD;
+										DesiredDistance(30, (second_error_distance - 30), 1500);
+										DesiredDistance(30, (first_error_distance - 30), 1100);
+										// Error 발생 시 다시 초기 상태로 만들어 주기 위한 구문
+										step = FIRST_BACKWARD;
 									}
+									first_error_flag = 0;
+									DesiredDistance(-30, 350, 2000);
+									step = FIRST_FORWARD;
+									break;
+
+								case FIRST_FORWARD:
+									DesiredDistance(30, 250, 1000);
+									step = SECOND_FORWARD;
 									break;
 
 								case SECOND_FORWARD:
-									DesiredDistance(30, 600, 1800);
-									buzzer(2, 200000, 200000);
-									usleep(3000000);
+									DesiredDistance(-30, 150, 1200);
+									DesiredDistance(30, 350, 1800);
+									DesiredDistance(30, 150, 1500);
 									step = FINISH;
 									break;
 
@@ -950,20 +949,22 @@ void* mission_thread(void* arg)
 			{
 				int steerVal;
 				data->imgData.bmission = true;
-				data->imgData.bdark = false;
 				data->imgData.bprintString = true;
 
 				frontLightOnOff(data->controlData.lightFlag, true);
+				sprintf(data->imgData.missionString, "tunnel IN");
 
-				while (Tunnel_isEnd(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5)))
+				bool ENDFLAG = Tunnel_isEnd(DistanceSensor_cm(6), DistanceSensor_cm(2), DistanceSensor_cm(5), DistanceSensor_cm(3));
+				while (ENDFLAG)
 				{
 					data->missionData.loopTime = timeCheck(&time);
-					steerVal = Tunnel_SteerVal(DistanceSensor_cm(2), DistanceSensor_cm(6));
+					steerVal = Tunnel_SteerVal(DistanceSensor_cm(6), DistanceSensor_cm(2));
 					SteeringServoControl_Write(steerVal);
+					ENDFLAG = Tunnel_isEnd(DistanceSensor_cm(6), DistanceSensor_cm(2), DistanceSensor_cm(5), DistanceSensor_cm(3));
 					usleep(100000);
 				}
 				DesireSpeed_Write(0);
-				printf("tunnel_OFF\n");
+				printf("Tunnel OUT\n");
 
 				frontLightOnOff(data->controlData.lightFlag, false);
 

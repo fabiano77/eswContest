@@ -80,6 +80,16 @@ enum OvertakeState
 	DONE_O = NONE_O
 };
 
+enum RoundaboutState
+{
+	NONE_R,
+	WAIT_R,
+	ROUND_GO_1,
+	ROUND_STOP,
+	ROUND_GO_2,
+	DONE_R = NONE_R
+};
+
 enum CameraVerticalState
 {
 	CAMERA_UP,	//장애물 인식을 위해 올린상태
@@ -148,6 +158,7 @@ struct ImgProcessData
 	bool btopview;
 	bool bmission;
 	bool bauto;
+	bool bspeedControl;
 	bool bdark;
 	bool bwhiteLine;
 	bool bprintString;
@@ -329,6 +340,16 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		/* 기본 상태에서 처리되는 영상처리 */
 		else
 		{
+			if (t_data->imgData.bdark)
+			{
+				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65))
+				{
+					printf("img thread : Tunnel detect\n");
+					t_data->missionData.btunnel = true;
+					t_data->imgData.bdark = false;
+				}
+			}
+
 			if (t_data->imgData.bcalibration)
 			{
 				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
@@ -349,20 +370,14 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 
 					t_data->controlData.desireSpeedVal = auto_speedMapping(steerVal, 40);
 				}
-				if (t_data->controlData.desireSpeedVal != t_data->controlData.beforeSpeedVal)
+				if (t_data->imgData.bspeedControl)
 				{
-					//이전 속도와 달라졌을 때만 속도값 인가.
-					//DesireSpeed_Write(t_data->controlData.desireSpeedVal);
-					t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
-				}
-			}
-			if (t_data->imgData.bdark)
-			{
-				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65))
-				{
-					printf("Tunnel IN\n");
-					t_data->missionData.btunnel = true;
-					t_data->imgData.bdark = false;
+					if (t_data->controlData.desireSpeedVal != t_data->controlData.beforeSpeedVal)
+					{
+						//이전 속도와 달라졌을 때만 속도값 인가.
+						//DesireSpeed_Write(t_data->controlData.desireSpeedVal);
+						t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
+					}
 				}
 			}
 		}
@@ -954,32 +969,52 @@ void* mission_thread(void* arg)
 		{
 			if (data->missionData.btunnel)
 			{
-				int steerVal;
 				data->imgData.bmission = true;
 				data->imgData.bprintString = true;
+				SteeringServoControl_Write(1500);
 
 				frontLightOnOff(data->controlData.lightFlag, true);
-				sprintf(data->imgData.missionString, "tunnel IN");
-				bool ENDFLAG = Tunnel_isEnd(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5));
+				sprintf(data->imgData.missionString, "mission thread : tunnel detect");
 
-				while (!ENDFLAG)
+				while (true)
 				{
 					data->missionData.loopTime = timeCheck(&time);
-					steerVal = Tunnel_SteerVal(DistanceSensor_cm(2), DistanceSensor_cm(6));
-					SteeringServoControl_Write(steerVal);
-					ENDFLAG = Tunnel_isEnd(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5));
-					usleep(150000);
+					if (Tunnel_isStart(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5)))
+					{
+						sprintf(data->imgData.missionString, "tunnel in");
+						break;
+					}
+					usleep(100000);
 				}
+
+
+				while (true)
+				{
+					data->missionData.loopTime = timeCheck(&time);
+
+					if (Tunnel_isEnd(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5)))
+					{
+						sprintf(data->imgData.missionString, "tunnel out");
+						break;
+					}
+
+					data->controlData.steerVal = Tunnel_SteerVal(DistanceSensor_cm(2), DistanceSensor_cm(6));
+					SteeringServoControl_Write(data->controlData.steerVal);
+
+					usleep(100000);
+				}
+
 				DesireSpeed_Write(0);
+
+				frontLightOnOff(data->ntrolData.lightFlag, false);
+
+				DesiredDistance(-40, 150, 1500);
+				buzzer(1, 500000, 500000);
+				usleep(500000);
+
 				printf("Tunnel OUT\n");
-
-				frontLightOnOff(data->controlData.lightFlag, false);
-
-				data->imgData.bmission = false;
-				usleep(1500000);
-
-				DesireSpeed_Write(40);
 				tunnel = DONE;
+				data->imgData.bmission = false;
 				data->imgData.bprintString = false;
 				data->missionData.btunnel = false;
 			}
@@ -991,42 +1026,69 @@ void* mission_thread(void* arg)
 			{
 				data->imgData.bwhiteLine = true;
 				data->imgData.bprintString = true;
-				sprintf(data->imgData.missionString, "roundabout");
+				sprintf(data->imgData.missionString, "round about");
+				printf("roundabout IN\n");
 				int speed = 40;
 				bool delay = false;
+
 				DesireSpeed_Write(0);
-				printf("roundabout IN\n");
-				while (1)
+				data->imgData.bspeedControl = false;
+				enum RoundaboutState state = WAIT_R;
+				while (state)
 				{
-					data->missionData.loopTime = timeCheck(&time);
-					if (RoundAbout_isStart(DistanceSensor_cm(1)))
+					switch (state)
 					{
-						data->missionData.broundabout = true;
-						break;
-					}
-					usleep(150000);
-				}
-				printf("go\n");
-				while (!RoundAbout_isEnd(DistanceSensor_cm(1), DistanceSensor_cm(4)))
-				{
-					data->missionData.loopTime = timeCheck(&time);
-					if (RoundAbout_isDelay(DistanceSensor_cm(1)))
-					{
-						DesireSpeed_Write(0);
-						delay = true;
-					}
-					else
-					{
-						if (delay && (speed > 30))
+					case WAIT_R:
+						if (RoundAbout_isStart(DistanceSensor_cm(1)))
 						{
-							speed = speed - 10;
-							delay = false;
+							sprintf(data->imgData.missionString, "ROUND_GO_1");
+							printf("go\n");
+
+							state = ROUND_GO_1;
 						}
-						DesireSpeed_Write(speed);
+						break;
+
+					case ROUND_GO_1:
+						DesiredDistance(speed, 1000, 1500); //앞 센서 받아오면서 일정거리 가는 함수 추가.
+						state = ROUND_STOP;
+						sprintf(data->imgData.missionString, "ROUND_STOP");
+						break;
+
+					case ROUND_STOP:
+						if (DistanceSensor_cm(4) <= 20)
+						{
+							DesireSpeed_Write(speed);
+							sprintf(data->imgData.missionString, "ROUND_GO_2");
+							state = ROUND_GO_2;
+						}
+						break;
+
+					case ROUND_GO_2:
+
+						if (DistanceSensor_cm(4) <= 20)
+						{
+							printf("speed up \n");
+							speed += 5;
+							DesireSpeed_Write(speed);
+						}
+						else if (DistanceSensor_cm(1) <= 20)
+						{
+							printf("speed down \n");
+							speed -= 5;
+							DesireSpeed_Write(speed);
+						}
+						if (abs(data->controlData.steerVal - 1500) < 60)
+						{
+							sprintf(data->imgData.missionString, "DONE_R");
+							state = DONE_R;
+						}
+						break;
+
+					case DONE_R:
+						break;
 					}
 					usleep(100000);
 				}
-				DesireSpeed_Write(50);
 
 				printf("ROUNDABOUT_OFF\n");
 
@@ -1034,6 +1096,7 @@ void* mission_thread(void* arg)
 				roundabout = DONE;
 				signalLight = READY;
 				data->imgData.bmission = false;
+				data->imgData.bspeedControl = true;
 				data->imgData.bprintString = false;
 			}
 		}
@@ -1521,6 +1584,7 @@ int main(int argc, char** argv)
 	tdata.imgData.btopview = true;
 	tdata.imgData.topMode = 3;
 	tdata.imgData.bauto = false;
+	tdata.imgData.bspeedControl = true;
 	tdata.imgData.bdark = false;
 	tdata.imgData.bmission = false;
 	tdata.imgData.bwhiteLine = false;

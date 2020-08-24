@@ -22,8 +22,6 @@
 
 int flag_go, flag_wait, flag_stop, flag_end;
 int check_start;
-int lower_StopDistance = 25;
-int uper_StopDistance = 30;
 int lower_RoundDistance = 20;
 int uper_RoundDistance = 30;
 int THR_RoundAbout_END = 80;
@@ -136,6 +134,8 @@ extern "C" {
 
 	int RoundAbout_isStart(const int Distance1) {
 		if (!first_RoundAbout++) RoundAbout_Init();
+		int lower_StopDistance = 25;
+		int uper_StopDistance = 30;
 
 		if (flag_go > 0)
 		{
@@ -243,6 +243,12 @@ extern "C" {
 		}
 		return 0;
 	}*/
+
+	int Tunnel_isStart(const int Distance2, const int Distance6, const int Distance3, const int Distance5)
+	{
+		if (Distance2 <= 30 && Distance3 <= 30 && Distance5 <= 30 && Distance6 <= 30) return 1;
+		else return 0;
+	}
 
 	int Tunnel_isEnd(const int Distance1, const int Distance2, const int Distance3, const int Distance4) {
 		/* 2,6 - 3,5 (1,2 - 3,4)

@@ -297,6 +297,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				//srcbuf를 활용하여 capture한 영상을 변환
 			}
 
+			/*끝날 때 사용*/
 			if (t_data->missionData.finishData.checkFront == true)
 			{
 				OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
@@ -1477,7 +1478,7 @@ int main(int argc, char** argv)
 	tdata.missionData.overtakingFlag = false;
 	tdata.missionData.overtakingData.updownCamera = CAMERA_DOWN;
 	tdata.missionData.overtakingData.headingDirection = STOP;
-
+	tdata.missionData.finishData.checkFront = false;
 
 	// open vpe
 	vpe = vpe_open();

@@ -350,7 +350,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				if (t_data->controlData.desireSpeedVal != t_data->controlData.beforeSpeedVal)
 				{
 					//이전 속도와 달라졌을 때만 속도값 인가.
-					DesireSpeed_Write(t_data->controlData.desireSpeedVal);
+					//DesireSpeed_Write(t_data->controlData.desireSpeedVal);
 					t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
 				}
 			}

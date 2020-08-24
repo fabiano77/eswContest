@@ -111,13 +111,6 @@ struct Overtaking
 	enum CameraVerticalState updownCamera; //카메라를 위로 올릴지 말지 결정하는 부분
 };
 
-struct TUNNEL
-{
-	bool btunnel; // 터널 플래그
-	bool Tstart;  // 분기의 시작을 알리는 변수
-	bool Tend;	  // 분기의 끝을 알리는 변수
-};
-
 struct Finish {
 	bool checkFront;//앞의 수직 노란선 파악
 	int distEndLine;//결승선까지의 거리
@@ -128,9 +121,9 @@ struct MissionData
 {
 	uint32_t loopTime;	// mission 스레드 루프 시간
 	bool broundabout;
+	bool btunnel;
 	bool overtakingFlag;			  // 추월차로 플래그 ->MS 이후 overtaking struct 추가할 것
 
-	struct TUNNEL tunnel;
 	struct Parking parkingData;		  // 주차에 필요한 플래그를 담는 구조체
 	struct Overtaking overtakingData; //추월에 필요한 플래그 담는 구조체
 	struct Finish finishData;
@@ -154,6 +147,7 @@ struct ImgProcessData
 	bool btopview;
 	bool bmission;
 	bool bauto;
+	bool bdark;
 	bool bwhiteLine;
 	bool bprintString;
 	char missionString[20];
@@ -303,23 +297,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				//srcbuf를 활용하여 capture한 영상을 변환
 			}
 
-			if (t_data->missionData.tunnel.btunnel)
-			{
-				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65))
-				{
-					t_data->missionData.tunnel.Tstart = true;
-					t_data->missionData.tunnel.Tend = true;
-				}
-				else
-				{
-					t_data->missionData.tunnel.Tstart = false;
-					if (t_data->missionData.tunnel.Tend)
-					{
-						t_data->missionData.tunnel.Tend = false;
-						t_data->missionData.tunnel.btunnel = false;
-					}
-				}
-			}
+			/*끝날 때 사용*/
 			if (t_data->missionData.finishData.checkFront == true)
 			{
 				OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
@@ -375,6 +353,14 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 					//이전 속도와 달라졌을 때만 속도값 인가.
 					DesireSpeed_Write(t_data->controlData.desireSpeedVal);
 					t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
+				}
+			}
+			if (t_data->imgData.bdark)
+			{
+				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65))
+				{
+					printf("Tunnel IN\n");
+					t_data->missionData.btunnel = true;					
 				}
 			}
 		}
@@ -516,6 +502,7 @@ void* input_thread(void* arg)
 	MSG("\t debug : debug ON/OFF");
 	MSG("\t top   : top view ON/OFF");
 	MSG("\t auto  : auto steering ON/OFF");
+	MSG("\t dark  : detect darkness ON/OFF");
 	MSG("\t dist  : distance sensor check");
 	MSG("\t distc : distance sensor check by -cm-");
 	MSG("\t distl : distance sensor check constantly");
@@ -560,6 +547,14 @@ void* input_thread(void* arg)
 					printf("\t auto steering ON\n");
 				else
 					printf("\t auto steering OFF\n");
+			}
+			else if (0 == strncmp(cmd_input, "dark", 4))
+			{
+				data->imgData.bdark = !data->imgData.bdark;
+				if (data->imgData.bdark)
+					printf("\t detect darkness ON\n");
+				else
+					printf("\t detect darkness OFF\n");
 			}
 			else if (0 == strncmp(cmd_input, "top", 3))
 			{
@@ -707,7 +702,7 @@ void* mission_thread(void* arg)
 	enum MissionState flyover = NONE;
 	enum MissionState parking = READY;
 	enum MissionState roundabout = READY;
-	enum MissionState tunnel = NONE;
+	enum MissionState tunnel = READY;
 	enum MissionState overtake = READY;
 	enum MissionState signalLight = NONE;
 	enum MissionState finish = NONE;
@@ -907,10 +902,11 @@ void* mission_thread(void* arg)
 
 		if (tunnel)
 		{
-			if (data->missionData.tunnel.Tstart)
+			if (data->missionData.btunnel)
 			{
 				int steerVal;
 				data->imgData.bmission = true;
+				data->imgData.bdark = false;
 				data->imgData.bprintString = true;
 
 				frontLightOnOff(data->controlData.lightFlag, true);
@@ -920,19 +916,20 @@ void* mission_thread(void* arg)
 					data->missionData.loopTime = timeCheck(&time);
 					steerVal = Tunnel_SteerVal(DistanceSensor_cm(2), DistanceSensor_cm(6));
 					SteeringServoControl_Write(steerVal);
+					usleep(100000);
 				}
 				DesireSpeed_Write(0);
 				printf("tunnel_OFF\n");
 
 				frontLightOnOff(data->controlData.lightFlag, false);
-
-				data->imgData.bmission = false;
-				data->missionData.tunnel.btunnel = false;
-				usleep(150000);
+				
+				data->imgData.bmission = false;				
+				usleep(1500000);
 
 				DesireSpeed_Write(40);
 				tunnel = DONE;
 				data->imgData.bprintString = false;
+				data->missionData.btunnel = false;
 			}
 		}
 
@@ -1005,7 +1002,6 @@ void* mission_thread(void* arg)
 				data->missionData.overtakingFlag = true;
 				data->imgData.bwhiteLine = true;
 				bool obstacle = false;
-				int dist_encoder = 0;
 				int thresDistance = 500;
 				/*차량 정지*/
 				DesireSpeed_Write(0);
@@ -1110,7 +1106,6 @@ void* mission_thread(void* arg)
 						}
 						else
 						{ /*STOP이 유지되는 경우 멈춤*/
-							dist_encoder = 0;
 						}
 
 						break;
@@ -1218,6 +1213,7 @@ void* mission_thread(void* arg)
 
 		if (finish)/*MS*/
 		{
+			data->missionData.finishData.checkFront = false;/*비활성화*/
 			if (0)/*노란색 가로 직선이 일정이하로 떨어지면 입력*/
 			{//Encoder 사용해서 일정 직진하면 종료하게 설정
 				//끝나고 삐소리 
@@ -1460,6 +1456,7 @@ int main(int argc, char** argv)
 	tdata.imgData.btopview = true;
 	tdata.imgData.topMode = 3;
 	tdata.imgData.bauto = false;
+	tdata.imgData.bdark = false;
 	tdata.imgData.bmission = false;
 	tdata.imgData.bwhiteLine = false;
 	tdata.imgData.bprintString = false;
@@ -1476,9 +1473,7 @@ int main(int argc, char** argv)
 	tdata.controlData.cameraY = 1660;
 
 	/******************** Mission Data ********************/
-	tdata.missionData.tunnel.btunnel = true;
-	tdata.missionData.tunnel.Tstart = false;
-	tdata.missionData.tunnel.Tend = false;
+	tdata.missionData.btunnel = false;
 	tdata.missionData.broundabout = false;
 	tdata.missionData.parkingData.bparking = false;
 	tdata.missionData.parkingData.horizontalFlag = false;
@@ -1488,7 +1483,7 @@ int main(int argc, char** argv)
 	tdata.missionData.overtakingFlag = false;
 	tdata.missionData.overtakingData.updownCamera = CAMERA_DOWN;
 	tdata.missionData.overtakingData.headingDirection = STOP;
-
+	tdata.missionData.finishData.checkFront = false;
 
 	// open vpe
 	vpe = vpe_open();

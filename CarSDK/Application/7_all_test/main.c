@@ -1159,6 +1159,7 @@ void* mission_thread(void* arg)
 
 		if (roundabout)
 		{
+			printf("roundabout 분기 \n");
 			if (STOP_WhiteLine(4))
 			{
 				data->imgData.bwhiteLine = true;
@@ -1525,7 +1526,7 @@ void* mission_thread(void* arg)
 			finish = data->missionData.ms[7];
 		}
 
-		usleep(200000);
+		usleep(100000);
 		data->missionData.loopTime = timeCheck(&time);
 		//시간측정
 	}

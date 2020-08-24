@@ -2,6 +2,7 @@
  *  INCLUDE FILES
  *******************************************************************************
  */
+#include <iostream>
 #include <termios.h>
 #include <unistd.h> 
 #include <fcntl.h>
@@ -18,6 +19,7 @@
 #include "control_mission.h"
 #include "car_lib.h"
 
+using namespace std;
  ///////////////////////////////////////////////////////////////////////////////////
 int flag_line;
 int flag_go, flag_wait, flag_stop, flag_end;
@@ -91,6 +93,7 @@ extern "C" {
 			if (!(sensor & byte)) 	flag++;			
 			sensor = sensor << 1;
 		}
+		cout << "flag = " << flag << endl;
 		if (flag > Lineflag) {
 			return 1;
 		}

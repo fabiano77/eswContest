@@ -288,8 +288,8 @@ extern "C" {
 		}
 		else if (line_type == 1) {//라인이 1개일 때, left에만 값이 들어감
 			if(slope(line_left)<0){
-				grad_left = -1000;
 				grad_right = slope(line_left);//left에만 들어갔으므로 slope로 함
+				grad_left = -1000;
 			}
 			else {//>0:left
 				grad_right = 1000;
@@ -1000,7 +1000,7 @@ float countGray(Mat& src, Point down, Point up, const float dydx)
 		{ //y
 			int lower_x;//lower bound for calculate rectangular form
 			if (dydx >= 1000 && dydx == -1000) {//무의미한 값 제거
-				lower_x = 0;
+				lower_x = width/2;
 			}
 			else { lower_x = (y - up.y) / dydx + up.x; }
 
@@ -1022,7 +1022,7 @@ float countGray(Mat& src, Point down, Point up, const float dydx)
 		for (int y = up.y; y < down.y; y++)//up.y<down.y
 		{ //y
 			int upper_x;//upper bound for calculate rectangular form
-			if (dydx >= 1000) { upper_x = width; }//무의미한 값 제거
+			if (dydx >= 1000&&dydx<=-1000) { upper_x = width; }//무의미한 값 제거
 			else { upper_x = (y - up.y) / dydx + up.x; }
 			for (int x = upper_x; x < width; x++) // left Gray detection
 			{ //x

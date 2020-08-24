@@ -271,6 +271,7 @@ extern "C" {
 
 		Vec8i ransac_points = hough_ransacLine(img_canny, srcRGB, 640, 360, 17, 1, line_type);
 
+		cout << "line type = " << line_type <<endl;
 		/*Line Splitting*/ //point로 바꿔야됨
 		Vec4i line_left(ransac_points[0], ransac_points[1], ransac_points[2], ransac_points[3]);
 		Vec4i line_right(ransac_points[4], ransac_points[5], ransac_points[6], ransac_points[7]);

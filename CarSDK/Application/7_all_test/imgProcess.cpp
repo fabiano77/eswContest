@@ -24,7 +24,7 @@ void lineFiltering(Mat& src, Mat& dst, int mode);
 
 void cannyEdge(Mat& src, Mat& dst);
 
-Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType);
+Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType,const int lowThresAngle);
 
 Vec4i ransac_algorithm(vector<Vec4i> lines, vector<Point2i> P, int w, int h, int T, double& inlierPercent, Rect weightingRect);
 
@@ -269,7 +269,7 @@ extern "C" {
 		Mat img_ransac;
 		int line_type;
 
-		Vec8i ransac_points = hough_ransacLine(img_canny, srcRGB, 640, 360, 17, 1, line_type);
+		Vec8i ransac_points = hough_ransacLine(img_canny, srcRGB, 640, 360, 17, 1, line_type,0.5);
 
 		/*Line Splitting*/ //point로 바꿔야됨
 		Vec4i line_left(ransac_points[0], ransac_points[1], ransac_points[2], ransac_points[3]);
@@ -280,38 +280,54 @@ extern "C" {
 		line(srcRGB, Point(line_right[0], line_right[1]), Point(line_right[2], line_right[3]), Scalar(0, 0, 255), 2);
 		/*Check Line Upper Bound*/
 		line(srcRGB, Point(0, height_up), Point(width, height_up), Scalar(255, 0, 0), 2);
-		/*Calculate Gradient*/
+		int rightup_x, rightdown_x, leftup_x, leftdown_x;
 		double grad_right, grad_left;
 		if (line_type == 0) {//미탐지 시
 			grad_right = 1000;
 			grad_left = -1000;
+			rightup_x = 0;
+			rightdown_x = 0;
+			leftup_x = 0;
+			leftdown_x = 0;
 		}
 		else if (line_type == 1) {//라인이 1개일 때, left에만 값이 들어감
-			if(slope(line_left)<0){
+			if (slope(line_left) > 0) {//right
 				grad_right = slope(line_left);//left에만 들어갔으므로 slope로 함
-				grad_left = -1000;
+				rightup_x = getPointX_at_Y(line_left, height_up);
+				rightdown_x = getPointX_at_Y(line_left, height_down);
+
+				grad_left = 1000;
+				leftup_x = width / 2;
+				leftdown_x = width / 2;
 			}
 			else {//>0:left
-				grad_right = 1000;
+				grad_right = -1000;
+				rightup_x = width / 2;
+				rightdown_x = width / 2;
+
 				grad_left = slope(line_left);
+				leftup_x = getPointX_at_Y(line_left, height_up);
+				leftdown_x = getPointX_at_Y(line_left, height_down);
 			}
 		}
 		else {
 			grad_right = slope(line_right);
+			rightup_x = getPointX_at_Y(line_right, height_up);
+			rightdown_x = getPointX_at_Y(line_right, height_down);
+
 			grad_left = slope(line_left);
+			leftup_x = getPointX_at_Y(line_left, height_up);
+			leftdown_x = getPointX_at_Y(line_left, height_down);
 		}
 		/*Point that meets upper and lower bound*/
-		int rightup_x = getPointX_at_Y(line_right, height_up);
-		int rightdown_x = getPointX_at_Y(line_right, height_down);
-		int leftup_x = getPointX_at_Y(line_left, height_up);
-		int leftdown_x = getPointX_at_Y(line_left, height_down);
 		/*Calculate up or down point*/
 		Point point_rightup, point_rightdown, point_leftup, point_leftdown;
 		point_rightup = Point(rightup_x, height_up);
 		point_rightdown = Point(rightdown_x, height_down);
 		point_leftup = Point(leftup_x, height_up);
 		point_leftdown = Point(leftdown_x, height_down);
-
+		cout << point_rightup << point_rightdown;
+		cout << point_leftup << point_leftdown;
 
 		/*Count Gray*/
 		float grayrate_left = 0;
@@ -321,9 +337,64 @@ extern "C" {
 		inRange(img_hsv, lower_gray, upper_gray, img_filtered);
 		line(img_filtered, Point(line_left[0], line_left[1]), Point(line_left[2], line_left[3]), Scalar(0, 0, 255), 2);
 		line(img_filtered, Point(line_right[0], line_right[1]), Point(line_right[2], line_right[3]), Scalar(0, 0, 255), 2);
-		grayrate_right = countGray(img_filtered, point_rightdown, point_rightup, grad_right);
-		grayrate_left = countGray(img_filtered, point_leftdown, point_leftup, grad_left);
-		/*Calculate Rate*/
+		//left
+		int count_left = 0;
+		int count_right = 0;
+		int count_left_total = 0;
+		int count_right_total = 0;
+		float rate_left, rate_right;
+		//left
+		for (int y = point_leftup.y; y < point_leftdown.y; y++)//up.y<down.y
+		{ //y
+			int lower_x;//lower bound for calculate rectangular form
+			if (grad_left >= 1000) {//무의미한 값 제거
+				lower_x = width / 2;
+			}
+			else {
+				lower_x = getPointX_at_Y(line_left, point_leftup.y);//왼쪽은 if문 불필요 (오른쪽 부분 참조)
+			}
+
+			for (int x = 0; x < lower_x; x++) // left Gray detection
+			{ //x
+				uchar color_value = img_filtered.at<uchar>(y, x);
+				//img_filtered를 사용해야 회색의 범위를 찾음
+				if (color_value > 128)
+				{
+					count_left++;
+				}
+				count_left_total++;
+			}
+		}
+		grayrate_left = (float)count_left / count_left_total * 100.0;
+		printf("Left rate is %f %% \n", grayrate_left);
+		//right
+		for (int y = point_rightup.y; y < point_rightdown.y; y++)//up.y<down.y
+		{ //y
+			int upper_x;//upper bound for calculate rectangular form
+			if (grad_right <= -1000) { upper_x = width / 2; }//무의미한 값 제거
+			else {
+				/*line_left에 만 값이 들어있을 때 line_type이 1일 때*/
+				if (slope(line_left) > 0) {
+					upper_x = getPointX_at_Y(line_left, point_rightup.y);
+				}
+				else {
+					upper_x = getPointX_at_Y(line_right, point_rightup.y);
+				}
+			}
+			for (int x = upper_x; x < width; x++) // left Gray detection
+			{ //x
+				uchar color_value = img_filtered.at<uchar>(y, x);
+				//img_filtered를 사용해야 회색의 범위를 찾음
+				if (color_value > 128)
+				{
+					count_right++;
+				}
+				count_right_total++;
+			}
+		}
+
+		grayrate_right = (float)count_right / count_right_total * 100.0;
+		printf("Right rate is %f %% \n", grayrate_right);
 		/**************************************/
 
 		/*Show image*/
@@ -635,7 +706,7 @@ void cannyEdge(Mat& src, Mat& dst)
 	Canny(src, dst, threshold_1, threshold_2);	//노란색만 남은 frame의 윤곽을 1채널 Mat객체로 추출
 }
 
-Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType)
+Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType,const int lowThresAngle)
 {
 	Point printPoint(210 * (w / 640.0), 140 * (h / 360.0));
 	vector<Point2i> P;
@@ -667,7 +738,7 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 	for (unsigned int i = 0; i < lines.size(); i++)
 	{
 		//수직 예외직선 삭제 및 ROI설정을 위한 직선 위치판단
-		if (abs(slope(lines[i])) > 30 || abs(slope(lines[i])) < 0.1)
+		if (abs(slope(lines[i])) > 30 || abs(slope(lines[i])) < lowThresAngle)
 		{
 			line(dst, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(), 2);
 			lines.erase(lines.begin() + i);

@@ -26,7 +26,7 @@ int lower_StopDistance = 25;
 int uper_StopDistance = 30;
 int lower_RoundDistance = 20;
 int uper_RoundDistance = 30;
-int THR_RoundAbout_END = 70;
+int THR_RoundAbout_END = 80;
 int first_RoundAbout = 0;
 
 void RoundAbout_Init();
@@ -114,8 +114,11 @@ extern "C" {
 		if (SettingSpeed < 0)	CarLight_Write(0x02);
 		while (1)
 		{
-			if (DistanceSensor_cm(1) <= 5 || DistanceSensor_cm(4) <= 5)
+			if (DistanceSensor_cm(1) <= 5 && SettingSpeed > 0)
 				break;
+			if (DistanceSensor_cm(4) <= 5 && SettingSpeed < 0)
+				break;
+
 			on_encoder = abs(EncoderCounter_Read());
 			if (on_encoder != 65278)
 			{
@@ -323,6 +326,7 @@ extern "C" {
 			if ((flag_steer[j] > 0) && (j != i))
 				flag_steer[j]--;
 		}
+		printf("steer : %d, [%d, %d]\n", steerVal, Distance2, Distance1);
 		return 1500 - steerVal;
 	}
 

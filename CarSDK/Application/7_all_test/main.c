@@ -968,7 +968,7 @@ void* mission_thread(void* arg)
 									usleep(10000);
 									SteeringServoControl_Write(1110);
 									DesireSpeed_Write(25);
-									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 1) || DistanceSensor_cm(1) <= 5) {
+									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2) || DistanceSensor_cm(1) <= 5) {
 										step_h = SECOND_FORWARD;
 										Winker_Write(ALL_ON);
 										buzzer(5, 500000, 500000);

@@ -24,7 +24,7 @@ void lineFiltering(Mat& src, Mat& dst, int mode);
 
 void cannyEdge(Mat& src, Mat& dst);
 
-Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType,const int lowThresAngle);
+Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType,const double lowThresAngle);
 
 Vec4i ransac_algorithm(vector<Vec4i> lines, vector<Point2i> P, int w, int h, int T, double& inlierPercent, Rect weightingRect);
 
@@ -696,7 +696,7 @@ void cannyEdge(Mat& src, Mat& dst)
 	Canny(src, dst, threshold_1, threshold_2);	//노란색만 남은 frame의 윤곽을 1채널 Mat객체로 추출
 }
 
-Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType,const int lowThresAngle)
+Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType,const double lowThresAngle)
 {
 	Point printPoint(210 * (w / 640.0), 140 * (h / 360.0));
 	vector<Point2i> P;

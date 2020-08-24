@@ -34,7 +34,7 @@ void RoundAbout_Init();
 int flag_Tunnel;
 int first_Tunnel = 0;
 int absDist;
-int steerVal = 0;
+int steerVal;
 int flag_steer[5];
 
 extern "C" {
@@ -244,7 +244,14 @@ extern "C" {
 		1. ��(2, 6)
 		2. ��(3, 5)
 		*/
-		if (!first_Tunnel++) flag_Tunnel = 0;
+		int i;
+		if (first_Tunnel == 1) {
+			flag_Tunnel = 0;
+			steerVal = 0;
+			for (i = 0; i < 5; i++) {
+				flag_steer[i] = 0;
+			}
+		}
 
 		if ((Distance1 > 30) && (Distance2 > 30)) {
 			if (flag_Tunnel < 2)
@@ -273,13 +280,6 @@ extern "C" {
 	int Tunnel_SteerVal(const int Distance1, const int Distance2) {
 		// ���� 19 , ���� 40
 		// �߾��� 10, 10�� ���;���
-		int i;
-		if (!first_Tunnel++) {
-			for (i = 0; i < 5; i++) {
-				flag_steer[i] = 0;
-			}
-		}
-
 		absDist = abs(Distance1 - Distance2);
 
 		if (absDist < 2) {
@@ -349,8 +349,8 @@ extern "C" {
 					flag_steer[i]--;
 			}
 		}
-
-		return steerVal + 1500;
+		
+		return 1500 - steerVal;
 	}
 
 	void frontLightOnOff(unsigned short lightFlag, int on)

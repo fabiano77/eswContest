@@ -35,7 +35,7 @@
 #define OVERLAY_DISP_W 480
 #define OVERLAY_DISP_H 272
 
-#define TIME_TEXT_X 350			   //320
+#define TIME_TEXT_X 340			   //320
 #define TIME_TEXT_Y 260			   //240
 #define TIME_TEXT_COLOR 0xffffffff //while
 
@@ -176,6 +176,7 @@ struct ImgProcessData
 	bool bprintString;
 	char missionString[20];
 	int topMode;
+	int debugMode;
 };
 
 struct thr_data
@@ -527,17 +528,20 @@ void* input_thread(void* arg)
 	printf("	space bar = Alarm									\n");
 	printf("----------------------------------------------------	\n");
 	MSG("\n\nInput command:");
-	MSG("\t calib : calibration ON/OFF");
-	MSG("\t debug : debug ON/OFF");
-	MSG("\t top   : top view ON/OFF");
-	MSG("\t auto  : auto steering ON/OFF");
-	MSG("\t dark  : detect darkness ON/OFF");
-	MSG("\t dist  : distance sensor check");
-	MSG("\t distc : distance sensor check by -cm-");
-	MSG("\t distl : distance sensor check constantly");
-	MSG("\t stop  : stop Line ON/OFF");
-	MSG("\t encoder : ");
-	MSG("\t parking : ");
+	MSG("\t calib  : calibration ON/OFF");
+	MSG("\t debug  : debug ON/OFF");
+	MSG("\t auto   : auto steering ON/OFF");
+	MSG("\t top    : top view ON/OFF");
+	MSG("\t dark   : detect darkness ON/OFF");
+	MSG("\t dist   : distance sensor check");
+	MSG("\t distc  : distance sensor check by -cm-");
+	MSG("\t distl  : distance sensor check constantly");
+	MSG("\t stop   : stop Line ON/OFF");
+	MSG("\t encoder: ");
+	MSG("\t back   : ");
+	MSG("\t stop   : check line sensor");
+	MSG("\t parking: output distance");
+	MSG("\t ms	   : mission on/off");
 	MSG("\n");
 
 	while (1)
@@ -564,11 +568,25 @@ void* input_thread(void* arg)
 			}
 			else if (0 == strncmp(cmd_input, "debug", 5))
 			{
-				data->imgData.bdebug = !data->imgData.bdebug;
-				if (data->imgData.bdebug)
-					printf("\t debug ON\n");
+				if (!data->imgData.bdebug)
+				{
+					data->imgData.bdebug = !data->imgData.bdebug;
+					printf("\t debug 1 ON\n");
+				}
 				else
-					printf("\t debug OFF\n");
+				{
+					if (data->imgData.debugMode == 1)
+					{
+						data->imgData.debugMode = 2;
+						printf("\t debug 2 ON\n");
+					}
+					else if (data->imgData.debugMode == 2)
+					{
+						data->imgData.debugMode = 1;
+						data->imgData.bdebug = !data->imgData.bdebug;
+						printf("\t debug OFF\n");
+					}
+				}
 			}
 			else if (0 == strncmp(cmd_input, "auto", 4))
 			{
@@ -577,14 +595,6 @@ void* input_thread(void* arg)
 					printf("\t auto steering ON\n");
 				else
 					printf("\t auto steering OFF\n");
-			}
-			else if (0 == strncmp(cmd_input, "dark", 4))
-			{
-				data->imgData.bdark = !data->imgData.bdark;
-				if (data->imgData.bdark)
-					printf("\t detect darkness ON\n");
-				else
-					printf("\t detect darkness OFF\n");
 			}
 			else if (0 == strncmp(cmd_input, "top", 3))
 			{
@@ -612,6 +622,14 @@ void* input_thread(void* arg)
 						printf("\t topview OFF\n");
 					}
 				}
+			}
+			else if (0 == strncmp(cmd_input, "dark", 4))
+			{
+				data->imgData.bdark = !data->imgData.bdark;
+				if (data->imgData.bdark)
+					printf("\t detect darkness ON\n");
+				else
+					printf("\t detect darkness OFF\n");
 			}
 			else if (0 == strncmp(cmd_input, "distl", 5))
 			{
@@ -682,30 +700,6 @@ void* input_thread(void* arg)
 				}
 				printf("Total Forward encoder : %d\n", forward_encoder);
 			}
-			else if (0 == strncmp(cmd_input, "stop", 4))
-			{
-				char sensor;
-				char byte = 0x80;
-				int flag;
-				int i;
-				while (1) {
-					flag = 0;
-					sensor = LineSensor_Read();        // black:1, white:0
-					printf("LineSensor_Read() = ");
-					for (i = 0; i < 8; i++)
-					{
-						if ((i % 4) == 0) printf(" ");
-						if ((sensor & byte)) printf("1");	//byte == 0x80 == 0111 0000 (2)
-						else {
-							printf("0");
-							flag++;
-						}
-						sensor = sensor << 1;
-					}
-					printf(", flag = %d\n", flag);
-					usleep(100000);
-				}
-			}
 			else if (0 == strncmp(cmd_input, "back", 4))
 			{
 				int init_encoder = 0;
@@ -734,46 +728,46 @@ void* input_thread(void* arg)
 				}
 				printf("Total Back encoder : %d\n", total_encoder);
 			}
+			else if (0 == strncmp(cmd_input, "stop", 4))
+			{
+				char sensor;
+				char byte = 0x80;
+				int flag;
+				int i;
+				while (1) {
+					flag = 0;
+					sensor = LineSensor_Read();        // black:1, white:0
+					printf("LineSensor_Read() = ");
+					for (i = 0; i < 8; i++)
+					{
+						if ((i % 4) == 0) printf(" ");
+						if ((sensor & byte)) printf("1");	//byte == 0x80 == 0111 0000 (2)
+						else {
+							printf("0");
+							flag++;
+						}
+						sensor = sensor << 1;
+					}
+					printf(", flag = %d\n", flag);
+					usleep(100000);
+				}
+			}
 			else if (0 == strncmp(cmd_input, "ms", 2)) {
 				int num;
-
 				printf("0. start \n");
 				printf("1. fly over \n");
 				printf("2. parking \n");
-				printf("3. round about \n");
-				printf("4. tunnel \n");
+				printf("3. tunnel \n");
+				printf("4. round about \n");
 				printf("5. overtake \n");
 				printf("6. signal light \n");
 				printf("7. finish \n");
+				printf("\t input(0~7) : ");
 				scanf("%d", &num);
-				switch (num) {
-				case 0:
-					data->missionData.ms[0] = READY;
-					break;
-				case 1:
-					data->missionData.ms[1] = READY;
-					break;
-				case 2:
-					data->missionData.ms[2] = READY;
-					break;
-				case 3:
-					data->missionData.ms[3] = READY;
-					break;
-				case 4:
-					data->missionData.ms[4] = READY;
-					break;
-				case 5:
-					data->missionData.ms[5] = READY;
-					break;
-				case 6:
-					data->missionData.ms[6] = READY;
-					break;
-				case 7:
-					data->missionData.ms[7] = READY;
-					break;
-				default:
-					break;
-				}
+				if (num >= 0 && num <= 7)
+					data->missionData.ms[num] = READY;
+				else
+					printf("wrong input\n");
 			}
 			else
 			{
@@ -1010,7 +1004,7 @@ void* mission_thread(void* arg)
 									DesiredDistance(23, 400, 1100);
 									usleep(200000);
 									sprintf(data->imgData.missionString, "2nd_ d1=%d, d2=%d, d3=%d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2)) 
+									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2))
 									{
 										sprintf(data->imgData.missionString, "sibal_ d1=%d, d2=%d, d3=%d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
 										DesireSpeed_Write(0);
@@ -1185,6 +1179,7 @@ void* mission_thread(void* arg)
 				enum RoundaboutState state = WAIT_R;
 				while (state)
 				{
+					data->missionData.loopTime = timeCheck(&time);
 					switch (state)
 					{
 					case WAIT_R:
@@ -1543,9 +1538,8 @@ void* mission_thread(void* arg)
 			finish = data->missionData.ms[7];
 		}
 
-		usleep(100000);
-		data->missionData.loopTime = timeCheck(&time);
-		//시간측정
+		//usleep(100000);
+		usleep(50000);
 	}
 }
 
@@ -1742,6 +1736,7 @@ int main(int argc, char** argv)
 	tdata.imgData.bdebug = false;
 	tdata.imgData.btopview = true;
 	tdata.imgData.topMode = 3;
+	tdata.imgData.debugMode = 1;
 	tdata.imgData.bauto = false;
 	tdata.imgData.bspeedControl = true;
 	tdata.imgData.bdark = false;

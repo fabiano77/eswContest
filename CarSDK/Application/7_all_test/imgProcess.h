@@ -13,7 +13,7 @@ extern "C" {
 
 	void displayPrint(unsigned char* inBuf, int w, int h, unsigned char* outBuf, char* name);
 
-	void debugFiltering(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
+	void debugFiltering(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int mode);
 
 	int autoSteering(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int whiteMode);
 

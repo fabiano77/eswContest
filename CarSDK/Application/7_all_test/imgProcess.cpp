@@ -24,7 +24,7 @@ void lineFiltering(Mat& src, Mat& dst, int mode);
 
 void cannyEdge(Mat& src, Mat& dst);
 
-Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType,const double lowThresAngle);
+Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType, const double lowThresAngle);
 
 Vec4i ransac_algorithm(vector<Vec4i> lines, vector<Point2i> P, int w, int h, int T, double& inlierPercent, Rect weightingRect);
 
@@ -158,7 +158,7 @@ extern "C" {
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
-		
+
 		if (mode == 1)
 		{
 			Point2f Hp[4] = {	//변환전 좌표
@@ -196,7 +196,7 @@ extern "C" {
 		else if (mode == 3)
 		{
 			Mat temp;
-			temp = srcRGB.rowRange(h*(15/36.0), h).clone();
+			temp = srcRGB.rowRange(h * (15 / 36.0), h).clone();
 			resize(temp, dstRGB, Size(w, h));
 		}
 	}
@@ -212,13 +212,48 @@ extern "C" {
 
 		putText(dstRGB, str, printPosition, 0, 0.8, Scalar(255, 153, 0), 2);
 	}
-	
-	void debugFiltering(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
+
+	void debugFiltering(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int mode)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
-
-		lineFiltering(srcRGB, dstRGB, 1);
+		if (mode == 1)
+		{
+			Mat src8C;
+			lineFiltering(srcRGB, src8C, 1);
+			for (int x = 0; x < w; x++)
+			{
+				for (int y = 0; y < h; y++)
+				{
+					uchar pixelVal = src8C.at<uchar>(y, x);
+					dstRGB.at<Vec3b>(y, x)[0] = pixelVal;
+					dstRGB.at<Vec3b>(y, x)[1] = pixelVal;
+					dstRGB.at<Vec3b>(y, x)[2] = pixelVal;
+				}
+			}
+		}
+		else if (mode == 2)
+		{
+			Mat src8C;
+			Mat srcEdge;
+			lineFiltering(srcRGB, src8C, 1);
+			cannyEdge(src8C, srcEdge);
+			for (int x = 0; x < w; x++)
+			{
+				for (int y = 0; y < h; y++)
+				{
+					uchar srcEdge = srcEdge.at<uchar>(y, x);
+					dstRGB.at<Vec3b>(y, x)[0] = pixelVal;
+					dstRGB.at<Vec3b>(y, x)[1] = pixelVal;
+					dstRGB.at<Vec3b>(y, x)[2] = pixelVal;
+				}
+			}
+		}
+		else if (mode == 3)
+		{
+			int retval = checkObstacle(inBuf, w, h, outBuf);
+			printf("return val = %d\n", retval);
+		}
 	}
 
 	int autoSteering(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int whiteMode)
@@ -260,9 +295,9 @@ extern "C" {
 		Mat img_ransac;
 		int line_type;
 
-		Vec8i ransac_points = hough_ransacLine(img_canny, srcRGB, 640, 360, 17, 1, line_type,0.5);
+		Vec8i ransac_points = hough_ransacLine(img_canny, srcRGB, 640, 360, 17, 1, line_type, 0.5);
 
-		cout << "line type = " << line_type <<endl;
+		cout << "line type = " << line_type << endl;
 		/*Line Splitting*/ //point로 바꿔야됨
 		Vec4i line_left(ransac_points[0], ransac_points[1], ransac_points[2], ransac_points[3]);
 		Vec4i line_right(ransac_points[4], ransac_points[5], ransac_points[6], ransac_points[7]);
@@ -424,7 +459,7 @@ extern "C" {
 		return return_go;
 	}
 
-	int checkFront(unsigned char* inBuf, int w, int h,unsigned char* outBuf) {
+	int checkFront(unsigned char* inBuf, int w, int h, unsigned char* outBuf) {
 		//need alread top view transformed
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
@@ -440,9 +475,9 @@ extern "C" {
 		Mat img_hsv;
 		/* convert color to hsv */
 		cvtColor(srcRGB, img_hsv, COLOR_BGR2HSV);
-		int roi_upY=80;
+		int roi_upY = 80;
 		line(dstRGB, Point(0, roi_upY), Point(640, roi_upY), Scalar(0, 0, 255), 2);
-		putText(dstRGB, "ROI Section", Point(15, 80), font,fontScale,Scalar(0,0,255),2);
+		putText(dstRGB, "ROI Section", Point(15, 80), font, fontScale, Scalar(0, 0, 255), 2);
 		/* roi img and filtering */
 		Mat img_roi(img_hsv, Rect(0, 80, 640, 280));// roi 지정(선으로 변화 시킬것)
 		Mat img_filtered;
@@ -464,7 +499,7 @@ extern "C" {
 		/*line fitting to one*/
 		Vec4f line_fit;
 		if (points_filtered.size() > 0) {
-			fitLine(points_filtered, line_fit,2, 0, 0.01, 0.01);
+			fitLine(points_filtered, line_fit, 2, 0, 0.01, 0.01);
 			float dydx = line_fit[1] / line_fit[0];
 			/*find point y at x*/
 			Point leftPoint(0, dydx * (0 - line_fit[2]) + line_fit[3]);
@@ -560,7 +595,7 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 	lineFiltering(src, src_yel, whiteMode);
 	cannyEdge(src_yel, src_can);
 	int lineType;	// 0 == 라인이 없다, 1 == 라인이 한개, 2 == 라인이 두개.
-	Vec8i l = hough_ransacLine(src_can, src, w, h, 15, 1, lineType,0.1);
+	Vec8i l = hough_ransacLine(src_can, src, w, h, 15, 1, lineType, 0.1);
 	Vec4i firstLine(l[0], l[1], l[2], l[3]);
 	Vec4i secondLine(l[4], l[5], l[6], l[7]);
 
@@ -652,7 +687,8 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 	if (retval != 9999)
 	{
 		//유의미한 값이 도출됐을 경우.
-		if (retval < -500) retval = -500;
+		if (abs(retval) > 1000) retval = 0;
+		else if (retval < -500) retval = -500;
 		else if (retval > 500) retval = 500;
 	}
 
@@ -696,7 +732,7 @@ void cannyEdge(Mat& src, Mat& dst)
 	Canny(src, dst, threshold_1, threshold_2);	//노란색만 남은 frame의 윤곽을 1채널 Mat객체로 추출
 }
 
-Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType,const double lowThresAngle)
+Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType, const double lowThresAngle)
 {
 	Point printPoint(210 * (w / 640.0), 140 * (h / 360.0));
 	vector<Point2i> P;
@@ -728,22 +764,24 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 	for (unsigned int i = 0; i < lines.size(); i++)
 	{
 		//수직 예외직선 삭제 및 ROI설정을 위한 직선 위치판단
-		if (abs(slope(lines[i])) > 30 || abs(slope(lines[i])) < lowThresAngle)
+		if (abs(slope(lines[i])) > 30						//수직 직선 예외처리
+			|| abs(slope(lines[i])) < lowThresAngle			//수평 직선 예외처리
+			|| centerPoint(lines[i]).y < h * (15 / 100.0))	//상단 직선 예외처리
 		{
 			line(dst, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(), 2);
 			lines.erase(lines.begin() + i);
 			i--;
 			continue;
 		}
-		if (lines[i][1] > h * (1 / 2.0) && lines[i][3] > h * (1 / 2.0))
+		if (lowLinePosition < 1)
 		{
 			//화면 하단 1/2에 라인이 있을 경우.
-			if (lowLinePosition < 1)lowLinePosition = 1;
+			if (lines[i][1] > h * (1 / 2.0) && lines[i][3] > h * (1 / 2.0)) lowLinePosition = 1;
 		}
-		if (lines[i][1] > h * (2 / 3.0) && lines[i][3] > h * (2 / 3.0))
+		if (lowLinePosition < 2)
 		{
 			//화면 하단 1/3에 라인이 있을 경우.
-			if (lowLinePosition < 2)lowLinePosition = 2;
+			if (lines[i][1] > h * (2 / 3.0) && lines[i][3] > h * (2 / 3.0)) lowLinePosition = 2;
 		}
 	}
 
@@ -775,7 +813,7 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 			if (centerPoint(lines[i]).y < h * (1 / 2.0))
 			{
 				//화면 하단 1/3에 라인이 있을 경우.
-				//상단 1/4구간 예외직선 무시구문
+				//상단 1/2구간 예외직선 무시구문
 				line(dst, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(), 2);
 				lines.erase(lines.begin() + i);
 				i--;

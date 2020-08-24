@@ -578,8 +578,8 @@ void settingStatic(int w, int h)
 		centerGuide[i][3] *= (h / 360.0);
 	}
 
-	leftGuide = Vec4i(0, 200, 160, 0) * (w / 640.0);
-	rightGuide = Vec4i(480, 0, 640, 200) * (w / 640.0);
+	leftGuide = Vec4i(0, 200, 200, 0) * (w / 640.0);
+	rightGuide = Vec4i(440, 0, 640, 200) * (w / 640.0);
 
 	cout << "settingStatic" << endl;
 }
@@ -627,7 +627,10 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 				rectangle(src, Point(centerGuide[i][0] - 5 + bias, centerGuide[i][1]), Point(centerGuide[i][2] + 5 + bias, centerGuide[i][3]), color[i], -1);
 		}
 		if (linePointY_atCenter > centerGuide[0][1])	// 선형적으로 조향.
+		{
 			proximity = 500 * (linePointY_atCenter - centerGuide[0][1]) / (h - centerGuide[0][1]);
+			if (proximity > 500) proximity = 500;
+		}
 
 		if (proximity == 0)
 			retval = 0; //9999 이면 조향하지않음.
@@ -765,8 +768,7 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 	{
 		//수직 예외직선 삭제 및 ROI설정을 위한 직선 위치판단
 		if (abs(slope(lines[i])) > 30						//수직 직선 예외처리
-			|| abs(slope(lines[i])) < lowThresAngle			//수평 직선 예외처리
-			|| centerPoint(lines[i]).y < h * (15 / 100.0))	//상단 직선 예외처리
+			|| abs(slope(lines[i])) < lowThresAngle)			//수평 직선 예외처리
 		{
 			line(dst, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(), 2);
 			lines.erase(lines.begin() + i);
@@ -785,40 +787,26 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 		}
 	}
 
-	for (unsigned int i = 0; lowLinePosition && i < lines.size(); i++)
+	int cuttingHeight;
+	for (unsigned int i = 0; i < lines.size(); i++)
 	{
-		if (lowLinePosition == 1)
+		if (i == 0)
 		{
-			if (i == 0)
-			{
-				putText(dst, "Region Of Interest", Point(15, h * (1 / 3.0) - 10), 0, 0.65, Scalar(0, 0, 255), 2);
-				line(dst, Point(0, h * (1 / 3.0)), Point(w, h * (1 / 3.0)), Scalar(0, 0, 255), 2);
-			}
-			if (centerPoint(lines[i]).y < h * (1 / 3.0))
-			{
-				//화면 하단 1/2에 라인이 있을 경우.
-				//상단1/3구간 예외직선 무시 구문
-				line(dst, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(), 2);
-				lines.erase(lines.begin() + i);
-				i--;
-			}
+			if (lowLinePosition == 1) cuttingHeight = h * (1 / 3.0);
+			else if (lowLinePosition == 2) cuttingHeight = h * (1 / 2.0);
+			else cuttingHeight = h * (20 / 100.0);
+
+			putText(dst, "ROI = " + toString(lowLinePosition), Point(15, cuttingHeight - 10), 0, 0.65, Scalar(0, 0, 255), 2);
+			line(dst, Point(0, cuttingHeight), Point(w, cuttingHeight), Scalar(0, 0, 255), 2);
 		}
-		else // lowLinePosition == 2
+
+		if (centerPoint(lines[i]).y < cuttingHeight)
 		{
-			if (i == 0)
-			{
-				putText(dst, "Region Of Interest", Point(15, h * (1 / 2.0) - 10), 0, 0.65, Scalar(0, 0, 255), 2);
-				line(dst, Point(0, h * (1 / 2.0)), Point(w, h * (1 / 2.0)), Scalar(0, 0, 255), 2);
-			}
-			if (centerPoint(lines[i]).y < h * (1 / 2.0))
-			{
-				//화면 하단 1/3에 라인이 있을 경우.
-				//상단 1/2구간 예외직선 무시구문
-				line(dst, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(), 2);
-				lines.erase(lines.begin() + i);
-				i--;
-			}
+			line(dst, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(), 2);
+			lines.erase(lines.begin() + i);
+			i--;
 		}
+
 	}
 
 	for (unsigned int j = 0; printMode && j < lines.size(); j++)
@@ -878,6 +866,7 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 	}
 	else //if (slopeSign(leftLine) == slopeSign(rightLine))	//좌우 직선의 기울기부호가 같으면
 	{
+		detectedLineType = 1;
 		Point highest(-1, h);		//최상단 점
 		Point lowest(-1, 0);		//최하단 점
 		for (unsigned int i = 0; i < lines.size(); i++)
@@ -899,17 +888,21 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 				lowest = Point(lines[i][2], lines[i][3]);
 			}
 		}
+
 		Rect lineRatio(highest, lowest);
-		if (((lineRatio.x < w / 2.0) && (lineRatio.x + lineRatio.width < w / 2.0)) && slopeSign(leftLine) == 1 ||
-			((lineRatio.x > w / 2.0) && (lineRatio.x + lineRatio.width > w / 2.0)) && slopeSign(leftLine) == -1)
+		if (((double)lineRatio.height / lineRatio.width) > 0.70)
 		{
-			detectedLineType = 0;
-			rectangle(dst, lineRatio, purple, 4);
-			putText(dst, "rect ratio = " + toString((double)lineRatio.height / lineRatio.width), printPoint + Point(0, 60), FONT_HERSHEY_SIMPLEX, 0.6, Scalar(255, 255, 255), 2);
-			return Vec8i();
+			//s자 코너에서 안쪽 차선을 보는것을 예외처리하기위한 부분.
+			if (((lineRatio.x < w / 2.0) && ((double)lineRatio.x + lineRatio.width < w / 2.0)) && slopeSign(leftLine) == 1 ||
+				((lineRatio.x > w / 2.0) && ((double)lineRatio.x + lineRatio.width > w / 2.0)) && slopeSign(leftLine) == -1)
+			{
+				detectedLineType = 0;
+				rectangle(dst, lineRatio, purple, 4);
+				putText(dst, "rect ratio = " + toString((double)lineRatio.height / lineRatio.width), printPoint + Point(0, 60), FONT_HERSHEY_SIMPLEX, 0.6, Scalar(255, 255, 255), 2);
+				return Vec8i();
+			}
 		}
 
-		detectedLineType = 1;
 		//가중치 영역 설정.
 		Rect weightingRect(w / 3, h / 2, w / 3, h / 2);
 		//rectangle(dst, weightingRect, purple, 2);

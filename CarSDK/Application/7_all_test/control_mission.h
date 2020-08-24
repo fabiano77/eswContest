@@ -28,6 +28,8 @@ int RoundAbout_isEnd(const int Distance1, const int Distance2);
 
 //int Tunnel_isTunnel(const int Distance1, const int Distance2, const int Distance3, const int Distance4);
 
+int Tunnel_isStart(const int Distance2, const int Distance6, const int Distance3, const int Distance5);
+
 int Tunnel_isEnd(const int Distance1, const int Distance2, const int Distance3, const int Distance4);
 // Return : 앞, 뒤 센서가 순서대로 감지되지 않으면 1을 반환한다.
 

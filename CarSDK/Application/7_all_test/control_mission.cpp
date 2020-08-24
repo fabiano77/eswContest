@@ -157,6 +157,48 @@ extern "C" {
 		if (SettingSpeed < 0)	CarLight_Write(0x00);
 	}
 
+	void onlyDistance(int SettingSpeed, int SettingDistance)
+	{
+		int init_encoder = 0;
+		int on_encoder = 0;
+		EncoderCounter_Write(init_encoder);
+		DesireSpeed_Write(SettingSpeed);
+		if (SettingSpeed < 0)	CarLight_Write(0x02);
+		while (1)
+		{
+			if (SettingSpeed > 0)
+			{
+				//정면 충돌 감지
+				if (DistanceSensor_cm(1) <= 5) {
+					DesireSpeed_Write(0);
+					break;
+				}
+			}
+			else
+			{
+				//후면 충돌 감지
+				if (DistanceSensor_cm(4) <= 5) {
+					DesireSpeed_Write(0);
+					break;
+				}
+			}
+
+
+			on_encoder = abs(EncoderCounter_Read());
+			if (on_encoder != 65278)
+			{
+				//printf("encoder : %-4d\n", on_encoder);
+				if (on_encoder >= SettingDistance)
+				{
+					DesireSpeed_Write(0);
+					break;
+				}
+			}
+			usleep(50000); // 50ms
+		}
+		if (SettingSpeed < 0)	CarLight_Write(0x00);
+	}
+
 	int RoundAbout_isStart(const int Distance1) {
 		if (!first_RoundAbout++) RoundAbout_Init();
 		int lower_StopDistance = 25;

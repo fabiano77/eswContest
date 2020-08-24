@@ -108,8 +108,9 @@ extern "C" {
 		int init_encoder = 0;
 		int on_encoder = 0;
 		EncoderCounter_Write(init_encoder);
-		DesireSpeed_Write(SettingSpeed);
 		SteeringServoControl_Write(SettingSteering);
+		usleep(50000);
+		DesireSpeed_Write(SettingSpeed);
 		if (SettingSpeed < 0)	CarLight_Write(0x02);
 		while (1)
 		{

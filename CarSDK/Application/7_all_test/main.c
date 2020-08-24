@@ -296,7 +296,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		/* 라인 필터링이나 canny 결과 확인 */
 		if (t_data->imgData.bdebug)
 		{
-			debugFiltering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+			debugFiltering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.debugMode);
 		}
 
 		/* 미션 진행중에 처리하는 영상처리 */
@@ -799,7 +799,7 @@ void* mission_thread(void* arg)
 	enum MissionState signalLight = NONE;
 	enum MissionState finish = NONE;
 
-	int i = 0;
+	//int i = 0;
 
 	//각 미션이 수행되고나면 detect를 하지 않도록 변수설정.
 

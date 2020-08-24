@@ -242,7 +242,7 @@ extern "C" {
 			{
 				for (int y = 0; y < h; y++)
 				{
-					uchar srcEdge = srcEdge.at<uchar>(y, x);
+					uchar pixelVal = srcEdge.at<uchar>(y, x);
 					dstRGB.at<Vec3b>(y, x)[0] = pixelVal;
 					dstRGB.at<Vec3b>(y, x)[1] = pixelVal;
 					dstRGB.at<Vec3b>(y, x)[2] = pixelVal;
@@ -367,7 +367,7 @@ extern "C" {
 		int count_right = 0;
 		int count_left_total = 0;
 		int count_right_total = 0;
-		float rate_left, rate_right;
+		//float rate_left, rate_right;
 		//left
 		for (int y = point_leftup.y; y < point_leftdown.y; y++)//up.y<down.y
 		{ //y
@@ -385,8 +385,14 @@ extern "C" {
 				//img_filtered를 사용해야 회색의 범위를 찾음
 				if (color_value > 128)
 				{
+					circle(srcRGB, Point2i(x, y), 2, Scalar(255,0,0), -1, 16);
 					count_left++;
 				}
+				else
+				{
+					circle(srcRGB, Point2i(x, y), 2, Scalar(0,0,255), -1, 16);
+				}
+				
 				count_left_total++;
 			}
 		}
@@ -408,11 +414,17 @@ extern "C" {
 			}
 			for (int x = upper_x; x < width; x++) // left Gray detection
 			{ //x
+				
 				uchar color_value = img_filtered.at<uchar>(y, x);
 				//img_filtered를 사용해야 회색의 범위를 찾음
 				if (color_value > 128)
 				{
+					circle(srcRGB, Point2i(x, y), 2, Scalar(255,0,0), -1, 16);
 					count_right++;
+				}
+				else
+				{
+					circle(srcRGB, Point2i(x, y), 2, Scalar(0,0,255), -1, 16);
 				}
 				count_right_total++;
 			}
@@ -430,10 +442,6 @@ extern "C" {
 
 		int font = FONT_ITALIC; // italic font
 		double fontScale = 0.8;
-
-		/*gray 픽셀 좌우 검사범위 확인*/
-		rectangle(srcRGB, Point(0, point_leftup.y), Point(lower_x, point_leftdown.y), purple, 3);
-		rectangle(srcRGB, Point(upper_x, point_rightup.y), Point(width, point_rightdown.y), mint, 3);
 
 		putText(srcRGB, toString((double)grayrate_left) + "%", location_left, font, fontScale, Scalar(255, 0, 0), 2);
 		putText(srcRGB, toString((double)grayrate_right) + "%", location_right, font, fontScale, Scalar(255, 0, 0), 2);
@@ -493,7 +501,7 @@ extern "C" {
 		vector<Point> points_filtered;
 		/*line detect*/
 		HoughLinesP(img_canny, lines, 1, CV_PI / 180, 80, 10, 300);
-		for (int i = 0; i < lines.size(); i++) {
+		for (unsigned int i = 0; i < lines.size(); i++) {
 			if (abs(slope(lines[i])) < 0.05 && lines[i][1] > 80 && lines[i][3] > 80) {
 				points_filtered.push_back(Point(lines[i][0], lines[i][1]));
 				points_filtered.push_back(Point(lines[i][2], lines[i][3]));
@@ -548,9 +556,9 @@ int HLP_threshold = 30;	//105
 int HLP_minLineLength = 90;//115
 int HLP_maxLineGap = 125;	//260
 
-static void on_trackbar(int, void*)
-{
-}
+// static void on_trackbar(int, void*)
+// {
+// }
 
 void settingStatic(int w, int h)
 {
@@ -897,8 +905,8 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 		if (((double)lineRatio.height / lineRatio.width) > 0.70)
 		{
 			//s자 코너에서 안쪽 차선을 보는것을 예외처리하기위한 부분.
-			if (((lineRatio.x < w / 2.0) && ((double)lineRatio.x + lineRatio.width < w / 2.0)) && slopeSign(leftLine) == 1 ||
-				((lineRatio.x > w / 2.0) && ((double)lineRatio.x + lineRatio.width > w / 2.0)) && slopeSign(leftLine) == -1)
+			if ((((lineRatio.x < w / 2.0) && ((double)lineRatio.x + lineRatio.width < w / 2.0)) && slopeSign(leftLine) == 1 )||
+				(((lineRatio.x > w / 2.0) && ((double)lineRatio.x + lineRatio.width > w / 2.0)) && slopeSign(leftLine) == -1))
 			{
 				detectedLineType = 0;
 				rectangle(dst, lineRatio, purple, 4);
@@ -1064,7 +1072,7 @@ void regionOfInterest(Mat& src, Mat& dst, Point* points)
 
 	Mat maskImg = Mat::zeros(src.size(), CV_8UC3);
 
-	Scalar ignore_mask_color = Scalar(255, 255, 255);
+	//Scalar ignore_mask_color = Scalar(255, 255, 255);
 	const Point* ppt[1] = { points }; //개의 꼭짓점 :n vertices
 	int npt[] = { 4 };
 

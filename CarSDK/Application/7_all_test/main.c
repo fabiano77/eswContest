@@ -868,7 +868,7 @@ void* mission_thread(void* arg)
 						{
 							usleep(50000000);
 						}
-						else if(data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
+						else if (data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
 						{
 							DesiredDistance(30, 75, 1500);
 							while (data->missionData.parkingData.horizontalFlag)
@@ -897,17 +897,23 @@ void* mission_thread(void* arg)
 									}
 									first_error_flag = 0;
 									DesiredDistance(-30, 450, 2000);
-									step = SECOND_FORWARD;
-									break;
+									SteeringServoControl_Write(1000);
+									DesireSpeed_Write(15);
+									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 1) || DistanceSensor_cm(1) <= 4) {
+										step = SECOND_FORWARD;
+										buzzer(3, 500000, 500000);
+										break;
+									}
 
-								//case FIRST_FORWARD:
-								//	DesiredDistance(30, 250, 1000);
-								//	step = SECOND_FORWARD;
-								//	break;
+									//case FIRST_FORWARD:
+									//	DesiredDistance(30, 250, 1000);
+									//	step = SECOND_FORWARD;
+									//	break;
 
 								case SECOND_FORWARD:
-									DesiredDistance(-30, 550, 1000);
-									DesiredDistance(30, 350, 1800);
+									DesiredDistance(-15, 300, 1000);
+									DesiredDistance(15, 500, 1800);
+
 									step = FINISH;
 									break;
 
@@ -1306,16 +1312,16 @@ void* mission_thread(void* arg)
 			}
 		}
 
-		if(true)
+		if (true)
 		{
 			start = data->missionData.ms[0];
-			flyover =  data->missionData.ms[1];
-			parking =  data->missionData.ms[2];
-			tunnel =  data->missionData.ms[3];
-			roundabout =  data->missionData.ms[4];
-			overtake =  data->missionData.ms[5];
-			signalLight =  data->missionData.ms[6];
-			finish =  data->missionData.ms[7];
+			flyover = data->missionData.ms[1];
+			parking = data->missionData.ms[2];
+			tunnel = data->missionData.ms[3];
+			roundabout = data->missionData.ms[4];
+			overtake = data->missionData.ms[5];
+			signalLight = data->missionData.ms[6];
+			finish = data->missionData.ms[7];
 		}
 
 		usleep(200000);

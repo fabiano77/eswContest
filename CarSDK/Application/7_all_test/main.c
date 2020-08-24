@@ -582,6 +582,11 @@ void* input_thread(void* arg)
 					}
 					else if (data->imgData.debugMode == 2)
 					{
+						data->imgData.debugMode = 3;
+						printf("\t debug 3 ON\n");
+					}
+					else if (data->imgData.debugMode == 3)
+					{
 						data->imgData.debugMode = 1;
 						data->imgData.bdebug = !data->imgData.bdebug;
 						printf("\t debug OFF\n");

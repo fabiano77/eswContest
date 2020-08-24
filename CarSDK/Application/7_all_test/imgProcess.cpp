@@ -367,13 +367,13 @@ extern "C" {
 		int thresDistance = 260;//이때부터 값 리턴
 		Scalar upper_yellow(120, 100, 255);
 		Scalar lower_yellow(50, 0, 120);
-
-		/*convert color to hsv*/
+		Mat img_hsv;
+		/* convert color to hsv */
 		cvtColor(srcRGB, img_hsv, COLOR_BGR2HSV);
 		int roi_upY=80;
 		line(dstRGB, Point(0, roi_upY), Point(640, roi_upY), Scalar(0, 0, 255), 2);
 		putText(dstRGB, "ROI Section", Point(15, 80), font,fontScale,Scalar(0,0,255),2);
-		/*roi img and filtering*/
+		/* roi img and filtering */
 		Mat img_roi(img_hsv, Rect(0, 80, 640, 280));// roi 지정(선으로 변화 시킬것)
 		Mat img_filtered;
 		inRange(img_roi, upper_yellow, lower_yellow, img_filtered); //color filtering
@@ -394,7 +394,7 @@ extern "C" {
 		/*line fitting to one*/
 		Vec4f line_fit;
 		if (points_filtered.size() > 0) {
-			fitLine(points_filtered, line_fit, DIST_L2, 0, 0.01, 0.01);
+			fitLine(points_filtered, line_fit,2, 0, 0.01, 0.01);
 			float dydx = line_fit[1] / line_fit[0];
 			/*find point y at x*/
 			Point leftPoint(0, dydx * (0 - line_fit[2]) + line_fit[3]);
@@ -826,7 +826,6 @@ Vec4i ransac_algorithm(vector<Vec4i> lines, vector<Point2i> P, int w, int h, int
 {
 	Vec4i resultLine;
 	int cntMax(-1);
-	int checkCnt(0);
 	for (unsigned int i = 0; i < lines.size(); i++)
 	{
 		int cntInlier = 0;

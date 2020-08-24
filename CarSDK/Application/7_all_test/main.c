@@ -307,7 +307,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 					if (steerVal != 9999)
 					{
 						t_data->controlData.steerVal = 1500 - steerVal;
-						SteeringServoControl_Write(data->controlData.steerVal);
+						SteeringServoControl_Write(t_data->controlData.steerVal);
 
 						t_data->controlData.desireSpeedVal = auto_speedMapping(steerVal, 40);
 					}
@@ -343,7 +343,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				if (steerVal != 9999)
 				{
 					t_data->controlData.steerVal = 1500 - steerVal;
-					SteeringServoControl_Write(data->controlData.steerVal);
+					SteeringServoControl_Write(t_data->controlData.steerVal);
 
 					t_data->controlData.desireSpeedVal = auto_speedMapping(steerVal, 40);
 				}
@@ -474,6 +474,7 @@ void* input_thread(void* arg)
 {
 	struct thr_data* data = (struct thr_data*)arg;
 
+	int total_encoder = 0;
 	char cmd_input[128];
 	char cmd_ready = true;
 
@@ -647,6 +648,29 @@ void* input_thread(void* arg)
 				}
 				printf("Test End.\n");
 			}
+			else if (0 == strncmp(cmd_input, "back", 4))
+			{
+				int init_encoder = 0;
+				int desire_encoder = 0;
+				int on_encoder = 0;
+				printf("Disired Encoder : ");
+				scanf("%d", &desire_encoder);
+				EncoderCounter_Write(init_encoder);
+				DesireSpeed_Write(-40);
+				while (1)
+				{
+					on_encoder = EncoderCounter_Read();
+					if (on_encoder != 65278)
+						printf("encoder : %-3d\n", on_encoder);
+					if (on_encoder >= desire_encoder && on_encoder != 65278)
+					{
+						DesireSpeed_Write(0);
+						break;
+					}
+					usleep(100000);
+				}
+				printf("Total encoder : %d\n", total_encoder);
+			}
 			else
 			{
 				printf("cmd_input:%s \n", cmd_input);
@@ -795,6 +819,8 @@ void* mission_thread(void* arg)
 								{
 								case FIRST_BACKWARD:
 									SteeringServoControl_Write(1000);
+									usleep(500000000);
+									// 100초 대기
 									DesireSpeed_Write(-40);
 									if (DistanceSensor_cm(4) <= 20)
 									{
@@ -970,7 +996,6 @@ void* mission_thread(void* arg)
 				data->missionData.overtakingFlag = true;
 				data->imgData.bwhiteLine = true;
 				bool obstacle = false;
-				int dist_encoder = 0;
 				int thresDistance = 500;
 				/*차량 정지*/
 				DesireSpeed_Write(0);
@@ -1075,7 +1100,6 @@ void* mission_thread(void* arg)
 						}
 						else
 						{ /*STOP이 유지되는 경우 멈춤*/
-							dist_encoder = 0;
 						}
 
 						break;
@@ -1192,7 +1216,7 @@ void* mission_thread(void* arg)
 				/*box filtering*/
 				data->missionData.finishData.checkFront = true;
 				/*encoding을 이용한 전진*/
-				data->missionData.finishData.encodingStart = false;
+				//data->missionData.finishData.encodingStart = false;
 				/*check front signal waiting*/
 				while (data->missionData.finishData.checkFront == true || data->missionData.finishData.distEndLine == -1000) {
 					usleep(500000);
@@ -1388,7 +1412,7 @@ uint32_t timeCheck(struct timeval* tempTime)
 	gettimeofday(&nowTime, NULL);
 
 	uint32_t retVal = ((nowTime.tv_sec - prevTime.tv_sec) * 1000) + ((int)nowTime.tv_usec / 1000 - (int)prevTime.tv_usec / 1000);
-	if (*tempTime.tv_sec == 0) retVal = 0;
+	if ((*tempTime).tv_sec == 0) retVal = 0;
 
 	*tempTime = nowTime;
 

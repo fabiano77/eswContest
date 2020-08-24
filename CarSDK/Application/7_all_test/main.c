@@ -361,7 +361,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65))
 				{
 					printf("Tunnel IN\n");
-					t_data->missionData.btunnel = true;	
+					t_data->missionData.btunnel = true;
 					t_data->imgData.bdark = false;
 				}
 			}
@@ -795,6 +795,10 @@ void* mission_thread(void* arg)
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "Parking");
 				int parking_width = 0;
+				int first_error_distance = 0;
+				int second_error_distance = 0;
+				int first_error_flag = 1;
+
 				enum ParkingState state = FIRST_WALL;
 				enum HorizentalStep step = FIRST_BACKWARD;
 
@@ -862,50 +866,45 @@ void* mission_thread(void* arg)
 						}
 						else if(data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
 						{
-							DesiredDistance(50, 100, 1500);
+							DesiredDistance(30, 75, 1500);
 							while (data->missionData.parkingData.horizontalFlag)
 							{
 								data->missionData.loopTime = timeCheck(&time);
 								switch (step)
 								{
 								case FIRST_BACKWARD:
-									SteeringServoControl_Write(1000);
-									usleep(500000000);
-									// 100초 대기
-									DesireSpeed_Write(-40);
-									if (DistanceSensor_cm(4) <= 20)
-									{
-										DesireSpeed_Write(0);
-										SteeringServoControl_Write(1500);
-										DesireSpeed_Write(-40);
-										if (DistanceSensor_cm(4) <= 7)
-										{
-											step = FIRST_FORWARD;
-											DesireSpeed_Write(0);
-										}
-									}
-									break;
-
-								case FIRST_FORWARD:
-									DesiredDistance(50, 700, 1350);
+									first_error_flag = 1;
+									EncoderCounter_Write(0);
+									DesiredDistance(-30, 850, 1100);
+									first_error_distance = EncoderCounter_Read();
+									EncoderCounter_Write(0);
+									DesiredDistance(-30, 180, 1500);
+									second_error_distance = EncoderCounter_Read();
 									step = SECOND_BACKWARD;
 									break;
 
 								case SECOND_BACKWARD:
-									SteeringServoControl_Write(2000);
-									DesireSpeed_Write(-40);
-									if (DistanceSensor_cm(4) <= 6 && DistanceSensor_cm(3) <= 6 && DistanceSensor_cm(2) <= 6)
+									if (DistanceSensor_cm(4) <= 4 && first_error_flag)
 									{
-										DesireSpeed_Write(0);
-										usleep(3000000);
-										step = SECOND_FORWARD;
+										DesiredDistance(30, (second_error_distance - 30), 1500);
+										DesiredDistance(30, (first_error_distance - 30), 1100);
+										// Error 발생 시 다시 초기 상태로 만들어 주기 위한 구문
+										step = FIRST_BACKWARD;
 									}
+									first_error_flag = 0;
+									DesiredDistance(-30, 350, 2000);
+									step = FIRST_FORWARD;
+									break;
+
+								case FIRST_FORWARD:
+									DesiredDistance(30, 250, 1000);
+									step = SECOND_FORWARD;
 									break;
 
 								case SECOND_FORWARD:
-									DesiredDistance(30, 600, 1800);
-									buzzer(2, 200000, 200000);
-									usleep(3000000);
+									DesiredDistance(-30, 150, 1200);
+									DesiredDistance(30, 350, 1800);
+									DesiredDistance(30, 150, 1500);
 									step = FINISH;
 									break;
 
@@ -955,8 +954,8 @@ void* mission_thread(void* arg)
 
 				frontLightOnOff(data->controlData.lightFlag, true);
 				sprintf(data->imgData.missionString, "tunnel IN");
-
 				bool ENDFLAG = Tunnel_isEnd(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5));
+
 				while (ENDFLAG)
 				{
 					data->missionData.loopTime = timeCheck(&time);
@@ -1040,6 +1039,7 @@ void* mission_thread(void* arg)
 			{
 				data->imgData.btopview = false; //topview off
 				data->imgData.bmission = true;	//영상처리 X
+				data->imgData.bwhiteLine = true; // 흰색 직선 O
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "overtake");
 				printf("overtake \n");
@@ -1113,7 +1113,7 @@ void* mission_thread(void* arg)
 							{
 								sprintf(data->imgData.missionString, "Detect Error");
 								/*정지, 후진 및 방향 전환*/
-								DesiredDistance(-50, thresDistance, 1900);
+								DesiredDistance(-50, thresDistance, 1100);
 								/*정지 및 방향 전환 명령*/
 								data->missionData.overtakingData.headingDirection = LEFT;
 							}
@@ -1146,7 +1146,7 @@ void* mission_thread(void* arg)
 							{
 								/*정지, 후진 및 방향 전환*/
 								sprintf(data->imgData.missionString, "Detect Error");
-								DesiredDistance(-50, thresDistance, 1100);
+								DesiredDistance(-50, thresDistance, 1900);
 								/*정지 후 방향 전환 명령*/
 								data->missionData.overtakingData.headingDirection = RIGHT;
 							}
@@ -1301,6 +1301,18 @@ void* mission_thread(void* arg)
 				data->imgData.bmission = false;
 				data->imgData.bprintString = false;
 			}
+		}
+
+		if(true)
+		{
+			start = data->missionData.ms[0];
+			flyover =  data->missionData.ms[1];
+			parking =  data->missionData.ms[2];
+			tunnel =  data->missionData.ms[3];
+			roundabout =  data->missionData.ms[4];
+			overtake =  data->missionData.ms[5];
+			signalLight =  data->missionData.ms[6];
+			finish =  data->missionData.ms[7];
 		}
 
 		usleep(200000);

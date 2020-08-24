@@ -19,6 +19,9 @@ int STOP_WhiteLine(int Lineflag);
 void DesiredDistance(int SettingSpeed, int SettingDistance, int SettingSteering);
 // Postcondition : SettingSpeed의 속도(양수는 전진, 음수는 후진)로 SettingDistance의 step 만큼 움직인다.
 
+void onlyDistance(int SettingSpeed, int SettingDistance);
+//ds
+
 int RoundAbout_isStart(const int Distance1);
 // Return : 앞에 차량이 지나갈 경우 일정 프레임 후 출발하며 1을 반환한다.
 

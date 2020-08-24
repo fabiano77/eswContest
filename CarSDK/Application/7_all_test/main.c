@@ -1129,7 +1129,6 @@ void* mission_thread(void* arg)
 				sprintf(data->imgData.missionString, "round about");
 				printf("roundabout IN\n");
 				int speed = 40;
-				bool delay = false;
 
 				DesireSpeed_Write(0);
 				data->imgData.bspeedControl = false;

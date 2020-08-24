@@ -348,9 +348,9 @@ extern "C" {
 			}
 		}
 
-		if ((flag_steer[i] == 2) && (Distance1 < Distance2)) {
+		if (flag_steer[i] == 2) {
 			flag_steer[i] = 0;
-			steerVal = -steerVal;
+			if (Distance1 < Distance2) steerVal = -steerVal;
 		}
 		for (int j = 0; j < 5; j++) {
 			if ((flag_steer[j] > 0) && (j != i))

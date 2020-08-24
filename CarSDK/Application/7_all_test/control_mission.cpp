@@ -113,14 +113,23 @@ extern "C" {
 		if (SettingSpeed < 0)	CarLight_Write(0x02);
 		while (1)
 		{
-			if (DistanceSensor_cm(1) <= 7 && SettingSpeed > 0) {
-				DesireSpeed_Write(0);
-				break;
+			if (SettingSpeed > 0)
+			{
+				//정면 충돌 감지
+				if (DistanceSensor_cm(1) <= 5 ) {
+					DesireSpeed_Write(0);
+					break;
+				}
 			}
-			if (DistanceSensor_cm(4) <= 7 && SettingSpeed < 0) {
-				DesireSpeed_Write(0);
-				break;
+			else
+			{
+				//후면 충돌 감지
+				if (DistanceSensor_cm(4) <= 5 ) {
+					DesireSpeed_Write(0);
+					break;
+				}
 			}
+
 
 			on_encoder = abs(EncoderCounter_Read());
 			if (on_encoder != 65278)
@@ -132,7 +141,7 @@ extern "C" {
 					break;
 				}
 			}
-			usleep(100000);
+			usleep(50000); // 50ms
 		}
 		if (SettingSpeed < 0)	CarLight_Write(0x00);
 	}

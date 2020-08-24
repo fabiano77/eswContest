@@ -69,7 +69,9 @@ enum HorizontalStep
 	FIRST_FORWARD,
 	SECOND_BACKWARD,
 	SECOND_FORWARD,
-	ESCAPE
+	ESCAPE,
+	ESCAPE_2,
+	ESCAPE_3
 };
 
 enum VerticalStep
@@ -915,7 +917,7 @@ void* mission_thread(void* arg)
 
 						if (data->missionData.parkingData.verticalFlag && data->missionData.parkingData.horizontalFlag == false)
 						{
-							DesiredDistance(30, 200, 1500);
+							DesiredDistance(30, 170, 1500);
 							while (data->missionData.parkingData.verticalFlag)
 							{
 								data->missionData.loopTime = timeCheck(&time);
@@ -993,26 +995,28 @@ void* mission_thread(void* arg)
 									if (DistanceSensor_cm(4) <= 5 && first_error_flag)
 									{
 										sprintf(data->imgData.missionString, "ERROR");
+										DesireSpeed_Write(0);
+										usleep(200000);
 										DesiredDistance(30, (second_error_distance - 30), 1500);
+										usleep(200000);
 										DesiredDistance(30, (first_error_distance - 30), 1110);
+										usleep(200000);
 										// Error 발생 시 다시 초기 상태로 만들어 주기 위한 구문
 										step_h = FIRST_BACKWARD;
 									}
 									first_error_flag = 0;
-									DesiredDistance(-30, 400, 1950);
+									DesiredDistance(-23, 200, 1900);
 									usleep(200000);
-									SteeringServoControl_Write(1110);
-									usleep(200000);
-									DesireSpeed_Write(23);
+									DesiredDistance(23, 200, 1100);
 									usleep(200000);
 									sprintf(data->imgData.missionString, "2nd_ d1=%d, d2=%d, d3=%d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2) || DistanceSensor_cm(1) <= 5) 
+									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 3) || DistanceSensor_cm(1) <= 5) 
 									{
 										sprintf(data->imgData.missionString, "sibal_ d1=%d, d2=%d, d3=%d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
 										DesireSpeed_Write(0);
 										usleep(200000);
 										SteeringServoControl_Write(1500);
-										usleep(5000000);
+										usleep(3000000);
 										step_h = SECOND_FORWARD;
 										Winker_Write(ALL_ON);
 										buzzer(2, 500000, 500000);
@@ -1027,45 +1031,53 @@ void* mission_thread(void* arg)
 
 								case SECOND_FORWARD:
 									sprintf(data->imgData.missionString, "SECOND_FORWARD");
-									while (1) {
-										if (DistanceSensor_cm(1) - DistanceSensor_cm(4) > 2)
-											DesiredDistance(20, 50, 1500);
-										else if (DistanceSensor_cm(1) - DistanceSensor_cm(4) < -2)
-											DesiredDistance(-20, 50, 1500);
-										else break;
-									}
-									SteeringServoControl_Write(1800);
-									usleep(400000);
-									DesireSpeed_Write(25);
+									DesireSpeed_Write(-20);
 									usleep(200000);
-									DesireSpeed_Write(0);
-									usleep(200000);
-									SteeringServoControl_Write(1200);
-									usleep(400000);
-									DesireSpeed_Write(-25);
-									usleep(200000);
-									if (DistanceSensor_cm(1) == 30) {
-										sprintf(data->imgData.missionString, "F = %d, B = %d", DistanceSensor_cm(1), DistanceSensor_cm(4));
+									if (DistanceSensor_cm(4) <= 5) {
+										DesireSpeed_Write(0);
+										SteeringServoControl_Write(1630);
+										usleep(500000);
 										step_h = ESCAPE;
 									}
 									break;
 
 								case ESCAPE:
 									sprintf(data->imgData.missionString, "ESCAPE");
+									DesireSpeed_Write(20);
+									usleep(100000);
+									if (DistanceSensor_cm(1) <= 5) {
+										DesireSpeed_Write(0);
+										SteeringServoControl_Write(1500);
+										usleep(500000);
+										step_h = ESCAPE_2;
+									}
+									break;
+
+								case ESCAPE_2:
+									sprintf(data->imgData.missionString, "ESCAPE_2");
 									DesireSpeed_Write(-20);
 									usleep(100000);
-									if (DistanceSensor_cm(4) <= 7) {
+									if (DistanceSensor_cm(4) <= 5 || DistanceSensor_cm(3) <= 5) {
 										DesireSpeed_Write(0);
+										SteeringServoControl_Write(1900);
+										usleep(500000);
+										step_h = FINISH;
 									}
+									data->missionData.parkingData.horizontalFlag = 0;
+									break;
+
+								case ESCAPE_3:
+									sprintf(data->imgData.missionString, "ESCAPE_3");
+									DesiredDistance(20, 500, 1900);
+									step_h = FINISH;
 									break;
 
 								case FINISH:
 									sprintf(data->imgData.missionString, "FINISH");
-									DesiredDistance(25, 300, 1800);
-									usleep(200000);
-									DesiredDistance(25, 500, 1200);
+									DesiredDistance(20, 500, 1100);
 									data->missionData.parkingData.horizontalFlag = 0;
 									break;
+
 
 								default:
 									break;

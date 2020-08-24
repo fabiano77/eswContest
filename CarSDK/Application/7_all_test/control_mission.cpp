@@ -115,11 +115,12 @@ extern "C" {
 
 	void DesiredDistance(int SettingSpeed, int SettingDistance, int SettingSteering)
 	{
+		DesireSpeed_Write(0);
 		int init_encoder = 0;
 		int on_encoder = 0;
 		EncoderCounter_Write(init_encoder);
 		SteeringServoControl_Write(SettingSteering);
-		usleep(50000);
+		usleep(500000);
 		DesireSpeed_Write(SettingSpeed);
 		if (SettingSpeed < 0)	CarLight_Write(0x02);
 		while (1)

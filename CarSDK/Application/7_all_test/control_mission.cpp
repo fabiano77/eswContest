@@ -281,75 +281,46 @@ extern "C" {
 		// ���� 19 , ���� 40
 		// �߾��� 10, 10�� ���;���
 		absDist = abs(Distance1 - Distance2);
-
+		int i;
 		if (absDist < 2) {
-			if (flag_steer[0] == 2) {
+			i = 0;
+			if (++flag_steer[0] == 2) {
 				steerVal = 0;
-				flag_steer[0] = 0;
-			}
-			flag_steer[0]++;
-			for (i = 0; i < 5; i++) {
-				if ((flag_steer[i] > 0) && (i != 0))
-					flag_steer[i]--;
 			}
 		}
 		else if (absDist < 4) {
-			if (flag_steer[1] == 2) {
+			i = 1;
+			if (++flag_steer[1] == 2) {
 				steerVal = 80;
-				flag_steer[1] = 0;
-				if (Distance1 < Distance2) {
-					steerVal = -steerVal;
-				}
-			}
-			flag_steer[1]++;
-			for (i = 0; i < 5; i++) {
-				if ((flag_steer[i] > 0) && (i != 1))
-					flag_steer[i]--;
 			}
 		}
 		else if (absDist < 6) {
-			if (flag_steer[2] == 2) {
+			i = 2;
+			if (++flag_steer[2] == 2) {
 				steerVal = 180;
-				flag_steer[2] = 0;
-				if (Distance1 < Distance2) {
-					steerVal = -steerVal;
-				}
-			}
-			flag_steer[2]++;
-			for (i = 0; i < 5; i++) {
-				if ((flag_steer[i] > 0) && (i != 2))
-					flag_steer[i]--;
 			}
 		}
 		else if (absDist < 8) {
-			if (flag_steer[3] == 2) {
+			i = 3;
+			if (++flag_steer[3] == 2) {
 				steerVal = 300;
-				flag_steer[3] = 0;
-				if (Distance1 < Distance2) {
-					steerVal = -steerVal;
-				}
-			}
-			flag_steer[3]++;
-			for (i = 0; i < 5; i++) {
-				if ((flag_steer[i] > 0) && (i != 3))
-					flag_steer[i]--;
 			}
 		}
 		else {
-			if (flag_steer[4] == 2) {
+			i = 4;
+			if (++flag_steer[4] == 2) {
 				steerVal = 420;
-				flag_steer[4] = 0;
-				if (Distance1 < Distance2) {
-					steerVal = -steerVal;
-				}
-			}
-			flag_steer[4]++;
-			for (i = 0; i < 5; i++) {
-				if ((flag_steer[i] > 0) && (i != 4))
-					flag_steer[i]--;
 			}
 		}
-		
+
+		if ((flag_steer[i] == 2) && (Distance1 < Distance2)) {
+			flag_steer[i] = 0;
+			steerVal = -steerVal;
+		}
+		for (int j = 0; j < 5; j++) {
+			if ((flag_steer[j] > 0) && (j != i))
+				flag_steer[j]--;
+		}
 		return 1500 - steerVal;
 	}
 

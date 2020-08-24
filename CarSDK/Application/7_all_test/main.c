@@ -956,7 +956,7 @@ void* mission_thread(void* arg)
 				sprintf(data->imgData.missionString, "tunnel IN");
 				bool ENDFLAG = Tunnel_isEnd(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5));
 
-				while (ENDFLAG)
+				while (!ENDFLAG)
 				{
 					data->missionData.loopTime = timeCheck(&time);
 					steerVal = Tunnel_SteerVal(DistanceSensor_cm(2), DistanceSensor_cm(6));

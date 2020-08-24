@@ -127,6 +127,7 @@ struct MissionData
 	struct Parking parkingData;		  // 주차에 필요한 플래그를 담는 구조체
 	struct Overtaking overtakingData; //추월에 필요한 플래그 담는 구조체
 	struct Finish finishData;
+	enum MissionState ms[8]; //
 };
 
 struct ControlData
@@ -360,7 +361,8 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65))
 				{
 					printf("Tunnel IN\n");
-					t_data->missionData.btunnel = true;					
+					t_data->missionData.btunnel = true;	
+					t_data->imgData.bdark = false;
 				}
 			}
 		}
@@ -667,10 +669,8 @@ void* input_thread(void* arg)
 
 					if (on_encoder != 65278)
 						printf("encoder : %-3d\n", on_encoder);
-=======
 					//if (on_encoder != 65278)
 					//	printf("encoder : %-3d\n", on_encoder);
->>>>>>> 5c2b2009167a4c016d8ce9370a1dcd7950465df4
 					if (on_encoder >= desire_encoder && on_encoder != 65278)
 					{
 						DesireSpeed_Write(0);
@@ -681,6 +681,46 @@ void* input_thread(void* arg)
 					usleep(300000);
 				}
 				printf("Total Back encoder : %d\n", total_encoder);
+			}
+			else if (0 == strncmp(cmd_input, "ms", 2)) {
+				int num;
+				printf("0. start \n");
+				printf("1. fly over \n");
+				printf("2. parking \n");
+				printf("3. round about \n");
+				printf("4. tunnel \n");
+				printf("5. overtake \n");
+				printf("6. signal light \n");
+				printf("7. finish \n");
+				scanf("%d", &num);
+				switch (num) {
+				case 0:
+					data->missionData.ms[0] = READY;
+					break;
+				case 1:
+					data->missionData.ms[1] = READY;
+					break;
+				case 2:
+					data->missionData.ms[2] = READY;
+					break;
+				case 3:
+					data->missionData.ms[3] = READY;
+					break;
+				case 4:
+					data->missionData.ms[4] = READY;
+					break;
+				case 5:
+					data->missionData.ms[5] = READY;
+					break;
+				case 6:
+					data->missionData.ms[6] = READY;
+					break;
+				case 7:
+					data->missionData.ms[7] = READY;
+					break;
+				default:
+					break;
+				}
 			}
 			else
 			{
@@ -705,7 +745,7 @@ void* mission_thread(void* arg)
 
 	enum MissionState start = NONE;
 	enum MissionState flyover = NONE;
-	enum MissionState parking = READY;
+	enum MissionState parking = NONE;
 	enum MissionState roundabout = NONE;
 	enum MissionState tunnel = NONE;
 	enum MissionState overtake = NONE;
@@ -909,24 +949,26 @@ void* mission_thread(void* arg)
 			{
 				int steerVal;
 				data->imgData.bmission = true;
-				data->imgData.bdark = false;
 				data->imgData.bprintString = true;
 
 				frontLightOnOff(data->controlData.lightFlag, true);
+				sprintf(data->imgData.missionString, "tunnel IN");
 
-				while (Tunnel_isEnd(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5)))
+				bool ENDFLAG = Tunnel_isEnd(DistanceSensor_cm(6), DistanceSensor_cm(2), DistanceSensor_cm(5), DistanceSensor_cm(3));
+				while (ENDFLAG)
 				{
 					data->missionData.loopTime = timeCheck(&time);
-					steerVal = Tunnel_SteerVal(DistanceSensor_cm(2), DistanceSensor_cm(6));
+					steerVal = Tunnel_SteerVal(DistanceSensor_cm(6), DistanceSensor_cm(2));
 					SteeringServoControl_Write(steerVal);
+					ENDFLAG = Tunnel_isEnd(DistanceSensor_cm(6), DistanceSensor_cm(2), DistanceSensor_cm(5), DistanceSensor_cm(3));
 					usleep(100000);
 				}
 				DesireSpeed_Write(0);
-				printf("tunnel_OFF\n");
+				printf("Tunnel OUT\n");
 
 				frontLightOnOff(data->controlData.lightFlag, false);
-				
-				data->imgData.bmission = false;				
+
+				data->imgData.bmission = false;
 				usleep(1500000);
 
 				DesireSpeed_Write(40);

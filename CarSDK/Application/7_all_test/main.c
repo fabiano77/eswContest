@@ -361,7 +361,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65))
 				{
 					printf("Tunnel IN\n");
-					t_data->missionData.btunnel = true;	
+					t_data->missionData.btunnel = true;
 					t_data->imgData.bdark = false;
 				}
 			}
@@ -798,6 +798,7 @@ void* mission_thread(void* arg)
 				int first_error_distance = 0;
 				int second_error_distance = 0;
 				int first_error_flag = 1;
+
 				enum ParkingState state = FIRST_WALL;
 				enum HorizentalStep step = FIRST_BACKWARD;
 
@@ -949,12 +950,13 @@ void* mission_thread(void* arg)
 			{
 				int steerVal;
 				data->imgData.bmission = true;
+				data->imgData.bdark = false;
 				data->imgData.bprintString = true;
 
 				frontLightOnOff(data->controlData.lightFlag, true);
 				sprintf(data->imgData.missionString, "tunnel IN");
+				bool ENDFLAG = Tunnel_isEnd(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5));
 
-				bool ENDFLAG = Tunnel_isEnd(DistanceSensor_cm(6), DistanceSensor_cm(2), DistanceSensor_cm(5), DistanceSensor_cm(3));
 				while (ENDFLAG)
 				{
 					data->missionData.loopTime = timeCheck(&time);
@@ -964,7 +966,7 @@ void* mission_thread(void* arg)
 					usleep(100000);
 				}
 				DesireSpeed_Write(0);
-				printf("Tunnel OUT\n");
+				printf("tunnel_OFF\n");
 
 				frontLightOnOff(data->controlData.lightFlag, false);
 
@@ -1038,6 +1040,7 @@ void* mission_thread(void* arg)
 			{
 				data->imgData.btopview = false; //topview off
 				data->imgData.bmission = true;	//영상처리 X
+				data->imgData.bwhiteLine = true; // 흰색 직선 O
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "overtake");
 				printf("overtake \n");
@@ -1111,7 +1114,7 @@ void* mission_thread(void* arg)
 							{
 								sprintf(data->imgData.missionString, "Detect Error");
 								/*정지, 후진 및 방향 전환*/
-								DesiredDistance(-50, thresDistance, 1900);
+								DesiredDistance(-50, thresDistance, 1100);
 								/*정지 및 방향 전환 명령*/
 								data->missionData.overtakingData.headingDirection = LEFT;
 							}
@@ -1144,7 +1147,7 @@ void* mission_thread(void* arg)
 							{
 								/*정지, 후진 및 방향 전환*/
 								sprintf(data->imgData.missionString, "Detect Error");
-								DesiredDistance(-50, thresDistance, 1100);
+								DesiredDistance(-50, thresDistance, 1900);
 								/*정지 후 방향 전환 명령*/
 								data->missionData.overtakingData.headingDirection = RIGHT;
 							}

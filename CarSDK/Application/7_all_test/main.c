@@ -68,8 +68,7 @@ enum HorizontalStep
 	FIRST_BACKWARD,
 	FIRST_FORWARD,
 	SECOND_BACKWARD,
-	SECOND_FORWARD,
-	ESCAPE
+	SECOND_FORWARD
 };
 
 enum VerticalStep
@@ -969,7 +968,7 @@ void* mission_thread(void* arg)
 						}
 						else if (data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
 						{
-							DesiredDistance(30, 75, 1500);
+							DesiredDistance(30, 50, 1500);
 							while (data->missionData.parkingData.horizontalFlag)
 							{
 								data->missionData.loopTime = timeCheck(&time);
@@ -983,7 +982,7 @@ void* mission_thread(void* arg)
 									first_error_distance = EncoderCounter_Read();
 									EncoderCounter_Write(0);
 									usleep(200000);
-									DesiredDistance(-30, 330, 1500);
+									DesiredDistance(-30, 250, 1500);
 									second_error_distance = EncoderCounter_Read();
 									step_h = SECOND_BACKWARD;
 									break;
@@ -1002,21 +1001,15 @@ void* mission_thread(void* arg)
 									DesiredDistance(-30, 400, 1950);
 									usleep(200000);
 									SteeringServoControl_Write(1110);
-									usleep(200000);
-									DesireSpeed_Write(23);
-									usleep(200000);
+									DesireSpeed_Write(25);
 									sprintf(data->imgData.missionString, "2nd_ d1=%d, d2=%d, d3=%d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2) || DistanceSensor_cm(1) <= 5) 
-									{
+									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2) || DistanceSensor_cm(1) <= 5) {
 										sprintf(data->imgData.missionString, "sibal_ d1=%d, d2=%d, d3=%d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
 										DesireSpeed_Write(0);
-										usleep(200000);
-										SteeringServoControl_Write(1500);
 										usleep(5000000);
 										step_h = SECOND_FORWARD;
 										Winker_Write(ALL_ON);
 										buzzer(2, 500000, 500000);
-										Winker_Write(ALL_OFF);
 										break;
 									}
 
@@ -1027,44 +1020,14 @@ void* mission_thread(void* arg)
 
 								case SECOND_FORWARD:
 									sprintf(data->imgData.missionString, "SECOND_FORWARD");
-									while (1) {
-										if (DistanceSensor_cm(1) - DistanceSensor_cm(4) > 2)
-											DesiredDistance(20, 50, 1500);
-										else if (DistanceSensor_cm(1) - DistanceSensor_cm(4) < -2)
-											DesiredDistance(-20, 50, 1500);
-										else break;
-									}
-									SteeringServoControl_Write(1800);
-									usleep(400000);
-									DesireSpeed_Write(25);
-									usleep(200000);
-									DesireSpeed_Write(0);
-									usleep(200000);
-									SteeringServoControl_Write(1200);
-									usleep(400000);
-									DesireSpeed_Write(-25);
-									usleep(200000);
-									if (DistanceSensor_cm(1) == 30) {
-										sprintf(data->imgData.missionString, "F = %d, B = %d", DistanceSensor_cm(1), DistanceSensor_cm(4));
-										step_h = ESCAPE;
-									}
-									break;
+									DesiredDistance(-25, 300, 1110);
+									DesiredDistance(25, 500, 1800);
 
-								case ESCAPE:
-									sprintf(data->imgData.missionString, "ESCAPE");
-									DesireSpeed_Write(-20);
-									usleep(100000);
-									if (DistanceSensor_cm(4) <= 7) {
-										DesireSpeed_Write(0);
-									}
+									step_h = FINISH;
+									data->missionData.parkingData.horizontalFlag = 0;
 									break;
 
 								case FINISH:
-									sprintf(data->imgData.missionString, "FINISH");
-									DesiredDistance(25, 300, 1800);
-									usleep(200000);
-									DesiredDistance(25, 500, 1200);
-									data->missionData.parkingData.horizontalFlag = 0;
 									break;
 
 								default:
@@ -1178,7 +1141,7 @@ void* mission_thread(void* arg)
 						if (RoundAbout_isStart(DistanceSensor_cm(1)))
 						{
 							sprintf(data->imgData.missionString, "ROUND_GO_1-1");
-							printf("go\n");
+							printf("ROUND_GO_1-1\n");
 
 							state = ROUND_GO_1;
 						}
@@ -1186,12 +1149,16 @@ void* mission_thread(void* arg)
 
 					case ROUND_GO_1:
 						data->imgData.bmission = true;
-						DesiredDistance(speed, 400, 1500); //앞 센서 받아오면서 일정거리 가는 함수 추가.
+						DesiredDistance(speed, 600, 1500); //앞 센서 받아오면서 일정거리 가는 함수 추가.
 						sprintf(data->imgData.missionString, "ROUND_GO_1-2");
+						printf("ROUND_GO_1_2\n");
+						usleep(100000);
+
 						data->imgData.bmission = false;
-						onlyDistance(speed, 600);
+						onlyDistance(speed, 900);
 						state = ROUND_STOP;
 						sprintf(data->imgData.missionString, "ROUND_STOP");
+						printf("ROUND_STOP\n");
 						break;
 
 					case ROUND_STOP:
@@ -1200,12 +1167,12 @@ void* mission_thread(void* arg)
 							data->imgData.bmission = false;
 							DesireSpeed_Write(speed);
 							sprintf(data->imgData.missionString, "ROUND_GO_2");
+							printf("ROUND_GO_2\n");
 							state = ROUND_GO_2;
 						}
 						break;
 
 					case ROUND_GO_2:
-
 						if (DistanceSensor_cm(4) <= 20)
 						{
 							printf("speed up \n");
@@ -1227,6 +1194,7 @@ void* mission_thread(void* arg)
 
 					case DONE_R:
 						break;
+
 					}
 					usleep(100000);
 				}
@@ -1253,6 +1221,7 @@ void* mission_thread(void* arg)
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "overtake");
 				printf("overtake \n");
+				bool farFront = false;
 				enum OvertakeState state = FRONT_DETECT;
 				data->missionData.overtakingData.headingDirection = STOP;
 				data->missionData.overtakingFlag = true;
@@ -1272,7 +1241,7 @@ void* mission_thread(void* arg)
 						sprintf(data->imgData.missionString, "Front Detect");
 						if (data->missionData.overtakingData.headingDirection == STOP)
 						{
-							data->controlData.cameraY = 1550;
+							data->controlData.cameraY = 1610;
 							CameraYServoControl_Write(data->controlData.cameraY);
 							data->missionData.overtakingData.updownCamera = CAMERA_UP;
 						}
@@ -1304,20 +1273,27 @@ void* mission_thread(void* arg)
 							DesiredDistance(50, thresDistance, 1100);
 							Winker_Write(ALL_OFF);
 							/*thresDistance이상 가서 전방 거리 재확인*/
-							if (DistanceSensor_cm(1) < 20)
+							if (DistanceSensor_cm(1) < 30)
+							{
+								farFront = false;
+							}
+							else
+							{
+								farFront = true; /*전방 미탐지*/
+							}
+							/*전진하는 동안 전방 센서가 30 이상 멀어지면 SIDE_ON으로 진행*/
+							if (farFront == true)
+							{
+								state = SIDE_ON;
+								DesireSpeed_Write(50);
+							}
+							else
 							{
 								sprintf(data->imgData.missionString, "Detect Error");
 								/*정지, 후진 및 방향 전환*/
 								DesiredDistance(-50, thresDistance, 1100);
 								/*정지 및 방향 전환 명령*/
 								data->missionData.overtakingData.headingDirection = LEFT;
-							}
-							else
-							{
-							/*전진하는 동안 전방 센서가 30 이상 멀어지면 SIDE_ON으로 진행*/
-								/*전방 미탐지*/
-								state = SIDE_ON;
-								DesireSpeed_Write(50);
 							}
 						}
 						else if (data->missionData.overtakingData.headingDirection == LEFT &&
@@ -1330,20 +1306,27 @@ void* mission_thread(void* arg)
 							DesiredDistance(50, thresDistance, 1900);
 							Winker_Write(ALL_OFF);
 							/*thresDistance이상 가서 전방 거리 재확인*/
-							if (DistanceSensor_cm(1) < 20)
+							if (DistanceSensor_cm(1) < 30)
+							{
+								farFront = false;
+							}
+							else
+							{
+								farFront = true;
+							}
+							/*전진하는 동안 전방 센서가 30 이상 멀어지면 SIDE_ON으로 진행*/
+							if (farFront == true)
+							{
+								state = SIDE_ON;
+								DesireSpeed_Write(50);
+							}
+							else
 							{
 								/*정지, 후진 및 방향 전환*/
 								sprintf(data->imgData.missionString, "Detect Error");
 								DesiredDistance(-50, thresDistance, 1900);
 								/*정지 후 방향 전환 명령*/
 								data->missionData.overtakingData.headingDirection = RIGHT;
-							}
-							else
-							{
-								/*전진하는 동안 전방 센서가 30 이상 멀어지면 SIDE_ON으로 진행*/
-								
-								state = SIDE_ON;
-								DesireSpeed_Write(50);
 							}
 						}
 						else
@@ -1379,7 +1362,7 @@ void* mission_thread(void* arg)
 						else if (data->missionData.overtakingData.headingDirection == LEFT)
 						{
 							/*장애물 통과 확인*/
-							if (DistanceSensor_cm(2) < 30 && DistanceSensor_cm(3) < 30)
+							if (DistanceSensor_cm(2) < 30 && DistanceSensor_cm(2) < 30)
 							{
 								obstacle = true;
 							}

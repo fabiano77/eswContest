@@ -68,7 +68,8 @@ enum HorizontalStep
 	FIRST_BACKWARD,
 	FIRST_FORWARD,
 	SECOND_BACKWARD,
-	SECOND_FORWARD
+	SECOND_FORWARD,
+	ESCAPE
 };
 
 enum VerticalStep
@@ -1006,10 +1007,13 @@ void* mission_thread(void* arg)
 									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2) || DistanceSensor_cm(1) <= 5) {
 										sprintf(data->imgData.missionString, "sibal_ d1=%d, d2=%d, d3=%d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
 										DesireSpeed_Write(0);
+										usleep(200000);
+										SteeringServoControl_Write(1500);
 										usleep(5000000);
 										step_h = SECOND_FORWARD;
 										Winker_Write(ALL_ON);
 										buzzer(2, 500000, 500000);
+										Winker_Write(ALL_OFF);
 										break;
 									}
 
@@ -1019,15 +1023,39 @@ void* mission_thread(void* arg)
 									//	break;
 
 								case SECOND_FORWARD:
-									sprintf(data->imgData.missionString, "SECOND_FORWARD");
-									DesiredDistance(-25, 300, 1110);
-									DesiredDistance(25, 500, 1800);
+									while (1) {
+										if (DistanceSensor_cm(1) - DistanceSensor_cm(4) > 1)
+											DesiredDistance(20, 50, 1500);
+										else if (DistanceSensor_cm(1) - DistanceSensor_cm(4) < 1)
+											DesiredDistance(-20, 50, 1500);
+										else break;
+									}
+									SteeringServoControl_Write(1200);
+									usleep(200000);
+									DesireSpeed_Write(25);
+									usleep(200000);
+									SteeringServoControl_Write(1800);
+									usleep(200000);
+									DesireSpeed_Write(-25);
+									usleep(200000);
+									if (DistanceSensor_cm(1) == 30) {
+										sprintf(data->imgData.missionString, "F = %d, B = %d", DistanceSensor_cm(1), DistanceSensor_cm(4));
+										step_h = ESCAPE;
+									}
+									break;
 
-									step_h = FINISH;
-									data->missionData.parkingData.horizontalFlag = 0;
+								case ESCAPE:
+									DesireSpeed_Write(-20);
+									usleep(100000);
+									if (DistanceSensor_cm(4) <= 7) {
+										DesireSpeed_Write(0);
+									}
 									break;
 
 								case FINISH:
+									DesiredDistance(25, 300, 1800);
+									DesiredDistance(25, 500, 1200);
+									data->missionData.parkingData.horizontalFlag = 0;
 									break;
 
 								default:

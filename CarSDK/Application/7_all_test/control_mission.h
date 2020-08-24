@@ -14,6 +14,8 @@ int sensor_dist(int channel, int input);
 int StopLine(int Lineflag);
 // Return : Lineflag보다 1로 감지된 값이 더 크면 정지선을 감지한 것으로 판단하고 true를 반환한다.
 
+int STOP_WhiteLine(int Lineflag);
+
 void DesiredDistance(int SettingSpeed, int SettingDistance, int SettingSteering);
 // Postcondition : SettingSpeed의 속도(양수는 전진, 음수는 후진)로 SettingDistance의 step 만큼 움직인다.
 

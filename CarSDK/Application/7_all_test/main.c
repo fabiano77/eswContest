@@ -1125,14 +1125,13 @@ void* mission_thread(void* arg)
 
 		if (roundabout)
 		{
-			if (StopLine(4))
+			if (STOP_WhiteLine(4))
 			{
 				data->imgData.bwhiteLine = true;
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "round about");
 				printf("roundabout IN\n");
 				int speed = 40;
-				bool delay = false;
 
 				DesireSpeed_Write(0);
 				data->imgData.bspeedControl = false;

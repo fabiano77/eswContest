@@ -19,13 +19,14 @@
 #include "car_lib.h"
 
  ///////////////////////////////////////////////////////////////////////////////////
-
+int flag_line;
 int flag_go, flag_wait, flag_stop, flag_end;
 int check_start;
 int lower_RoundDistance = 20;
 int uper_RoundDistance = 30;
 int THR_RoundAbout_END = 80;
 int first_RoundAbout = 0;
+int first_Line = 0;
 
 void RoundAbout_Init();
 
@@ -87,18 +88,27 @@ extern "C" {
 		int i;
 		for (i = 0; i < 8; i++)
 		{
-			if ((i % 4) == 0)
-				if ((sensor & byte)) { // 1
-
-				}
-				else { // 0
-					flag++;
-				}
+			if (!(sensor & byte)) 	flag++;			
 			sensor = sensor << 1;
 		}
 		if (flag > Lineflag) {
-
 			return 1;
+		}
+		return 0;
+	}
+
+	int STOP_WhiteLine(int Lineflag) {
+		if (!first_Line++) flag_line = 0;
+
+		if (StopLine(Lineflag)) {
+			flag_line++;
+			if (flag_line > 2) {
+				flag_line = 0;
+				return 1;
+			}
+		}
+		else {
+			if(flag_line > 0) flag_line--;
 		}
 		return 0;
 	}
@@ -339,9 +349,9 @@ extern "C" {
 			}
 		}
 
-		if ((flag_steer[i] == 2) && (Distance1 < Distance2)) {
+		if (flag_steer[i] == 2) {
 			flag_steer[i] = 0;
-			steerVal = -steerVal;
+			if (Distance1 < Distance2) steerVal = -steerVal;
 		}
 		for (int j = 0; j < 5; j++) {
 			if ((flag_steer[j] > 0) && (j != i))

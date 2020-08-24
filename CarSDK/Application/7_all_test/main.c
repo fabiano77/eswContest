@@ -489,6 +489,7 @@ void* input_thread(void* arg)
 {
 	struct thr_data* data = (struct thr_data*)arg;
 
+	int total_encoder = 0;
 	char cmd_input[128];
 	char cmd_ready = true;
 
@@ -653,6 +654,29 @@ void* input_thread(void* arg)
 				}
 				printf("Test End.\n");
 			}
+			else if (0 == strncmp(cmd_input, "back", 4))
+			{
+				int init_encoder = 0;
+				int desire_encoder = 0;
+				int on_encoder = 0;
+				printf("Disired Encoder : ");
+				scanf("%d", &desire_encoder);
+				EncoderCounter_Write(init_encoder);
+				DesireSpeed_Write(-40);
+				while (1)
+				{
+					on_encoder = EncoderCounter_Read();
+					if (on_encoder != 65278)
+						printf("encoder : %-3d\n", on_encoder);
+					if (on_encoder >= desire_encoder && on_encoder != 65278)
+					{
+						DesireSpeed_Write(0);
+						break;
+					}
+					usleep(100000);
+				}
+				printf("Total encoder : %d\n", total_encoder);
+			}
 			else
 			{
 				printf("cmd_input:%s \n", cmd_input);
@@ -801,6 +825,8 @@ void* mission_thread(void* arg)
 								{
 								case FIRST_BACKWARD:
 									SteeringServoControl_Write(1000);
+									usleep(500000000);
+									// 100초 대기
 									DesireSpeed_Write(-40);
 									if (DistanceSensor_cm(4) <= 20)
 									{

@@ -286,6 +286,14 @@ extern "C" {
 			grad_right = 1000;
 			grad_left = -1000;
 		}
+		else if (line_type == 1) {//라인이 1개일 때, left에만 값이 들어감
+			if(slope(line_left)<0){
+				grad_left = -1000;
+			}
+			else {//>0:left
+				grad_right = 1000;
+			}
+		}
 		else {
 			grad_right = slope(line_right);
 			grad_left = slope(line_left);

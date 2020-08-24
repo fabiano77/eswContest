@@ -963,7 +963,7 @@ void* mission_thread(void* arg)
 						}
 						else if (data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
 						{
-							DesiredDistance(30, 75, 1500);
+							DesiredDistance(30, 50, 1500);
 							while (data->missionData.parkingData.horizontalFlag)
 							{
 								data->missionData.loopTime = timeCheck(&time);
@@ -972,10 +972,10 @@ void* mission_thread(void* arg)
 								case FIRST_BACKWARD:
 									first_error_flag = 1;
 									EncoderCounter_Write(0);
-									DesiredDistance(-30, 850, 1110);
+									DesiredDistance(-30, 800, 1050);
 									first_error_distance = EncoderCounter_Read();
 									EncoderCounter_Write(0);
-									DesiredDistance(-30, 300, 1500);
+									DesiredDistance(-30, 100, 1500);
 									second_error_distance = EncoderCounter_Read();
 									step_h = SECOND_BACKWARD;
 									break;
@@ -989,11 +989,11 @@ void* mission_thread(void* arg)
 										step_h = FIRST_BACKWARD;
 									}
 									first_error_flag = 0;
-									DesiredDistance(-30, 450, 1950);
+									DesiredDistance(-30, 400, 1950);
 									usleep(10000);
 									SteeringServoControl_Write(1110);
 									DesireSpeed_Write(25);
-									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 1) || DistanceSensor_cm(1) <= 5) {
+									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2) || DistanceSensor_cm(1) <= 5) {
 										step_h = SECOND_FORWARD;
 										Winker_Write(ALL_ON);
 										buzzer(5, 500000, 500000);
@@ -1092,7 +1092,7 @@ void* mission_thread(void* arg)
 
 				DesireSpeed_Write(0);
 
-				frontLightOnOff(data->ntrolData.lightFlag, false);
+				frontLightOnOff(data->controlData.lightFlag, false);
 
 				DesiredDistance(-40, 150, 1500);
 				buzzer(1, 500000, 500000);

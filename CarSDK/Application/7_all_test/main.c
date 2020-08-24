@@ -974,7 +974,6 @@ void* mission_thread(void* arg)
 				data->missionData.overtakingFlag = true;
 				data->imgData.bwhiteLine = true;
 				bool obstacle = false;
-				int dist_encoder = 0;
 				int thresDistance = 500;
 				/*차량 정지*/
 				DesireSpeed_Write(0);
@@ -1079,7 +1078,6 @@ void* mission_thread(void* arg)
 						}
 						else
 						{ /*STOP이 유지되는 경우 멈춤*/
-							dist_encoder = 0;
 						}
 
 						break;

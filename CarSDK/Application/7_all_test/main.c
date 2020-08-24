@@ -882,13 +882,13 @@ void* mission_thread(void* arg)
 									DesiredDistance(-30, 850, 1100);
 									first_error_distance = EncoderCounter_Read();
 									EncoderCounter_Write(0);
-									DesiredDistance(-30, 180, 1500);
+									DesiredDistance(-30, 300, 1500);
 									second_error_distance = EncoderCounter_Read();
 									step = SECOND_BACKWARD;
 									break;
 
 								case SECOND_BACKWARD:
-									if (DistanceSensor_cm(4) <= 4 && first_error_flag)
+									if (DistanceSensor_cm(4) <= 5 && first_error_flag)
 									{
 										DesiredDistance(30, (second_error_distance - 30), 1500);
 										DesiredDistance(30, (first_error_distance - 30), 1100);
@@ -896,19 +896,18 @@ void* mission_thread(void* arg)
 										step = FIRST_BACKWARD;
 									}
 									first_error_flag = 0;
-									DesiredDistance(-30, 350, 2000);
-									step = FIRST_FORWARD;
-									break;
-
-								case FIRST_FORWARD:
-									DesiredDistance(30, 250, 1000);
+									DesiredDistance(-30, 450, 2000);
 									step = SECOND_FORWARD;
 									break;
 
+								//case FIRST_FORWARD:
+								//	DesiredDistance(30, 250, 1000);
+								//	step = SECOND_FORWARD;
+								//	break;
+
 								case SECOND_FORWARD:
-									DesiredDistance(-30, 150, 1200);
+									DesiredDistance(-30, 550, 1000);
 									DesiredDistance(30, 350, 1800);
-									DesiredDistance(30, 150, 1500);
 									step = FINISH;
 									break;
 

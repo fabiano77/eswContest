@@ -114,6 +114,8 @@ extern "C" {
 		if (SettingSpeed < 0)	CarLight_Write(0x02);
 		while (1)
 		{
+			if (DistanceSensor_cm(1) <= 5 || DistanceSensor_cm(4) <= 5)
+				break;
 			on_encoder = abs(EncoderCounter_Read());
 			if (on_encoder != 65278)
 			{

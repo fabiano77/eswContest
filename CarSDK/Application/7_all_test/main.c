@@ -62,13 +62,22 @@ enum ParkingState
 	DONE_P = NONE_P
 };
 
-enum HorizentalStep
+enum HorizontalStep
 {
 	FINISH,
 	FIRST_BACKWARD,
 	FIRST_FORWARD,
 	SECOND_BACKWARD,
 	SECOND_FORWARD
+};
+
+enum VerticalStep
+{
+	FINISH_V,
+	FIRST_BACKWARD_V,
+	FIRST_FORWARD_V,
+	SECOND_BACKWARD_V,
+	SECOND_FORWARD_V
 };
 
 enum OvertakeState
@@ -799,9 +808,11 @@ void* mission_thread(void* arg)
 				int first_error_distance = 0;
 				int second_error_distance = 0;
 				int first_error_flag = 1;
+				int dist_difference = 0;
 
 				enum ParkingState state = FIRST_WALL;
-				enum HorizentalStep step = FIRST_BACKWARD;
+				enum HorizontalStep step_h = FIRST_BACKWARD;
+				enum VerticalStep step_v = FIRST_BACKWARD_V;
 
 				while (state) // state == END가 아닌이상 루프 진행
 				{
@@ -863,7 +874,52 @@ void* mission_thread(void* arg)
 
 						if (data->missionData.parkingData.verticalFlag && data->missionData.parkingData.horizontalFlag == false)
 						{
-							usleep(50000000);
+							DesiredDistance(30, 200, 1500);
+							while (data->missionData.parkingData.verticalFlag)
+							{
+								data->missionData.loopTime = timeCheck(&time);
+								switch (step_v)
+								{
+								case FIRST_BACKWARD_V:
+									DesiredDistance(-30, 850, 1110);
+									DesiredDistance(-30, 200, 1500);
+									step_v = SECOND_BACKWARD_V;
+									break;
+
+								case SECOND_BACKWARD_V:
+									dist_difference = DistanceSensor_cm(3) - DistanceSensor_cm(5);
+									SteeringServoControl_Write(1500 - dist_difference * 20);
+									DesireSpeed_Write(-25);
+									if (DistanceSensor_cm(4) <= 5) {
+										step_v = FIRST_FORWARD_V;
+										Winker_Write(ALL_ON);
+										buzzer(5, 500000, 500000);
+										Winker_Write(ALL_OFF);
+										break;
+									}
+								case FIRST_FORWARD_V:
+									dist_difference = DistanceSensor_cm(3) - DistanceSensor_cm(5);
+									SteeringServoControl_Write(1500 - dist_difference * 20);
+									DesireSpeed_Write(25);
+									if (DistanceSensor_cm(1) >= 15 && DistanceSensor_cm(6) >= 15) {
+										DesireSpeed_Write(0);
+										step_v = SECOND_FORWARD_V;
+										break;
+									}
+								case SECOND_FORWARD_V:
+									DesiredDistance(25, 300, 1500);
+									DesiredDistance(25, 500, 1110);
+									step_v = FINISH_V;
+									break;
+								case FINISH_V:
+									data->missionData.parkingData.verticalFlag = 0;
+									break;
+
+								default:
+									break;
+								}
+								usleep(200000);
+							}
 						}
 						else if (data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
 						{
@@ -871,34 +927,36 @@ void* mission_thread(void* arg)
 							while (data->missionData.parkingData.horizontalFlag)
 							{
 								data->missionData.loopTime = timeCheck(&time);
-								switch (step)
+								switch (step_h)
 								{
 								case FIRST_BACKWARD:
 									first_error_flag = 1;
 									EncoderCounter_Write(0);
-									DesiredDistance(-30, 850, 1100);
+									DesiredDistance(-30, 850, 1110);
 									first_error_distance = EncoderCounter_Read();
 									EncoderCounter_Write(0);
 									DesiredDistance(-30, 300, 1500);
 									second_error_distance = EncoderCounter_Read();
-									step = SECOND_BACKWARD;
+									step_h = SECOND_BACKWARD;
 									break;
 
 								case SECOND_BACKWARD:
 									if (DistanceSensor_cm(4) <= 5 && first_error_flag)
 									{
 										DesiredDistance(30, (second_error_distance - 30), 1500);
-										DesiredDistance(30, (first_error_distance - 30), 1100);
+										DesiredDistance(30, (first_error_distance - 30), 1110);
 										// Error 발생 시 다시 초기 상태로 만들어 주기 위한 구문
-										step = FIRST_BACKWARD;
+										step_h = FIRST_BACKWARD;
 									}
 									first_error_flag = 0;
-									DesiredDistance(-30, 450, 2000);
-									SteeringServoControl_Write(1000);
-									DesireSpeed_Write(15);
-									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 1) || DistanceSensor_cm(1) <= 4) {
-										step = SECOND_FORWARD;
-										buzzer(3, 500000, 500000);
+									DesiredDistance(-30, 450, 1950);
+									usleep(10000);
+									SteeringServoControl_Write(1110);
+									DesireSpeed_Write(25);
+									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 1) || DistanceSensor_cm(1) <= 5) {
+										step_h = SECOND_FORWARD;
+										Winker_Write(ALL_ON);
+										buzzer(5, 500000, 500000);
 										break;
 									}
 
@@ -908,10 +966,10 @@ void* mission_thread(void* arg)
 									//	break;
 
 								case SECOND_FORWARD:
-									DesiredDistance(-15, 300, 1000);
-									DesiredDistance(15, 500, 1800);
+									DesiredDistance(-25, 300, 1110);
+									DesiredDistance(25, 500, 1800);
 
-									step = FINISH;
+									step_h = FINISH;
 									break;
 
 								case FINISH:
@@ -946,7 +1004,10 @@ void* mission_thread(void* arg)
 					usleep(10000000);
 				}
 				if (parking == DONE)
+				{
 					printf("Second Parking is Dome!\n");
+					usleep(10000000);
+				}
 			}
 		}
 

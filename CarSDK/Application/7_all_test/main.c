@@ -1052,7 +1052,7 @@ void* mission_thread(void* arg)
 				data->missionData.overtakingFlag = true;
 				data->imgData.bwhiteLine = true;
 				bool obstacle = false;
-				int thresDistance = 500;
+				int thresDistance = 300;
 				/*차량 정지*/
 				DesireSpeed_Write(0);
 
@@ -1095,7 +1095,7 @@ void* mission_thread(void* arg)
 							sprintf(data->imgData.missionString, "Right to go");
 							/*출발*/
 							Winker_Write(RIGHT_ON);
-							DesiredDistance(50, thresDistance, 500);
+							DesiredDistance(50, thresDistance, 1100);
 							Winker_Write(ALL_OFF);
 							/*thresDistance이상 가서 전방 거리 재확인*/
 							if (DistanceSensor_cm(1) < 30)
@@ -1225,7 +1225,7 @@ void* mission_thread(void* arg)
 						{
 							/*복귀 우회전 방향 설정*/
 							Winker_Write(RIGHT_ON);
-							DesiredDistance(50, thresDistance, 500);
+							DesiredDistance(50, thresDistance, 1100);
 							Winker_Write(ALL_OFF);
 						}
 						/*알고리즘 전진*/

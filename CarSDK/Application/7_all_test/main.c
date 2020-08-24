@@ -1108,7 +1108,7 @@ void* mission_thread(void* arg)
 
 		if (roundabout)
 		{
-			if (StopLine(4))
+			if (STOP_WhiteLine(4))
 			{
 				data->imgData.bwhiteLine = true;
 				data->imgData.bprintString = true;

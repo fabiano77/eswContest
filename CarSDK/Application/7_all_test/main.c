@@ -1026,10 +1026,11 @@ void* mission_thread(void* arg)
 									//	break;
 
 								case SECOND_FORWARD:
+									sprintf(data->imgData.missionString, "SECOND_FORWARD");
 									while (1) {
-										if (DistanceSensor_cm(1) - DistanceSensor_cm(4) > 1)
+										if (DistanceSensor_cm(1) - DistanceSensor_cm(4) > 2)
 											DesiredDistance(20, 50, 1500);
-										else if (DistanceSensor_cm(1) - DistanceSensor_cm(4) < -1)
+										else if (DistanceSensor_cm(1) - DistanceSensor_cm(4) < -2)
 											DesiredDistance(-20, 50, 1500);
 										else break;
 									}
@@ -1050,6 +1051,7 @@ void* mission_thread(void* arg)
 									break;
 
 								case ESCAPE:
+									sprintf(data->imgData.missionString, "ESCAPE");
 									DesireSpeed_Write(-20);
 									usleep(100000);
 									if (DistanceSensor_cm(4) <= 7) {
@@ -1058,6 +1060,7 @@ void* mission_thread(void* arg)
 									break;
 
 								case FINISH:
+									sprintf(data->imgData.missionString, "FINISH");
 									DesiredDistance(25, 300, 1800);
 									usleep(200000);
 									DesiredDistance(25, 500, 1200);

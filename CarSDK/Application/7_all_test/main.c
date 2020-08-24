@@ -532,6 +532,7 @@ void* input_thread(void* arg)
 	MSG("\t dist  : distance sensor check");
 	MSG("\t distc : distance sensor check by -cm-");
 	MSG("\t distl : distance sensor check constantly");
+	MSG("\t stop  : stop Line ON/OFF");
 	MSG("\t encoder : ");
 	MSG("\t parking : ");
 	MSG("\n");
@@ -677,6 +678,30 @@ void* input_thread(void* arg)
 					usleep(300000);
 				}
 				printf("Total Forward encoder : %d\n", forward_encoder);
+			}
+			else if (0 == strncmp(cmd_input, "stop", 4))
+			{
+				char sensor;
+				char byte = 0x80;
+				int flag;
+				int i;
+				while (1) {
+					flag = 0;
+					sensor = LineSensor_Read();        // black:1, white:0
+					printf("LineSensor_Read() = ");
+					for (i = 0; i < 8; i++)
+					{
+						if ((i % 4) == 0) printf(" ");
+						if ((sensor & byte)) printf("1");	//byte == 0x80 == 0111 0000 (2)
+						else {
+							printf("0");
+							flag++;
+						}
+						sensor = sensor << 1;
+					}
+					printf(", flag = %d\n", flag);
+					usleep(100000);
+				}
 			}
 			else if (0 == strncmp(cmd_input, "back", 4))
 			{

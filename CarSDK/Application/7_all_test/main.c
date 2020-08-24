@@ -297,6 +297,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				//srcbuf를 활용하여 capture한 영상을 변환
 			}
 
+			/*끝날 때 사용*/
 			if (t_data->missionData.finishData.checkFront == true)
 			{
 				OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
@@ -475,6 +476,7 @@ void* input_thread(void* arg)
 	struct thr_data* data = (struct thr_data*)arg;
 
 	int total_encoder = 0;
+	int forward_encoder = 0;
 	char cmd_input[128];
 	char cmd_ready = true;
 
@@ -633,20 +635,22 @@ void* input_thread(void* arg)
 				printf("Disired Speed : ");
 				scanf("%d", &desire_encoder);
 				EncoderCounter_Write(init_encoder);
-				DesireSpeed_Write(30);
+				DesireSpeed_Write(40);
 				while (1)
 				{
 					on_encoder = EncoderCounter_Read();
-					if (on_encoder != 65278)
-						printf("encoder : %-3d\n", on_encoder);
+					//if (on_encoder != 65278)
+					//	printf("encoder : %-3d\n", on_encoder);
 					if (on_encoder >= desire_encoder && on_encoder != 65278)
 					{
 						DesireSpeed_Write(0);
+						printf("encoder : %d, total : %d\n", on_encoder, forward_encoder);
+						forward_encoder += on_encoder;
 						break;
 					}
-					usleep(100000);
+					usleep(300000);
 				}
-				printf("Test End.\n");
+				printf("Total Forward encoder : %d\n", forward_encoder);
 			}
 			else if (0 == strncmp(cmd_input, "back", 4))
 			{
@@ -660,17 +664,23 @@ void* input_thread(void* arg)
 				while (1)
 				{
 					on_encoder = abs(EncoderCounter_Read());
+
 					if (on_encoder != 65278)
 						printf("encoder : %-3d\n", on_encoder);
+=======
+					//if (on_encoder != 65278)
+					//	printf("encoder : %-3d\n", on_encoder);
+>>>>>>> 5c2b2009167a4c016d8ce9370a1dcd7950465df4
 					if (on_encoder >= desire_encoder && on_encoder != 65278)
 					{
 						DesireSpeed_Write(0);
+						printf("encoder : %d, total : %d\n", on_encoder, total_encoder);
+						total_encoder += on_encoder;
 						break;
 					}
-					usleep(100000);
+					usleep(300000);
 				}
-				total_encoder += on_encoder;
-				printf("Total encoder : %d\n", total_encoder);
+				printf("Total Back encoder : %d\n", total_encoder);
 			}
 			else
 			{
@@ -808,9 +818,9 @@ void* mission_thread(void* arg)
 
 						if (data->missionData.parkingData.verticalFlag && data->missionData.parkingData.horizontalFlag == false)
 						{
-							// 수직 주차 구문
+							usleep(50000000);
 						}
-						else
+						else if(data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
 						{
 							DesiredDistance(50, 100, 1500);
 							while (data->missionData.parkingData.horizontalFlag)
@@ -1478,7 +1488,7 @@ int main(int argc, char** argv)
 	tdata.missionData.overtakingFlag = false;
 	tdata.missionData.overtakingData.updownCamera = CAMERA_DOWN;
 	tdata.missionData.overtakingData.headingDirection = STOP;
-
+	tdata.missionData.finishData.checkFront = false;
 
 	// open vpe
 	vpe = vpe_open();

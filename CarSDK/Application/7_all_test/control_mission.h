@@ -14,6 +14,8 @@ int sensor_dist(int channel, int input);
 int StopLine(int Lineflag);
 // Return : Lineflag보다 1로 감지된 값이 더 크면 정지선을 감지한 것으로 판단하고 true를 반환한다.
 
+int STOP_WhiteLine(int Lineflag);
+
 void DesiredDistance(int SettingSpeed, int SettingDistance, int SettingSteering);
 // Postcondition : SettingSpeed의 속도(양수는 전진, 음수는 후진)로 SettingDistance의 step 만큼 움직인다.
 
@@ -27,6 +29,8 @@ int RoundAbout_isEnd(const int Distance1, const int Distance2);
 // Return : 앞, 뒤 거리센서에 일정 간격만큼 아무것도 잡히지 않는다면 1을 반환한다.
 
 //int Tunnel_isTunnel(const int Distance1, const int Distance2, const int Distance3, const int Distance4);
+
+int Tunnel_isStart(const int Distance2, const int Distance6, const int Distance3, const int Distance5);
 
 int Tunnel_isEnd(const int Distance1, const int Distance2, const int Distance3, const int Distance4);
 // Return : 앞, 뒤 센서가 순서대로 감지되지 않으면 1을 반환한다.

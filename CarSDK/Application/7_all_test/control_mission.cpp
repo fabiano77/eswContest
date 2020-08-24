@@ -19,15 +19,14 @@
 #include "car_lib.h"
 
  ///////////////////////////////////////////////////////////////////////////////////
-
+int flag_line;
 int flag_go, flag_wait, flag_stop, flag_end;
 int check_start;
-int lower_StopDistance = 25;
-int uper_StopDistance = 30;
 int lower_RoundDistance = 20;
 int uper_RoundDistance = 30;
-int THR_RoundAbout_END = 70;
+int THR_RoundAbout_END = 80;
 int first_RoundAbout = 0;
+int first_Line = 0;
 
 void RoundAbout_Init();
 
@@ -81,7 +80,7 @@ extern "C" {
 		return position;
 	}
 
-	int StopLine(int Lineflag) { // ��� 0
+	int StopLine(int Lineflag) { // black 1, white 0
 		char sensor;
 		char byte = 0x80;
 		sensor = LineSensor_Read();
@@ -89,17 +88,27 @@ extern "C" {
 		int i;
 		for (i = 0; i < 8; i++)
 		{
-			if ((i % 4) == 0)
-				if ((sensor & byte)) { // 1
-
-				}
-				else { // 0
-					flag++;
-				}
+			if (!(sensor & byte)) 	flag++;			
 			sensor = sensor << 1;
 		}
 		if (flag > Lineflag) {
 			return 1;
+		}
+		return 0;
+	}
+
+	int STOP_WhiteLine(int Lineflag) {
+		if (!first_Line++) flag_line = 0;
+
+		if (StopLine(Lineflag)) {
+			flag_line++;
+			if (flag_line > 2) {
+				flag_line = 0;
+				return 1;
+			}
+		}
+		else {
+			if(flag_line > 0) flag_line--;
 		}
 		return 0;
 	}
@@ -114,25 +123,43 @@ extern "C" {
 		if (SettingSpeed < 0)	CarLight_Write(0x02);
 		while (1)
 		{
-			if (DistanceSensor_cm(1) <= 5 || DistanceSensor_cm(4) <= 5)
-				break;
+			if (SettingSpeed > 0)
+			{
+				//정면 충돌 감지
+				if (DistanceSensor_cm(1) <= 5 ) {
+					DesireSpeed_Write(0);
+					break;
+				}
+			}
+			else
+			{
+				//후면 충돌 감지
+				if (DistanceSensor_cm(4) <= 5 ) {
+					DesireSpeed_Write(0);
+					break;
+				}
+			}
+
+
 			on_encoder = abs(EncoderCounter_Read());
 			if (on_encoder != 65278)
 			{
-				printf("encoder : %-4d\n", on_encoder);
+				//printf("encoder : %-4d\n", on_encoder);
 				if (on_encoder >= SettingDistance)
 				{
 					DesireSpeed_Write(0);
 					break;
 				}
 			}
-			usleep(100000);
+			usleep(50000); // 50ms
 		}
 		if (SettingSpeed < 0)	CarLight_Write(0x00);
 	}
 
 	int RoundAbout_isStart(const int Distance1) {
 		if (!first_RoundAbout++) RoundAbout_Init();
+		int lower_StopDistance = 25;
+		int uper_StopDistance = 30;
 
 		if (flag_go > 0)
 		{
@@ -241,6 +268,12 @@ extern "C" {
 		return 0;
 	}*/
 
+	int Tunnel_isStart(const int Distance2, const int Distance6, const int Distance3, const int Distance5)
+	{
+		if (Distance2 <= 30 && Distance3 <= 30 && Distance5 <= 30 && Distance6 <= 30) return 1;
+		else return 0;
+	}
+
 	int Tunnel_isEnd(const int Distance1, const int Distance2, const int Distance3, const int Distance4) {
 		/* 2,6 - 3,5 (1,2 - 3,4)
 		1. ��(2, 6)
@@ -315,14 +348,15 @@ extern "C" {
 			}
 		}
 
-		if ((flag_steer[i] == 2) && (Distance1 < Distance2)) {
+		if (flag_steer[i] == 2) {
 			flag_steer[i] = 0;
-			steerVal = -steerVal;
+			if (Distance1 < Distance2) steerVal = -steerVal;
 		}
 		for (int j = 0; j < 5; j++) {
 			if ((flag_steer[j] > 0) && (j != i))
 				flag_steer[j]--;
 		}
+		printf("steer : %d, [%d, %d]\n", steerVal, Distance2, Distance1);
 		return 1500 - steerVal;
 	}
 

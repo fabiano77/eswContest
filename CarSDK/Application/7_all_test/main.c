@@ -956,13 +956,13 @@ void* mission_thread(void* arg)
 				frontLightOnOff(data->controlData.lightFlag, true);
 				sprintf(data->imgData.missionString, "tunnel IN");
 
-				bool ENDFLAG = Tunnel_isEnd(DistanceSensor_cm(6), DistanceSensor_cm(2), DistanceSensor_cm(5), DistanceSensor_cm(3));
+				bool ENDFLAG = Tunnel_isEnd(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5));
 				while (ENDFLAG)
 				{
 					data->missionData.loopTime = timeCheck(&time);
-					steerVal = Tunnel_SteerVal(DistanceSensor_cm(6), DistanceSensor_cm(2));
+					steerVal = Tunnel_SteerVal(DistanceSensor_cm(2), DistanceSensor_cm(6));
 					SteeringServoControl_Write(steerVal);
-					ENDFLAG = Tunnel_isEnd(DistanceSensor_cm(6), DistanceSensor_cm(2), DistanceSensor_cm(5), DistanceSensor_cm(3));
+					ENDFLAG = Tunnel_isEnd(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5));
 					usleep(100000);
 				}
 				DesireSpeed_Write(0);

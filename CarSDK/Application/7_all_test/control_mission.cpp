@@ -112,15 +112,19 @@ extern "C" {
 		if (SettingSpeed < 0)	CarLight_Write(0x02);
 		while (1)
 		{
-			if (DistanceSensor_cm(1) <= 5 && SettingSpeed > 0)
+			if (DistanceSensor_cm(1) <= 7 && SettingSpeed > 0) {
+				DesireSpeed_Write(0);
 				break;
-			if (DistanceSensor_cm(4) <= 5 && SettingSpeed < 0)
+			}
+			if (DistanceSensor_cm(4) <= 7 && SettingSpeed < 0) {
+				DesireSpeed_Write(0);
 				break;
+			}
 
 			on_encoder = abs(EncoderCounter_Read());
 			if (on_encoder != 65278)
 			{
-				printf("encoder : %-4d\n", on_encoder);
+				//printf("encoder : %-4d\n", on_encoder);
 				if (on_encoder >= SettingDistance)
 				{
 					DesireSpeed_Write(0);

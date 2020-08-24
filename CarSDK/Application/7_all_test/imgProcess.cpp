@@ -238,8 +238,8 @@ extern "C" {
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 		dstRGB = srcRGB;
 		/*Declare usable variables*/
-		int height_up = 80;
-		int height_down = 150;
+		int height_up = 120;
+		int height_down = 220;
 		int width = w;
 		int height = h;
 		/*filtering value setting*/

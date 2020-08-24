@@ -330,7 +330,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 					if (steerVal != 9999)
 					{
 						t_data->controlData.steerVal = 1500 - steerVal;
-						SteeringServoControl_Write(data->controlData.steerVal);
+						SteeringServoControl_Write(t_data->controlData.steerVal);
 
 						t_data->controlData.desireSpeedVal = auto_speedMapping(steerVal, 40);
 					}
@@ -366,7 +366,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				if (steerVal != 9999)
 				{
 					t_data->controlData.steerVal = 1500 - steerVal;
-					SteeringServoControl_Write(data->controlData.steerVal);
+					SteeringServoControl_Write(t_data->controlData.steerVal);
 
 					t_data->controlData.desireSpeedVal = auto_speedMapping(steerVal, 40);
 				}
@@ -1196,7 +1196,7 @@ void* mission_thread(void* arg)
 				/*box filtering*/
 				data->missionData.finishData.checkFront = true;
 				/*encoding을 이용한 전진*/
-				data->missionData.finishData.encodingStart = false;
+				//data->missionData.finishData.encodingStart = false;
 				/*check front signal waiting*/
 				while (data->missionData.finishData.checkFront == true || data->missionData.finishData.distEndLine == -1000) {
 					usleep(500000);
@@ -1392,7 +1392,7 @@ uint32_t timeCheck(struct timeval* tempTime)
 	gettimeofday(&nowTime, NULL);
 
 	uint32_t retVal = ((nowTime.tv_sec - prevTime.tv_sec) * 1000) + ((int)nowTime.tv_usec / 1000 - (int)prevTime.tv_usec / 1000);
-	if (*tempTime.tv_sec == 0) retVal = 0;
+	if ((*tempTime).tv_sec == 0) retVal = 0;
 
 	*tempTime = nowTime;
 

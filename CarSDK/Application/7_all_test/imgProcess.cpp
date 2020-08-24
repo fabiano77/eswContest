@@ -570,7 +570,7 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 	lineFiltering(src, src_yel, whiteMode);
 	cannyEdge(src_yel, src_can);
 	int lineType;	// 0 == 라인이 없다, 1 == 라인이 한개, 2 == 라인이 두개.
-	Vec8i l = hough_ransacLine(src_can, src, w, h, 15, 1, lineType);
+	Vec8i l = hough_ransacLine(src_can, src, w, h, 15, 1, lineType,0.1);
 	Vec4i firstLine(l[0], l[1], l[2], l[3]);
 	Vec4i secondLine(l[4], l[5], l[6], l[7]);
 

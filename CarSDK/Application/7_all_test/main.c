@@ -1029,16 +1029,18 @@ void* mission_thread(void* arg)
 									while (1) {
 										if (DistanceSensor_cm(1) - DistanceSensor_cm(4) > 1)
 											DesiredDistance(20, 50, 1500);
-										else if (DistanceSensor_cm(1) - DistanceSensor_cm(4) < 1)
+										else if (DistanceSensor_cm(1) - DistanceSensor_cm(4) < -1)
 											DesiredDistance(-20, 50, 1500);
 										else break;
 									}
-									SteeringServoControl_Write(1200);
-									usleep(200000);
+									SteeringServoControl_Write(1800);
+									usleep(400000);
 									DesireSpeed_Write(25);
 									usleep(200000);
-									SteeringServoControl_Write(1800);
+									DesireSpeed_Write(0);
 									usleep(200000);
+									SteeringServoControl_Write(1200);
+									usleep(400000);
 									DesireSpeed_Write(-25);
 									usleep(200000);
 									if (DistanceSensor_cm(1) == 30) {
@@ -1057,6 +1059,7 @@ void* mission_thread(void* arg)
 
 								case FINISH:
 									DesiredDistance(25, 300, 1800);
+									usleep(200000);
 									DesiredDistance(25, 500, 1200);
 									data->missionData.parkingData.horizontalFlag = 0;
 									break;

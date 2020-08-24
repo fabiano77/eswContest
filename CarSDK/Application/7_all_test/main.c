@@ -969,7 +969,7 @@ void* mission_thread(void* arg)
 						}
 						else if (data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
 						{
-							DesiredDistance(30, 50, 1500);
+							DesiredDistance(30, 75, 1500);
 							while (data->missionData.parkingData.horizontalFlag)
 							{
 								data->missionData.loopTime = timeCheck(&time);
@@ -983,7 +983,7 @@ void* mission_thread(void* arg)
 									first_error_distance = EncoderCounter_Read();
 									EncoderCounter_Write(0);
 									usleep(200000);
-									DesiredDistance(-30, 250, 1500);
+									DesiredDistance(-30, 330, 1500);
 									second_error_distance = EncoderCounter_Read();
 									step_h = SECOND_BACKWARD;
 									break;
@@ -1002,9 +1002,12 @@ void* mission_thread(void* arg)
 									DesiredDistance(-30, 400, 1950);
 									usleep(200000);
 									SteeringServoControl_Write(1110);
-									DesireSpeed_Write(25);
+									usleep(200000);
+									DesireSpeed_Write(23);
+									usleep(200000);
 									sprintf(data->imgData.missionString, "2nd_ d1=%d, d2=%d, d3=%d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2) || DistanceSensor_cm(1) <= 5) {
+									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2) || DistanceSensor_cm(1) <= 5) 
+									{
 										sprintf(data->imgData.missionString, "sibal_ d1=%d, d2=%d, d3=%d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
 										DesireSpeed_Write(0);
 										usleep(200000);
@@ -1099,7 +1102,7 @@ void* mission_thread(void* arg)
 			{
 				data->imgData.bmission = true;
 				data->imgData.bprintString = true;
-				SteeringServoControl_Write(1500);
+				//SteeringServoControl_Write(1500);
 
 				frontLightOnOff(data->controlData.lightFlag, true);
 				sprintf(data->imgData.missionString, "mission thread : tunnel detect");
@@ -1168,7 +1171,7 @@ void* mission_thread(void* arg)
 					case WAIT_R:
 						if (RoundAbout_isStart(DistanceSensor_cm(1)))
 						{
-							sprintf(data->imgData.missionString, "ROUND_GO_1");
+							sprintf(data->imgData.missionString, "ROUND_GO_1-1");
 							printf("go\n");
 
 							state = ROUND_GO_1;
@@ -1176,7 +1179,11 @@ void* mission_thread(void* arg)
 						break;
 
 					case ROUND_GO_1:
-						DesiredDistance(speed, 1000, 1500); //앞 센서 받아오면서 일정거리 가는 함수 추가.
+						data->imgData.bmission = true;
+						DesiredDistance(speed, 400, 1500); //앞 센서 받아오면서 일정거리 가는 함수 추가.
+						sprintf(data->imgData.missionString, "ROUND_GO_1-2");
+						data->imgData.bmission = false;
+						onlyDistance(speed, 600);
 						state = ROUND_STOP;
 						sprintf(data->imgData.missionString, "ROUND_STOP");
 						break;
@@ -1184,6 +1191,7 @@ void* mission_thread(void* arg)
 					case ROUND_STOP:
 						if (DistanceSensor_cm(4) <= 20)
 						{
+							data->imgData.bmission = false;
 							DesireSpeed_Write(speed);
 							sprintf(data->imgData.missionString, "ROUND_GO_2");
 							state = ROUND_GO_2;

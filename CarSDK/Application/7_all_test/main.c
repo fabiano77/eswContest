@@ -360,7 +360,8 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65))
 				{
 					printf("Tunnel IN\n");
-					t_data->missionData.btunnel = true;					
+					t_data->missionData.btunnel = true;	
+					t_data->imgData.bdark = false;
 				}
 			}
 		}
@@ -911,20 +912,22 @@ void* mission_thread(void* arg)
 			{
 				int steerVal;
 				data->imgData.bmission = true;
-				data->imgData.bdark = false;
 				data->imgData.bprintString = true;
 
 				frontLightOnOff(data->controlData.lightFlag, true);
+				sprintf(data->imgData.missionString, "tunnel IN");
 
-				while (Tunnel_isEnd(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5)))
+				bool ENDFLAG = Tunnel_isEnd(DistanceSensor_cm(6), DistanceSensor_cm(2), DistanceSensor_cm(5), DistanceSensor_cm(3));
+				while (ENDFLAG)
 				{
 					data->missionData.loopTime = timeCheck(&time);
-					steerVal = Tunnel_SteerVal(DistanceSensor_cm(2), DistanceSensor_cm(6));
+					steerVal = Tunnel_SteerVal(DistanceSensor_cm(6), DistanceSensor_cm(2));
 					SteeringServoControl_Write(steerVal);
+					ENDFLAG = Tunnel_isEnd(DistanceSensor_cm(6), DistanceSensor_cm(2), DistanceSensor_cm(5), DistanceSensor_cm(3));
 					usleep(100000);
 				}
 				DesireSpeed_Write(0);
-				printf("tunnel_OFF\n");
+				printf("Tunnel OUT\n");
 
 				frontLightOnOff(data->controlData.lightFlag, false);
 				

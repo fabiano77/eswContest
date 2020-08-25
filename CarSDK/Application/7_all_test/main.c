@@ -192,7 +192,7 @@ struct ImgProcessData
 	bool bprintSensor;		// 오버레이에 센서값 표시 ON/OFF
 	bool bdark;				// 터널 탐지 ON/OFF
 	bool bcheckPriority;	// 우선정지 표지판 탐지 ON/OFF
-	bool bcheckSignalLight	// 신호등 탐지 ON/OFF
+	bool bcheckSignalLight;	// 신호등 탐지 ON/OFF
 	char missionString[20];	// 오버레이에 표시할 문자열
 	int topMode;			// 탑뷰 모드 (0, 1, 2)
 	int debugMode;			// 디버그 모드(0~ )
@@ -371,6 +371,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 			if (t_data->imgData.bcheckSignalLight)
 			{
 				switch(t_data->missionData.signalLightData.state)
+				{
 					case DETECT_RED:
 						break;
 					case DETECT_YELLOW:
@@ -380,6 +381,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 						break;
 					case DETECTION_FINISH:
 						break;
+				}
 			}
 		}
 
@@ -446,15 +448,15 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		if (t_data->imgData.bprintMission)
 		{
 			displayPrintMission(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H,
-				(int)data->missionData.ms[0], (int)data->missionData.ms[1], (int)data->missionData.ms[2],
-				(int)data->missionData.ms[3], (int)data->missionData.ms[4], (int)data->missionData.ms[5],
-				(int)data->missionData.ms[6], (int)data->missionData.ms[7], (int)data->missionData.ms[8]);
+				(int)t_data->missionData.ms[0], (int)t_data->missionData.ms[1], (int)t_data->missionData.ms[2],
+				(int)t_data->missionData.ms[3], (int)t_data->missionData.ms[4], (int)t_data->missionData.ms[5],
+				(int)t_data->missionData.ms[6], (int)t_data->missionData.ms[7], (int)t_data->missionData.ms[8]);
 		}
 		if (t_data->imgData.bprintSensor)
 		{
 			displayPrintSensor(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H,
 				DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3), 
-				DistanceSensor_cm(4), DistanceSensor_cm(5), DistanceSensor_cm(6), StopLine(4))
+				DistanceSensor_cm(4), DistanceSensor_cm(5), DistanceSensor_cm(6), StopLine(4));
 		}
 
 		memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
@@ -827,7 +829,7 @@ void* input_thread(void* arg)
 					if (data->missionData.ms[num] == READY)
 						data->missionData.ms[num] = NONE;
 					else
-						data->missionData.ms[num] = READY
+						data->missionData.ms[num] = READY;
 					data->missionData.changeMissionState = true;
 				}
 				else

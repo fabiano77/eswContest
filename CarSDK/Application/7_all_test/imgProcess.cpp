@@ -554,9 +554,7 @@ extern "C" {
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 
-		return_go = Tunnel_isStart(srcRGB, percent);
-
-		return return_go;
+		return  Tunnel_isStart(srcRGB, percent);
 	}
 
 	int checkFront(unsigned char* inBuf, int w, int h, unsigned char* outBuf) {
@@ -653,9 +651,9 @@ int MAXTHR_tunnel = 10;
 int MINTHR_tunnel = 5;
 
 
-static void on_trackbar(int, void*)
-{
-}
+// static void on_trackbar(int, void*)
+// {
+// }
 
 void settingStatic(int w, int h)
 {
@@ -1007,8 +1005,8 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 		if (((double)lineRatio.height / lineRatio.width) > 0.70)
 		{
 			//s자 코너에서 안쪽 차선을 보는것을 예외처리하기위한 부분.
-			if (((lineRatio.x < w / 2.0) && ((double)lineRatio.x + lineRatio.width < w / 2.0)) && slopeSign(leftLine) == 1 ||
-				((lineRatio.x > w / 2.0) && ((double)lineRatio.x + lineRatio.width > w / 2.0)) && slopeSign(leftLine) == -1)
+			if ((((lineRatio.x < w / 2.0) && ((double)lineRatio.x + lineRatio.width < w / 2.0)) && slopeSign(leftLine) == 1 )||
+				(((lineRatio.x > w / 2.0) && ((double)lineRatio.x + lineRatio.width > w / 2.0)) && slopeSign(leftLine) == -1))
 			{
 				detectedLineType = 0;
 				rectangle(dst, lineRatio, purple, 4);
@@ -1174,7 +1172,7 @@ void regionOfInterest(Mat& src, Mat& dst, Point* points)
 
 	Mat maskImg = Mat::zeros(src.size(), CV_8UC3);
 
-	Scalar ignore_mask_color = Scalar(255, 255, 255);
+	//Scalar ignore_mask_color = Scalar(255, 255, 255);
 	const Point* ppt[1] = { points }; //개의 꼭짓점 :n vertices
 	int npt[] = { 4 };
 

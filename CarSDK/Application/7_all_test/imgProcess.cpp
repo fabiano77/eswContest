@@ -940,7 +940,7 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 
 	}
 
-	for (unsigned int j = 0; printMode && j < lines.size(); j++)
+	for (unsigned int j = 0; j < lines.size(); j++)
 	{
 		line(dst, Point(lines[j][0], lines[j][1]), Point(lines[j][2], lines[j][3]), Scalar(255, 255, 255), 2);
 		//circle(dst, Point2i(lines[j][0], lines[j][1]), 4, color[j], -1, LINE_AA);

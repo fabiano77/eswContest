@@ -434,6 +434,19 @@ extern "C" {
 			leftup_x = getPointX_at_Y(line_left, height_up);
 			leftdown_x = getPointX_at_Y(line_left, height_down);
 		}
+		/*check inadequate value*/
+		if (leftup_x>width/2) {
+			leftup_x = width / 2;
+		}
+		if (leftdown_x < 0) {
+			leftdown_x = 0;
+		}
+		if (rightup_x < width / 2) {
+			rightup_x = width / 2;
+		}
+		if (leftdown_x > width) {
+			leftdown_x = width;
+		}
 		/*Point that meets upper and lower bound*/
 		/*Calculate up or down point*/
 		Point point_rightup, point_rightdown, point_leftup, point_leftdown;
@@ -448,14 +461,13 @@ extern "C" {
 		Mat img_filtered, img_hsv;
 		cvtColor(img_roi, img_hsv, COLOR_BGR2HSV);
 		inRange(img_hsv, lower_gray, upper_gray, img_filtered);
-		line(img_filtered, Point(line_left[0], line_left[1]), Point(line_left[2], line_left[3]), Scalar(0, 0, 255), 2);
-		line(img_filtered, Point(line_right[0], line_right[1]), Point(line_right[2], line_right[3]), Scalar(0, 0, 255), 2);
 		//left
 		int count_left = 0;
 		int count_right = 0;
 		int count_left_total = 0;
 		int count_right_total = 0;
 		//float rate_left, rate_right;
+		/* Count Left and Right Gray Scale */
 		//left
 		for (int y = point_leftup.y; y < point_leftdown.y; y++)//up.y<down.y
 		{ //y
@@ -1506,3 +1518,4 @@ void outputSensor(Mat& dst, int w, int h, int c1, int c2, int c3, int c4, int c5
 	else
 		putText(dst, "black Line", Point(w / 2 - 60, 320), 0, 0.85, Scalar(0, 255, 255), 2);
 }
+

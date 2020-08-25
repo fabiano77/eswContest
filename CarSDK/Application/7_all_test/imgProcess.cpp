@@ -206,11 +206,11 @@ extern "C" {
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 		string str(name);
-		Point printPosition(230, 25);
+		Point printPosition(195, 50);
 
 		dstRGB = srcRGB;
 
-		putText(dstRGB, str, printPosition, 0, 0.8, Scalar(255, 153, 0), 2);
+		putText(dstRGB, "[ " + str + " ]", printPosition, 0, 0.92, Scalar(0, 255, 40), 2);
 	}
 
 	void debugFiltering(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int mode)
@@ -265,6 +265,20 @@ extern "C" {
 		dstRGB = srcRGB;
 
 		return steer;
+	}
+
+	bool isPriorityStop(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
+	{
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		Mat dstRGB(h, w, CV_8UC3, outBuf);
+
+	}
+
+	int checkSignalLight(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
+	{
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		Mat dstRGB(h, w, CV_8UC3, outBuf);
+
 	}
 
 	bool checkObstacle(unsigned char* inBuf, int w, int h, unsigned char* outBuf) {
@@ -385,14 +399,14 @@ extern "C" {
 				//img_filtered를 사용해야 회색의 범위를 찾음
 				if (color_value > 128)
 				{
-					circle(srcRGB, Point2i(x, y), 2, Scalar(255,0,0), -1, 16);
+					circle(srcRGB, Point2i(x, y), 2, Scalar(255, 0, 0), -1, 16);
 					count_left++;
 				}
 				else
 				{
-					circle(srcRGB, Point2i(x, y), 2, Scalar(0,0,255), -1, 16);
+					circle(srcRGB, Point2i(x, y), 2, Scalar(0, 0, 255), -1, 16);
 				}
-				
+
 				count_left_total++;
 			}
 		}
@@ -414,17 +428,17 @@ extern "C" {
 			}
 			for (int x = upper_x; x < width; x++) // left Gray detection
 			{ //x
-				
+
 				uchar color_value = img_filtered.at<uchar>(y, x);
 				//img_filtered를 사용해야 회색의 범위를 찾음
 				if (color_value > 128)
 				{
-					circle(srcRGB, Point2i(x, y), 2, Scalar(255,0,0), -1, 16);
+					circle(srcRGB, Point2i(x, y), 2, Scalar(255, 0, 0), -1, 16);
 					count_right++;
 				}
 				else
 				{
-					circle(srcRGB, Point2i(x, y), 2, Scalar(0,0,255), -1, 16);
+					circle(srcRGB, Point2i(x, y), 2, Scalar(0, 0, 255), -1, 16);
 				}
 				count_right_total++;
 			}
@@ -905,7 +919,7 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 		if (((double)lineRatio.height / lineRatio.width) > 0.70)
 		{
 			//s자 코너에서 안쪽 차선을 보는것을 예외처리하기위한 부분.
-			if ((((lineRatio.x < w / 2.0) && ((double)lineRatio.x + lineRatio.width < w / 2.0)) && slopeSign(leftLine) == 1 )||
+			if ((((lineRatio.x < w / 2.0) && ((double)lineRatio.x + lineRatio.width < w / 2.0)) && slopeSign(leftLine) == 1) ||
 				(((lineRatio.x > w / 2.0) && ((double)lineRatio.x + lineRatio.width > w / 2.0)) && slopeSign(leftLine) == -1))
 			{
 				detectedLineType = 0;

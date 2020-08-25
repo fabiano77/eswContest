@@ -49,7 +49,7 @@ enum MissionState
 	NONE,
 	READY,
 	REMAIN,
-	DONE = NONE
+	DONE
 };
 
 enum ParkingState
@@ -145,11 +145,13 @@ struct MissionData
 	bool broundabout;
 	bool btunnel;
 	bool overtakingFlag;			  // 추월차로 플래그 ->MS 이후 overtaking struct 추가할 것
+	bool changeMissionState;
+	int frame_priority;
 
 	struct Parking parkingData;		  // 주차에 필요한 플래그를 담는 구조체
 	struct Overtaking overtakingData; //추월에 필요한 플래그 담는 구조체
 	struct Finish finishData;
-	enum MissionState ms[8]; //
+	enum MissionState ms[9]; //
 };
 
 struct ControlData
@@ -173,6 +175,7 @@ struct ImgProcessData
 	bool bspeedControl;
 	bool bdark;
 	bool bwhiteLine;
+	bool bcheckPriority;
 	bool bprintString;
 	char missionString[20];
 	int topMode;
@@ -353,6 +356,11 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		/* 기본 상태에서 처리되는 영상처리 */
 		else
 		{
+			if (t_data->imgData.bcheckPriority)
+			{
+
+			}
+
 			if (t_data->imgData.bdark)
 			{
 				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65))
@@ -760,17 +768,21 @@ void* input_thread(void* arg)
 			else if (0 == strncmp(cmd_input, "ms", 2)) {
 				int num;
 				printf("0. start \n");
-				printf("1. fly over \n");
-				printf("2. parking \n");
-				printf("3. tunnel \n");
-				printf("4. round about \n");
-				printf("5. overtake \n");
-				printf("6. signal light \n");
-				printf("7. finish \n");
+				printf("1. flyover \n");
+				printf("2. priority \n");
+				printf("3. parking \n");
+				printf("4. tunnel \n");
+				printf("5. round about \n");
+				printf("6. overtake \n");
+				printf("7. signal light \n");
+				printf("8. finish \n");
 				printf("\t input(0~7) : ");
 				scanf("%d", &num);
-				if (num >= 0 && num <= 7)
+				if (num >= 0 && num <= 8)
+				{
 					data->missionData.ms[num] = READY;
+					data->missionData.changeMissionState = true;
+				}
 				else
 					printf("wrong input\n");
 			}
@@ -797,6 +809,7 @@ void* mission_thread(void* arg)
 
 	enum MissionState start = NONE;
 	enum MissionState flyover = NONE;
+	enum MissionState priority = NONE;
 	enum MissionState parking = NONE;
 	enum MissionState roundabout = NONE;
 	enum MissionState tunnel = NONE;
@@ -812,7 +825,7 @@ void* mission_thread(void* arg)
 	{
 		data->missionData.loopTime = timeCheck(&time);
 
-		if (start)
+		if (start && start != DONE)
 		{
 			if (0)
 			{
@@ -826,7 +839,7 @@ void* mission_thread(void* arg)
 			}
 		}
 
-		if (flyover)
+		if (flyover && flyover != DONE)
 		{
 			if (0)
 			{
@@ -840,7 +853,29 @@ void* mission_thread(void* arg)
 			}
 		}
 
-		if (parking)
+		if (priority && priority != DONE)
+		{
+			//imgProcess에서 우선정지표지판 체크 활성화
+			data->imgData.bcheckPriority = true;
+
+			if (data->missionData.frame_priority >= 2)	//우선정지표지판 2프레임 검출.
+			{
+				while (1)
+				{
+					if (data->missionData.frame_priority == 0)	//우선정지표지판 사라지면
+					{
+						break;
+					}
+					usleep(50000);
+				}
+
+				priority = DONE;
+				//imgProcess에서 우선정지표지판 체크 비활성화
+				data->imgData.bcheckPriority = false;
+			}
+		}
+
+		if (parking && parking != DONE)
 		{
 			if (DistanceSensor_cm(2) <= 20) //처음 벽이 감지되었을 경우
 			{
@@ -1113,7 +1148,7 @@ void* mission_thread(void* arg)
 			}
 		}
 
-		if (tunnel)
+		if (tunnel && tunnel != DONE)
 		{
 			if (data->missionData.btunnel)
 			{
@@ -1168,7 +1203,7 @@ void* mission_thread(void* arg)
 			}
 		}
 
-		if (roundabout)
+		if (roundabout && roundabout != DONE)
 		{
 			printf("roundabout 분기 \n");
 			if (STOP_WhiteLine(4))
@@ -1260,7 +1295,7 @@ void* mission_thread(void* arg)
 			}
 		}
 
-		if (overtake)
+		if (overtake && overtake != DONE)
 		{
 			/*MS 분기진입 명령 지시*/
 			if (DistanceSensor_cm(1) < 30) //전방 장애물 감지 //주차 상황이 아닐때, 분기진입 가능
@@ -1472,7 +1507,7 @@ void* mission_thread(void* arg)
 			}
 		}
 
-		if (signalLight)
+		if (signalLight && signalLight != DONE)
 		{
 			if ((roundabout != READY) && StopLine(4))
 			{
@@ -1486,7 +1521,7 @@ void* mission_thread(void* arg)
 			}
 		}
 
-		if (finish)/*MS*/
+		if (finish && finish != DONE)/*MS*/
 		{
 			data->missionData.finishData.checkFront = false;/*비활성화*/
 			if (0)/*노란색 가로 직선이 일정이하로 떨어지면 입력*/
@@ -1531,16 +1566,31 @@ void* mission_thread(void* arg)
 			}
 		}
 
-		if (true)
+		if (data->missionData.changeMissionState)
 		{
 			start = data->missionData.ms[0];
 			flyover = data->missionData.ms[1];
-			parking = data->missionData.ms[2];
-			tunnel = data->missionData.ms[3];
-			roundabout = data->missionData.ms[4];
-			overtake = data->missionData.ms[5];
-			signalLight = data->missionData.ms[6];
-			finish = data->missionData.ms[7];
+			priority = data->missionData.ms[2];
+			parking = data->missionData.ms[3];
+			tunnel = data->missionData.ms[4];
+			roundabout = data->missionData.ms[5];
+			overtake = data->missionData.ms[6];
+			signalLight = data->missionData.ms[7];
+			finish = data->missionData.ms[8];
+
+			data->missionData.changeMissionState = false;
+		}
+		else
+		{
+			data->missionData.ms[0] = start;
+			data->missionData.ms[1] = flyover;
+			data->missionData.ms[2] = priority;
+			data->missionData.ms[3] = parking;
+			data->missionData.ms[4] = tunnel;
+			data->missionData.ms[5] = roundabout;
+			data->missionData.ms[6] = overtake;
+			data->missionData.ms[7] = signalLight;
+			data->missionData.ms[8] = finish;
 		}
 
 		//usleep(100000);
@@ -1743,6 +1793,7 @@ int main(int argc, char** argv)
 	tdata.imgData.topMode = 3;
 	tdata.imgData.debugMode = 1;
 	tdata.imgData.bauto = false;
+	tdata.imgData.bcheckPriority = false;
 	tdata.imgData.bspeedControl = true;
 	tdata.imgData.bdark = false;
 	tdata.imgData.bmission = false;
@@ -1763,6 +1814,8 @@ int main(int argc, char** argv)
 	/******************** Mission Data ********************/
 	tdata.missionData.btunnel = false;
 	tdata.missionData.broundabout = false;
+	tdata.missionData.changeMissionState = false;
+	tdata.missionData.frame_priority = 0;
 	tdata.missionData.parkingData.bparking = false;
 	tdata.missionData.parkingData.horizontalFlag = false;
 	tdata.missionData.parkingData.verticalFlag = false;

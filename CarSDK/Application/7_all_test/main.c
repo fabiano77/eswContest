@@ -99,7 +99,7 @@ enum RoundaboutState
 	ROUND_GO_1,
 	ROUND_STOP,
 	ROUND_GO_2,
-	DONE_R = NONE_R
+	DONE_R
 };
 
 enum CameraVerticalState
@@ -1235,10 +1235,8 @@ void* mission_thread(void* arg)
 		if (tunnel && tunnel != DONE)
 		{
 			if (data->missionData.btunnel)
-			{
-				data->imgData.bmission = true;
+			{				
 				data->imgData.bprintString = true;
-				//SteeringServoControl_Write(1500);
 
 				frontLightOnOff(data->controlData.lightFlag, true);
 				sprintf(data->imgData.missionString, "mission thread : tunnel detect");
@@ -1246,15 +1244,15 @@ void* mission_thread(void* arg)
 				while (true)
 				{
 					data->missionData.loopTime = timeCheck(&time);
-					if (Tunnel_isStart(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5)))
+					//if (Tunnel_isStart(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5)))
+					if((DistanceSensor_cm(2) < 30) && (DistanceSensor_cm(6) < 30))
 					{
 						sprintf(data->imgData.missionString, "tunnel in");
 						break;
 					}
 					usleep(100000);
 				}
-
-
+				data->imgData.bmission = true;
 				while (true)
 				{
 					data->missionData.loopTime = timeCheck(&time);
@@ -1300,13 +1298,18 @@ void* mission_thread(void* arg)
 
 				DesireSpeed_Write(0);
 				data->imgData.bspeedControl = false;
+				//SteeringServoControl_Write(1500);
 				enum RoundaboutState state = WAIT_R;
-				while (state)
+				while (state != DONE_R)
 				{
 					data->missionData.loopTime = timeCheck(&time);
 					switch (state)
 					{
+					case NONE_R:
+						break;
+
 					case WAIT_R:
+						data->imgData.bmission = true;
 						if (RoundAbout_isStart(DistanceSensor_cm(1)))
 						{
 							sprintf(data->imgData.missionString, "ROUND_GO_1-1");
@@ -1317,46 +1320,51 @@ void* mission_thread(void* arg)
 						break;
 
 					case ROUND_GO_1:
-						data->imgData.bmission = true;
-						DesiredDistance(speed, 600, 1500); //앞 센서 받아오면서 일정거리 가는 함수 추가.
+						//DesiredDistance(speed, 600, 1500); //앞 센서 받아오면서 일정거리 가는 함수 추가.
+						onlyDistance(speed, 600);
 						sprintf(data->imgData.missionString, "ROUND_GO_1-2");
 						printf("ROUND_GO_1_2\n");
-						usleep(100000);
+						usleep(500000);
 
 						data->imgData.bmission = false;
-						onlyDistance(speed, 900);
-						state = ROUND_STOP;
+						onlyDistance(speed, 1400);
+						
 						sprintf(data->imgData.missionString, "ROUND_STOP");
 						printf("ROUND_STOP\n");
+
+						state = ROUND_STOP;
 						break;
 
 					case ROUND_STOP:
-						if (DistanceSensor_cm(4) <= 20)
+						if ((DistanceSensor_cm(4) <= 15) || (DistanceSensor_cm(5) <= 15) || (DistanceSensor_cm(6) <= 15))
 						{
-							data->imgData.bmission = false;
 							DesireSpeed_Write(speed);
 							sprintf(data->imgData.missionString, "ROUND_GO_2");
 							printf("ROUND_GO_2\n");
+
 							state = ROUND_GO_2;
 						}
 						break;
 
 					case ROUND_GO_2:
-						if (DistanceSensor_cm(4) <= 20)
+						if ((DistanceSensor_cm(4) <= 15) || (DistanceSensor_cm(5) <= 15))
 						{
 							printf("speed up \n");
-							speed += 5;
+							if (speed < 70)	speed += 5;
 							DesireSpeed_Write(speed);
 						}
-						else if (DistanceSensor_cm(1) <= 20)
+						else if ((DistanceSensor_cm(1) <= 15) || (DistanceSensor_cm(6) <= 15))
 						{
 							printf("speed down \n");
-							speed -= 5;
+							if (speed > 20) speed -= 5;
 							DesireSpeed_Write(speed);
 						}
-						if (abs(data->controlData.steerVal - 1500) < 60)
+						//if (abs(data->controlData.steerVal - 1500) < 60)
+						if (data->controlData.steerVal - 1500 < 10) // steerVal 1500 이상으로 유지되다가 직진 구간이 나올 때
 						{
 							sprintf(data->imgData.missionString, "DONE_R");
+							printf("DONE_R");
+
 							state = DONE_R;
 						}
 						break;
@@ -1369,10 +1377,8 @@ void* mission_thread(void* arg)
 				}
 
 				printf("ROUNDABOUT_OFF\n");
-
-				data->missionData.broundabout = false;
 				roundabout = DONE;
-				data->imgData.bmission = false;
+				data->missionData.broundabout = false;
 				data->imgData.bspeedControl = true;
 				data->imgData.bprintString = false;
 			}

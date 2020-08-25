@@ -1134,7 +1134,7 @@ void* mission_thread(void* arg)
 										DesireSpeed_Write(0);
 										usleep(200000);
 										SteeringServoControl_Write(1500);
-										usleep(3000000);
+										usleep(1500000);
 										step_h = SECOND_FORWARD;
 										Winker_Write(ALL_ON);
 										buzzer(2, 500000, 500000);
@@ -1151,9 +1151,9 @@ void* mission_thread(void* arg)
 									sprintf(data->imgData.missionString, "SECOND_FORWARD");
 									DesireSpeed_Write(-20);
 									usleep(200000);
-									if (DistanceSensor_cm(4) <= 6) {
+									if (DistanceSensor_cm(4) <= 6 || DistanceSensor_cm(1) >= 20) {
 										DesireSpeed_Write(0);
-										SteeringServoControl_Write(1700);
+										SteeringServoControl_Write(1750);
 										usleep(500000);
 										step_h = ESCAPE;
 									}

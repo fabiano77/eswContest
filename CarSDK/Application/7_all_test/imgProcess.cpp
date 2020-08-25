@@ -1334,6 +1334,10 @@ int checkRedSignal(Mat& src, Mat& dst, double percent, bool debug)
 					dst.at<Vec3b>(y, x)[1] = 0;
 					dst.at<Vec3b>(y, x)[2] = 255;
 				}
+				else
+				{
+					dst.at<Vec3b>(y, x) = Vec3b(0, 0, 0);
+				}
 			}
 		}
 	}
@@ -1378,6 +1382,10 @@ int checkYellowSignal(Mat& src, Mat& dst, double percent, bool debug)
 					dst.at<Vec3b>(y, x)[1] = 255;
 					dst.at<Vec3b>(y, x)[2] = 255;
 				}
+				else
+				{
+					dst.at<Vec3b>(y, x) = Vec3b(0, 0, 0);
+				}
 			}
 		}
 	}
@@ -1421,6 +1429,10 @@ int checkGreenSignal(Mat& src, Mat& dst, double percent, bool debug)
 					dst.at<Vec3b>(y, x)[0] = 0;
 					dst.at<Vec3b>(y, x)[1] = 255;
 					dst.at<Vec3b>(y, x)[2] = 0;
+				}
+				else
+				{
+					dst.at<Vec3b>(y, x) = Vec3b(0, 0, 0);
 				}
 			}
 		}

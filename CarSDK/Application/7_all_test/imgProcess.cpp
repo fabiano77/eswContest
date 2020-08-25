@@ -46,7 +46,6 @@ string toString(double A);
 
 Point centerPoint(Vec4i line);
 
-
 /// <summary>
 /// 관심영역만 마스킹해서 나머지는 올 블랙으로 없애버림
 /// </summary>
@@ -55,10 +54,23 @@ Point centerPoint(Vec4i line);
 /// <param name="points"></param> //4points is needed
 void regionOfInterest(Mat& src, Mat& dst, Point* points);
 
-// TUNNEL
 int isDark(Mat& frame, const double percent);
+
 int Tunnel_isStart(Mat& frame, const double percent);
-int return_go;
+
+bool priorityStop(Mat& src, Mat& dst, double percent, bool debug);
+
+int checkRedSignal(Mat& src, Mat& dst, double percent, bool debug);
+
+int checkYellowSignal(Mat& src, Mat& dst, double percent, bool debug);
+
+int checkGreenSignal(Mat& src, Mat& dst, double percent, bool debug);
+
+int countPixel(Mat& src, Rect ROI);
+
+void outputSensor(Mat& dst, int w, int h, int c1, int c2, int c3, int c4, int c5, int c6, int stopline);
+
+void outputMission(Mat& dst, int ms0, int ms1, int ms2, int ms3, int ms4, int ms5, int ms6, int ms7, int ms8);
 
 extern "C" {
 
@@ -553,6 +565,8 @@ extern "C" {
 
 
 Scalar color[7];
+Scalar white(255, 255, 255);
+Scalar yellow(0, 255, 255);
 Scalar pink(255, 50, 255);
 Scalar mint(255, 153, 0);
 Scalar red(0, 0, 255);
@@ -563,16 +577,23 @@ Scalar orange(0, 169, 237);
 Vec4i leftGuide;
 Vec4i rightGuide;
 Vec4i centerGuide[5];
-//Mat temp;
+Rect Rect_signalDetect;
+Point signalPrintPosition(30, 50);
 int guideCnt = 5;
 bool first = 0;
 int HLP_threshold = 30;	//105
 int HLP_minLineLength = 90;//115
 int HLP_maxLineGap = 125;	//260
 
-// static void on_trackbar(int, void*)
-// {
-// }
+int flag_tunnel;
+int first_tunnel = 0;
+int MAXTHR_tunnel = 10;
+int MINTHR_tunnel = 5;
+
+
+static void on_trackbar(int, void*)
+{
+}
 
 void settingStatic(int w, int h)
 {
@@ -607,6 +628,9 @@ void settingStatic(int w, int h)
 	leftGuide = Vec4i(0, 200, 200, 0) * (w / 640.0);
 	rightGuide = Vec4i(440, 0, 640, 200) * (w / 640.0);
 
+	Rect_signalDetect = Rect(0, 0, w, h);
+
+
 	cout << "settingStatic" << endl;
 }
 
@@ -616,18 +640,20 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 	int retval(0);
 	Mat src_yel;
 	Mat src_can;
-	Point printPosition(230, 70);
+	Mat temp(h, w, CV_8UC3);
+	Point printPosition(230, 120);
 
 	lineFiltering(src, src_yel, whiteMode);
 	cannyEdge(src_yel, src_can);
+
 	int lineType;	// 0 == 라인이 없다, 1 == 라인이 한개, 2 == 라인이 두개.
-	Vec8i l = hough_ransacLine(src_can, src, w, h, 15, 1, lineType, 0.1);
+	Vec8i l = hough_ransacLine(src_can, src, w, h, 15, 0, lineType, 0.1);
 	Vec4i firstLine(l[0], l[1], l[2], l[3]);
 	Vec4i secondLine(l[4], l[5], l[6], l[7]);
 
 	if (lineType == 0)
 	{
-		putText(src, "no lines", printPosition, FONT_HERSHEY_COMPLEX, 0.8, Scalar(255, 255, 255), 2);
+		putText(src, "no lines", printPosition + Point(46, 0), 0, 0.8, Scalar(255, 255, 255), 2);
 		return 9999;	//의미없다는 결과를 알려주는 수(조향하지말라는 뜻)
 	}
 	else if (lineType == 1 && (getPointY_at_X(firstLine, w / 2) > 0 || abs(slope(firstLine)) < 0.95))
@@ -650,7 +676,7 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 				//proximity += 500.0 / guideCnt;
 			}
 			else
-				rectangle(src, Point(centerGuide[i][0] - 5 + bias, centerGuide[i][1]), Point(centerGuide[i][2] + 5 + bias, centerGuide[i][3]), color[i], -1);
+				rectangle(src, Point(centerGuide[i][0] - 3 + bias, centerGuide[i][1]), Point(centerGuide[i][2] + 3 + bias, centerGuide[i][3]), color[i], -1);
 		}
 		if (linePointY_atCenter > centerGuide[0][1])	// 선형적으로 조향.
 		{
@@ -710,8 +736,8 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 	if (lineType == 2)
 		line(src, Point(secondLine[0], secondLine[1]), Point(secondLine[2], secondLine[3]), pink, 5);
 
-	putText(src, "Steering = " + ((retval == 9999) ? "0" : toString(retval)), printPosition, 0, 0.8, Scalar(255, 255, 255), 2);
-	putText(src, (abs(retval) < 20) ? "[ ^ ]" : (retval < 0) ? "[<<<]" : "[>>>]", printPosition + Point(55, 30), 0, 0.8, Scalar(255, 255, 255), 2);
+	putText(src, "Steering = " + ((retval == 9999) ? "?" : toString(retval)), printPosition, 0, 0.8, Scalar(255, 255, 255), 2);
+	//putText(src, (abs(retval) < 20) ? "[ ^ ]" : (retval < 0) ? "[<<<]" : "[>>>]", printPosition + Point(55, 30), 0, 0.8, Scalar(255, 255, 255), 2);
 
 	if (retval != 9999)
 	{
@@ -763,7 +789,7 @@ void cannyEdge(Mat& src, Mat& dst)
 
 Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType, const double lowThresAngle)
 {
-	Point printPoint(210 * (w / 640.0), 140 * (h / 360.0));
+	Point printPoint(210 * (w / 640.0), 180 * (h / 360.0));
 	vector<Point2i> P;
 	Vec4i firstLine;
 	Vec4i secondLine;
@@ -822,8 +848,8 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 			else if (lowLinePosition == 2) cuttingHeight = h * (1 / 2.0);
 			else cuttingHeight = h * (20 / 100.0);
 
-			putText(dst, "ROI = " + toString(lowLinePosition), Point(15, cuttingHeight - 10), 0, 0.65, Scalar(0, 0, 255), 2);
-			line(dst, Point(0, cuttingHeight), Point(w, cuttingHeight), Scalar(0, 0, 255), 2);
+			putText(dst, "ROI = " + toString(lowLinePosition), Point(15, cuttingHeight - 10), 2, 0.58, Scalar(0, 0, 255), 1);
+			line(dst, Point(0, cuttingHeight), Point(w, cuttingHeight), Scalar(0, 0, 255), 1);
 		}
 
 		if (centerPoint(lines[i]).y < cuttingHeight)
@@ -881,10 +907,10 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 		secondLine = ransac_algorithm(rightLines, P, w, h, T, right_inlierPercent, Rect());
 		if (printMode)
 		{
-			putText(dst, "inlier(%)  = " + toString((int)left_inlierPercent) + "%", printPoint + Point(-160, 0), FONT_HERSHEY_SIMPLEX, 0.6, Scalar(255, 255, 255), 2);
-			putText(dst, "inlier(%)  = " + toString((int)right_inlierPercent) + "%", printPoint + Point(+160, 0), FONT_HERSHEY_SIMPLEX, 0.6, Scalar(255, 255, 255), 2);
-			putText(dst, "slope = " + toString(slope(firstLine)), printPoint + Point(-160, 30), FONT_HERSHEY_SIMPLEX, 0.6, Scalar(255, 255, 255), 2);
-			putText(dst, "slope = " + toString(slope(secondLine)), printPoint + Point(+160, 30), FONT_HERSHEY_SIMPLEX, 0.6, Scalar(255, 255, 255), 2);
+			putText(dst, "inlier = " + toString((int)left_inlierPercent) + "%", printPoint + Point(-160, 0), 0, 0.6, Scalar(255, 255, 255), 2);
+			putText(dst, "inlier = " + toString((int)right_inlierPercent) + "%", printPoint + Point(+160, 0), 0, 0.6, Scalar(255, 255, 255), 2);
+			putText(dst, "slope = " + toString(slope(firstLine)), printPoint + Point(-160, 30), 0, 0.6, Scalar(255, 255, 255), 2);
+			putText(dst, "slope = " + toString(slope(secondLine)), printPoint + Point(+160, 30), 0, 0.6, Scalar(255, 255, 255), 2);
 		}
 		//dst = temp;
 		return Vec8i(firstLine[0], firstLine[1], firstLine[2], firstLine[3],
@@ -919,8 +945,8 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 		if (((double)lineRatio.height / lineRatio.width) > 0.70)
 		{
 			//s자 코너에서 안쪽 차선을 보는것을 예외처리하기위한 부분.
-			if ((((lineRatio.x < w / 2.0) && ((double)lineRatio.x + lineRatio.width < w / 2.0)) && slopeSign(leftLine) == 1) ||
-				(((lineRatio.x > w / 2.0) && ((double)lineRatio.x + lineRatio.width > w / 2.0)) && slopeSign(leftLine) == -1))
+			if (((lineRatio.x < w / 2.0) && ((double)lineRatio.x + lineRatio.width < w / 2.0)) && slopeSign(leftLine) == 1 ||
+				((lineRatio.x > w / 2.0) && ((double)lineRatio.x + lineRatio.width > w / 2.0)) && slopeSign(leftLine) == -1)
 			{
 				detectedLineType = 0;
 				rectangle(dst, lineRatio, purple, 4);
@@ -938,9 +964,9 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 
 		if (printMode)
 		{
-			putText(dst, "inlier(%)  = " + toString((int)inlierPercent) + "%", printPoint + Point(0, 0), FONT_HERSHEY_SIMPLEX, 0.6, Scalar(255, 255, 255), 2);
-			putText(dst, "slope = " + toString(slope(firstLine)), printPoint + Point(0, 30), FONT_HERSHEY_SIMPLEX, 0.6, Scalar(255, 255, 255), 2);
-			putText(dst, "rect ratio = " + toString((double)lineRatio.height / lineRatio.width), printPoint + Point(0, 60), FONT_HERSHEY_SIMPLEX, 0.6, Scalar(255, 255, 255), 2);
+			putText(dst, "inlier = " + toString((int)inlierPercent) + "%", printPoint + Point(0, 0), 0, 0.7, Scalar(255, 255, 255), 2);
+			putText(dst, "slope = " + toString(slope(firstLine)), printPoint + Point(0, 30), 0, 0.7, Scalar(255, 255, 255), 2);
+			putText(dst, "rect  = " + toString((double)lineRatio.height / lineRatio.width), printPoint + Point(0, 60), 0, 0.7, Scalar(255, 255, 255), 2);
 		}
 		//dst = temp;
 		return Vec8i(firstLine[0], firstLine[1], firstLine[2], firstLine[3],
@@ -1086,7 +1112,7 @@ void regionOfInterest(Mat& src, Mat& dst, Point* points)
 
 	Mat maskImg = Mat::zeros(src.size(), CV_8UC3);
 
-	//Scalar ignore_mask_color = Scalar(255, 255, 255);
+	Scalar ignore_mask_color = Scalar(255, 255, 255);
 	const Point* ppt[1] = { points }; //개의 꼭짓점 :n vertices
 	int npt[] = { 4 };
 
@@ -1095,14 +1121,6 @@ void regionOfInterest(Mat& src, Mat& dst, Point* points)
 	bitwise_and(src, maskImg, maskedImg);
 	dst = maskedImg;
 }
-
-/**/////////////////////////////
-/*		TUNNEL START		  */
-/**/////////////////////////////
-int flag_tunnel;
-int first_tunnel = 0;
-int MAXTHR_tunnel = 10;
-int MINTHR_tunnel = 5;
 
 int isDark(Mat& frame, const double percent) {
 
@@ -1146,6 +1164,285 @@ int Tunnel_isStart(Mat& frame, const double percent) {
 		return 1;
 	return 0;
 }
-/*/////////////////////////////
-		TUNNEL END
-*//////////////////////////////
+
+bool priorityStop(Mat& src, Mat& dst, double percent, bool debug)
+{
+	Scalar lower_red1(0, 100, 150);
+	Scalar upper_red1(12, 255, 255);
+	Scalar lower_red2(168, 100, 150);
+	Scalar upper_red2(180, 255, 255);
+
+	Mat src_hsv;
+
+	Mat src_red, src_red1, src_red2;
+	Mat src_edge;
+
+	cvtColor(src, src_hsv, COLOR_BGR2HSV);
+	inRange(src_hsv, lower_red1, upper_red1, src_red1);
+	inRange(src_hsv, lower_red2, upper_red2, src_red2);
+	src_red = src_red1 | src_red2;
+
+	int redPixel = countPixel(src_red, Rect(0, 0, src.cols, src.rows));
+	double redRatio((double)redPixel / Rect(0, 0, src.cols, src.rows).area());	//검출된 픽셀수를 전체 픽셀수로 나눈 비율
+	redRatio *= 100.0;
+
+
+	//클래스멤버로 저장되어있는 src_red 활용.
+	Canny(src_red, src_edge, 118, 242);	//빨간색만 남은 frame의 윤곽을 1채널 Mat객체로 추출
+
+	vector<Vec4i> lines;		//검출될 직선이 저장될 객체
+	HoughLinesP(src_edge, lines, 1, CV_PI / 180, 75, 15, 5);
+
+	if (debug)
+	{
+		for (int x = 0; x < src.cols; x++)
+		{
+			for (int y = 0; y < src.rows; y++)
+			{
+				dst.at<Vec3b>(y, x)[0] = src_red.at<uchar>(y, x);
+				dst.at<Vec3b>(y, x)[1] = src_red.at<uchar>(y, x);
+				dst.at<Vec3b>(y, x)[2] = src_red.at<uchar>(y, x);
+			}
+		}
+		putText(dst, "red Pixel : " + toString(redRatio) + '%', signalPrintPosition, 0, 1, Scalar(255, 0, 0), 2);
+		putText(dst, "Line Count : " + toString((int)lines.size()), signalPrintPosition + Point(0, 30), 0, 1, Scalar(255), 2);
+		for (unsigned int i = 0; i < lines.size(); i++)
+		{
+			line(dst, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), pink, 2);
+		}
+	}
+
+	if (redRatio > percent)
+	{
+		if (lines.size() >= 2)
+		{
+			putText(dst, "[Priority STOP!]", Point(src.cols / 12, src.rows * 0.65), 0, 2, Scalar(255, 123, 0), 3);
+			return true;
+		}
+	}
+	return false;
+}
+
+int checkRedSignal(Mat& src, Mat& dst, double percent, bool debug)
+{
+	Scalar lower_red1(0, 100, 150);
+	Scalar upper_red1(12, 255, 255);
+	Scalar lower_red2(168, 100, 150);
+	Scalar upper_red2(180, 255, 255);
+
+	Mat src_hsv;
+
+	Mat src_red, src_red1, src_red2;
+
+	cvtColor(src, src_hsv, COLOR_BGR2HSV);
+	inRange(src_hsv, lower_red1, upper_red1, src_red1);
+	inRange(src_hsv, lower_red2, upper_red2, src_red2);
+	src_red = src_red1 | src_red2;
+
+	int redPixel = countPixel(src_red, Rect_signalDetect);
+	double redRatio((double)redPixel / Rect_signalDetect.area());	//검출된 픽셀수를 전체 픽셀수로 나눈 비율
+	redRatio *= 100.0;
+
+	if (debug)
+	{
+		for (int x = Rect_signalDetect.x; x < Rect_signalDetect.x + Rect_signalDetect.width; x++)
+		{
+			for (int y = Rect_signalDetect.y; y < Rect_signalDetect.y + Rect_signalDetect.height; y++)
+			{
+				if (src_red.at<uchar>(y, x))
+				{
+					dst.at<Vec3b>(y, x)[0] = 0;
+					dst.at<Vec3b>(y, x)[1] = 0;
+					dst.at<Vec3b>(y, x)[2] = 255;
+				}
+			}
+		}
+	}
+
+	putText(dst, "red Pixel : " + toString(redRatio) + '%', signalPrintPosition, 0, 1, Scalar(255, 0, 0), 2);
+
+	if (redRatio > percent)
+	{
+		putText(dst, "RED signal!", Point(src.cols / 5, src.rows * 0.65), 0, 2, Scalar(255), 3);
+		putText(dst, "RED signal!", Point(src.cols / 5, src.rows * 0.65), 0, 2, Scalar(255, 255, 0), 3);
+
+		return true;
+	}
+	else
+		return false;
+}
+
+int checkYellowSignal(Mat& src, Mat& dst, double percent, bool debug)
+{
+	Scalar lower_yellow(18, 100, 150);
+	Scalar upper_yellow(42, 255, 255);
+
+	Mat src_hsv;
+
+	Mat src_yellow;
+	cvtColor(src, src_hsv, COLOR_BGR2HSV);
+	inRange(src_hsv, lower_yellow, upper_yellow, src_yellow);
+
+	int yellowPixel = countPixel(src_yellow, Rect_signalDetect);
+	double yellowRatio((double)yellowPixel / Rect_signalDetect.area());	//검출된 픽셀수를 전체 픽셀수로 나눈 비율
+	yellowRatio *= 100.0;
+
+	if (debug)
+	{
+		for (int x = Rect_signalDetect.x; x < Rect_signalDetect.x + Rect_signalDetect.width; x++)
+		{
+			for (int y = Rect_signalDetect.y; y < Rect_signalDetect.y + Rect_signalDetect.height; y++)
+			{
+				if (src_yellow.at<uchar>(y, x))
+				{
+					dst.at<Vec3b>(y, x)[0] = 0;
+					dst.at<Vec3b>(y, x)[1] = 255;
+					dst.at<Vec3b>(y, x)[2] = 255;
+				}
+			}
+		}
+	}
+
+	putText(dst, "yellow Pixel : " + toString(yellowRatio) + '%', signalPrintPosition, 0, 1, Scalar(255, 0, 0), 2);
+
+	if (yellowRatio > percent)
+	{
+		putText(dst, "YELLOW signal!", Point(src.cols / 5, src.rows * 0.65), 0, 2, Scalar(255), 3);
+		putText(dst, "YELLOW signal!", Point(src.cols / 5, src.rows * 0.65), 0, 2, Scalar(255, 255, 0), 3);
+
+		return true;
+	}
+	else
+		return false;
+}
+
+int checkGreenSignal(Mat& src, Mat& dst, double percent, bool debug)
+{
+	Scalar lower_green(43, 50, 130);
+	Scalar upper_green(77, 255, 255);
+
+	Mat src_hsv;
+
+	Mat src_green;
+	cvtColor(src, src_hsv, COLOR_BGR2HSV);
+	inRange(src_hsv, lower_green, upper_green, src_green);
+
+	int greenPixel = countPixel(src_green, Rect_signalDetect);
+	double greenRatio((double)greenPixel / Rect_signalDetect.area());	//검출된 픽셀수를 전체 픽셀수로 나눈 비율
+	greenRatio *= 100.0;
+
+	if (debug)
+	{
+		for (int x = Rect_signalDetect.x; x < Rect_signalDetect.x + Rect_signalDetect.width; x++)
+		{
+			for (int y = Rect_signalDetect.y; y < Rect_signalDetect.y + Rect_signalDetect.height; y++)
+			{
+				if (src_green.at<uchar>(y, x))
+				{
+					dst.at<Vec3b>(y, x)[0] = 0;
+					dst.at<Vec3b>(y, x)[1] = 255;
+					dst.at<Vec3b>(y, x)[2] = 0;
+				}
+			}
+		}
+	}
+
+	putText(dst, "green Pixel : " + toString(greenRatio) + '%', signalPrintPosition, 0, 1, Scalar(255, 0, 0), 2);
+
+	if (greenRatio > percent)
+	{
+		putText(dst, "GREEN signal!", Point(src.cols / 5, src.rows * 0.65), 0, 2, Scalar(255), 3);
+		putText(dst, "GREEN signal!", Point(src.cols / 5, src.rows * 0.65), 0, 2, Scalar(255, 255, 0), 3);
+
+		return true;
+	}
+	else
+		return false;
+}
+
+int countPixel(Mat& src, Rect ROI)
+{
+	int cnt(0);
+	for (int x = ROI.x; x < ROI.x + ROI.width; x++)
+	{
+		for (int y = ROI.y; y < ROI.y + ROI.height; y++)
+		{
+			if (src.at<uchar>(y, x)) cnt++;		// 붉은색이 검출된 픽셀 개수 계산
+		}
+	}
+	return cnt;
+}
+
+void outputSensor(Mat& dst, int w, int h, int c1, int c2, int c3, int c4, int c5, int c6, int stopline)
+{
+	putText(dst, toString(c1) + "_cm", Point((w / 2) - 30, 22), 0, 0.75, (c1 > 30) ? white : (c1 < 15) ? red : yellow, 2);
+	putText(dst, toString(c2) + "_cm", Point(w - 88, 100), 0, 0.75, (c2 > 30) ? white : (c2 < 15) ? red : yellow, 2);
+	putText(dst, toString(c3) + "_cm", Point(w - 88, 257), 0, 0.75, (c3 > 30) ? white : (c3 < 15) ? red : yellow, 2);
+	putText(dst, toString(c4) + "_cm", Point((w / 2) - 30, h - 10), 0, 0.75, (c4 > 30) ? white : (c4 < 15) ? red : yellow, 2);
+	putText(dst, toString(c5) + "_cm", Point(7, 257), 0, 0.75, (c5 > 30) ? white : (c5 < 15) ? red : yellow, 2);
+	putText(dst, toString(c6) + "_cm", Point(7, 100), 0, 0.75, (c6 > 30) ? white : (c6 < 15) ? red : yellow, 2);
+
+	if (stopline)
+		putText(dst, "white Line", Point(w / 2 - 60, 320), 0, 0.85, Scalar(255, 255, 0), 2);
+	else
+		putText(dst, "black Line", Point(w / 2 - 60, 320), 0, 0.85, Scalar(0, 255, 255), 2);
+}
+
+void outputMission(Mat& dst, int ms0, int ms1, int ms2, int ms3, int ms4, int ms5, int ms6, int ms7, int ms8)
+{
+	int ms[9] = { ms0, ms1, ms2, ms3, ms4, ms5, ms6, ms7, ms8 };
+	//0 == NONE, 1 == READY, 2 == REMAIN, 3 == DONE
+	for (int i = 0; i < 9; i++)
+	{
+		Scalar color;
+		string name;
+		if (ms[i] == 1)
+		{
+			color = Scalar(0, 255, 255);
+		}
+		else if (ms[i] == 2)
+		{
+			color = Scalar(255, 255, 0);
+		}
+		else if (ms[i] == 3)
+		{
+			color = Scalar(50, 255, 50);
+		}
+		else //ms[i] == 0
+		{
+			color = Scalar(0, 0, 255);
+		}
+		switch (i)
+		{
+		case 0:
+			name = "start";
+			break;
+		case 1:
+			name = "flyover";
+			break;
+		case 2:
+			name = "priority";
+			break;
+		case 3:
+			name = "parking";
+			break;
+		case 4:
+			name = "tunnel";
+			break;
+		case 5:
+			name = "roundabout";
+			break;
+		case 6:
+			name = "overtake";
+			break;
+		case 7:
+			name = "signalLight";
+			break;
+		case 8:
+			name = "finish";
+			break;
+		}
+		circle(dst, Point(50, 50 + i * 30) + Point(390, 20), 8, color, -1);
+		putText(dst, name, Point(65, 57 + i * 30) + Point(390, 20), 0, 0.72, Scalar(220, 220, 220), 2);
+	}
+}

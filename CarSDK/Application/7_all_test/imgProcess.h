@@ -5,11 +5,11 @@
 extern "C" {
 #endif
 
-	void OpenCV_calibration(float* map1, float* map2, int w, int h);
+	void calibration(float* map1, float* map2, int w, int h);
 
 	void OpenCV_remap(unsigned char* inBuf, int w, int h, unsigned char* outBuf, float* map1, float* map2);
 
-	void OpenCV_topview_transform(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int mode);
+	void topview_transform(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int mode);
 
 	void displayPrintStr(unsigned char* outBuf, int w, int h, char* name);
 

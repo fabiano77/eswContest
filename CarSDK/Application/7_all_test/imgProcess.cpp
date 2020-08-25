@@ -74,7 +74,7 @@ void outputSensor(Mat& dst, int w, int h, int c1, int c2, int c3, int c4, int c5
 
 extern "C" {
 
-	void OpenCV_calibration(float* map1, float* map2, int w, int h) {
+	void calibration(float* map1, float* map2, int w, int h) {
 		Size videoSize = Size(w, h);
 		Mat Mat_map1(h, w, CV_32FC1, map1);
 		Mat Mat_map2(h, w, CV_32FC1, map2);
@@ -166,7 +166,7 @@ extern "C" {
 		remap(srcRGB, dstRGB, map1_Mat, map2_Mat, INTER_LINEAR);
 	}
 
-	void OpenCV_topview_transform(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int mode)
+	void topview_transform(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int mode)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
@@ -341,6 +341,13 @@ extern "C" {
 			cout << "debug priorityStop()" << endl;
 
 			priorityStop(srcRGB, dstRGB, 10, 1);
+		}
+		else if (mode == 8)
+		{
+			cout << "debug checkFront()" << endl;
+			
+			int retval = checkFront(inBuf, w, h, outBuf);
+			printf("return val = %d\n", retval);
 		}
 	}
 
@@ -1276,7 +1283,7 @@ bool priorityStop(Mat& src, Mat& dst, double percent, bool debug)
 	{
 		if (lines.size() >= 2)
 		{
-			putText(dst, "[Priority STOP!]", Point(src.cols / 12, src.rows * 0.65), 0, 2, Scalar(255, 123, 0), 3);
+			putText(dst, "[Priority STOP!]", Point(src.cols / 9, src.rows * 0.65), 0, 1.5, Scalar(255, 123, 0), 3);
 			return true;
 		}
 	}

@@ -147,6 +147,8 @@ struct Finish {
 
 struct SignalLight {
 	enum SignalLightState state;
+	int Accumulation_greenVal;
+	int ignore_frame;
 	int finalDirection;
 };
 
@@ -186,7 +188,7 @@ struct ImgProcessData
 	bool bmission;			// 미션진입 ON/OFF (차선인식 사용하지 않게됨)
 	bool bauto;				// 자동 조향 ON/OFF
 	bool bspeedControl;		// 자동 조향의 속도개입 ON/OFF
-	bool bwhiteLine;		// 자동 조향의 흰색선 탐지 ON/OFF
+	bool bwhiteLine;		// 자동 조향의 흰색 선 탐지 ON/OFF
 	bool bprintString;		// 오버레이에 문자열 표시 ON/OFF
 	bool bprintMission;		// 오버레이에 미션정보 표시 ON/OFF
 	bool bprintSensor;		// 오버레이에 센서값 표시 ON/OFF
@@ -195,7 +197,7 @@ struct ImgProcessData
 	bool bcheckSignalLight;	// 신호등 탐지 ON/OFF
 	char missionString[20];	// 오버레이에 표시할 문자열
 	int topMode;			// 탑뷰 모드 (0, 1, 2)
-	int debugMode;			// 디버그 모드(0~ )
+	int debugMode;			// 디버그 모드(0~ 7)
 };
 
 struct thr_data
@@ -344,7 +346,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 			/*끝날 때 사용*/
 			if (t_data->missionData.finishData.checkFront == true)
 			{
-				OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
+				topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
 				t_data->missionData.finishData.distEndLine = checkFront(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
 				/*무의미한 값인 경우 알고리즘에 맞게 steering 진행*/
 				if (t_data->missionData.finishData.distEndLine == -1000) {
@@ -373,13 +375,43 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				switch(t_data->missionData.signalLightData.state)
 				{
 					case DETECT_RED:
+						if(checkRed(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf))
+							t_data->missionData.signalLightData.state = DETECT_YELLOW;
 						break;
+
 					case DETECT_YELLOW:
+						if(checkYellow(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf))
+						{
+							t_data->missionData.signalLightData.state = DETECT_GREEN;
+							t_data->missionData.signalLightData.Accumulation_greenVal = 0;
+							t_data->missionData.signalLightData.ignore_frame = 3;
+						}
 						break;
+
 					case DETECT_GREEN:
-						//영상 처리
+						if(t_data->missionData.signalLightData.ignore_frame)
+						{
+							if(checkGreen(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf))
+								t_data->missionData.signalLightData.ignore_frame--;
+						}
+						else
+						{
+							t_data->missionData.signalLightData.Accumulation_greenVal += checkGreen(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+							if(t_data->missionData.signalLightData.Accumulation_greenVal >= 3)
+							{
+								t_data->missionData.signalLightData.state = DETECTION_FINISH;
+								t_data->missionData.signalLightData.finalDirection = 1;
+							}
+							else if(t_data->missionData.signalLightData.Accumulation_greenVal <= -3)
+							{
+								t_data->missionData.signalLightData.state = DETECTION_FINISH;
+								t_data->missionData.signalLightData.finalDirection = -1;
+							}
+						}
 						break;
+						
 					case DETECTION_FINISH:
+						t_data->imgData.bcheckSignalLight = false;
 						break;
 				}
 			}
@@ -390,7 +422,14 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		{
 			if (t_data->imgData.bcheckPriority)
 			{
-
+				if(isPriorityStop(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf))
+				{
+					if(t_data->missionData.frame_priority < 2)
+						t_data->missionData.frame_priority++;
+					printf("img thread : isPriorityStop() return 1; frame =%d\n", t_data->missionData.frame_priority);
+				}
+				else
+					t_data->missionData.frame_priority--;
 			}
 
 			if (t_data->imgData.bdark)
@@ -410,7 +449,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 
 			if (t_data->imgData.btopview)
 			{
-				OpenCV_topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
+				topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
 			}
 
 			if (t_data->imgData.bauto)
@@ -420,15 +459,14 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				{
 					t_data->controlData.steerVal = 1500 - steerVal;
 					SteeringServoControl_Write(t_data->controlData.steerVal);
-
-					t_data->controlData.desireSpeedVal = auto_speedMapping(steerVal, 40);
 				}
 				if (t_data->imgData.bspeedControl)
 				{
+					t_data->controlData.desireSpeedVal = auto_speedMapping(steerVal, 40);
 					if (t_data->controlData.desireSpeedVal != t_data->controlData.beforeSpeedVal)
 					{
 						//이전 속도와 달라졌을 때만 속도값 인가.
-						//DesireSpeed_Write(t_data->controlData.desireSpeedVal);
+						DesireSpeed_Write(t_data->controlData.desireSpeedVal);
 						t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
 					}
 				}
@@ -488,7 +526,7 @@ void* image_process_thread(void* arg)
 	};
 	memset(map1, 0, VPE_OUTPUT_W * VPE_OUTPUT_H);
 	memset(map2, 0, VPE_OUTPUT_W * VPE_OUTPUT_H);
-	OpenCV_calibration(map1, map2, VPE_OUTPUT_W, VPE_OUTPUT_H);
+	calibration(map1, map2, VPE_OUTPUT_W, VPE_OUTPUT_H);
 	v4l2_reqbufs(v4l2, NUMBUF);
 	vpe_input_init(vpe);
 	allocate_input_buffers(data);
@@ -622,7 +660,6 @@ void* input_thread(void* arg)
 			{
 				if (!data->imgData.bdebug)
 				{
-					int num;
 					printf("\t select debug mode\n");
 					printf("1. lineFiltering() \n");
 					printf("2. lineFiltering() & cannyEdge() \n");
@@ -630,11 +667,11 @@ void* input_thread(void* arg)
 					printf("4. checkRedSignal() \n");
 					printf("5. checkRedSignal() \n");
 					printf("6. checkRedSignal() \n");
-					printf("7. priorityStop() \n\n");
+					printf("7. priorityStop() \n");
+					printf("8. checkFront() \n\n");
 
-					printf("\t input(0~7) : ");
-					scanf("%d", &num);
-					data->imgData.debugMode = num;
+					printf("\t input(0~8) : ");
+					scanf("%d", &data->imgData.debugMode);
 					data->imgData.bdebug = !data->imgData.bdebug;
 					printf("\t debug ON\n");
 				}
@@ -909,18 +946,16 @@ void* mission_thread(void* arg)
 
 			if (data->missionData.frame_priority >= 2)	//우선정지표지판 2프레임 검출.
 			{
-				while (1)
+				while (data->imgData.bcheckPriority)
 				{
 					if (data->missionData.frame_priority == 0)	//우선정지표지판 사라지면
 					{
-						break;
+						data->imgData.bcheckPriority = false;
 					}
-					usleep(50000);
+					usleep(100000);
 				}
-
 				priority = DONE;
 				//imgProcess에서 우선정지표지판 체크 비활성화
-				data->imgData.bcheckPriority = false;
 			}
 		}
 
@@ -1337,7 +1372,6 @@ void* mission_thread(void* arg)
 
 				data->missionData.broundabout = false;
 				roundabout = DONE;
-				signalLight = READY;
 				data->imgData.bmission = false;
 				data->imgData.bspeedControl = true;
 				data->imgData.bprintString = false;
@@ -1551,6 +1585,7 @@ void* mission_thread(void* arg)
 					}
 					usleep(1500000);
 				}
+				signalLight = READY;
 				data->imgData.bmission = false;
 				data->imgData.bprintString = false;
 			}
@@ -1560,13 +1595,36 @@ void* mission_thread(void* arg)
 		{
 			if (StopLine(4))
 			{
+				DesireSpeed_Write(0);
 				data->imgData.bmission = true;
 				data->imgData.bprintString = true;
 				data->imgData.bcheckSignalLight = true;
 				sprintf(data->imgData.missionString, "signalLight");
 				printf("signalLight\n");
 
+				while(data->imgData.bcheckSignalLight)
+					usleep(200000);	//영상처리에서 일련의 과정이 끝날 때 까지 기다린다.
+				
+				if(data->missionData.signalLightData.finalDirection == 1)
+				{
+					sprintf(data->imgData.missionString, "Right signal");
+					printf("\tRight signal\n");
+					DesiredDistance(40,1150,1000);
+				}
+				else if(data->missionData.signalLightData.finalDirection == -1)
+				{
+					sprintf(data->imgData.missionString, "Left signal");
+					printf("\tLeft signal\n");
+					DesiredDistance(40,1150,2000);
+				}
+				else 
+				{
+					sprintf(data->imgData.missionString, "ERROR");
+					printf("\tERROR\n");
+					DesiredDistance(40,1150,1000);
+				}
 
+				finish = READY;
 				data->imgData.bmission = false;
 				data->imgData.bprintString = false;
 			}

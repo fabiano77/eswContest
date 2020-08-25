@@ -115,6 +115,13 @@ enum DirectionState
 	STOP //앞에 장애물이 있다면 스탑(overtaking이 on일 때만)
 };
 
+enum SignalLightState{
+	DETECTION_FINISH,
+	DETECT_RED,
+	DETECT_YELLOW,
+	DETECT_GREEN
+};
+
 
 /******************** mission struct ********************/
 struct Parking
@@ -138,6 +145,11 @@ struct Finish {
 	int distEndLine;//결승선까지의 거리
 };
 
+struct SignalLight {
+	enum SignalLightState state;
+	int finalDirection;
+};
+
 /******************** thread struct ********************/
 struct MissionData
 {
@@ -148,8 +160,9 @@ struct MissionData
 	bool changeMissionState;
 	int frame_priority;
 
-	struct Parking parkingData;		  // 주차에 필요한 플래그를 담는 구조체
-	struct Overtaking overtakingData; //추월에 필요한 플래그 담는 구조체
+	struct Parking parkingData;			// 주차에 필요한 플래그를 담는 구조체
+	struct Overtaking overtakingData;	// 추월에 필요한 플래그 담는 구조체
+	struct SignalLight signalLightData;	// 신호등에 필요한 변수를 담는 구조체
 	struct Finish finishData;
 	enum MissionState ms[9]; //
 };
@@ -166,20 +179,23 @@ struct ControlData
 
 struct ImgProcessData
 {
-	uint32_t loopTime; //img 스레드 루프 시간
-	bool bcalibration;
-	bool bdebug;
-	bool btopview;
-	bool bmission;
-	bool bauto;
-	bool bspeedControl;
-	bool bdark;
-	bool bwhiteLine;
-	bool bcheckPriority;
-	bool bprintString;
-	char missionString[20];
-	int topMode;
-	int debugMode;
+	uint32_t loopTime;		// img 스레드 루프 시간
+	bool bcalibration;		// 캘리브레이션
+	bool bdebug;			// 디버그모드 ON/OFF
+	bool btopview;			// 탑뷰 ON/OFF
+	bool bmission;			// 미션진입 ON/OFF (차선인식 사용하지 않게됨)
+	bool bauto;				// 자동 조향 ON/OFF
+	bool bspeedControl;		// 자동 조향의 속도개입 ON/OFF
+	bool bwhiteLine;		// 자동 조향의 흰색선 탐지 ON/OFF
+	bool bprintString;		// 오버레이에 문자열 표시 ON/OFF
+	bool bprintMission;		// 오버레이에 미션정보 표시 ON/OFF
+	bool bprintSensor;		// 오버레이에 센서값 표시 ON/OFF
+	bool bdark;				// 터널 탐지 ON/OFF
+	bool bcheckPriority;	// 우선정지 표지판 탐지 ON/OFF
+	bool bcheckSignalLight	// 신호등 탐지 ON/OFF
+	char missionString[20];	// 오버레이에 표시할 문자열
+	int topMode;			// 탑뷰 모드 (0, 1, 2)
+	int debugMode;			// 디버그 모드(0~ )
 };
 
 struct thr_data
@@ -351,6 +367,20 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 					t_data->missionData.finishData.checkFront = false;
 				}
 			}
+
+			if (t_data->imgData.bcheckSignalLight)
+			{
+				switch(t_data->missionData.signalLightData.state)
+					case DETECT_RED:
+						break;
+					case DETECT_YELLOW:
+						break;
+					case DETECT_GREEN:
+						//영상 처리
+						break;
+					case DETECTION_FINISH:
+						break;
+			}
 		}
 
 		/* 기본 상태에서 처리되는 영상처리 */
@@ -408,12 +438,24 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		/*			영상처리 종료								*/
 		/********************************************************/
 
-		/* 상단에 문자열(missionStr) 출력 */
+		/* 영상처리후 오버레이로 정보 등등 출력. */
 		if (t_data->imgData.bprintString)
 		{
-			displayPrint(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.missionString);
+			displayPrintStr(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, t_data->imgData.missionString);
 		}
-
+		if (t_data->imgData.bprintMission)
+		{
+			displayPrintMission(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H,
+				(int)data->missionData.ms[0], (int)data->missionData.ms[1], (int)data->missionData.ms[2],
+				(int)data->missionData.ms[3], (int)data->missionData.ms[4], (int)data->missionData.ms[5],
+				(int)data->missionData.ms[6], (int)data->missionData.ms[7], (int)data->missionData.ms[8]);
+		}
+		if (t_data->imgData.bprintSensor)
+		{
+			displayPrintSensor(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H,
+				DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3), 
+				DistanceSensor_cm(4), DistanceSensor_cm(5), DistanceSensor_cm(6), StopLine(4))
+		}
 
 		memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
 		gettimeofday(&et, NULL);
@@ -543,12 +585,12 @@ void* input_thread(void* arg)
 	MSG("\t dark   : detect darkness ON/OFF");
 	MSG("\t dist   : distance sensor check");
 	MSG("\t distc  : distance sensor check by -cm-");
-	MSG("\t distl  : distance sensor check constantly");
 	MSG("\t stop   : stop Line ON/OFF");
 	MSG("\t encoder: ");
 	MSG("\t back   : ");
 	MSG("\t stop   : check line sensor");
-	MSG("\t parking: output distance");
+	MSG("\t mission: mission display output on/off");
+	MSG("\t sensor : sensor  display output on/off");
 	MSG("\t ms	   : mission on/off");
 	MSG("\n");
 
@@ -578,27 +620,26 @@ void* input_thread(void* arg)
 			{
 				if (!data->imgData.bdebug)
 				{
+					int num;
+					printf("\t select debug mode\n");
+					printf("1. lineFiltering() \n");
+					printf("2. lineFiltering() & cannyEdge() \n");
+					printf("3. checkObstacle() \n");
+					printf("4. checkRedSignal() \n");
+					printf("5. checkRedSignal() \n");
+					printf("6. checkRedSignal() \n");
+					printf("7. priorityStop() \n\n");
+
+					printf("\t input(0~7) : ");
+					scanf("%d", &num);
+					data->imgData.debugMode = num;
 					data->imgData.bdebug = !data->imgData.bdebug;
-					printf("\t debug 1 ON\n");
+					printf("\t debug ON\n");
 				}
 				else
 				{
-					if (data->imgData.debugMode == 1)
-					{
-						data->imgData.debugMode = 2;
-						printf("\t debug 2 ON\n");
-					}
-					else if (data->imgData.debugMode == 2)
-					{
-						data->imgData.debugMode = 3;
-						printf("\t debug 3 ON\n");
-					}
-					else if (data->imgData.debugMode == 3)
-					{
-						data->imgData.debugMode = 1;
-						data->imgData.bdebug = !data->imgData.bdebug;
-						printf("\t debug OFF\n");
-					}
+					data->imgData.bdebug = !data->imgData.bdebug;
+					printf("\t debug OFF\n");
 				}
 			}
 			else if (0 == strncmp(cmd_input, "auto", 4))
@@ -643,20 +684,6 @@ void* input_thread(void* arg)
 					printf("\t detect darkness ON\n");
 				else
 					printf("\t detect darkness OFF\n");
-			}
-			else if (0 == strncmp(cmd_input, "distl", 5))
-			{
-				int d_data;
-				int channel;
-				int j;
-				printf("channel(1~6) : ");
-				scanf("%d", &channel);
-				for (j = 0; j < 50000; j++)
-				{
-					d_data = DistanceSensor(channel);
-					printf("channel = %d, distance = 0x%04X(%d) \n", channel, d_data, d_data);
-					usleep(300000);
-				}
 			}
 			else if (0 == strncmp(cmd_input, "distc", 5))
 			{
@@ -765,6 +792,22 @@ void* input_thread(void* arg)
 					usleep(100000);
 				}
 			}
+			else if (0 == strncmp(cmd_input, "mission", 7))
+			{
+				data->imgData.bprintMission = !data->imgData.bprintMission;
+				if (data->imgData.bprintMission)
+					printf("\t print mission ON\n");
+				else
+					printf("\t print mission OFF\n");
+			}
+			else if (0 == strncmp(cmd_input, "sensor", 6))
+			{
+				data->imgData.bprintSensor = !data->imgData.bprintSensor;
+				if (data->imgData.bprintSensor)
+					printf("\t print sensor ON\n");
+				else
+					printf("\t print sensor OFF\n");
+			}
 			else if (0 == strncmp(cmd_input, "ms", 2)) {
 				int num;
 				printf("0. start \n");
@@ -775,12 +818,16 @@ void* input_thread(void* arg)
 				printf("5. round about \n");
 				printf("6. overtake \n");
 				printf("7. signal light \n");
-				printf("8. finish \n");
+				printf("8. finish \n\n");
+
 				printf("\t input(0~7) : ");
 				scanf("%d", &num);
 				if (num >= 0 && num <= 8)
 				{
-					data->missionData.ms[num] = READY;
+					if (data->missionData.ms[num] == READY)
+						data->missionData.ms[num] = NONE;
+					else
+						data->missionData.ms[num] = READY
 					data->missionData.changeMissionState = true;
 				}
 				else
@@ -1509,12 +1556,14 @@ void* mission_thread(void* arg)
 
 		if (signalLight && signalLight != DONE)
 		{
-			if ((roundabout != READY) && StopLine(4))
+			if (StopLine(4))
 			{
 				data->imgData.bmission = true;
 				data->imgData.bprintString = true;
+				data->imgData.bcheckSignalLight = true;
 				sprintf(data->imgData.missionString, "signalLight");
 				printf("signalLight\n");
+
 
 				data->imgData.bmission = false;
 				data->imgData.bprintString = false;
@@ -1593,8 +1642,7 @@ void* mission_thread(void* arg)
 			data->missionData.ms[8] = finish;
 		}
 
-		//usleep(100000);
-		usleep(50000);
+		usleep(50000);	//50ms
 	}
 }
 
@@ -1789,16 +1837,19 @@ int main(int argc, char** argv)
 	/******************** imgProcess Data ********************/
 	tdata.imgData.bcalibration = false;
 	tdata.imgData.bdebug = false;
+	tdata.imgData.debugMode = 1;
 	tdata.imgData.btopview = true;
 	tdata.imgData.topMode = 3;
-	tdata.imgData.debugMode = 1;
 	tdata.imgData.bauto = false;
-	tdata.imgData.bcheckPriority = false;
-	tdata.imgData.bspeedControl = true;
-	tdata.imgData.bdark = false;
-	tdata.imgData.bmission = false;
 	tdata.imgData.bwhiteLine = false;
+	tdata.imgData.bspeedControl = true;
+	tdata.imgData.bmission = false;
+	tdata.imgData.bdark = false;
+	tdata.imgData.bcheckPriority = false;
+	tdata.imgData.bcheckSignalLight = false;
 	tdata.imgData.bprintString = false;
+	tdata.imgData.bprintSensor = true;
+	tdata.imgData.bprintMission = true;
 	sprintf(tdata.imgData.missionString, "(null)");
 
 	/******************** Control Data ********************/
@@ -1824,6 +1875,7 @@ int main(int argc, char** argv)
 	tdata.missionData.overtakingFlag = false;
 	tdata.missionData.overtakingData.updownCamera = CAMERA_DOWN;
 	tdata.missionData.overtakingData.headingDirection = STOP;
+	tdata.missionData.signalLightData.finalDirection = 0;
 	tdata.missionData.finishData.checkFront = false;
 	int i = 0;
 	for (i = 0; i < 8; i++) {

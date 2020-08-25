@@ -11,7 +11,21 @@ extern "C" {
 
 	void OpenCV_topview_transform(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int mode);
 
-	void displayPrint(unsigned char* inBuf, int w, int h, unsigned char* outBuf, char* name);
+	void displayPrintStr(unsigned char* outBuf, int w, int h, char* name);
+
+	void displayPrintMission(unsigned char* outBuf, int w, int h, 
+		int ms0, int ms1, int ms2, int ms3, int ms4, int ms5, int ms6, int ms7, int ms8);
+
+	void displayPrintSensor(unsigned char* outBuf, int w, int h,
+		int c1, int c2, int c3, int c4, int c5, int c6, int stopline);
+
+	int checkRed(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
+
+	int checkYellow(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
+
+	int checkGreen(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
+
+	bool isPriorityStop(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
 
 	void debugFiltering(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int mode);
 
@@ -27,15 +41,15 @@ extern "C" {
 	/// <param name="w"></param>
 	/// <param name="h"></param>
 	/// <returns></returns>
-	int checkFront(unsigned char* inBuf, int w, int h,unsigned char* outBuf);
+	int checkFront(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
 
 
 	/// <summary>
-    /// check where is obstacle
+	/// check where is obstacle
 	/// </summary>
 	/// <param name="src"></param> //Input img buf(������ �̹����� ������ ��)
 	/// <returns></returns> true (left), false(right)
-	bool checkObstacle(unsigned char* inBuf,int w, int h, unsigned char* outBuf);
+	bool checkObstacle(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
 #ifdef __cplusplus
 }
 #endif

@@ -68,9 +68,9 @@ int checkGreenSignal(Mat& src, Mat& dst, double percent, bool debug);
 
 int countPixel(Mat& src, Rect ROI);
 
-void outputSensor(Mat& dst, int w, int h, int c1, int c2, int c3, int c4, int c5, int c6, int stopline);
-
 void outputMission(Mat& dst, int ms0, int ms1, int ms2, int ms3, int ms4, int ms5, int ms6, int ms7, int ms8);
+
+void outputSensor(Mat& dst, int w, int h, int c1, int c2, int c3, int c4, int c5, int c6, int stopline);
 
 extern "C" {
 
@@ -213,24 +213,72 @@ extern "C" {
 		}
 	}
 
-	void displayPrint(unsigned char* inBuf, int w, int h, unsigned char* outBuf, char* name)
+	void displayPrintStr(unsigned char* outBuf, int w, int h, char* name)
 	{
-		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 		string str(name);
 		Point printPosition(195, 50);
 
-		dstRGB = srcRGB;
-
 		putText(dstRGB, "[ " + str + " ]", printPosition, 0, 0.92, Scalar(0, 255, 40), 2);
+	}
+
+	void displayPrintMission(unsigned char* outBuf, int w, int h,
+		int ms0, int ms1, int ms2, int ms3, int ms4, int ms5, int ms6, int ms7, int ms8)
+	{
+		Mat dstRGB(h, w, CV_8UC3, outBuf);
+
+		outputMission(dstRGB, ms0, ms1, ms2, ms3, ms4, ms5, ms6, ms7, ms8);
+	}
+
+	void displayPrintSensor(unsigned char* outBuf, int w, int h,
+		int c1, int c2, int c3, int c4, int c5, int c6, int stopline)
+	{
+		Mat dstRGB(h, w, CV_8UC3, outBuf);
+
+		outputSensor(dstRGB, w, h, c1, c2, c3, c4, c5, c6, stopline);
+	}
+
+	int checkRed(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
+	{
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		Mat dstRGB(h, w, CV_8UC3, outBuf);
+
+		return checkRedSignal(srcRGB, dstRGB, 20, 1);
+	}
+
+	int checkYellow(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
+	{
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		Mat dstRGB(h, w, CV_8UC3, outBuf);
+
+		return checkYellowSignal(srcRGB, dstRGB, 20, 1);
+	}
+
+	int checkGreen(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
+	{
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		Mat dstRGB(h, w, CV_8UC3, outBuf);
+
+		return checkGreenSignal(srcRGB, dstRGB, 20, 1);
+	}
+
+	bool isPriorityStop(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
+	{
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		Mat dstRGB(h, w, CV_8UC3, outBuf);
+
+		return priorityStop(srcRGB, dstRGB, 10, 0);
 	}
 
 	void debugFiltering(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int mode)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
+		cout << "\tmode = ";
 		if (mode == 1)
 		{
+			cout << "debug lineFiltering()" << endl;
+
 			Mat src8C;
 			lineFiltering(srcRGB, src8C, 1);
 			for (int x = 0; x < w; x++)
@@ -246,6 +294,8 @@ extern "C" {
 		}
 		else if (mode == 2)
 		{
+			cout << "debug lineFiltering() & cannyEdge()" << endl;
+
 			Mat src8C;
 			Mat srcEdge;
 			lineFiltering(srcRGB, src8C, 1);
@@ -263,8 +313,34 @@ extern "C" {
 		}
 		else if (mode == 3)
 		{
+			cout << "debug checkObstacle()" << endl;
+
 			int retval = checkObstacle(inBuf, w, h, outBuf);
 			printf("return val = %d\n", retval);
+		}
+		else if (mode == 4)
+		{
+			cout << "debug checkRedSignal()" << endl;
+
+			checkRedSignal(srcRGB, dstRGB, 20, 1);
+		}
+		else if (mode == 5)
+		{
+			cout << "debug checkYellowSignal()" << endl;
+
+			checkYellowSignal(srcRGB, dstRGB, 20, 1);
+		}
+		else if (mode == 6)
+		{
+			cout << "debug checkGreenSignal()" << endl;
+
+			checkGreenSignal(srcRGB, dstRGB, 20, 1);
+		}
+		else if (mode == 7)
+		{
+			cout << "debug priorityStop()" << endl;
+
+			priorityStop(srcRGB, dstRGB, 10, 1);
 		}
 	}
 
@@ -277,20 +353,6 @@ extern "C" {
 		dstRGB = srcRGB;
 
 		return steer;
-	}
-
-	bool isPriorityStop(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
-	{
-		Mat srcRGB(h, w, CV_8UC3, inBuf);
-		Mat dstRGB(h, w, CV_8UC3, outBuf);
-
-	}
-
-	int checkSignalLight(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
-	{
-		Mat srcRGB(h, w, CV_8UC3, inBuf);
-		Mat dstRGB(h, w, CV_8UC3, outBuf);
-
 	}
 
 	bool checkObstacle(unsigned char* inBuf, int w, int h, unsigned char* outBuf) {
@@ -1373,21 +1435,6 @@ int countPixel(Mat& src, Rect ROI)
 	return cnt;
 }
 
-void outputSensor(Mat& dst, int w, int h, int c1, int c2, int c3, int c4, int c5, int c6, int stopline)
-{
-	putText(dst, toString(c1) + "_cm", Point((w / 2) - 30, 22), 0, 0.75, (c1 > 30) ? white : (c1 < 15) ? red : yellow, 2);
-	putText(dst, toString(c2) + "_cm", Point(w - 88, 100), 0, 0.75, (c2 > 30) ? white : (c2 < 15) ? red : yellow, 2);
-	putText(dst, toString(c3) + "_cm", Point(w - 88, 257), 0, 0.75, (c3 > 30) ? white : (c3 < 15) ? red : yellow, 2);
-	putText(dst, toString(c4) + "_cm", Point((w / 2) - 30, h - 10), 0, 0.75, (c4 > 30) ? white : (c4 < 15) ? red : yellow, 2);
-	putText(dst, toString(c5) + "_cm", Point(7, 257), 0, 0.75, (c5 > 30) ? white : (c5 < 15) ? red : yellow, 2);
-	putText(dst, toString(c6) + "_cm", Point(7, 100), 0, 0.75, (c6 > 30) ? white : (c6 < 15) ? red : yellow, 2);
-
-	if (stopline)
-		putText(dst, "white Line", Point(w / 2 - 60, 320), 0, 0.85, Scalar(255, 255, 0), 2);
-	else
-		putText(dst, "black Line", Point(w / 2 - 60, 320), 0, 0.85, Scalar(0, 255, 255), 2);
-}
-
 void outputMission(Mat& dst, int ms0, int ms1, int ms2, int ms3, int ms4, int ms5, int ms6, int ms7, int ms8)
 {
 	int ms[9] = { ms0, ms1, ms2, ms3, ms4, ms5, ms6, ms7, ms8 };
@@ -1445,4 +1492,19 @@ void outputMission(Mat& dst, int ms0, int ms1, int ms2, int ms3, int ms4, int ms
 		circle(dst, Point(50, 50 + i * 30) + Point(390, 20), 8, color, -1);
 		putText(dst, name, Point(65, 57 + i * 30) + Point(390, 20), 0, 0.72, Scalar(220, 220, 220), 2);
 	}
+}
+
+void outputSensor(Mat& dst, int w, int h, int c1, int c2, int c3, int c4, int c5, int c6, int stopline)
+{
+	putText(dst, toString(c1) + "_cm", Point((w / 2) - 30, 22), 0, 0.75, (c1 > 30) ? white : (c1 < 15) ? red : yellow, 2);
+	putText(dst, toString(c2) + "_cm", Point(w - 88, 100), 0, 0.75, (c2 > 30) ? white : (c2 < 15) ? red : yellow, 2);
+	putText(dst, toString(c3) + "_cm", Point(w - 88, 257), 0, 0.75, (c3 > 30) ? white : (c3 < 15) ? red : yellow, 2);
+	putText(dst, toString(c4) + "_cm", Point((w / 2) - 30, h - 10), 0, 0.75, (c4 > 30) ? white : (c4 < 15) ? red : yellow, 2);
+	putText(dst, toString(c5) + "_cm", Point(7, 257), 0, 0.75, (c5 > 30) ? white : (c5 < 15) ? red : yellow, 2);
+	putText(dst, toString(c6) + "_cm", Point(7, 100), 0, 0.75, (c6 > 30) ? white : (c6 < 15) ? red : yellow, 2);
+
+	if (stopline)
+		putText(dst, "white Line", Point(w / 2 - 60, 320), 0, 0.85, Scalar(255, 255, 0), 2);
+	else
+		putText(dst, "black Line", Point(w / 2 - 60, 320), 0, 0.85, Scalar(0, 255, 255), 2);
 }

@@ -1633,7 +1633,7 @@ void* mission_thread(void* arg)
 		if (finish && finish != DONE)/*MS*/
 		{
 			data->missionData.finishData.checkFront = false;/*비활성화*/
-			if (0)/*노란색 가로 직선이 일정이하로 떨어지면 입력*/
+			if (1)/*노란색 가로 직선이 일정이하로 떨어지면 입력*/
 			{//Encoder 사용해서 일정 직진하면 종료하게 설정
 				//끝나고 삐소리 
 				data->missionData.finishData.distEndLine = -1000;

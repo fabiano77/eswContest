@@ -405,8 +405,8 @@ extern "C" {
 		int rightup_x, rightdown_x, leftup_x, leftdown_x;
 		double grad_right, grad_left;
 		if (line_type == 0) {//미탐지 시
-			grad_right = 1000;
-			grad_left = -1000;
+			grad_right = -1000;
+			grad_left = 1000;
 			rightup_x = 0;
 			rightdown_x = 0;
 			leftup_x = 0;
@@ -463,8 +463,6 @@ extern "C" {
 		point_leftdown = Point(leftdown_x, height_down);
 
 		/*Count Gray*/
-		float grayrate_left = 0;
-		float grayrate_right = 0;
 		Mat img_filtered, img_hsv;
 		cvtColor(img_roi, img_hsv, COLOR_BGR2HSV);
 		inRange(img_hsv, lower_gray, upper_gray, img_filtered);
@@ -503,7 +501,7 @@ extern "C" {
 				count_left_total++;
 			}
 		}
-		grayrate_left = (float)count_left / count_left_total * 100.0;
+		float grayrate_left = (float)count_left / count_left_total * 100.0;
 		printf("Left rate is %f %% \n", grayrate_left);
 		//right
 		for (int y = point_rightup.y; y < point_rightdown.y; y++)//up.y<down.y
@@ -537,7 +535,7 @@ extern "C" {
 			}
 		}
 
-		grayrate_right = (float)count_right / count_right_total * 100.0;
+		float grayrate_right = (float)count_right / count_right_total * 100.0;
 		printf("Right rate is %f %% \n", grayrate_right);
 		/**************************************/
 

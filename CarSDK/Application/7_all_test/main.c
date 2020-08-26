@@ -665,8 +665,8 @@ void* input_thread(void* arg)
 					printf("2. lineFiltering() & cannyEdge() \n");
 					printf("3. checkObstacle() \n");
 					printf("4. checkRedSignal() \n");
-					printf("5. checkRedSignal() \n");
-					printf("6. checkRedSignal() \n");
+					printf("5. checkYellowSignal() \n");
+					printf("6. checkGreenSignal() \n");
 					printf("7. priorityStop() \n");
 					printf("8. checkFront() \n\n");
 

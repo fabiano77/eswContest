@@ -1218,6 +1218,7 @@ int isDark(Mat& frame, const double percent) {
 	int totalValue = pixelCnt * 255;
 	double brightRate = ((double)pixelValue / totalValue) * 100.0;
 
+	cout << "isDark() : brightRate = " << brightRate << endl;
 	if (brightRate < (100 - percent))
 	{
 		return 1;

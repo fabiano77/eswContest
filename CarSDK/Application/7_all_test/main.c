@@ -1403,7 +1403,7 @@ void* mission_thread(void* arg)
 
 		if (overtake && overtake != DONE)
 		{
-			/*MS 분기진입 명령 지시*/
+			/* 분기진입 명령 지시 */
 			if (DistanceSensor_cm(1) < 30) //전방 장애물 감지 //주차 상황이 아닐때, 분기진입 가능
 			{
 				data->imgData.btopview = false; //topview off
@@ -1418,7 +1418,7 @@ void* mission_thread(void* arg)
 				data->missionData.overtakingFlag = true;
 				data->imgData.bwhiteLine = true;
 				bool obstacle = false;
-				int thresDistance = 400;
+				int thresDistance = 350;
 				/*차량 정지*/
 				DesireSpeed_Write(0);
 
@@ -1463,22 +1463,10 @@ void* mission_thread(void* arg)
 							Winker_Write(RIGHT_ON);
 							DesiredDistance(50, thresDistance, 1100);
 							Winker_Write(ALL_OFF);
+							/* 센서 오류 인식 방지*/
+							usleep(500000);
 							/*thresDistance이상 가서 전방 거리 재확인*/
-							if (DistanceSensor_cm(1) < 30)
-							{
-								farFront = false;
-							}
-							else
-							{
-								farFront = true; /*전방 미탐지*/
-							}
-							/*전진하는 동안 전방 센서가 30 이상 멀어지면 SIDE_ON으로 진행*/
-							if (farFront == true)
-							{
-								state = SIDE_ON;
-								DesireSpeed_Write(50);
-							}
-							else
+							if (DistanceSensor_cm(1) < 20)
 							{
 								sprintf(data->imgData.missionString, "Detect Error");
 								/*정지, 후진 및 방향 전환*/
@@ -1486,6 +1474,13 @@ void* mission_thread(void* arg)
 								/*정지 및 방향 전환 명령*/
 								data->missionData.overtakingData.headingDirection = LEFT;
 							}
+							else
+							{ /*전방 미탐지*/
+								state = SIDE_ON;
+								/*전진하는 동안 전방 센서가 20 이상 멀어지면 SIDE_ON으로 진행*/
+								DesireSpeed_Write(50);
+							}
+							
 						}
 						else if (data->missionData.overtakingData.headingDirection == LEFT &&
 							data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
@@ -1496,28 +1491,22 @@ void* mission_thread(void* arg)
 							Winker_Write(LEFT_ON);
 							DesiredDistance(50, thresDistance, 1900);
 							Winker_Write(ALL_OFF);
+							/* 센서 오류 인식 방지*/
+							usleep(500000);
 							/*thresDistance이상 가서 전방 거리 재확인*/
-							if (DistanceSensor_cm(1) < 30)
-							{
-								farFront = false;
-							}
-							else
-							{
-								farFront = true;
-							}
-							/*전진하는 동안 전방 센서가 30 이상 멀어지면 SIDE_ON으로 진행*/
-							if (farFront == true)
-							{
-								state = SIDE_ON;
-								DesireSpeed_Write(50);
-							}
-							else
+							if (DistanceSensor_cm(1) < 20)
 							{
 								/*정지, 후진 및 방향 전환*/
 								sprintf(data->imgData.missionString, "Detect Error");
 								DesiredDistance(-50, thresDistance, 1900);
 								/*정지 후 방향 전환 명령*/
 								data->missionData.overtakingData.headingDirection = RIGHT;
+							}
+							else
+							{
+							/*전진하는 동안 전방 센서가 20 이상 멀어지면 SIDE_ON으로 진행*/
+								state = SIDE_ON;
+								DesireSpeed_Write(50);
 							}
 						}
 						else
@@ -1653,7 +1642,7 @@ void* mission_thread(void* arg)
 			}
 		}
 
-		if (finish && finish != DONE)/*MS*/
+		if (finish && finish != DONE)
 		{
 			data->missionData.finishData.checkFront = false;/*비활성화*/
 			if (1)/*노란색 가로 직선이 일정이하로 떨어지면 입력*/
@@ -1685,7 +1674,9 @@ void* mission_thread(void* arg)
 				int dist_go = data->missionData.finishData.distEndLine;
 				DesiredDistance(40, (360 - dist_go) * 6, 1500);
 				/*이동 후 종료*/
-
+				Winker_Write(ALL_ON);
+				usleep(1000000);
+				Winker_Write(ALL_OFF);
 				/*밑에 흰색이 하나라도 탐지되는지 확인 후 있다면 정지*/
 				///추가필요/////
 

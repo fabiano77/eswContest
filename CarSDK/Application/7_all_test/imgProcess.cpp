@@ -345,7 +345,7 @@ extern "C" {
 		else if (mode == 8)
 		{
 			cout << "debug checkFront()" << endl;
-			
+
 			int retval = checkFront(inBuf, w, h, outBuf);
 			printf("return val = %d\n", retval);
 		}
@@ -442,7 +442,7 @@ extern "C" {
 			leftdown_x = getPointX_at_Y(line_left, height_down);
 		}
 		/*check inadequate value*/
-		if (leftup_x>width/2) {
+		if (leftup_x > width / 2) {
 			leftup_x = width / 2;
 		}
 		if (leftdown_x < 0) {
@@ -655,7 +655,7 @@ Vec4i leftGuide;
 Vec4i rightGuide;
 Vec4i centerGuide[5];
 Rect Rect_signalDetect;
-Point signalPrintPosition(30, 50);
+Point signalPrintPosition(120, 250);
 int guideCnt = 5;
 bool first = 0;
 int HLP_threshold = 30;	//105
@@ -705,7 +705,7 @@ void settingStatic(int w, int h)
 	leftGuide = Vec4i(0, 200, 200, 0) * (w / 640.0);
 	rightGuide = Vec4i(440, 0, 640, 200) * (w / 640.0);
 
-	Rect_signalDetect = Rect(0, 0, w, h);
+	Rect_signalDetect = Rect(100, 20, w - 200, h / 3);
 
 
 	cout << "settingStatic" << endl;
@@ -713,7 +713,7 @@ void settingStatic(int w, int h)
 
 int calculSteer(Mat& src, int w, int h, bool whiteMode)
 {
-	if (!first++) settingStatic(w, h);
+	//if (!first++) settingStatic(w, h);
 	int retval(0);
 	Mat src_yel;
 	Mat src_can;
@@ -1022,7 +1022,7 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 		if (((double)lineRatio.height / lineRatio.width) > 0.70)
 		{
 			//s자 코너에서 안쪽 차선을 보는것을 예외처리하기위한 부분.
-			if ((((lineRatio.x < w / 2.0) && ((double)lineRatio.x + lineRatio.width < w / 2.0)) && slopeSign(leftLine) == 1 )||
+			if ((((lineRatio.x < w / 2.0) && ((double)lineRatio.x + lineRatio.width < w / 2.0)) && slopeSign(leftLine) == 1) ||
 				(((lineRatio.x > w / 2.0) && ((double)lineRatio.x + lineRatio.width > w / 2.0)) && slopeSign(leftLine) == -1))
 			{
 				detectedLineType = 0;
@@ -1329,9 +1329,8 @@ int checkRedSignal(Mat& src, Mat& dst, double percent, bool debug)
 			{
 				if (src_red.at<uchar>(y, x))
 				{
-					dst.at<Vec3b>(y, x)[0] = 0;
-					dst.at<Vec3b>(y, x)[1] = 0;
-					dst.at<Vec3b>(y, x)[2] = 255;
+					dst.at<Vec3b>(y, x) = Vec3b(0, 0, 255);
+					Scalar(0, 0, 0);
 				}
 				else
 				{
@@ -1377,9 +1376,7 @@ int checkYellowSignal(Mat& src, Mat& dst, double percent, bool debug)
 			{
 				if (src_yellow.at<uchar>(y, x))
 				{
-					dst.at<Vec3b>(y, x)[0] = 0;
-					dst.at<Vec3b>(y, x)[1] = 255;
-					dst.at<Vec3b>(y, x)[2] = 255;
+					dst.at<Vec3b>(y, x) = Vec3b(0, 255, 255);
 				}
 				else
 				{
@@ -1389,7 +1386,7 @@ int checkYellowSignal(Mat& src, Mat& dst, double percent, bool debug)
 		}
 	}
 
-	putText(dst, "yellow Pixel : " + toString(yellowRatio) + '%', signalPrintPosition, 0, 1, Scalar(255, 0, 0), 2);
+	putText(dst, "yellow Pixel : " + toString(yellowRatio) + '%', signalPrintPosition, 0, 1, Scalar(0, 255, 0), 2);
 
 	if (yellowRatio > percent)
 	{
@@ -1425,9 +1422,7 @@ int checkGreenSignal(Mat& src, Mat& dst, double percent, bool debug)
 			{
 				if (src_green.at<uchar>(y, x))
 				{
-					dst.at<Vec3b>(y, x)[0] = 0;
-					dst.at<Vec3b>(y, x)[1] = 255;
-					dst.at<Vec3b>(y, x)[2] = 0;
+					dst.at<Vec3b>(y, x) = Vec3b(0, 255, 0);
 				}
 				else
 				{
@@ -1536,4 +1531,3 @@ void outputSensor(Mat& dst, int w, int h, int c1, int c2, int c3, int c4, int c5
 	else
 		putText(dst, "black Line", Point(w / 2 - 60, 320), 0, 0.85, Scalar(0, 255, 255), 2);
 }
-

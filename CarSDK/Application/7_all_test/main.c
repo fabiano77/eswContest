@@ -1378,7 +1378,7 @@ void *mission_thread(void *arg)
 					data->missionData.loopTime = timeCheck(&time);
 					int c2 = DistanceSensor_cm(2);
 					int c6 = DistanceSensor_cm(6);
-					if (Tunnel_isEnd(c2, c6, DistanceSensor_cm(3), DistanceSensor_cm(5)))
+					if (Tunnel_isEnd(c2, c6, 50, 50))
 					{
 						sprintf(data->imgData.missionString, "tunnel out");
 						break;
@@ -1389,7 +1389,7 @@ void *mission_thread(void *arg)
 
 					SteeringServoControl_Write(data->controlData.steerVal);
 
-					usleep(100000);
+					usleep(10000);
 				}
 				DesireSpeed_Write(0);
 

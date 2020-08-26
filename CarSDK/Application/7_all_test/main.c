@@ -1931,7 +1931,7 @@ int main(int argc, char **argv)
 	tdata.imgData.bcheckPriority = false;
 	tdata.imgData.bcheckSignalLight = false;
 	tdata.imgData.bprintString = false;
-	tdata.imgData.bprintSensor = true;
+	tdata.imgData.bprintSensor = false;
 	tdata.imgData.bprintMission = true;
 	sprintf(tdata.imgData.missionString, "(null)");
 

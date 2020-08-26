@@ -93,7 +93,7 @@ extern "C" {
 			if (!(sensor & byte)) 	flag++;			
 			sensor = sensor << 1;
 		}
-		cout << "flag = " << flag << endl;
+		//cout << "flag = " << flag << endl;
 		if (flag > Lineflag) {
 			return 1;
 		}

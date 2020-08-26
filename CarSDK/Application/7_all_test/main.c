@@ -1221,9 +1221,13 @@ void *mission_thread(void *arg)
 									usleep(500000);
 									DesireSpeed_Write(-23);
 									usleep(50000);
-									while (DistanceSensor_cm(4) <= 6)
+									while (1)
 									{
-										DesireSpeed_Write(0);
+										if (DistanceSensor_cm(4) <= 6)
+										{
+											DesireSpeed_Write(0);
+											break;
+										}
 										usleep(50000);
 									}
 									DesiredDistance(23, 400, 1100);

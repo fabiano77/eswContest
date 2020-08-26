@@ -1095,7 +1095,7 @@ void *mission_thread(void *arg)
 										step_v = LEFT_FRONT_V;
 										break;
 									}
-									if (DistanceSensor_cm(5) <= 5)
+									if (DistanceSensor_cm(5) <= 6)
 									{
 										// 언더스티어 상황
 										printf("under steer\n");
@@ -1121,7 +1121,6 @@ void *mission_thread(void *arg)
 									usleep(200000);
 									DesiredDistance(23, 100, 1500);
 									usleep(200000);
-
 									DesiredDistance(23, 200, 1700);
 									usleep(200000);
 
@@ -1130,12 +1129,12 @@ void *mission_thread(void *arg)
 
 								case OVER_STEER_V:
 									sprintf(data->imgData.missionString, "OVER_STEER");
-									DesiredDistance(23, 100, 1700);
+									//DesiredDistance(23, 100, 1300);
+									//usleep(200000);
+									DesiredDistance(23, 500, 1500);
 									usleep(300000);
-									DesiredDistance(23, 100, 1500);
-									usleep(300000);
-									DesiredDistance(23, 200, 1300);
-									usleep(200000);
+									//DesiredDistance(23, 200, 1700);
+									//usleep(200000);
 									step_v = SECOND_BACKWARD_V;
 									break;
 
@@ -1214,15 +1213,15 @@ void *mission_thread(void *arg)
 								{
 								case FIRST_BACKWARD:
 									sprintf(data->imgData.missionString, "FIRST_BACKWARD");
-									DesiredDistance(-23, 850, 1100);
+									DesiredDistance(-23, 820, 1100);
 									usleep(200000);
-									DesiredDistance(-23, 330, 1500);
+									DesiredDistance(-23, 300, 1500);
 									usleep(200000);
 									SteeringServoControl_Write(1900);
 									usleep(500000);
 									DesireSpeed_Write(-23);
 									usleep(50000);
-									while (DistanceSensor_cm(4) <= 7 && DistanceSensor_cm(3) <= 10)
+									while (DistanceSensor_cm(4) <= 5)
 									{
 										DesireSpeed_Write(0);
 										usleep(50000);

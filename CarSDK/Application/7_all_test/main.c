@@ -78,8 +78,12 @@ enum VerticalStep
 {
 	FINISH_V,
 	FIRST_BACKWARD_V,
-	FIRST_FORWARD_V,
 	SECOND_BACKWARD_V,
+	OVER_STEER_V,
+	UNDER_STEER_V,
+	RIGHT_FRONT_V,
+	LEFT_FRONT_V,
+	FIRST_FORWARD_V,
 	SECOND_FORWARD_V
 };
 
@@ -204,10 +208,10 @@ struct ImgProcessData
 
 struct thr_data
 {
-	struct display *disp;
-	struct v4l2 *v4l2;
-	struct vpe *vpe;
-	struct buffer **input_bufs;
+	struct display* disp;
+	struct v4l2* v4l2;
+	struct vpe* vpe;
+	struct buffer** input_bufs;
 	struct ControlData controlData;
 	struct MissionData missionData;
 	struct ImgProcessData imgData;
@@ -220,14 +224,14 @@ struct thr_data
 };
 
 /******************** function ********************/
-static void manualControl(struct ControlData *cdata, char key);
+static void manualControl(struct ControlData* cdata, char key);
 
-static uint32_t timeCheck(struct timeval *tempTime);
+static uint32_t timeCheck(struct timeval* tempTime);
 
-static int allocate_input_buffers(struct thr_data *data)
+static int allocate_input_buffers(struct thr_data* data)
 {
 	int i;
-	struct vpe *vpe = data->vpe;
+	struct vpe* vpe = data->vpe;
 
 	data->input_bufs = calloc(NUMBUF, sizeof(*data->input_bufs));
 	for (i = 0; i < NUMBUF; i++)
@@ -246,7 +250,7 @@ static int allocate_input_buffers(struct thr_data *data)
 	return 0;
 }
 
-static void free_input_buffers(struct buffer **buffer, uint32_t n, bool bmultiplanar)
+static void free_input_buffers(struct buffer** buffer, uint32_t n, bool bmultiplanar)
 {
 	uint32_t i;
 	for (i = 0; i < n; i++)
@@ -265,10 +269,10 @@ static void free_input_buffers(struct buffer **buffer, uint32_t n, bool bmultipl
 	free(buffer);
 }
 
-static void draw_operatingtime(struct display *disp, uint32_t time, uint32_t itime, uint32_t mtime)
+static void draw_operatingtime(struct display* disp, uint32_t time, uint32_t itime, uint32_t mtime)
 {
 	FrameBuffer tmpFrame;
-	unsigned char *pbuf[4];
+	unsigned char* pbuf[4];
 	char strmtime[128];
 	char strtime[128];
 	char stritime[128];
@@ -300,12 +304,12 @@ static void draw_operatingtime(struct display *disp, uint32_t time, uint32_t iti
 /************************************************/
 /*	Function - img_process						*/
 /************************************************/
-static void img_process(struct display *disp, struct buffer *cambuf, struct thr_data *t_data, float *map1, float *map2)
+static void img_process(struct display* disp, struct buffer* cambuf, struct thr_data* t_data, float* map1, float* map2)
 {
 	unsigned char srcbuf[VPE_OUTPUT_W * VPE_OUTPUT_H * 3];
 	uint32_t optime;
 	struct timeval st, et;
-	unsigned char *cam_pbuf[4];
+	unsigned char* cam_pbuf[4];
 	if (get_framebuf(cambuf, cam_pbuf) == 0)
 	{
 		memcpy(srcbuf, cam_pbuf[0], VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
@@ -488,15 +492,15 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		if (t_data->imgData.bprintMission)
 		{
 			displayPrintMission(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H,
-								(int)t_data->missionData.ms[0], (int)t_data->missionData.ms[1], (int)t_data->missionData.ms[2],
-								(int)t_data->missionData.ms[3], (int)t_data->missionData.ms[4], (int)t_data->missionData.ms[5],
-								(int)t_data->missionData.ms[6], (int)t_data->missionData.ms[7], (int)t_data->missionData.ms[8]);
+				(int)t_data->missionData.ms[0], (int)t_data->missionData.ms[1], (int)t_data->missionData.ms[2],
+				(int)t_data->missionData.ms[3], (int)t_data->missionData.ms[4], (int)t_data->missionData.ms[5],
+				(int)t_data->missionData.ms[6], (int)t_data->missionData.ms[7], (int)t_data->missionData.ms[8]);
 		}
 		if (t_data->imgData.bprintSensor)
 		{
 			displayPrintSensor(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H,
-							   DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3),
-							   DistanceSensor_cm(4), DistanceSensor_cm(5), DistanceSensor_cm(6), StopLine(4));
+				DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3),
+				DistanceSensor_cm(4), DistanceSensor_cm(5), DistanceSensor_cm(6), StopLine(4));
 		}
 
 		memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
@@ -509,12 +513,12 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 /************************************************/
 /*	Thread - image_process_thread				*/
 /************************************************/
-void *image_process_thread(void *arg)
+void* image_process_thread(void* arg)
 {
-	struct thr_data *data = (struct thr_data *)arg;
-	struct v4l2 *v4l2 = data->v4l2;
-	struct vpe *vpe = data->vpe;
-	struct buffer *capt;
+	struct thr_data* data = (struct thr_data*)arg;
+	struct v4l2* v4l2 = data->v4l2;
+	struct vpe* vpe = data->vpe;
+	struct buffer* capt;
 	struct timeval st, et;
 	bool isFirst = true;
 	int index;
@@ -592,9 +596,9 @@ void *image_process_thread(void *arg)
 /************************************************/
 /*	Thread - input_thread						*/
 /************************************************/
-void *input_thread(void *arg)
+void* input_thread(void* arg)
 {
-	struct thr_data *data = (struct thr_data *)arg;
+	struct thr_data* data = (struct thr_data*)arg;
 
 	int total_encoder = 0;
 	int forward_encoder = 0;
@@ -888,9 +892,9 @@ void *input_thread(void *arg)
 /************************************************/
 /*	Thread - mission_thread						*/
 /************************************************/
-void *mission_thread(void *arg)
+void* mission_thread(void* arg)
 {
-	struct thr_data *data = (struct thr_data *)arg;
+	struct thr_data* data = (struct thr_data*)arg;
 	struct timeval time;
 	time.tv_sec = 0;
 
@@ -970,7 +974,6 @@ void *mission_thread(void *arg)
 				int first_error_distance = 0;
 				int second_error_distance = 0;
 				int first_error_flag = 1;
-				int dist_difference = 0;
 				bool wrong_detection = 1;
 
 				enum ParkingState state = FIRST_WALL;
@@ -1042,7 +1045,7 @@ void *mission_thread(void *arg)
 
 						if (data->missionData.parkingData.verticalFlag && data->missionData.parkingData.horizontalFlag == false)
 						{
-							DesiredDistance(23, 240, 1500);
+							DesiredDistance(23, 270, 1500);
 							while (data->missionData.parkingData.verticalFlag)
 							{
 								data->missionData.loopTime = timeCheck(&time);
@@ -1050,56 +1053,123 @@ void *mission_thread(void *arg)
 								{
 								case FIRST_BACKWARD_V:
 									sprintf(data->imgData.missionString, "FIRST_BACKWARD_V");
-									DesiredDistance(-23, 1100, 1050);
+									SteeringServoControl_Write(1050);
+									usleep(500000);
+									DesireSpeed_Write(-23);
 									usleep(200000);
-									DesiredDistance(-23, 330, 1500);
-									usleep(200000);
-									step_v = SECOND_BACKWARD_V;
+									if (DistanceSensor_cm(3) <= 13 && DistanceSensor_cm(5) <= 13) {
+										DesireSpeed_Write(0);
+										usleep(200000);
+										step_v = SECOND_BACKWARD_V;
+									}
 									break;
 
 								case SECOND_BACKWARD_V:
 									sprintf(data->imgData.missionString, "SECOND_BACKWARD_V");
-									dist_difference = DistanceSensor_cm(3) - DistanceSensor_cm(5);
-									SteeringServoControl_Write(1500 - dist_difference * 20);
+									SteeringServoControl_Write(1500);
 									usleep(500000);
 									DesireSpeed_Write(-23);
-									if (DistanceSensor_cm(4) <= 6)
-									{
+									usleep(200000);
+									// 바퀴를 일자로 맞춰주고 후진한다.
+									if (DistanceSensor_cm(5) <= 5) {
+										// 언더스티어 상황
 										DesireSpeed_Write(0);
 										usleep(200000);
-										SteeringServoControl_Write(1500);
-										usleep(300000);
-										step_v = FIRST_FORWARD_V;
-										Winker_Write(ALL_ON);
-										buzzer(5, 500000, 500000);
-										Winker_Write(ALL_OFF);
+										step_v = UNDER_STEER_V;
 										break;
 									}
+									else if (DistanceSensor_cm(3) <= 5) {
+										// 오버스티어 상황
+										DesireSpeed_Write(0);
+										usleep(200000);
+										step_v = OVER_STEER_V;
+										break;
+									}
+									if (DistanceSensor_cm(2) <= 11) {
+										DesireSpeed_Write(0);
+										usleep(200000);
+										step_v = RIGHT_FRONT_V;
+										break;
+									}
+									else if (DistanceSensor_cm(6) <= 11) {
+										DesireSpeed_Write(0);
+										usleep(200000);
+										step_v = LEFT_FRONT_V;
+										break;
+									}
+									break;
+
+								case UNDER_STEER_V:
+									sprintf(data->imgData.missionString, "UNDER_STEER");
+									DesiredDistance(23, 150, 1500);
+									usleep(200000);
+									DesiredDistance(23, 150, 1650);
+									usleep(200000);
+									step_v = SECOND_BACKWARD_V;
+									break;
+
+								case OVER_STEER_V:
+									sprintf(data->imgData.missionString, "OVER_STEER");
+									DesiredDistance(23, 150, 1500);
+									usleep(200000);
+									DesiredDistance(23, 150, 1350);
+									usleep(200000);
+									step_v = SECOND_BACKWARD_V;
+									break;
+
+								case RIGHT_FRONT_V:
+									sprintf(data->imgData.missionString, "RIGHT_FRONT_V");
+									int right_difference = DistanceSensor_cm(2) - DistanceSensor_cm(3);
+									DesiredDistance(23, 75, 1500 - (right_difference * 75));
+									usleep(200000);
+									DesiredDistance(-23, 400, 1500);
+									usleep(200000);
+									if (abs(right_difference) <= 2) {
+										DesireSpeed_Write(0);
+										usleep(200000);
+										step_v = FIRST_FORWARD_V;
+									}
+									break;
+
+								case LEFT_FRONT_V:
+									sprintf(data->imgData.missionString, "RIGHT_FRONT_V");
+									int left_difference = DistanceSensor_cm(6) - DistanceSensor_cm(5);
+									DesiredDistance(23, 75, 1500 + (right_difference * 75));
+									usleep(200000);
+									DesiredDistance(-23, 400, 1500);
+									usleep(200000);
+									if (abs(left_difference) <= 2) {
+										DesireSpeed_Write(0);
+										usleep(200000);
+										step_v = FIRST_FORWARD_V;
+									}
+									break;
+
 								case FIRST_FORWARD_V:
 									sprintf(data->imgData.missionString, "FIRST_FORWARD_V");
-									dist_difference = DistanceSensor_cm(3) - DistanceSensor_cm(5);
-									SteeringServoControl_Write(1500 - dist_difference * 20);
-									usleep(300000);
-									DesireSpeed_Write(25);
-									usleep(200000);
-									if (DistanceSensor_cm(1) >= 15 && DistanceSensor_cm(6) >= 15)
-									{
-										DesireSpeed_Write(0);
-										usleep(200000);
-										step_v = SECOND_FORWARD_V;
-										break;
-									}
+									DesiredDistance(-23, 400, 1500);
+									usleep(1500000);
+									step_v = SECOND_FORWARD_V;
+									Winker_Write(ALL_ON);
+									buzzer(4, 500000, 500000);
+									Winker_Write(ALL_OFF);
+									break;
+
+
 								case SECOND_FORWARD_V:
 									sprintf(data->imgData.missionString, "SECOND_FORWARD_V");
-									DesiredDistance(25, 350, 1500);
+									DesireSpeed_Write(23);
 									usleep(200000);
-									DesiredDistance(25, 550, 1110);
-									usleep(200000);
-									step_v = FINISH_V;
-									data->missionData.parkingData.verticalFlag = 0;
+									if (DistanceSensor_cm(2) >= 15 || DistanceSensor_cm(6) >= 15) {
+										DesireSpeed_Write(0);
+										step_v = FINISH_V;
+									}
 									break;
 
 								case FINISH_V:
+									sprintf(data->imgData.missionString, "FINISH_V");
+									DesiredDistance(23, 1150, 1050);
+									data->missionData.parkingData.verticalFlag = 0;
 									break;
 
 								default:
@@ -1144,24 +1214,35 @@ void *mission_thread(void *arg)
 										step_h = FIRST_BACKWARD;
 									}
 									first_error_flag = 0;
-									DesiredDistance(-23, 400, 1900);
-									usleep(200000);
-									DesiredDistance(23, 400, 1100);
-									usleep(200000);
 									sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-									if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2))
+									int difference = DistanceSensor_cm(2) - DistanceSensor_cm(3);
+									if (difference < -2) {
+										sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
+										DesiredDistance(-23, 400, 1100);
+										usleep(200000);
+										DesiredDistance(23, 400, 1900);
+										usleep(200000);
+									}
+									else if (difference > 2) {
+										sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
+										DesiredDistance(-23, 400, 1900);
+										usleep(200000);
+										DesiredDistance(23, 400, 1100);
+										usleep(200000);
+									}
+									if (abs(difference) <= 2)
 									{
 										sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-										DesireSpeed_Write(0);
-										usleep(200000);
-										SteeringServoControl_Write(1500);
-										usleep(1500000);
-										step_h = SECOND_FORWARD;
-										Winker_Write(ALL_ON);
-										buzzer(2, 500000, 500000);
-										Winker_Write(ALL_OFF);
-										break;
+											DesireSpeed_Write(0);
+											usleep(200000);
+											SteeringServoControl_Write(1500);
+											usleep(1500000);
+											step_h = SECOND_FORWARD;
+											Winker_Write(ALL_ON);
+											buzzer(2, 500000, 500000);
+											Winker_Write(ALL_OFF);
 									}
+									break;
 
 									//case FIRST_FORWARD:
 									//	DesiredDistance(30, 250, 1000);
@@ -1491,7 +1572,7 @@ void *mission_thread(void *arg)
 							}
 						}
 						else if (data->missionData.overtakingData.headingDirection == LEFT &&
-								 data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
+							data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
 						{
 
 							sprintf(data->imgData.missionString, "Left to go");
@@ -1729,7 +1810,7 @@ void *mission_thread(void *arg)
 	}
 }
 
-static struct thr_data *pexam_data = NULL;
+static struct thr_data* pexam_data = NULL;
 
 void signal_handler(int sig)
 {
@@ -1758,7 +1839,7 @@ void signal_handler(int sig)
 	}
 }
 
-void manualControl(struct ControlData *cdata, char key)
+void manualControl(struct ControlData* cdata, char key)
 {
 	int i;
 	switch (key)
@@ -1879,7 +1960,7 @@ void manualControl(struct ControlData *cdata, char key)
 	}
 }
 
-uint32_t timeCheck(struct timeval *tempTime)
+uint32_t timeCheck(struct timeval* tempTime)
 {
 	struct timeval prevTime = *tempTime;
 	struct timeval nowTime;
@@ -1897,13 +1978,13 @@ uint32_t timeCheck(struct timeval *tempTime)
 /************************************************/
 /*	MAIN	main	MAIN	main				*/
 /************************************************/
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-	struct v4l2 *v4l2;
-	struct vpe *vpe;
+	struct v4l2* v4l2;
+	struct vpe* vpe;
 	struct thr_data tdata;
 	int disp_argc = 3;
-	char *disp_argv[] = {"dummy", "-s", "4:480x272", "\0"}; // 추후 변경 여부 확인 후 처리..
+	char* disp_argv[] = { "dummy", "-s", "4:480x272", "\0" }; // 추후 변경 여부 확인 후 처리..
 	int ret = 0;
 
 	printf("------ main start ------\n");
@@ -2004,8 +2085,8 @@ int main(int argc, char **argv)
 	vpe->translen = 1;
 
 	MSG("Input(Camera) = %d x %d (%.4s)\nOutput(LCD) = %d x %d (%.4s)",
-		vpe->src.width, vpe->src.height, (char *)&vpe->src.fourcc,
-		vpe->dst.width, vpe->dst.height, (char *)&vpe->dst.fourcc);
+		vpe->src.width, vpe->src.height, (char*)&vpe->src.fourcc,
+		vpe->dst.width, vpe->dst.height, (char*)&vpe->dst.fourcc);
 	// 입출력 이미지의 크기 및 포맷정보 출력
 	// 입력 이미지 : 1280x720, Format = UYUV422
 	// 출력 이미지 : 320x180. Format = BGR24

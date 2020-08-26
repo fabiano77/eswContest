@@ -1214,33 +1214,20 @@ void *mission_thread(void *arg)
 								{
 								case FIRST_BACKWARD:
 									sprintf(data->imgData.missionString, "FIRST_BACKWARD");
-									first_error_flag = 1;
-									EncoderCounter_Write(0);
 									DesiredDistance(-23, 850, 1100);
-									first_error_distance = EncoderCounter_Read();
-									EncoderCounter_Write(0);
 									usleep(200000);
 									DesiredDistance(-23, 330, 1500);
-									second_error_distance = EncoderCounter_Read();
+									usleep(200000);
+									DesiredDistance(-23, 400, 1900);
+									usleep(200000);
+									DesiredDistance(23, 400, 1100);
 									step_h = SECOND_BACKWARD;
 									break;
 
 								case SECOND_BACKWARD:
 									sprintf(data->imgData.missionString, "SECOND_BACKWARD");
-									if (DistanceSensor_cm(4) <= 5 && first_error_flag)
-									{
-										sprintf(data->imgData.missionString, "ERROR");
-										DesireSpeed_Write(0);
-										usleep(200000);
-										DesiredDistance(30, (second_error_distance - 30), 1500);
-										usleep(200000);
-										DesiredDistance(30, (first_error_distance - 30), 1110);
-										usleep(200000);
-										// Error 발생 시 다시 초기 상태로 만들어 주기 위한 구문
-										step_h = FIRST_BACKWARD;
-									}
-									first_error_flag = 0;
 									sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
+
 									int difference = DistanceSensor_cm(2) - DistanceSensor_cm(3);
 									if (difference < -2)
 									{
@@ -1334,10 +1321,12 @@ void *mission_thread(void *arg)
 								usleep(200000);
 							}
 						}
-						state = DONE;
+						state = DONE_P;
 
 						if (parking == READY)
+						{
 							parking = REMAIN;
+						}
 						else if (parking == REMAIN)
 							parking = DONE;
 
@@ -1346,7 +1335,7 @@ void *mission_thread(void *arg)
 					default:
 						break;
 					}
-					usleep(200000);
+					usleep(50000);
 				}
 				data->imgData.bmission = false;
 				data->imgData.bprintString = false;

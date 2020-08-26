@@ -1206,7 +1206,7 @@ void *mission_thread(void *arg)
 						}
 						else if (data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
 						{
-							DesiredDistance(30, 75, 1500);
+							DesiredDistance(30, 110, 1500);
 							while (data->missionData.parkingData.horizontalFlag)
 							{
 								data->missionData.loopTime = timeCheck(&time);
@@ -1218,31 +1218,37 @@ void *mission_thread(void *arg)
 									usleep(200000);
 									DesiredDistance(-23, 330, 1500);
 									usleep(200000);
-									DesiredDistance(-23, 400, 1900);
+									SteeringServoControl_Write(1900);
+									usleep(500000);
+									DesireSpeed_Write(-23);
+									usleep(50000);
+									while (DistanceSensor_cm(4) <= 7) {
+										DesireSpeed_Write(0);
+										usleep(50000);
+									}
+									DesiredDistance(-23, 400, 1100);
 									usleep(200000);
-									DesiredDistance(23, 400, 1100);
 									step_h = SECOND_BACKWARD;
 									break;
 
 								case SECOND_BACKWARD:
 									sprintf(data->imgData.missionString, "SECOND_BACKWARD");
 									sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-
 									int difference = DistanceSensor_cm(2) - DistanceSensor_cm(3);
 									if (difference < -2)
 									{
 										sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-										DesiredDistance(-23, 400, 1100);
+										DesiredDistance(-23, 400, 1300);
 										usleep(200000);
-										DesiredDistance(23, 400, 1900);
+										DesiredDistance(23, 400, 1700);
 										usleep(200000);
 									}
 									else if (difference > 2)
 									{
 										sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-										DesiredDistance(-23, 400, 1900);
+										DesiredDistance(-23, 400, 1700);
 										usleep(200000);
-										DesiredDistance(23, 400, 1100);
+										DesiredDistance(23, 400, 1300);
 										usleep(200000);
 									}
 									if (abs(difference) <= 2)
@@ -1268,7 +1274,7 @@ void *mission_thread(void *arg)
 									sprintf(data->imgData.missionString, "SECOND_FORWARD");
 									DesireSpeed_Write(-20);
 									usleep(200000);
-									if (DistanceSensor_cm(4) <= 6 || DistanceSensor_cm(1) >= 20)
+									if (DistanceSensor_cm(4) <= 6)
 									{
 										DesireSpeed_Write(0);
 										SteeringServoControl_Write(1750);
@@ -1281,7 +1287,7 @@ void *mission_thread(void *arg)
 									sprintf(data->imgData.missionString, "ESCAPE");
 									DesireSpeed_Write(20);
 									usleep(100000);
-									if (DistanceSensor_cm(1) <= 6)
+									if (DistanceSensor_cm(1) <= 6 || DistanceSensor_cm(1) >= 20)
 									{
 										DesireSpeed_Write(0);
 										SteeringServoControl_Write(1500);
@@ -1324,9 +1330,7 @@ void *mission_thread(void *arg)
 						state = DONE_P;
 
 						if (parking == READY)
-						{
 							parking = REMAIN;
-						}
 						else if (parking == REMAIN)
 							parking = DONE;
 
@@ -1335,7 +1339,7 @@ void *mission_thread(void *arg)
 					default:
 						break;
 					}
-					usleep(50000);
+					usleep(75000);
 				}
 				data->imgData.bmission = false;
 				data->imgData.bprintString = false;

@@ -54,7 +54,7 @@ Point centerPoint(Vec4i line);
 /// <param name="points"></param> //4points is needed
 void regionOfInterest(Mat& src, Mat& dst, Point* points);
 
-int isDark(Mat& frame, const double percent);
+int isDark(Mat& frame, const double percent, int debug);
 
 int Tunnel_isStart(Mat& frame, const double percent);
 
@@ -274,11 +274,8 @@ extern "C" {
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
-		cout << "\tmode = ";
 		if (mode == 1)
 		{
-			cout << "debug lineFiltering()" << endl;
-
 			Mat src8C;
 			lineFiltering(srcRGB, src8C, 1);
 			for (int x = 0; x < w; x++)
@@ -292,8 +289,6 @@ extern "C" {
 		}
 		else if (mode == 2)
 		{
-			cout << "debug lineFiltering() & cannyEdge()" << endl;
-
 			Mat src8C;
 			Mat srcEdge;
 			lineFiltering(srcRGB, src8C, 1);
@@ -309,39 +304,27 @@ extern "C" {
 		}
 		else if (mode == 3)
 		{
-			cout << "debug checkObstacle()" << endl;
-
 			int retval = checkObstacle(inBuf, w, h, outBuf);
 			printf("return val = %d\n", retval);
 		}
 		else if (mode == 4)
 		{
-			cout << "debug checkRedSignal()" << endl;
-
 			checkRedSignal(srcRGB, dstRGB, 20, 1);
 		}
 		else if (mode == 5)
 		{
-			cout << "debug checkYellowSignal()" << endl;
-
 			checkYellowSignal(srcRGB, dstRGB, 20, 1);
 		}
 		else if (mode == 6)
 		{
-			cout << "debug checkGreenSignal()" << endl;
-
 			checkGreenSignal(srcRGB, dstRGB, 20, 1);
 		}
 		else if (mode == 7)
 		{
-			cout << "debug priorityStop()" << endl;
-
 			priorityStop(srcRGB, dstRGB, 10, 1);
 		}
 		else if (mode == 8)
 		{
-			cout << "debug checkFront()" << endl;
-
 			int retval = checkFront(inBuf, w, h, outBuf);
 			printf("return val = %d\n", retval);
 		}
@@ -520,12 +503,12 @@ extern "C" {
 				//img_filtered를 사용해야 회색의 범위를 찾음
 				if (color_value > 128)
 				{
-					circle(srcRGB, Point2i(x, y), 2, Scalar(255, 0, 0), -1, 16);
+					srcRGB.at<Vec3b>(y, x) = Vec3b(255, 0, 0);
 					count_right++;
 				}
 				else
 				{
-					circle(srcRGB, Point2i(x, y), 2, Scalar(0, 0, 255), -1, 16);
+					srcRGB.at<Vec3b>(y, x) = Vec3b(0, 0, 255);
 				}
 				count_right_total++;
 			}
@@ -1195,7 +1178,7 @@ void regionOfInterest(Mat& src, Mat& dst, Point* points)
 	dst = maskedImg;
 }
 
-int isDark(Mat& frame, const double percent) {
+int isDark(Mat& frame, const double percent, int debug) {
 
 	Mat grayFrame;
 
@@ -1203,29 +1186,48 @@ int isDark(Mat& frame, const double percent) {
 
 	int pixelCnt(0);
 	int pixelValue(0);
-	for (int i = 0; i < grayFrame.cols; i += 10)
+	for (int i = 100; i < grayFrame.cols - 100; i += 1)		// i += 10 에서 바꿈 08.27 AM 01:58
 	{
-		for (int j = 0; j < grayFrame.rows; j += 10)
+		for (int j = 50; j < grayFrame.rows - 100; j += 1)	// j += 10 에서 바꿈 08.27 AM 01:58
 		{
 			pixelValue += grayFrame.at<uchar>(j, i);
 			pixelCnt++;
+			if (debug)
+			{
+				int temp = grayFrame.at<uchar>(j, i);
+				frame.at<Vec3b>(j, i) = Vec3b(temp, temp, temp);
+			}
 		}
 	}
 	int totalValue = pixelCnt * 255;
 	double brightRate = ((double)pixelValue / totalValue) * 100.0;
 
-	cout << "isDark() : brightRate = " << brightRate << endl;
 	if (brightRate < (100 - percent))
 	{
+		if (debug)
+		{
+			rectangle(frame, Point(100, 50), Point(grayFrame.cols - 100, grayFrame.rows - 100), Scalar(0), 2);
+			putText(frame, "darkRate = " + toString(100.0 - brightRate) + '%', signalPrintPosition + Point(0, 100), 0, 1, Scalar(0, 255, 0), 2);
+			putText(frame, "[ isDark ON ]", signalPrintPosition + Point(80, 50), 0, 1, mint, 2);
+			printf("isDark() return true");
+		}
 		return 1;
 	}
-	return 0;
+	else
+	{
+		if (debug)
+		{
+			putText(frame, "darkRate = " + toString(100.0 - brightRate) + '%', signalPrintPosition, 0, 1, Scalar(0, 255, 0), 2);
+			printf("isDark() return false");
+		}
+		return 0;
+	}
 }
 
 int Tunnel_isStart(Mat& frame, const double percent) {
 	if (!first_tunnel++) flag_tunnel = -1;
 
-	if (isDark(frame, percent)) {
+	if (isDark(frame, percent, 0)) {
 		if (flag_tunnel < MAXTHR_tunnel)
 			flag_tunnel++;
 	}

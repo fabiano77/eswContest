@@ -286,9 +286,7 @@ extern "C" {
 				for (int y = 0; y < h; y++)
 				{
 					uchar pixelVal = src8C.at<uchar>(y, x);
-					dstRGB.at<Vec3b>(y, x)[0] = pixelVal;
-					dstRGB.at<Vec3b>(y, x)[1] = pixelVal;
-					dstRGB.at<Vec3b>(y, x)[2] = pixelVal;
+					dstRGB.at<Vec3b>(y, x) = Vec3b(pixelVal, pixelVal, pixelVal);
 				}
 			}
 		}
@@ -305,9 +303,7 @@ extern "C" {
 				for (int y = 0; y < h; y++)
 				{
 					uchar pixelVal = srcEdge.at<uchar>(y, x);
-					dstRGB.at<Vec3b>(y, x)[0] = pixelVal;
-					dstRGB.at<Vec3b>(y, x)[1] = pixelVal;
-					dstRGB.at<Vec3b>(y, x)[2] = pixelVal;
+					dstRGB.at<Vec3b>(y, x) = Vec3b(pixelVal, pixelVal, pixelVal);
 				}
 			}
 		}
@@ -490,12 +486,12 @@ extern "C" {
 				//img_filtered를 사용해야 회색의 범위를 찾음
 				if (color_value > 128)
 				{
-					circle(srcRGB, Point2i(x, y), 2, Scalar(255, 0, 0), -1, 16);
+					srcRGB.at<Vec3b>(y, x) = Vec3b(255, 0, 0);
 					count_left++;
 				}
 				else
 				{
-					circle(srcRGB, Point2i(x, y), 2, Scalar(0, 0, 255), -1, 16);
+					srcRGB.at<Vec3b>(y, x) = Vec3b(0, 0, 255);
 				}
 
 				count_left_total++;

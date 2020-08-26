@@ -38,6 +38,8 @@ int absDist;
 int steerVal;
 int flag_steer[5];
 
+bool sensor_using_flag = false;
+
 extern "C"
 {
 
@@ -63,7 +65,14 @@ extern "C"
 
 	int DistanceSensor_cm(int channel)
 	{
-		return sensor_dist(channel, DistanceSensor(channel));
+		while (sensor_using_flag)
+		{
+			usleep(5000);	//5ms
+		}
+		sensor_using_flag = true;
+		int retval = sensor_dist(channel, DistanceSensor(channel));
+		sensor_using_flag = false;
+		return retval;
 	}
 
 	int sensor_dist(int channel, int input)
@@ -88,11 +97,30 @@ extern "C"
 		return position;
 	}
 
+	signed int Encoder_Read(void)
+	{
+		while (sensor_using_flag)
+		{
+			usleep(5000);	//5ms
+		}
+		sensor_using_flag = true;
+		int retval = EncoderCounter_Read();
+		sensor_using_flag = false;
+		return retval;
+	}
+
 	int StopLine(int Lineflag)
 	{ // black 1, white 0
 		char sensor;
 		char byte = 0x80;
+
+		while (sensor_using_flag)
+		{
+			usleep(5000);	//5ms
+		}
+		sensor_using_flag = true;
 		sensor = LineSensor_Read();
+		sensor_using_flag = false;
 		int flag = 0;
 		int i;
 		for (i = 0; i < 8; i++)
@@ -139,12 +167,12 @@ extern "C"
 		int on_encoder = 0;
 		EncoderCounter_Write(init_encoder);
 		usleep(50000);
-		int read_encoder = EncoderCounter_Read();
+		int read_encoder = Encoder_Read();
 		int error_flag = 0;
 		while (read_encoder != 0)
 		{
 			//cout << "[]read_encoder" << read_encoder << endl;
-			read_encoder = EncoderCounter_Read();
+			read_encoder = Encoder_Read();
 			usleep(50000);
 			EncoderCounter_Write(init_encoder);
 			usleep(50000);
@@ -179,7 +207,7 @@ extern "C"
 				}
 			}
 
-			on_encoder = abs(EncoderCounter_Read());
+			on_encoder = abs(Encoder_Read());
 			if (on_encoder != CHECKSUMERROR) // 65278
 			{
 				//printf("encoder : %-4d\n", on_encoder);
@@ -227,7 +255,7 @@ extern "C"
 				}
 			}
 
-			on_encoder = abs(EncoderCounter_Read());
+			on_encoder = abs(Encoder_Read());
 			if (on_encoder != CHECKSUMERROR) // 65278
 			{
 				//printf("encoder : %-4d\n", on_encoder);

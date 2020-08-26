@@ -11,6 +11,9 @@ int DistanceSensor_cm(int channel);
 int sensor_dist(int channel, int input);
 // Return : 적외선 센서 값을 측정값 기준으로 맵핑하여 cm 단위로 반환한다.
 
+signed int Encoder_Read(void);
+// return : 현재 인코더 값을 반환한다
+
 int StopLine(int Lineflag);
 // Return : Lineflag보다 1로 감지된 값이 더 크면 정지선을 감지한 것으로 판단하고 true를 반환한다.
 

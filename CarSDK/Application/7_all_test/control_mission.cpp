@@ -138,12 +138,18 @@ extern "C"
 		int init_encoder = 0;
 		int on_encoder = 0;
 		EncoderCounter_Write(init_encoder);
+		usleep(50000);
 		int read_encoder = EncoderCounter_Read();
+		int error_flag = 0;
 		while (read_encoder != 0)
 		{
-			cout << "[]read_encoder" << read_encoder << endl;
+			//cout << "[]read_encoder" << read_encoder << endl;
 			read_encoder = EncoderCounter_Read();
-			usleep(10000);
+			usleep(50000);
+			EncoderCounter_Write(init_encoder);
+			usleep(50000);
+			if (error_flag++ > 10)
+				printf("DesireDistance(): encoder ERROR!\n");
 		}
 		SteeringServoControl_Write(SettingSteering);
 		usleep(500000);

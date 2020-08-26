@@ -717,14 +717,6 @@ void *input_thread(void *arg)
 					}
 				}
 			}
-			else if (0 == strncmp(cmd_input, "dark", 4))
-			{
-				data->imgData.bdark = !data->imgData.bdark;
-				if (data->imgData.bdark)
-					printf("\t detect darkness ON\n");
-				else
-					printf("\t detect darkness OFF\n");
-			}
 			else if (0 == strncmp(cmd_input, "distc", 5))
 			{
 				int d_data;
@@ -869,6 +861,11 @@ void *input_thread(void *arg)
 				scanf("%d", &num);
 				if (num >= 0 && num <= 8)
 				{
+					if (num == 4)
+					{
+						data->imgData.bdark = true;
+						printf("bdark ON \n");
+					}
 					if (data->missionData.ms[num] == READY)
 						data->missionData.ms[num] = NONE;
 					else
@@ -1282,14 +1279,17 @@ void *mission_thread(void *arg)
 				while (true)
 				{
 					data->missionData.loopTime = timeCheck(&time);
-
-					if (Tunnel_isEnd(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5)))
+					int c2 = DistanceSensor_cm(2);
+					int c6 = DistanceSensor_cm(6);
+					if (Tunnel_isEnd(c2, c6, DistanceSensor_cm(3), DistanceSensor_cm(5)))
 					{
 						sprintf(data->imgData.missionString, "tunnel out");
 						break;
 					}
 
-					data->controlData.steerVal = Tunnel_SteerVal(DistanceSensor_cm(2), DistanceSensor_cm(6));
+					data->controlData.steerVal = Tunnel_SteerVal(c2, c6);
+					sprintf(data->imgData.missionString, "steer= %d, %d : %d", data->controlData.steerVal, c2, c6);
+
 					SteeringServoControl_Write(data->controlData.steerVal);
 
 					usleep(100000);
@@ -1299,7 +1299,7 @@ void *mission_thread(void *arg)
 
 				frontLightOnOff(data->controlData.lightFlag, false);
 
-				DesiredDistance(-40, 150, 1500);
+				DesiredDistance(-40, 300, 1500);
 				buzzer(1, 500000, 500000);
 				usleep(500000);
 

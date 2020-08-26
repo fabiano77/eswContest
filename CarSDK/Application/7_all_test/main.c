@@ -761,7 +761,7 @@ void *input_thread(void *arg)
 				DesireSpeed_Write(40);
 				while (1)
 				{
-					on_encoder = EncoderCounter_Read();
+					on_encoder = Encoder_Read();
 					//if (on_encoder != 65278)
 					//	printf("encoder : %-3d\n", on_encoder);
 					if (on_encoder >= desire_encoder && on_encoder != 65278)
@@ -786,7 +786,7 @@ void *input_thread(void *arg)
 				DesireSpeed_Write(-40);
 				while (1)
 				{
-					on_encoder = abs(EncoderCounter_Read());
+					on_encoder = abs(Encoder_Read());
 
 					if (on_encoder != 65278)
 						printf("encoder : %-3d\n", on_encoder);
@@ -1003,7 +1003,7 @@ void *mission_thread(void *arg)
 						/*
 						주차 폭에 대한 거리를 측정하기 위해 거리 측정 시작
 						*/
-						encoderVal = EncoderCounter_Read();
+						encoderVal = Encoder_Read();
 						if (encoderVal != 65278)
 						{
 							parking_width = encoderVal;
@@ -2043,6 +2043,7 @@ int main(int argc, char **argv)
 	tdata.imgData.bprintSensor = false;
 	tdata.imgData.bprintMission = true;
 	sprintf(tdata.imgData.missionString, "(null)");
+	settingStatic(VPE_OUTPUT_W, VPE_OUTPUT_H);
 
 	/******************** Control Data ********************/
 	tdata.controlData.settingSpeedVal = 40;

@@ -1141,11 +1141,11 @@ void *mission_thread(void *arg)
 								case RIGHT_FRONT_V:
 									sprintf(data->imgData.missionString, "RIGHT_FRONT_V");
 									int right_difference = DistanceSensor_cm(2) - DistanceSensor_cm(3);
-									DesiredDistance(23, 100, 1500 - (right_difference * 75));
+									DesiredDistance(23, 100, 1500 - (right_difference * 100));
 									usleep(200000);
 									DesiredDistance(-23, 400, 1500);
 									usleep(200000);
-									if (abs(right_difference) <= 1)
+									if (abs(right_difference) <= 2)
 									{
 										DesireSpeed_Write(0);
 										usleep(200000);
@@ -1156,11 +1156,11 @@ void *mission_thread(void *arg)
 								case LEFT_FRONT_V:
 									sprintf(data->imgData.missionString, "RIGHT_FRONT_V");
 									int left_difference = DistanceSensor_cm(6) - DistanceSensor_cm(5);
-									DesiredDistance(23, 100, 1500 + (right_difference * 75));
+									DesiredDistance(23, 100, 1500 + (right_difference * 100));
 									usleep(200000);
 									DesiredDistance(-23, 400, 1500);
 									usleep(200000);
-									if (abs(left_difference) <= 1)
+									if (abs(left_difference) <= 2)
 									{
 										DesireSpeed_Write(0);
 										usleep(200000);
@@ -1221,7 +1221,7 @@ void *mission_thread(void *arg)
 									usleep(500000);
 									DesireSpeed_Write(-23);
 									usleep(50000);
-									while (DistanceSensor_cm(4) <= 5)
+									while (DistanceSensor_cm(4) <= 6)
 									{
 										DesireSpeed_Write(0);
 										usleep(50000);

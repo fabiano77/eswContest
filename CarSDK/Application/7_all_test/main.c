@@ -1412,7 +1412,6 @@ void* mission_thread(void* arg)
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "overtake");
 				printf("overtake \n");
-				bool farFront = false;
 				enum OvertakeState state = FRONT_DETECT;
 				data->missionData.overtakingData.headingDirection = STOP;
 				data->missionData.overtakingFlag = true;

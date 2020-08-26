@@ -1053,7 +1053,10 @@ void *mission_thread(void *arg)
 							printf("sibal\n");
 							DesireSpeed_Write(0);
 							usleep(500000);
-							DesiredDistance(23, 150, 1500);
+							EncoderCounter_Write(0);
+							usleep(200000);
+							DesiredDistance(30, 150, 1500);
+							usleep(200000);
 							while (data->missionData.parkingData.verticalFlag)
 							{
 								data->missionData.loopTime = timeCheck(&time);
@@ -1116,26 +1119,30 @@ void *mission_thread(void *arg)
 
 								case UNDER_STEER_V:
 									sprintf(data->imgData.missionString, "UNDER_STEER");
-									DesiredDistance(23, 75, 1650);
-									usleep(100000);
+									DesiredDistance(23, 150, 1650);
+									usleep(300000);
+									DesiredDistance(23, 150, 1350);
+									usleep(300000);
 									DesiredDistance(-23, 400, 1500);
-									usleep(100000);
+									usleep(200000);
 									step_v = SECOND_BACKWARD_V;
 									break;
 
 								case OVER_STEER_V:
 									sprintf(data->imgData.missionString, "OVER_STEER");
-									DesiredDistance(23, 175, 1350);
-									usleep(100000);
+									DesiredDistance(23, 150, 1350);
+									usleep(300000);
+									DesiredDistance(23, 150, 1650);
+									usleep(300000);
 									DesiredDistance(-23, 400, 1500);
-									usleep(100000);
+									usleep(200000);
 									step_v = SECOND_BACKWARD_V;
 									break;
 
 								case RIGHT_FRONT_V:
 									sprintf(data->imgData.missionString, "RIGHT_FRONT_V");
 									int right_difference = DistanceSensor_cm(2) - DistanceSensor_cm(3);
-									DesiredDistance(23, 75, 1500 - (right_difference * 75));
+									DesiredDistance(23, 100, 1500 - (right_difference * 75));
 									usleep(200000);
 									DesiredDistance(-23, 400, 1500);
 									usleep(200000);
@@ -1150,7 +1157,7 @@ void *mission_thread(void *arg)
 								case LEFT_FRONT_V:
 									sprintf(data->imgData.missionString, "RIGHT_FRONT_V");
 									int left_difference = DistanceSensor_cm(6) - DistanceSensor_cm(5);
-									DesiredDistance(23, 75, 1500 + (right_difference * 75));
+									DesiredDistance(23, 100, 1500 + (right_difference * 75));
 									usleep(200000);
 									DesiredDistance(-23, 400, 1500);
 									usleep(200000);

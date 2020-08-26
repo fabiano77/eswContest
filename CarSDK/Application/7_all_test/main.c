@@ -623,7 +623,6 @@ void *input_thread(void *arg)
 	MSG("\t debug  : debug ON/OFF");
 	MSG("\t auto   : auto steering ON/OFF");
 	MSG("\t top    : top view ON/OFF");
-	MSG("\t dark   : detect darkness ON/OFF");
 	MSG("\t dist   : distance sensor check");
 	MSG("\t distc  : distance sensor check by -cm-");
 	MSG("\t stop   : stop Line ON/OFF");
@@ -1287,21 +1286,22 @@ void *mission_thread(void *arg)
 						break;
 					}
 
-					data->controlData.steerVal = Tunnel_SteerVal(c2, c6);
+					data->controlData.steerVal = Tunnel_SteerVal2(c2, c6);
 					sprintf(data->imgData.missionString, "steer= %d, %d : %d", data->controlData.steerVal, c2, c6);
 
 					SteeringServoControl_Write(data->controlData.steerVal);
 
 					usleep(100000);
 				}
-
 				DesireSpeed_Write(0);
 
 				frontLightOnOff(data->controlData.lightFlag, false);
 
-				DesiredDistance(-40, 300, 1500);
 				buzzer(1, 500000, 500000);
-				usleep(500000);
+				usleep(2000000);
+
+				DesiredDistance(-40, 300, 1500);
+				usleep(2000000);
 
 				printf("Tunnel OUT\n");
 				tunnel = DONE;

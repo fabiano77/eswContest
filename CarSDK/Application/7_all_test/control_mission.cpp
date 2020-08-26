@@ -407,6 +407,32 @@ extern "C" {
 		return 1500 - steerVal;
 	}
 
+	int Tunnel_SteerVal2(const int Distance1, const int Distance2) {
+
+		absDist = abs(Distance1 - Distance2);
+
+		if (absDist < 2) {
+			steerVal = 0;
+		}
+		else if (absDist < 4) {
+			steerVal = 100;
+		}
+		else if (absDist < 6) {
+			steerVal = 220;
+		}
+		else if (absDist < 8) {
+			steerVal = 350;
+		}
+		else {
+			steerVal = 480;
+		}
+
+		if (Distance1 < Distance2) steerVal = -steerVal;
+
+		printf("steer : %d, [%d, %d]\n", steerVal, Distance2, Distance1);
+		return 1500 - steerVal;
+	}
+
 	void frontLightOnOff(unsigned short lightFlag, int on)
 	{
 		if (on == 1)

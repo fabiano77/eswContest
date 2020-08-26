@@ -40,6 +40,7 @@ int Tunnel_isEnd(const int Distance1, const int Distance2, const int Distance3, 
 
 int Tunnel_SteerVal(const int Distance1, const int Distance2);
 // Return : 양 옆 센서의 거리차를 이용하여 알맞은 조향각을 반환한다.
+int Tunnel_SteerVal2(const int Distance1, const int Distance2);
 
 void frontLightOnOff(unsigned short lightFlag, int on);
 // Postcondition : 인자가 1일경우 전조등 on, 0일경우 off

@@ -155,7 +155,7 @@ extern "C"
 			if (SettingSpeed > 0)
 			{
 				//정면 충돌 감지
-				if (DistanceSensor_cm(1) <= 5)
+				if (DistanceSensor_cm(1) <= 6)
 				{
 					DesireSpeed_Write(0);
 					cout << "\tDesiredDistance() : front detection!" << endl;
@@ -165,7 +165,7 @@ extern "C"
 			else
 			{
 				//후면 충돌 감지
-				if (DistanceSensor_cm(4) <= 5)
+				if (DistanceSensor_cm(4) <= 6)
 				{
 					DesireSpeed_Write(0);
 					cout << "\tDesiredDistance() : rear detection!" << endl;

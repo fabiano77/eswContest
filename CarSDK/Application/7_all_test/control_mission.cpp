@@ -223,7 +223,7 @@ extern "C"
 					break;
 				}
 			}
-			usleep(10000); // 10ms
+			usleep(30000); // 10ms
 		}
 		if (SettingSpeed < 0)
 			CarLight_Write(0x00);

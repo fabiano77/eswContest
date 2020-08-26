@@ -984,9 +984,12 @@ void *mission_thread(void *arg)
 				while (state && wrong_detection) // state == END가 아닌이상 루프 진행
 				{
 					data->missionData.loopTime = timeCheck(&time);
-					data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 18) ? true : false;
-					data->missionData.parkingData.rearRight = (DistanceSensor_cm(3) <= 18) ? true : false;
+					int c2 = DistanceSensor_cm(2);
+					int c3 = DistanceSensor_cm(3);
+					data->missionData.parkingData.frontRight = (c2 <= 23) ? true : false;
+					data->missionData.parkingData.rearRight = (c3 <= 23) ? true : false;
 
+					printf("\tc2 = %d, c3 = %d \n", c2, c3);
 					switch (state)
 					{
 					case FIRST_WALL:
@@ -1827,7 +1830,7 @@ void *mission_thread(void *arg)
 			data->missionData.ms[8] = finish;
 		}
 
-		usleep(50000); //50ms
+		usleep(100000); //100ms
 	}
 }
 

@@ -2027,6 +2027,7 @@ int main(int argc, char **argv)
 	SpeedPIDProportional_Write(40);
 
 	/******************** imgProcess Data ********************/
+	settingStatic(VPE_OUTPUT_W, VPE_OUTPUT_H);
 	tdata.imgData.bcalibration = false;
 	tdata.imgData.bdebug = false;
 	tdata.imgData.debugMode = 1;
@@ -2043,17 +2044,18 @@ int main(int argc, char **argv)
 	tdata.imgData.bprintSensor = false;
 	tdata.imgData.bprintMission = true;
 	sprintf(tdata.imgData.missionString, "(null)");
-	settingStatic(VPE_OUTPUT_W, VPE_OUTPUT_H);
 
 	/******************** Control Data ********************/
 	tdata.controlData.settingSpeedVal = 40;
 	tdata.controlData.desireSpeedVal = 0;
 	tdata.controlData.beforeSpeedVal = 0;
 	tdata.controlData.lightFlag = 0x00;
+	CarLight_Write(tdata.controlData.lightFlag);
 	CameraXServoControl_Write(1500);
 	tdata.controlData.steerVal = 1500;
 	CameraYServoControl_Write(1660);
 	tdata.controlData.cameraY = 1660;
+	Winker_Write(ALL_OFF);
 
 	/******************** Mission Data ********************/
 	tdata.missionData.btunnel = false;

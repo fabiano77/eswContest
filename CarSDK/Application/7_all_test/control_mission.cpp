@@ -133,10 +133,18 @@ extern "C"
 
 	void DesiredDistance(int SettingSpeed, int SettingDistance, int SettingSteering)
 	{
+		//cout << "speed = " << SettingSpeed << "dist = " << SettingDistance << "steer = " << SettingSteering << endl;
 		DesireSpeed_Write(0);
 		int init_encoder = 0;
 		int on_encoder = 0;
 		EncoderCounter_Write(init_encoder);
+		int read_encoder = EncoderCounter_Read();
+		while (read_encoder != 0)
+		{
+			cout << "[]read_encoder" << read_encoder << endl;
+			read_encoder = EncoderCounter_Read();
+			usleep(10000);
+		}
 		SteeringServoControl_Write(SettingSteering);
 		usleep(500000);
 		DesireSpeed_Write(SettingSpeed);

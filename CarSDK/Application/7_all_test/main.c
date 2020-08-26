@@ -1136,7 +1136,7 @@ void *mission_thread(void *arg)
 									usleep(200000);
 									DesiredDistance(-23, 400, 1500);
 									usleep(200000);
-									if (abs(right_difference) <= 2)
+									if (abs(right_difference) <= 1)
 									{
 										DesireSpeed_Write(0);
 										usleep(200000);
@@ -1151,7 +1151,7 @@ void *mission_thread(void *arg)
 									usleep(200000);
 									DesiredDistance(-23, 400, 1500);
 									usleep(200000);
-									if (abs(left_difference) <= 2)
+									if (abs(left_difference) <= 1)
 									{
 										DesireSpeed_Write(0);
 										usleep(200000);

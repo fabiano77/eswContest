@@ -43,6 +43,8 @@
 #define FPS_TEXT_Y 260			  //240
 #define FPS_TEXT_COLOR 0xffffffff //while
 
+#define BASIC_SPEED 40		// 프로그램 기본 바퀴속도, autoSteer와 주로 사용.
+
 /******************** enumerator ********************/
 enum MissionState
 {
@@ -50,6 +52,14 @@ enum MissionState
 	READY,
 	REMAIN,
 	DONE
+};
+
+enum StartState
+{
+	START_S,
+	WAIT_S,
+	FRONT_CLOSE_S,
+	FRONT_OPEN_S
 };
 
 enum ParkingState
@@ -208,10 +218,10 @@ struct ImgProcessData
 
 struct thr_data
 {
-	struct display *disp;
-	struct v4l2 *v4l2;
-	struct vpe *vpe;
-	struct buffer **input_bufs;
+	struct display* disp;
+	struct v4l2* v4l2;
+	struct vpe* vpe;
+	struct buffer** input_bufs;
 	struct ControlData controlData;
 	struct MissionData missionData;
 	struct ImgProcessData imgData;
@@ -224,14 +234,14 @@ struct thr_data
 };
 
 /******************** function ********************/
-static void manualControl(struct ControlData *cdata, char key);
+static void manualControl(struct ControlData* cdata, char key);
 
-static uint32_t timeCheck(struct timeval *tempTime);
+static uint32_t timeCheck(struct timeval* tempTime);
 
-static int allocate_input_buffers(struct thr_data *data)
+static int allocate_input_buffers(struct thr_data* data)
 {
 	int i;
-	struct vpe *vpe = data->vpe;
+	struct vpe* vpe = data->vpe;
 
 	data->input_bufs = calloc(NUMBUF, sizeof(*data->input_bufs));
 	for (i = 0; i < NUMBUF; i++)
@@ -250,7 +260,7 @@ static int allocate_input_buffers(struct thr_data *data)
 	return 0;
 }
 
-static void free_input_buffers(struct buffer **buffer, uint32_t n, bool bmultiplanar)
+static void free_input_buffers(struct buffer** buffer, uint32_t n, bool bmultiplanar)
 {
 	uint32_t i;
 	for (i = 0; i < n; i++)
@@ -269,10 +279,10 @@ static void free_input_buffers(struct buffer **buffer, uint32_t n, bool bmultipl
 	free(buffer);
 }
 
-static void draw_operatingtime(struct display *disp, uint32_t time, uint32_t itime, uint32_t mtime)
+static void draw_operatingtime(struct display* disp, uint32_t time, uint32_t itime, uint32_t mtime)
 {
 	FrameBuffer tmpFrame;
-	unsigned char *pbuf[4];
+	unsigned char* pbuf[4];
 	char strmtime[128];
 	char strtime[128];
 	char stritime[128];
@@ -304,12 +314,12 @@ static void draw_operatingtime(struct display *disp, uint32_t time, uint32_t iti
 /************************************************/
 /*	Function - img_process						*/
 /************************************************/
-static void img_process(struct display *disp, struct buffer *cambuf, struct thr_data *t_data, float *map1, float *map2)
+static void img_process(struct display* disp, struct buffer* cambuf, struct thr_data* t_data, float* map1, float* map2)
 {
 	unsigned char srcbuf[VPE_OUTPUT_W * VPE_OUTPUT_H * 3];
 	uint32_t optime;
 	struct timeval st, et;
-	unsigned char *cam_pbuf[4];
+	unsigned char* cam_pbuf[4];
 	if (get_framebuf(cambuf, cam_pbuf) == 0)
 	{
 		memcpy(srcbuf, cam_pbuf[0], VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
@@ -469,7 +479,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				}
 				if (t_data->imgData.bspeedControl)
 				{
-					t_data->controlData.desireSpeedVal = auto_speedMapping(steerVal, 40);
+					t_data->controlData.desireSpeedVal = auto_speedMapping(steerVal, BASIC_SPEED);
 					if (t_data->controlData.desireSpeedVal != t_data->controlData.beforeSpeedVal)
 					{
 						//이전 속도와 달라졌을 때만 속도값 인가.
@@ -492,15 +502,15 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		if (t_data->imgData.bprintMission)
 		{
 			displayPrintMission(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H,
-								(int)t_data->missionData.ms[0], (int)t_data->missionData.ms[1], (int)t_data->missionData.ms[2],
-								(int)t_data->missionData.ms[3], (int)t_data->missionData.ms[4], (int)t_data->missionData.ms[5],
-								(int)t_data->missionData.ms[6], (int)t_data->missionData.ms[7], (int)t_data->missionData.ms[8]);
+				(int)t_data->missionData.ms[0], (int)t_data->missionData.ms[1], (int)t_data->missionData.ms[2],
+				(int)t_data->missionData.ms[3], (int)t_data->missionData.ms[4], (int)t_data->missionData.ms[5],
+				(int)t_data->missionData.ms[6], (int)t_data->missionData.ms[7], (int)t_data->missionData.ms[8]);
 		}
 		if (t_data->imgData.bprintSensor)
 		{
 			displayPrintSensor(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H,
-							   DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3),
-							   DistanceSensor_cm(4), DistanceSensor_cm(5), DistanceSensor_cm(6), StopLine(4));
+				DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3),
+				DistanceSensor_cm(4), DistanceSensor_cm(5), DistanceSensor_cm(6), StopLine(4));
 		}
 
 		memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
@@ -513,12 +523,12 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 /************************************************/
 /*	Thread - image_process_thread				*/
 /************************************************/
-void *image_process_thread(void *arg)
+void* image_process_thread(void* arg)
 {
-	struct thr_data *data = (struct thr_data *)arg;
-	struct v4l2 *v4l2 = data->v4l2;
-	struct vpe *vpe = data->vpe;
-	struct buffer *capt;
+	struct thr_data* data = (struct thr_data*)arg;
+	struct v4l2* v4l2 = data->v4l2;
+	struct vpe* vpe = data->vpe;
+	struct buffer* capt;
 	struct timeval st, et;
 	bool isFirst = true;
 	int index;
@@ -596,9 +606,9 @@ void *image_process_thread(void *arg)
 /************************************************/
 /*	Thread - input_thread						*/
 /************************************************/
-void *input_thread(void *arg)
+void* input_thread(void* arg)
 {
-	struct thr_data *data = (struct thr_data *)arg;
+	struct thr_data* data = (struct thr_data*)arg;
 
 	int total_encoder = 0;
 	int forward_encoder = 0;
@@ -758,7 +768,7 @@ void *input_thread(void *arg)
 				printf("Disired Speed : ");
 				scanf("%d", &desire_encoder);
 				EncoderCounter_Write(init_encoder);
-				DesireSpeed_Write(40);
+				DesireSpeed_Write(BASIC_SPEED);
 				while (1)
 				{
 					on_encoder = Encoder_Read();
@@ -771,7 +781,7 @@ void *input_thread(void *arg)
 						forward_encoder += on_encoder;
 						break;
 					}
-					usleep(300000);
+					usleep(10000);
 				}
 				printf("Total Forward encoder : %d\n", forward_encoder);
 			}
@@ -783,7 +793,7 @@ void *input_thread(void *arg)
 				printf("Disired Encoder : ");
 				scanf("%d", &desire_encoder);
 				EncoderCounter_Write(init_encoder);
-				DesireSpeed_Write(-40);
+				DesireSpeed_Write(-BASIC_SPEED);
 				while (1)
 				{
 					on_encoder = abs(Encoder_Read());
@@ -799,7 +809,7 @@ void *input_thread(void *arg)
 						total_encoder += on_encoder;
 						break;
 					}
-					usleep(300000);
+					usleep(10000);
 				}
 				printf("Total Back encoder : %d\n", total_encoder);
 			}
@@ -892,9 +902,9 @@ void *input_thread(void *arg)
 /************************************************/
 /*	Thread - mission_thread						*/
 /************************************************/
-void *mission_thread(void *arg)
+void* mission_thread(void* arg)
 {
-	struct thr_data *data = (struct thr_data *)arg;
+	struct thr_data* data = (struct thr_data*)arg;
 	struct timeval time;
 	time.tv_sec = 0;
 
@@ -918,30 +928,62 @@ void *mission_thread(void *arg)
 
 		if (start && start != DONE)
 		{
-			if (0)
-			{
-				data->imgData.bmission = true;
-				data->imgData.bprintString = true;
-				sprintf(data->imgData.missionString, "start");
+			DesireSpeed_Write(0);
+			data->imgData.bmission = true;
+			data->imgData.bprintString = true;
+			sprintf(data->imgData.missionString, "start");
 
-				start = DONE;
-				data->imgData.bmission = false;
-				data->imgData.bprintString = false;
+			enum StartState state = WAIT_S;
+
+			while (state)
+			{
+				switch (state)
+				{
+				case WAIT_S:
+					if (DistanceSensor_cm(1) < 8)
+						state = FRONT_CLOSE_S;
+					break;
+
+				case FRONT_CLOSE_S:
+					if (DistanceSensor_cm(1) > 8)
+						state = FRONT_OPEN_S;
+					break;
+
+				case FRONT_OPEN_S:
+					state = START_S;
+					break;
+
+				case START_S:
+					break;
+				}
+				usleep(10000);
 			}
+
+			start = DONE;
+			flyover = READY;
+			data->missionData.ms[1] = flyover;
+
+			data->imgData.bmission = false;
+			data->imgData.bprintString = false;
+			data->imgData.bauto = true;
+			data->imgData.bspeedControl = true;
+
 		}
 
 		if (flyover && flyover != DONE)
 		{
-			if (0)
-			{
-				data->imgData.bmission = true;
-				data->imgData.bprintString = true;
-				sprintf(data->imgData.missionString, "flyover");
+			//data->imgData.bmission = true;
+			data->imgData.bprintString = true;
+			sprintf(data->imgData.missionString, "flyover");
 
-				flyover = DONE;
-				data->imgData.bmission = false;
-				data->imgData.bprintString = false;
+			while (1)
+			{
+				usleep(50000);
 			}
+
+			flyover = DONE;
+			//data->imgData.bmission = false;
+			data->imgData.bprintString = false;
 		}
 
 		if (priority && priority != DONE)
@@ -951,16 +993,18 @@ void *mission_thread(void *arg)
 
 			if (data->missionData.frame_priority >= 2) //우선정지표지판 2프레임 검출.
 			{
+				DesireSpeed_Write(0);
 				while (data->imgData.bcheckPriority)
 				{
-					if (data->missionData.frame_priority == 0) //우선정지표지판 사라지면
+					if (data->missionData.frame_priority == 0)	//우선정지표지판 사라지면
 					{
-						data->imgData.bcheckPriority = false;
+						data->imgData.bcheckPriority = false;	//imgProcess에서 우선정지표지판 체크 비활성화
 					}
 					usleep(100000);
 				}
+
+				DesireSpeed_Write(BASIC_SPEED);
 				priority = DONE;
-				//imgProcess에서 우선정지표지판 체크 비활성화
 			}
 		}
 
@@ -1426,7 +1470,7 @@ void *mission_thread(void *arg)
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "round about");
 				printf("roundabout IN\n");
-				int speed = 40;
+				int speed = BASIC_SPEED;
 
 				DesireSpeed_Write(0);
 				data->imgData.bspeedControl = false;
@@ -1596,11 +1640,11 @@ void *mission_thread(void *arg)
 							{ /*전방 미탐지*/
 								state = SIDE_ON;
 								/*전진하는 동안 전방 센서가 20 이상 멀어지면 SIDE_ON으로 진행*/
-								DesireSpeed_Write(50);
+								DesireSpeed_Write(BASIC_SPEED);
 							}
 						}
 						else if (data->missionData.overtakingData.headingDirection == LEFT &&
-								 data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
+							data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
 						{
 
 							sprintf(data->imgData.missionString, "Left to go");
@@ -1623,7 +1667,7 @@ void *mission_thread(void *arg)
 							{
 								/*전진하는 동안 전방 센서가 20 이상 멀어지면 SIDE_ON으로 진행*/
 								state = SIDE_ON;
-								DesireSpeed_Write(50);
+								DesireSpeed_Write(BASIC_SPEED);
 							}
 						}
 						else
@@ -1703,7 +1747,7 @@ void *mission_thread(void *arg)
 						/*알고리즘 전진*/
 						data->imgData.bmission = false;
 						sprintf(data->imgData.missionString, "End Overtaking");
-						DesireSpeed_Write(40);
+						DesireSpeed_Write(BASIC_SPEED);
 						state = DONE_O;
 						overtake = DONE;
 						data->missionData.overtakingFlag = false;
@@ -1838,7 +1882,7 @@ void *mission_thread(void *arg)
 	}
 }
 
-static struct thr_data *pexam_data = NULL;
+static struct thr_data* pexam_data = NULL;
 
 void signal_handler(int sig)
 {
@@ -1867,7 +1911,7 @@ void signal_handler(int sig)
 	}
 }
 
-void manualControl(struct ControlData *cdata, char key)
+void manualControl(struct ControlData* cdata, char key)
 {
 	int i;
 	switch (key)
@@ -1988,7 +2032,7 @@ void manualControl(struct ControlData *cdata, char key)
 	}
 }
 
-uint32_t timeCheck(struct timeval *tempTime)
+uint32_t timeCheck(struct timeval* tempTime)
 {
 	struct timeval prevTime = *tempTime;
 	struct timeval nowTime;
@@ -2006,13 +2050,13 @@ uint32_t timeCheck(struct timeval *tempTime)
 /************************************************/
 /*	MAIN	main	MAIN	main				*/
 /************************************************/
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-	struct v4l2 *v4l2;
-	struct vpe *vpe;
+	struct v4l2* v4l2;
+	struct vpe* vpe;
 	struct thr_data tdata;
 	int disp_argc = 3;
-	char *disp_argv[] = {"dummy", "-s", "4:480x272", "\0"}; // 추후 변경 여부 확인 후 처리..
+	char* disp_argv[] = { "dummy", "-s", "4:480x272", "\0" }; // 추후 변경 여부 확인 후 처리..
 	int ret = 0;
 
 	printf("------ main start ------\n");
@@ -2116,8 +2160,8 @@ int main(int argc, char **argv)
 	vpe->translen = 1;
 
 	MSG("Input(Camera) = %d x %d (%.4s)\nOutput(LCD) = %d x %d (%.4s)",
-		vpe->src.width, vpe->src.height, (char *)&vpe->src.fourcc,
-		vpe->dst.width, vpe->dst.height, (char *)&vpe->dst.fourcc);
+		vpe->src.width, vpe->src.height, (char*)&vpe->src.fourcc,
+		vpe->dst.width, vpe->dst.height, (char*)&vpe->dst.fourcc);
 	// 입출력 이미지의 크기 및 포맷정보 출력
 	// 입력 이미지 : 1280x720, Format = UYUV422
 	// 출력 이미지 : 320x180. Format = BGR24

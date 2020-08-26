@@ -133,6 +133,7 @@ extern "C" {
 				//정면 충돌 감지
 				if (DistanceSensor_cm(1) <= 5 ) {
 					DesireSpeed_Write(0);
+					cout << "DesiredDistance() : front detection!" << endl;
 					break;
 				}
 			}
@@ -141,13 +142,14 @@ extern "C" {
 				//후면 충돌 감지
 				if (DistanceSensor_cm(4) <= 5 ) {
 					DesireSpeed_Write(0);
+					cout << "DesiredDistance() : rear detection!" << endl;
 					break;
 				}
 			}
 
 
 			on_encoder = abs(EncoderCounter_Read());
-			if (on_encoder != 65278)
+			if (on_encoder != CHECKSUMERROR) // 65278
 			{
 				//printf("encoder : %-4d\n", on_encoder);
 				if (on_encoder >= SettingDistance)
@@ -156,7 +158,7 @@ extern "C" {
 					break;
 				}
 			}
-			usleep(50000); // 50ms
+			usleep(10000); // 10ms
 		}
 		if (SettingSpeed < 0)	CarLight_Write(0x00);
 	}
@@ -174,6 +176,7 @@ extern "C" {
 			{
 				//정면 충돌 감지
 				if (DistanceSensor_cm(1) <= 5) {
+					cout << "onlyDistance() : front detection!" << endl;
 					DesireSpeed_Write(0);
 					break;
 				}
@@ -182,6 +185,7 @@ extern "C" {
 			{
 				//후면 충돌 감지
 				if (DistanceSensor_cm(4) <= 5) {
+					cout << "onlyDistance() : rear detection!" << endl;
 					DesireSpeed_Write(0);
 					break;
 				}
@@ -189,7 +193,7 @@ extern "C" {
 
 
 			on_encoder = abs(EncoderCounter_Read());
-			if (on_encoder != 65278)
+			if (on_encoder != CHECKSUMERROR) // 65278
 			{
 				//printf("encoder : %-4d\n", on_encoder);
 				if (on_encoder >= SettingDistance)
@@ -198,7 +202,7 @@ extern "C" {
 					break;
 				}
 			}
-			usleep(50000); // 50ms
+			usleep(10000); // 10ms
 		}
 		if (SettingSpeed < 0)	CarLight_Write(0x00);
 	}

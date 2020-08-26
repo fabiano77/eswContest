@@ -1327,7 +1327,7 @@ void *mission_thread(void *arg)
 								usleep(200000);
 							}
 						}
-						state = DONE;
+						state = DONE_P;
 
 						if (parking == READY)
 							parking = REMAIN;
@@ -1339,7 +1339,7 @@ void *mission_thread(void *arg)
 					default:
 						break;
 					}
-					usleep(200000);
+					usleep(75000);
 				}
 				data->imgData.bmission = false;
 				data->imgData.bprintString = false;

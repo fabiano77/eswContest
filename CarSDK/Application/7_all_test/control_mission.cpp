@@ -150,7 +150,7 @@ extern "C"
 				if (DistanceSensor_cm(1) <= 5)
 				{
 					DesireSpeed_Write(0);
-					cout << "DesiredDistance() : front detection!" << endl;
+					cout << "\tDesiredDistance() : front detection!" << endl;
 					break;
 				}
 			}
@@ -160,7 +160,7 @@ extern "C"
 				if (DistanceSensor_cm(4) <= 5)
 				{
 					DesireSpeed_Write(0);
-					cout << "DesiredDistance() : rear detection!" << endl;
+					cout << "\tDesiredDistance() : rear detection!" << endl;
 					break;
 				}
 			}
@@ -179,7 +179,7 @@ extern "C"
 		}
 		if (SettingSpeed < 0)
 			CarLight_Write(0x00);
-		cout << "DesiredDistance() :encoder = " << on_encoder << endl;
+		cout << "\tDesiredDistance() :encoder = " << on_encoder << endl;
 	}
 
 	void onlyDistance(int SettingSpeed, int SettingDistance)

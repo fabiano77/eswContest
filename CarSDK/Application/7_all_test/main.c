@@ -984,12 +984,10 @@ void *mission_thread(void *arg)
 				while (state && wrong_detection) // state == END가 아닌이상 루프 진행
 				{
 					data->missionData.loopTime = timeCheck(&time);
-					int c2 = DistanceSensor_cm(2);
-					int c3 = DistanceSensor_cm(3);
-					data->missionData.parkingData.frontRight = (c2 <= 23) ? true : false;
-					data->missionData.parkingData.rearRight = (c3 <= 23) ? true : false;
 
-					printf("\tc2 = %d, c3 = %d \n", c2, c3);
+					data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 23) ? true : false;
+					data->missionData.parkingData.rearRight = (DistanceSensor_cm(3) <= 23) ? true : false;
+
 					switch (state)
 					{
 					case FIRST_WALL:
@@ -1106,7 +1104,7 @@ void *mission_thread(void *arg)
 										step_v = UNDER_STEER_V;
 										break;
 									}
-									else if (DistanceSensor_cm(3) <= 5)
+									else if (DistanceSensor_cm(3) <= 6)
 									{
 										// 오버스티어 상황
 										printf("over steer\n");
@@ -1119,22 +1117,24 @@ void *mission_thread(void *arg)
 
 								case UNDER_STEER_V:
 									sprintf(data->imgData.missionString, "UNDER_STEER");
-									DesiredDistance(23, 150, 1650);
-									usleep(300000);
-									DesiredDistance(23, 150, 1350);
-									usleep(300000);
-									DesiredDistance(-23, 400, 1500);
+									DesiredDistance(23, 100, 1300);
 									usleep(200000);
+									DesiredDistance(23, 100, 1500);
+									usleep(200000);
+
+									DesiredDistance(23, 200, 1700);
+									usleep(200000);
+
 									step_v = SECOND_BACKWARD_V;
 									break;
 
 								case OVER_STEER_V:
 									sprintf(data->imgData.missionString, "OVER_STEER");
-									DesiredDistance(23, 150, 1350);
+									DesiredDistance(23, 100, 1700);
 									usleep(300000);
-									DesiredDistance(23, 150, 1650);
+									DesiredDistance(23, 100, 1500);
 									usleep(300000);
-									DesiredDistance(-23, 400, 1500);
+									DesiredDistance(23, 200, 1300);
 									usleep(200000);
 									step_v = SECOND_BACKWARD_V;
 									break;
@@ -1206,7 +1206,7 @@ void *mission_thread(void *arg)
 						}
 						else if (data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
 						{
-							DesiredDistance(30, 110, 1500);
+							DesiredDistance(30, 150, 1500);
 							while (data->missionData.parkingData.horizontalFlag)
 							{
 								data->missionData.loopTime = timeCheck(&time);
@@ -1222,11 +1222,12 @@ void *mission_thread(void *arg)
 									usleep(500000);
 									DesireSpeed_Write(-23);
 									usleep(50000);
-									while (DistanceSensor_cm(4) <= 7) {
+									while (DistanceSensor_cm(4) <= 7 && DistanceSensor_cm(3) <= 10)
+									{
 										DesireSpeed_Write(0);
 										usleep(50000);
 									}
-									DesiredDistance(-23, 400, 1100);
+									DesiredDistance(23, 400, 1100);
 									usleep(200000);
 									step_h = SECOND_BACKWARD;
 									break;

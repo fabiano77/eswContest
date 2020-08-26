@@ -1313,7 +1313,7 @@ void *mission_thread(void *arg)
 
 		if (roundabout && roundabout != DONE)
 		{
-			printf("roundabout 분기 \n");
+			//printf("roundabout 분기 \n");
 			if (STOP_WhiteLine(4))
 			{
 				data->imgData.bwhiteLine = true;
@@ -1347,13 +1347,13 @@ void *mission_thread(void *arg)
 
 					case ROUND_GO_1:
 						//DesiredDistance(speed, 600, 1500); //앞 센서 받아오면서 일정거리 가는 함수 추가.
-						onlyDistance(speed, 600);
+						onlyDistance(speed, 500);
 						sprintf(data->imgData.missionString, "ROUND_GO_1-2");
 						printf("ROUND_GO_1_2\n");
-						usleep(500000);
+						usleep(1000000);
 
 						data->imgData.bmission = false;
-						onlyDistance(speed, 1400);
+						onlyDistance(speed, 1000);
 
 						sprintf(data->imgData.missionString, "ROUND_STOP");
 						printf("ROUND_STOP\n");
@@ -1362,7 +1362,7 @@ void *mission_thread(void *arg)
 						break;
 
 					case ROUND_STOP:
-						if ((DistanceSensor_cm(4) <= 15) || (DistanceSensor_cm(5) <= 15) || (DistanceSensor_cm(6) <= 15))
+						if ((DistanceSensor_cm(4) <= 15) || (DistanceSensor_cm(5) <= 15))
 						{
 							DesireSpeed_Write(speed);
 							sprintf(data->imgData.missionString, "ROUND_GO_2");
@@ -1376,17 +1376,19 @@ void *mission_thread(void *arg)
 						if ((DistanceSensor_cm(4) <= 15) || (DistanceSensor_cm(5) <= 15))
 						{
 							printf("speed up \n");
-							if (speed < 70)
-								speed += 5;
-							DesireSpeed_Write(speed);
+							if (speed < 80)
+								speed += 10;
 						}
 						else if ((DistanceSensor_cm(1) <= 15) || (DistanceSensor_cm(6) <= 15))
 						{
-							printf("speed down \n");
+							DesireSpeed_Write(0);
+							printf("stop and speed down \n");
 							if (speed > 20)
-								speed -= 5;
-							DesireSpeed_Write(speed);
+								speed -= 10;
+							usleep(1900000);
+							break;
 						}
+						DesireSpeed_Write(speed);
 						//if (abs(data->controlData.steerVal - 1500) < 60)
 						if (data->controlData.steerVal - 1500 < 10) // steerVal 1500 이상으로 유지되다가 직진 구간이 나올 때
 						{
@@ -1404,6 +1406,7 @@ void *mission_thread(void *arg)
 				}
 
 				printf("ROUNDABOUT_OFF\n");
+				sprintf(data->imgData.missionString, "ROUNDABOUT_OFF");
 				roundabout = DONE;
 				data->missionData.broundabout = false;
 				data->imgData.bspeedControl = true;

@@ -7,51 +7,70 @@ extern "C" {
 
 	void cSettingStatic(int w, int h);
 
-	void calibration(float* map1, float* map2, int w, int h);
+	int calculSteer(Mat& src, int w, int h, bool whiteMode);
+	//PreCondition	: frame은 자동차의 topview2영상을 입력으로 받는다.
+	//PostCondition	: 차선을 인식하여 인식된 결과를 src에 표시한다..
+	//Return : 조향해야될 결과값을 반환한다(-500 ~ 500)
 
-	void OpenCV_remap(unsigned char* inBuf, int w, int h, unsigned char* outBuf, float* map1, float* map2);
+	void lineFiltering(Mat& src, Mat& dst, int mode);
 
-	void topview_transform(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int mode);
+	void cannyEdge(Mat& src, Mat& dst);
 
-	void displayPrintStr(unsigned char* outBuf, int w, int h, char* name);
+	Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType, const double lowThresAngle);
 
-	void displayPrintMission(unsigned char* outBuf, int w, int h, 
-		int ms0, int ms1, int ms2, int ms3, int ms4, int ms5, int ms6, int ms7, int ms8);
+	Vec4i ransac_algorithm(vector<Vec4i> lines, vector<Point2i> P, int w, int h, int T, double& inlierPercent, Rect weightingRect);
 
-	void displayPrintSensor(unsigned char* outBuf, int w, int h,
-		int c1, int c2, int c3, int c4, int c5, int c6, int stopline);
+	int slopeSign(Vec4i line);
 
-	int checkRed(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
+	double slope(Vec4i line);
 
-	int checkYellow(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
+	double distance_between_line_and_point(Vec4i& line, Point2i point, int w, int h);
 
-	int checkGreen(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
+	int getPointX_at_Y(Vec4i line, const int Y);
 
-	bool isPriorityStop(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
+	int getPointY_at_X(Vec4i line, const int X);
 
-	void debugFiltering(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int mode);
+	int lineDeviation(Mat& dst, Vec4i line1, Vec4i line2);
 
-	int autoSteering(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int whiteMode);
+	string toString(int A);
 
-	int Tunnel(unsigned char* inBuf, int w, int h, const double percent);
+	string toString(double A);
 
-	/// <summary>
-	/// check where is the end line in front of the car
-	/// need get img that is already topview transformed
-	/// </summary>
-	/// <param name="inBuf"></param>
-	/// <param name="w"></param>
-	/// <param name="h"></param>
-	/// <returns></returns>
-	int checkFront(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
-
+	Point centerPoint(Vec4i line);
 
 	/// <summary>
-	/// check where is obstacle
+	/// 관심영역만 마스킹해서 나머지는 올 블랙으로 없애버림
 	/// </summary>
-	/// <param name="src"></param> //Input img buf(������ �̹����� ������ ��)
-	/// <returns></returns> true (left), false(right)
-	bool checkObstacle(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
+	/// <param name="src"></param> //Input img
+	/// <param name="dst"></param> //after masking image
+	/// <param name="points"></param> //4points is needed
+	void regionOfInterest(Mat& src, Mat& dst, Point* points);
+
+	int isDark(Mat& frame, const double percent, int debug);
+
+	int Tunnel_isStart(Mat& frame, const double percent);
+
+	bool priorityStop(Mat& src, Mat& dst, double percent, bool debug);
+
+	int checkRedSignal(Mat& src, Mat& dst, double percent, bool debug);
+
+	int checkYellowSignal(Mat& src, Mat& dst, double percent, bool debug);
+
+	int checkGreenSignal(Mat& src, Mat& dst, double percent, bool debug);
+
+	int countPixel(Mat& src, Rect ROI);
+
+	void outputMission(Mat& dst, int ms0, int ms1, int ms2, int ms3, int ms4, int ms5, int ms6, int ms7, int ms8);
+
+	void outputSensor(Mat& dst, int w, int h, int c1, int c2, int c3, int c4, int c5, int c6, int stopline);
+
+	void fileOutVideo(Mat& src);
+
+	void fileOutimage(Mat& src, string str);
+
+	void closeVideoWrite();
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -622,6 +622,31 @@ extern "C" {
 			return -1000;
 		}
 	}
+
+	void opencv_imwrite(unsigned char* inBuf)
+	{
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		struct timeval timestamp;
+		struct tm* today;
+		string name(toString(today->tm_hour) + toString(today->tm_min) + toString(today->tm_sec)+".jpg");
+
+		gettimeofday(&timestamp, NULL);
+		today = localtime(&timestamp.tv_sec);
+
+		fileOutimage(srcRGB, name);
+	}
+
+	void opencv_videowrite(unsigned char* inBuf)
+	{
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+
+		fileOutVideo(srcRGB);
+	}
+
+	void opencv_videoclose(void)
+	{
+		closeVideoWrite();
+	}
 }	// extern "C"
 
 
@@ -651,6 +676,7 @@ int first_tunnel = 0;
 int MAXTHR_tunnel = 10;
 int MINTHR_tunnel = 5;
 
+VideoWriter outputVideo;
 
 // static void on_trackbar(int, void*)
 // {
@@ -658,6 +684,11 @@ int MINTHR_tunnel = 5;
 
 void settingStatic(int w, int h)
 {
+	string filename("video.avi");
+	outputVideo.open(filename, VideoWriter::fourcc('D', 'I', 'V', 'X'), 10, Size(640, 360), true);
+	//outputVideo.open(filename, CV_FOURCC('D', 'I', 'V', 'X'), 10, Size(640, 360), true);
+
+
 	color[0] = Scalar(255, 255, 0);
 	color[1] = blue;
 	color[2] = green;
@@ -1532,4 +1563,26 @@ void outputSensor(Mat& dst, int w, int h, int c1, int c2, int c3, int c4, int c5
 		putText(dst, "white Line", Point(w / 2 - 60, 320), 0, 0.85, Scalar(255, 255, 0), 2);
 	else
 		putText(dst, "black Line", Point(w / 2 - 60, 320), 0, 0.85, Scalar(0, 255, 255), 2);
+}
+
+void fileOutimage(Mat& src, string str)
+{
+	if (imwrite(str, src))
+		cout << "imwrite() success!,\tfilename = " << str << endl;;
+}
+
+void fileOutVideo(Mat& src)
+{
+	if (!outputVideo.isOpened())
+	{
+		cout << "file open failed!" << endl;
+		return;
+	}
+	outputVideo << src;
+}
+
+void closeVideoWrite()
+{
+	outputVideo.~VideoWriter();
+	cout << "videoWrite() finish!" << endl;
 }

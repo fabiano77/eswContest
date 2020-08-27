@@ -199,6 +199,9 @@ struct ControlData
 struct ImgProcessData
 {
 	uint32_t loopTime;		// img 스레드 루프 시간
+	bool dump_request;		// 덤프요청
+	bool bvideoRecord;		// 동영상 녹화 시작
+	bool bvideoSave;		// 동영상 파일 저장
 	bool bcalibration;		// 캘리브레이션
 	bool bdebug;			// 디버그모드 ON/OFF
 	bool btopview;			// 탑뷰 ON/OFF
@@ -226,12 +229,13 @@ struct thr_data
 	struct ControlData controlData;
 	struct MissionData missionData;
 	struct ImgProcessData imgData;
+	unsigned char img_data_buf[VPE_OUTPUT_IMG_SIZE];
 
 	int msgq_id;
 
 	bool bfull_screen;
 	bool bstream_start;
-	pthread_t threads[3];
+	pthread_t threads[4];		//스레드개수
 };
 
 /******************** function ********************/
@@ -501,7 +505,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		/*			영상처리 종료								*/
 		/********************************************************/
 
-		/* 영상처리후 오버레이로 정보 등등 출력. */
+		/* 영상처리후 오버레이로 정보 등등 출력.*/
 		if (t_data->imgData.bprintString)
 		{
 			displayPrintStr(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, t_data->imgData.missionString);
@@ -518,6 +522,19 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 			displayPrintSensor(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H,
 				DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3),
 				DistanceSensor_cm(4), DistanceSensor_cm(5), DistanceSensor_cm(6), StopLine(4));
+		}
+
+		/*		현재 영상 .bmp파일로 저장		*/
+		if (t_data->imgData.dump_request)
+		{
+			opencv_imwrite(srcbuf);
+			t_data->imgData.dump_request = false;
+		}
+
+		/*		현재 영상 .avi파일로 녹화		*/	
+		if (t_data->imgData.bvideoRecord)
+		{
+			memcpy(t_data->img_data_buf, srcbuf, VPE_OUTPUT_IMG_SIZE);
 		}
 
 		memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
@@ -652,6 +669,9 @@ void* input_thread(void* arg)
 	MSG("\t mission: mission display output on/off");
 	MSG("\t sensor : sensor  display output on/off");
 	MSG("\t ms	   : mission on/off");
+	MSG("\t dump   : save image file");
+	MSG("\t video  : video record start");
+	MSG("\t save   : save video file");
 	MSG("\n");
 
 	int buzzerPulseWidth_us = 100000;
@@ -877,6 +897,22 @@ void* input_thread(void* arg)
 				else
 					printf("wrong input\n");
 			}
+			else if (0 == strncmp(cmd_input, "dump", 4)
+			{
+				buzzer(1, 0, buzzerPulseWidth_us);
+				data->imgData.dump_request = true;
+			}
+			else if (0 == strncmp(cmd_input, "video", 5)
+			{
+				buzzer(1, 0, buzzerPulseWidth_us);
+				data->imgData.bvideoRecord = true;
+			}
+			else if (0 == strncmp(cmd_input, "save", 3)
+			{
+				buzzer(1, 0, buzzerPulseWidth_us);
+				data->imgData.bvideoRecord = false;
+				data->imgData.bvideoSave = true;
+			}
 			else
 			{
 				printf("cmd_input:%s \n", cmd_input);
@@ -886,6 +922,32 @@ void* input_thread(void* arg)
 	}
 
 	return NULL;
+}
+
+void* video_record_thread(void* arg)
+{
+	struct thr_data* data = (struct thr_data*)arg;
+	bool videoEnd = false;
+	int fps = 10;
+	int delay_us = 1000000 / fps;
+
+	while (1)
+	{
+		if (videoEnd)
+		{
+			usleep(10000000);
+		}
+		else if (data->imgData.bvideoSave)
+		{
+			opencv_videoclose();
+			videoEnd = true;
+		}
+		else if (data->imgData.bvideoRecord)
+		{
+			opencv_videowrite(data->img_data_buf);
+		}
+		usleep(delay_us);
+	}
 }
 
 /************************************************/
@@ -2052,6 +2114,7 @@ int main(int argc, char** argv)
 	int disp_argc = 3;
 	char* disp_argv[] = { "dummy", "-s", "4:480x272", "\0" }; // 추후 변경 여부 확인 후 처리..
 	int ret = 0;
+	memset(tdata.img_data_buf, 0, sizeof(tdata.img_data_buf));
 
 	printf("------ main start ------\n");
 
@@ -2066,6 +2129,9 @@ int main(int argc, char** argv)
 
 	/******************** imgProcess Data ********************/
 	cSettingStatic(VPE_OUTPUT_W, VPE_OUTPUT_H);
+	tdata.imgData.dump_request = false;
+	tdata.imgData.bvideoRecord = false;
+	tdata.imgData.bvideoSave = false;
 	tdata.imgData.bcalibration = false;
 	tdata.imgData.bdebug = false;
 	tdata.imgData.debugMode = 1;
@@ -2205,6 +2271,13 @@ int main(int argc, char** argv)
 		MSG("Failed creating input_thread");
 	}
 	pthread_detach(tdata.threads[2]);
+
+	ret = pthread_create(&tdata.threads[3], NULL, video_record_thread, &tdata);
+	if (ret)
+	{
+		MSG("Failed creating video_record_thread");
+	}
+	pthread_detach(tdata.threads[3]);
 
 	/* register signal handler for <CTRL>+C in order to clean up */
 	if (signal(SIGINT, signal_handler) == SIG_ERR)

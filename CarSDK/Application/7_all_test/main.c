@@ -895,19 +895,21 @@ void* input_thread(void* arg)
 					data->missionData.changeMissionState = true;
 				}
 				else
+				{
 					printf("wrong input\n");
+				}
 			}
-			else if (0 == strncmp(cmd_input, "dump", 4)
+			else if (0 == strncmp(cmd_input, "dump", 4))
 			{
 				buzzer(1, 0, buzzerPulseWidth_us);
 				data->imgData.dump_request = true;
 			}
-			else if (0 == strncmp(cmd_input, "video", 5)
+			else if (0 == strncmp(cmd_input, "video", 5))
 			{
 				buzzer(1, 0, buzzerPulseWidth_us);
 				data->imgData.bvideoRecord = true;
 			}
-			else if (0 == strncmp(cmd_input, "save", 3)
+			else if (0 == strncmp(cmd_input, "save", 3))
 			{
 				buzzer(1, 0, buzzerPulseWidth_us);
 				data->imgData.bvideoRecord = false;
@@ -1071,9 +1073,9 @@ void* mission_thread(void* arg)
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "Parking");
 				int parking_width = 0;
-				int first_error_distance = 0;
-				int second_error_distance = 0;
-				int first_error_flag = 1;
+				//int first_error_distance = 0;
+				//int second_error_distance = 0;
+				//int first_error_flag = 1;
 				bool wrong_detection = 1;
 				int encoderVal = 0;
 
@@ -1256,7 +1258,7 @@ void* mission_thread(void* arg)
 								case LEFT_FRONT_V:
 									sprintf(data->imgData.missionString, "RIGHT_FRONT_V");
 									int left_difference = DistanceSensor_cm(6) - DistanceSensor_cm(5);
-									DesiredDistance(23, 100, 1500 + (right_difference * 100));
+									DesiredDistance(23, 100, 1500 + (left_difference * 100));
 									usleep(200000);
 									DesiredDistance(-23, 400, 1500);
 									usleep(200000);

@@ -1,5 +1,6 @@
 ﻿#include "imgProcess.h"
 #include <stdlib.h>
+#include <sys/time.h>
 #include <time.h>
 #include <math.h>
 #include <iostream>
@@ -71,6 +72,13 @@ int countPixel(Mat& src, Rect ROI);
 void outputMission(Mat& dst, int ms0, int ms1, int ms2, int ms3, int ms4, int ms5, int ms6, int ms7, int ms8);
 
 void outputSensor(Mat& dst, int w, int h, int c1, int c2, int c3, int c4, int c5, int c6, int stopline);
+
+void fileOutVideo(Mat& src);
+
+void fileOutimage(Mat& src, string str);
+
+void closeVideoWrite();
+//
 
 extern "C" {
 
@@ -625,20 +633,21 @@ extern "C" {
 
 	void opencv_imwrite(unsigned char* inBuf)
 	{
-		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		Mat srcRGB(360, 640, CV_8UC3, inBuf);
 		struct timeval timestamp;
 		struct tm* today;
-		string name(toString(today->tm_hour) + toString(today->tm_min) + toString(today->tm_sec)+".jpg");
 
 		gettimeofday(&timestamp, NULL);
 		today = localtime(&timestamp.tv_sec);
+
+		string name(toString(today->tm_hour) + toString(today->tm_min) + toString(today->tm_sec)+".jpg");
 
 		fileOutimage(srcRGB, name);
 	}
 
 	void opencv_videowrite(unsigned char* inBuf)
 	{
-		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		Mat srcRGB(360, 640, CV_8UC3, inBuf);
 
 		fileOutVideo(srcRGB);
 	}
@@ -685,8 +694,8 @@ VideoWriter outputVideo;
 void settingStatic(int w, int h)
 {
 	string filename("video.avi");
-	outputVideo.open(filename, VideoWriter::fourcc('D', 'I', 'V', 'X'), 10, Size(640, 360), true);
-	//outputVideo.open(filename, CV_FOURCC('D', 'I', 'V', 'X'), 10, Size(640, 360), true);
+	//outputVideo.open(filename, VideoWriter::fourcc('D', 'I', 'V', 'X'), 10, Size(640, 360), true);
+	outputVideo.open(filename, CV_FOURCC('D', 'I', 'V', 'X'), 10, Size(640, 360), true);
 
 
 	color[0] = Scalar(255, 255, 0);

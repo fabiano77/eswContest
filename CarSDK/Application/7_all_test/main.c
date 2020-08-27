@@ -44,6 +44,7 @@
 #define FPS_TEXT_COLOR 0xffffffff //while
 
 #define BASIC_SPEED 40		// 프로그램 기본 바퀴속도, autoSteer와 주로 사용.
+#define BUZZER_PULSE 100000	// 기본 부저 길이
 
 /******************** enumerator ********************/
 enum MissionState
@@ -393,12 +394,16 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				{
 				case DETECT_RED:
 					if (checkRed(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf))
+					{
+						buzzer(1, 0, BUZZER_PULSE);
 						t_data->missionData.signalLightData.state = DETECT_YELLOW;
+					}
 					break;
 
 				case DETECT_YELLOW:
 					if (checkYellow(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf))
 					{
+						buzzer(1, 0, BUZZER_PULSE);
 						t_data->missionData.signalLightData.state = DETECT_GREEN;
 						t_data->missionData.signalLightData.Accumulation_greenVal = 0;
 						t_data->missionData.signalLightData.ignore_frame = 3;
@@ -416,11 +421,13 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 						t_data->missionData.signalLightData.Accumulation_greenVal += checkGreen(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
 						if (t_data->missionData.signalLightData.Accumulation_greenVal >= 3)
 						{
+							buzzer(2, BUZZER_PULSE, BUZZER_PULSE);
 							t_data->missionData.signalLightData.state = DETECTION_FINISH;
 							t_data->missionData.signalLightData.finalDirection = 1;
 						}
 						else if (t_data->missionData.signalLightData.Accumulation_greenVal <= -3)
 						{
+							buzzer(1, 0, BUZZER_PULSE*2);
 							t_data->missionData.signalLightData.state = DETECTION_FINISH;
 							t_data->missionData.signalLightData.finalDirection = -1;
 						}
@@ -632,14 +639,13 @@ void* input_thread(void* arg)
 	printf("----------------------------------------------------	\n");
 	printf("	space bar = Alarm									\n");
 	printf("----------------------------------------------------	\n");
+	//MSG("\t dist   : distance sensor check");
+	//MSG("\t distc  : distance sensor check by -cm-");
 	MSG("\n\nInput command:");
 	MSG("\t calib  : calibration ON/OFF");
 	MSG("\t debug  : debug ON/OFF");
 	MSG("\t auto   : auto steering ON/OFF");
 	MSG("\t top    : top view ON/OFF");
-	MSG("\t dist   : distance sensor check");
-	MSG("\t distc  : distance sensor check by -cm-");
-	MSG("\t stop   : stop Line ON/OFF");
 	MSG("\t encoder: ");
 	MSG("\t back   : ");
 	MSG("\t stop   : check line sensor");
@@ -647,6 +653,8 @@ void* input_thread(void* arg)
 	MSG("\t sensor : sensor  display output on/off");
 	MSG("\t ms	   : mission on/off");
 	MSG("\n");
+
+	int buzzerPulseWidth_us = 100000;
 
 	while (1)
 	{
@@ -665,6 +673,7 @@ void* input_thread(void* arg)
 			else if (0 == strncmp(cmd_input, "calib", 5))
 			{
 				data->imgData.bcalibration = !data->imgData.bcalibration;
+				buzzer(1, 0, buzzerPulseWidth_us);
 				if (data->imgData.bcalibration)
 					printf("\t calibration ON\n");
 				else
@@ -686,6 +695,7 @@ void* input_thread(void* arg)
 
 					printf("\t input(0~8) : ");
 					scanf("%d", &data->imgData.debugMode);
+					buzzer(1, 0, buzzerPulseWidth_us);
 					data->imgData.bdebug = !data->imgData.bdebug;
 					printf("\t debug ON\n");
 				}
@@ -697,6 +707,7 @@ void* input_thread(void* arg)
 			}
 			else if (0 == strncmp(cmd_input, "auto", 4))
 			{
+				buzzer(1, 0, buzzerPulseWidth_us);
 				data->imgData.bauto = !data->imgData.bauto;
 				if (data->imgData.bauto)
 					printf("\t auto steering ON\n");
@@ -705,6 +716,7 @@ void* input_thread(void* arg)
 			}
 			else if (0 == strncmp(cmd_input, "top", 3))
 			{
+				buzzer(1, 0, buzzerPulseWidth_us);
 				if (!data->imgData.btopview)
 				{
 					data->imgData.btopview = !data->imgData.btopview;
@@ -767,6 +779,7 @@ void* input_thread(void* arg)
 				int on_encoder = 0;
 				printf("Disired Speed : ");
 				scanf("%d", &desire_encoder);
+				buzzer(1, 0, buzzerPulseWidth_us);
 				EncoderCounter_Write(init_encoder);
 				DesireSpeed_Write(BASIC_SPEED);
 				while (1)
@@ -792,6 +805,7 @@ void* input_thread(void* arg)
 				int on_encoder = 0;
 				printf("Disired Encoder : ");
 				scanf("%d", &desire_encoder);
+				buzzer(1, 0, buzzerPulseWidth_us);
 				EncoderCounter_Write(init_encoder);
 				DesireSpeed_Write(-BASIC_SPEED);
 				while (1)
@@ -813,36 +827,9 @@ void* input_thread(void* arg)
 				}
 				printf("Total Back encoder : %d\n", total_encoder);
 			}
-			else if (0 == strncmp(cmd_input, "stop", 4))
-			{
-				char sensor;
-				char byte = 0x80;
-				int flag;
-				int i;
-				while (1)
-				{
-					flag = 0;
-					sensor = LineSensor_Read(); // black:1, white:0
-					printf("LineSensor_Read() = ");
-					for (i = 0; i < 8; i++)
-					{
-						if ((i % 4) == 0)
-							printf(" ");
-						if ((sensor & byte))
-							printf("1"); //byte == 0x80 == 0111 0000 (2)
-						else
-						{
-							printf("0");
-							flag++;
-						}
-						sensor = sensor << 1;
-					}
-					printf(", flag = %d\n", flag);
-					usleep(100000);
-				}
-			}
 			else if (0 == strncmp(cmd_input, "mission", 7))
 			{
+				buzzer(1, 0, buzzerPulseWidth_us);
 				data->imgData.bprintMission = !data->imgData.bprintMission;
 				if (data->imgData.bprintMission)
 					printf("\t print mission ON\n");
@@ -851,6 +838,7 @@ void* input_thread(void* arg)
 			}
 			else if (0 == strncmp(cmd_input, "sensor", 6))
 			{
+				buzzer(1, 0, buzzerPulseWidth_us);
 				data->imgData.bprintSensor = !data->imgData.bprintSensor;
 				if (data->imgData.bprintSensor)
 					printf("\t print sensor ON\n");
@@ -872,6 +860,7 @@ void* input_thread(void* arg)
 
 				printf("\t input(0~7) : ");
 				scanf("%d", &num);
+				buzzer(1, 0, buzzerPulseWidth_us);
 				if (num >= 0 && num <= 8)
 				{
 					if (num == 4)
@@ -951,6 +940,7 @@ void* mission_thread(void* arg)
 
 				case FRONT_OPEN_S:
 					state = START_S;
+					buzzer(1, 0, BUZZER_PULSE);
 					break;
 
 				case START_S:
@@ -973,14 +963,17 @@ void* mission_thread(void* arg)
 		if (flyover && flyover != DONE)
 		{
 			//data->imgData.bmission = true;
+			int escapeCnt = 4;
 			data->imgData.bprintString = true;
 			sprintf(data->imgData.missionString, "flyover");
 
-			while (1)
+			while (escapeCnt)
 			{
+				if (DistanceSensor_cm(2) > 25 && DistanceSensor_cm(6) > 25)
+					escapeCnt--;
 				usleep(50000);
 			}
-
+			buzzer(1, 0, BUZZER_PULSE);
 			flyover = DONE;
 			//data->imgData.bmission = false;
 			data->imgData.bprintString = false;
@@ -996,13 +989,14 @@ void* mission_thread(void* arg)
 				DesireSpeed_Write(0);
 				while (data->imgData.bcheckPriority)
 				{
+					Winker_Write(ALL_ON);
 					if (data->missionData.frame_priority == 0)	//우선정지표지판 사라지면
 					{
 						data->imgData.bcheckPriority = false;	//imgProcess에서 우선정지표지판 체크 비활성화
 					}
 					usleep(100000);
 				}
-
+				Winker_Write(ALL_OFF);
 				DesireSpeed_Write(BASIC_SPEED);
 				priority = DONE;
 			}
@@ -1447,7 +1441,7 @@ void* mission_thread(void* arg)
 
 				frontLightOnOff(data->controlData.lightFlag, false);
 
-				buzzer(1, 500000, 500000);
+				buzzer(1, 0, 500000);
 				usleep(2000000);
 
 				DesiredDistance(-40, 300, 1500);
@@ -2085,7 +2079,7 @@ int main(int argc, char** argv)
 	tdata.imgData.bcheckPriority = false;
 	tdata.imgData.bcheckSignalLight = false;
 	tdata.imgData.bprintString = false;
-	tdata.imgData.bprintSensor = false;
+	tdata.imgData.bprintSensor = true;
 	tdata.imgData.bprintMission = true;
 	sprintf(tdata.imgData.missionString, "(null)");
 
@@ -2093,8 +2087,8 @@ int main(int argc, char** argv)
 	tdata.controlData.settingSpeedVal = 40;
 	tdata.controlData.desireSpeedVal = 0;
 	tdata.controlData.beforeSpeedVal = 0;
+	CarLight_Write(0x00);
 	tdata.controlData.lightFlag = 0x00;
-	CarLight_Write(tdata.controlData.lightFlag);
 	CameraXServoControl_Write(1500);
 	tdata.controlData.steerVal = 1500;
 	CameraYServoControl_Write(1660);

@@ -684,7 +684,7 @@ void settingStatic(int w, int h)
 	leftGuide = Vec4i(0, 200, 200, 0) * (w / 640.0);
 	rightGuide = Vec4i(440, 0, 640, 200) * (w / 640.0);
 
-	Rect_signalDetect = Rect(100, 20, w - 200, h / 3);
+	Rect_signalDetect = Rect(15, 20, w - 30, h / 4);
 
 
 	cout << "settingStatic" << endl;
@@ -703,7 +703,7 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 	cannyEdge(src_yel, src_can);
 
 	int lineType;	// 0 == 라인이 없다, 1 == 라인이 한개, 2 == 라인이 두개.
-	Vec8i l = hough_ransacLine(src_can, src, w, h, 15, 0, lineType, 0.1);
+	Vec8i l = hough_ransacLine(src_can, src, w, h, 15, true, lineType, 0.1);
 	Vec4i firstLine(l[0], l[1], l[2], l[3]);
 	Vec4i secondLine(l[4], l[5], l[6], l[7]);
 
@@ -712,13 +712,13 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 		putText(src, "no lines", printPosition + Point(46, 0), 0, 0.8, Scalar(255, 255, 255), 2);
 		return 9999;	//의미없다는 결과를 알려주는 수(조향하지말라는 뜻)
 	}
-	else if (lineType == 1 && (getPointY_at_X(firstLine, w / 2) > 0 || abs(slope(firstLine)) < 0.95))
+	else if (lineType == 1 && (getPointY_at_X(firstLine, w / 2) > 144 || abs(slope(firstLine)) < 0.95))
 	{
-		//직선이 1개이고, 
-		//기울기절댓값이 0.95미만이거나 직선의 x = 180에서의 좌표가 화면내에 존재할때
-		/************************************************************************************
-		*										곡선 구간
-		************************************************************************************/
+		/*직선이 1개이고,																	*/
+		/*기울기절댓값이 0.95미만이거나 직선의 x = 180에서의 좌표가 화면내 하단 60%에 존재  */
+		/************************************************************************************/
+		/*										곡선 구간									*/
+		/************************************************************************************/
 		int proximity(0);	//외곽 차선이 차체와 얼마나 근접하였는지 값 (0~500)
 		int bias = slopeSign(firstLine) * 90 * (640.0 / w);	//좌, 우회전에 따른 가이드라인 바이어스.
 		int linePointY_atCenter = getPointY_at_X(firstLine, (w / 2) + bias);
@@ -749,12 +749,12 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 	}
 	else //if (lineType == 2 || (lineType == 1 && abs(slope(firstLine)) > 0.95) || (lineType == 1 && (getPointY_at_X(fisrtLine, w / 2) < 0)) )
 	{
-		// 직선이 두개이거나
-		// 직선이 하나인데 기울기의 절댓값이 0.95미만이거나
-		// 직선이 하나인데 직선의 x = (화면중심)에서의 y좌표가 화면 상단을 뚫고나가있을경우.
-		/************************************************************************************
-		*										직진 구간
-		************************************************************************************/
+		/* 직선이 두개이거나																*/
+		/* 직선이 하나인데 기울기의 절댓값이 0.95미만이거나									*/
+		/* 직선이 하나인데 직선의 x = (화면중심)에서의 y좌표가 화면 상단을 뚫고나가있을경우.*/
+		/************************************************************************************/
+		/*										직진 구간									*/
+		/************************************************************************************/
 		//가이드 표시.
 		line(src, Point(leftGuide[0], leftGuide[1]), Point(leftGuide[2], leftGuide[3]), mint, 4);
 		line(src, Point(rightGuide[0], rightGuide[1]), Point(rightGuide[2], rightGuide[3]), mint, 4);
@@ -1209,7 +1209,7 @@ int isDark(Mat& frame, const double percent, int debug) {
 			rectangle(frame, Point(100, 50), Point(grayFrame.cols - 100, grayFrame.rows - 100), Scalar(0), 2);
 			putText(frame, "darkRate = " + toString(100.0 - brightRate) + '%', signalPrintPosition + Point(0, 100), 0, 1, Scalar(0, 255, 0), 2);
 			putText(frame, "[ isDark ON ]", signalPrintPosition + Point(80, 50), 0, 1, mint, 2);
-			printf("isDark() return true");
+			printf("isDark() return true\n");
 		}
 		return 1;
 	}
@@ -1328,11 +1328,10 @@ int checkRedSignal(Mat& src, Mat& dst, double percent, bool debug)
 				if (src_red.at<uchar>(y, x))
 				{
 					dst.at<Vec3b>(y, x) = Vec3b(0, 0, 255);
-					Scalar(0, 0, 0);
 				}
 				else
 				{
-					dst.at<Vec3b>(y, x) = Vec3b(0, 0, 0);
+					dst.at<Vec3b>(y, x) = Vec3b(50, 50, 50);
 				}
 			}
 		}
@@ -1378,7 +1377,7 @@ int checkYellowSignal(Mat& src, Mat& dst, double percent, bool debug)
 				}
 				else
 				{
-					dst.at<Vec3b>(y, x) = Vec3b(0, 0, 0);
+					dst.at<Vec3b>(y, x) = Vec3b(50, 50, 50);
 				}
 			}
 		}
@@ -1424,7 +1423,7 @@ int checkGreenSignal(Mat& src, Mat& dst, double percent, bool debug)
 				}
 				else
 				{
-					dst.at<Vec3b>(y, x) = Vec3b(0, 0, 0);
+					dst.at<Vec3b>(y, x) = Vec3b(50, 50, 50);
 				}
 			}
 		}

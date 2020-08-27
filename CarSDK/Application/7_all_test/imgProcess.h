@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+	void cSettingStatic(int w, int h);
+
 	void calibration(float* map1, float* map2, int w, int h);
 
 	void OpenCV_remap(unsigned char* inBuf, int w, int h, unsigned char* outBuf, float* map1, float* map2);

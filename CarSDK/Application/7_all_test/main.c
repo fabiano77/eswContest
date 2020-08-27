@@ -2065,7 +2065,7 @@ int main(int argc, char** argv)
 	SpeedPIDProportional_Write(40);
 
 	/******************** imgProcess Data ********************/
-	settingStatic(VPE_OUTPUT_W, VPE_OUTPUT_H);
+	cSettingStatic(VPE_OUTPUT_W, VPE_OUTPUT_H);
 	tdata.imgData.bcalibration = false;
 	tdata.imgData.bdebug = false;
 	tdata.imgData.debugMode = 1;

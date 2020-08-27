@@ -74,6 +74,11 @@ void outputSensor(Mat& dst, int w, int h, int c1, int c2, int c3, int c4, int c5
 
 extern "C" {
 
+	void cSettingStatic(int w, int h)
+	{
+		settingStatic(w, h);
+	}
+
 	void calibration(float* map1, float* map2, int w, int h) {
 		Size videoSize = Size(w, h);
 		Mat Mat_map1(h, w, CV_32FC1, map1);

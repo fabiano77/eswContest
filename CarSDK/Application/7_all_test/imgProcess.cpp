@@ -25,7 +25,7 @@ void lineFiltering(Mat& src, Mat& dst, int mode);
 
 void cannyEdge(Mat& src, Mat& dst);
 
-Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType, const double lowThresAngle);
+Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType, const double lowThresAngle, const double highThresAngle);
 
 Vec4i ransac_algorithm(vector<Vec4i> lines, vector<Point2i> P, int w, int h, int T, double& inlierPercent, Rect weightingRect);
 
@@ -78,6 +78,8 @@ void fileOutVideo(Mat& src);
 void fileOutimage(Mat& src, string str);
 
 void closeVideoWrite();
+
+double calculDistance_toFinish(Mat& src, Mat& dst, const int distance_top, const int distance_bottom);
 //
 
 extern "C" {
@@ -341,6 +343,11 @@ extern "C" {
 			int retval = checkFront(inBuf, w, h, outBuf);
 			printf("return val = %d\n", retval);
 		}
+		else if (mode == 9)
+		{
+			int retval = calculDistance_toFinish(srcRGB, dstRGB, 50, 20);
+			printf("return val = %d\n", retval);
+		}
 	}
 
 	int autoSteering(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int whiteMode)
@@ -382,7 +389,7 @@ extern "C" {
 		Mat img_ransac;
 		int line_type;
 
-		Vec8i ransac_points = hough_ransacLine(img_canny, srcRGB, 640, 360, 17, 1, line_type, 0.5);
+		Vec8i ransac_points = hough_ransacLine(img_canny, srcRGB, 640, 360, 17, 1, line_type, 0.5, 30);
 
 		cout << "line type = " << line_type << endl;
 		/*Line Splitting*/ //point로 바꿔야됨
@@ -694,8 +701,8 @@ VideoWriter outputVideo;
 void settingStatic(int w, int h)
 {
 	string filename("video.avi");
-	//outputVideo.open(filename, VideoWriter::fourcc('D', 'I', 'V', 'X'), 10, Size(640, 360), true);
-	outputVideo.open(filename, CV_FOURCC('D', 'I', 'V', 'X'), 10, Size(640, 360), true);
+	outputVideo.open(filename, VideoWriter::fourcc('D', 'I', 'V', 'X'), 10, Size(640, 360), true);
+	//outputVideo.open(filename, CV_FOURCC('D', 'I', 'V', 'X'), 10, Size(640, 360), true);
 
 
 	color[0] = Scalar(255, 255, 0);
@@ -741,14 +748,14 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 	int retval(0);
 	Mat src_yel;
 	Mat src_can;
-	Mat temp(h, w, CV_8UC3);
+	//Mat temp(h, w, CV_8UC3);
 	Point printPosition(230, 120);
 
 	lineFiltering(src, src_yel, whiteMode);
 	cannyEdge(src_yel, src_can);
 
 	int lineType;	// 0 == 라인이 없다, 1 == 라인이 한개, 2 == 라인이 두개.
-	Vec8i l = hough_ransacLine(src_can, src, w, h, 15, true, lineType, 0.1);
+	Vec8i l = hough_ransacLine(src_can, src, w, h, 15, true, lineType, 0.1, 30.0);
 	Vec4i firstLine(l[0], l[1], l[2], l[3]);
 	Vec4i secondLine(l[4], l[5], l[6], l[7]);
 
@@ -888,7 +895,7 @@ void cannyEdge(Mat& src, Mat& dst)
 	Canny(src, dst, threshold_1, threshold_2);	//노란색만 남은 frame의 윤곽을 1채널 Mat객체로 추출
 }
 
-Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType, const double lowThresAngle)
+Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType, const double lowThresAngle, const double highThresAngle)
 {
 	Point printPoint(210 * (w / 640.0), 180 * (h / 360.0));
 	vector<Point2i> P;
@@ -920,7 +927,7 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 	for (unsigned int i = 0; i < lines.size(); i++)
 	{
 		//수직 예외직선 삭제 및 ROI설정을 위한 직선 위치판단
-		if (abs(slope(lines[i])) > 30						//수직 직선 예외처리
+		if (abs(slope(lines[i])) > highThresAngle				//수직 직선 예외처리
 			|| abs(slope(lines[i])) < lowThresAngle)			//수평 직선 예외처리
 		{
 			line(dst, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(), 2);
@@ -965,8 +972,6 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 	for (unsigned int j = 0; j < lines.size(); j++)
 	{
 		line(dst, Point(lines[j][0], lines[j][1]), Point(lines[j][2], lines[j][3]), Scalar(255, 255, 255), 2);
-		//circle(dst, Point2i(lines[j][0], lines[j][1]), 4, color[j], -1, LINE_AA);
-		//circle(dst, Point2i(lines[j][2], lines[j][3]), 4, color[j], -1, LINE_AA);
 	}
 
 	if (lines.size() < 1)
@@ -1594,4 +1599,34 @@ void closeVideoWrite()
 {
 	outputVideo.~VideoWriter();
 	cout << "videoWrite() finish!" << endl;
+}
+
+double calculDistance_toFinish(Mat& src, Mat& dst, const int distance_top, const int distance_bottom)
+{
+	Mat src_yel;
+	Mat src_can;
+	Point printPosition(230, 120);
+	int gap(distance_top - distance_bottom);
+
+	lineFiltering(src, src_yel, 0);
+	cannyEdge(src_yel, src_can);
+
+	int lineType;	// 0 == 라인이 없다, 1 == 라인이 한개, 2 == 라인이 두개.
+	Vec8i l = hough_ransacLine(src_can, src, 640, 360, 15, true, lineType, 0.0, 0.15);
+	Vec4i firstLine(l[0], l[1], l[2], l[3]);
+	Vec4i secondLine(l[4], l[5], l[6], l[7]);
+
+	if (lineType == 0)
+		return -1;
+
+	int pixelDistance = getPointY_at_X(firstLine, 640 / 2);
+	double distance = (distance_top - gap * (pixelDistance / 360.0));
+
+	line(src, Point(firstLine[0], firstLine[1]), Point(firstLine[2], firstLine[3]), pink, 5);
+	if (lineType == 2)
+		line(src, Point(secondLine[0], secondLine[1]), Point(secondLine[2], secondLine[3]), pink, 5);
+
+	putText(src, "Distance = " + toString(distance), printPosition, 0, 0.8, Scalar(255, 255, 255), 2);
+	line(src, Point(320, 360), Point(320, pixelDistance), mint, 10);
+	return distance;
 }

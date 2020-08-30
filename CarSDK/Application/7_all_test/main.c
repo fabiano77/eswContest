@@ -711,9 +711,10 @@ void* input_thread(void* arg)
 					printf("5. checkYellowSignal() \n");
 					printf("6. checkGreenSignal() \n");
 					printf("7. priorityStop() \n");
-					printf("8. checkFront() \n\n");
+					printf("8. checkFront() \n");
+					printf("9. calculDistance_toFinish() \n\n");
 
-					printf("\t input(0~8) : ");
+					printf("\t input(0~9) : ");
 					scanf("%d", &data->imgData.debugMode);
 					buzzer(1, 0, buzzerPulseWidth_us);
 					data->imgData.bdebug = !data->imgData.bdebug;

@@ -929,12 +929,16 @@ void* input_thread(void* arg)
 void* video_record_thread(void* arg)
 {
 	struct thr_data* data = (struct thr_data*)arg;
+	struct timeval st, et;
+	int optime_ms;
 	bool videoEnd = false;
 	int fps = 10;
-	int delay_us = 1000000 / fps;
+	int delay_ms = 1000 / fps;
 
 	while (1)
 	{
+		gettimeofday(&st, NULL);
+
 		if (videoEnd)
 		{
 			usleep(10000000);
@@ -948,7 +952,20 @@ void* video_record_thread(void* arg)
 		{
 			opencv_videowrite(data->img_data_buf);
 		}
-		usleep(delay_us);
+
+		while(1)
+		{
+			gettimeofday(&et, NULL);
+			optime_ms = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
+			if (optime_ms > delay_ms) 
+			{
+				break;
+			}
+			else
+			{
+				usleep(5000);
+			}
+		} 
 	}
 }
 

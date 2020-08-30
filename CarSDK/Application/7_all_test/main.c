@@ -366,6 +366,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 			/*끝날 때 사용*/
 			if (t_data->missionData.finishData.checkFront == true)
 			{
+				t_data->imgData.topMode = 1;//앞이 더 잘보이는 mode 1사용
 				topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
 				t_data->missionData.finishData.distEndLine = checkFront(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
 				/*무의미한 값인 경우 알고리즘에 맞게 steering 진행*/
@@ -386,8 +387,8 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 						t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
 					}
 				}
-				else
-				{ /*거리가 탐지된 경우 영상처리 종료*/
+				else if(t_data->missionData.finishData.distEndLine<320)
+				{ /*거리가 40(360-40)이하로 탐지된 경우 영상처리 종료*/
 					t_data->missionData.finishData.checkFront = false;
 				}
 			}
@@ -1885,11 +1886,12 @@ void* mission_thread(void* arg)
 			if (1)											 /*노란색 가로 직선이 일정이하로 떨어지면 입력*/
 			{												 //Encoder 사용해서 일정 직진하면 종료하게 설정
 				//끝나고 삐소리
+				/*이미 이동 상태*/
 				data->missionData.finishData.distEndLine = -1000;
 				data->imgData.bmission = true;
 				data->imgData.bprintString = true;
 				/*box filtering*/
-				data->missionData.finishData.checkFront = true;
+				data->missionData.finishData.checkFront = true;/*전방 노란라인 탐지 활성화*/
 				/*encoding을 이용한 전진*/
 				//data->missionData.finishData.encodingStart = false;
 				/*check front signal waiting*/
@@ -1897,21 +1899,16 @@ void* mission_thread(void* arg)
 				{
 					usleep(500000);
 					/*checkFront 가 false가 되어 종료 됐거나 distEndline값이 무의미하지 않을경우 종료*/
-					if (data->missionData.finishData.checkFront == false || data->missionData.finishData.distEndLine != -1000)
+					if (data->missionData.finishData.checkFront == false || data->missionData.finishData.distEndLine > 320)
 					{
 						sprintf(data->imgData.missionString, "End Check Front");
-						printf("need to go %d", (360 - data->missionData.finishData.distEndLine) * 6);
 						break; /*앞에 탐지시 종료*/
 					}
 					sprintf(data->imgData.missionString, "Check Front");
 				}
 				/*더이상 확인하지 않도록 종료(double check)*/
 				data->missionData.finishData.checkFront = false;
-
-				/*현재 주행상태 유지 및 이동*/
-				sprintf(data->imgData.missionString, "Finish is comming");
-				int dist_go = data->missionData.finishData.distEndLine;
-				DesiredDistance(40, (360 - dist_go) * 6, 1500);
+				DesireSpeed_Write(0);
 				/*이동 후 종료*/
 				Winker_Write(ALL_ON);
 				usleep(1000000);
@@ -1924,6 +1921,7 @@ void* mission_thread(void* arg)
 
 				data->imgData.bmission = false;
 				data->imgData.bprintString = false;
+				finish = DONE;
 			}
 		}
 

@@ -719,9 +719,11 @@ void* input_thread(void* arg)
 					printf("6. checkGreenSignal() \n");
 					printf("7. priorityStop() \n");
 					printf("8. checkFront() \n");
-					printf("9. calculDistance_toFinish() \n\n");
+					printf("9. calculDistance_toFinish() \n");
+					printf("10. isDark() \n\n");
 
-					printf("\t input(0~9) : ");
+
+					printf("\t input(0~10) : ");
 					scanf("%d", &data->imgData.debugMode);
 					buzzer(1, 0, buzzerPulseWidth_us);
 					data->imgData.bdebug = !data->imgData.bdebug;
@@ -1333,7 +1335,7 @@ void* mission_thread(void* arg)
 						}
 						else if (data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
 						{
-							DesiredDistance(30, 260, 1500);
+							DesiredDistance(30, 230, 1500);
 							// 주차 각 수정 부분
 							while (data->missionData.parkingData.horizontalFlag)
 							{
@@ -1364,7 +1366,8 @@ void* mission_thread(void* arg)
 									DesireSpeed_Write(30);
 									usleep(50000);
 									while (1) {
-										if (abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <=2 ) {
+										if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <=3 )||DistanceSensor_cm(1) <=4) {
+											DesireSpeed_Write(0);
 											step_h = SECOND_BACKWARD;
 											break;
 										}
@@ -1429,7 +1432,7 @@ void* mission_thread(void* arg)
 									if (DistanceSensor_cm(4) <= 6)
 									{
 										DesireSpeed_Write(0);
-										SteeringServoControl_Write(1750);
+										SteeringServoControl_Write(1850);
 										usleep(500000);
 										step_h = ESCAPE;
 									}
@@ -1439,10 +1442,10 @@ void* mission_thread(void* arg)
 									sprintf(data->imgData.missionString, "ESCAPE");
 									DesireSpeed_Write(20);
 									usleep(100000);
-									if (DistanceSensor_cm(1) <= 6 || DistanceSensor_cm(1) >= 20)
+									if (DistanceSensor_cm(1) <= 8 || DistanceSensor_cm(1) >= 20)
 									{
 										DesireSpeed_Write(0);
-										SteeringServoControl_Write(1500);
+										SteeringServoControl_Write(1400);
 										usleep(500000);
 										step_h = ESCAPE_2;
 									}
@@ -1452,7 +1455,7 @@ void* mission_thread(void* arg)
 									sprintf(data->imgData.missionString, "ESCAPE_2");
 									DesireSpeed_Write(-20);
 									usleep(100000);
-									if (DistanceSensor_cm(4) <= 6 || DistanceSensor_cm(3) <= 6)
+									if (DistanceSensor_cm(4) <= 8 || DistanceSensor_cm(3) <= 5)
 									{
 										DesireSpeed_Write(0);
 										SteeringServoControl_Write(1900);

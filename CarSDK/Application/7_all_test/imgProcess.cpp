@@ -348,6 +348,11 @@ extern "C" {
 			int retval = calculDistance_toFinish(srcRGB, dstRGB, 50, 20);
 			printf("return val = %d\n", retval);
 		}
+		else if (mode == 10)
+		{
+			isDark(srcRGB, 55, 1);
+			dstRGB = srcRGB;
+		}
 	}
 
 	int autoSteering(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int whiteMode)
@@ -1236,9 +1241,9 @@ int isDark(Mat& frame, const double percent, int debug) {
 
 	int pixelCnt(0);
 	int pixelValue(0);
-	for (int i = 100; i < grayFrame.cols - 100; i += 1)		// i += 10 에서 바꿈 08.27 AM 01:58
+	for (int i = 0; i < grayFrame.cols; i += 1)		// i += 10 에서 바꿈 08.27 AM 01:58
 	{
-		for (int j = 50; j < grayFrame.rows - 100; j += 1)	// j += 10 에서 바꿈 08.27 AM 01:58
+		for (int j = 0; j < grayFrame.rows /2; j += 1)	// j += 10 에서 바꿈 08.27 AM 01:58
 		{
 			pixelValue += grayFrame.at<uchar>(j, i);
 			pixelCnt++;
@@ -1256,7 +1261,7 @@ int isDark(Mat& frame, const double percent, int debug) {
 	{
 		if (debug)
 		{
-			rectangle(frame, Point(100, 50), Point(grayFrame.cols - 100, grayFrame.rows - 100), Scalar(0), 2);
+			rectangle(frame, Point(0, 0), Point(grayFrame.cols, grayFrame.rows /2), Scalar(0), 2);
 			putText(frame, "darkRate = " + toString(100.0 - brightRate) + '%', signalPrintPosition + Point(0, 100), 0, 1, Scalar(0, 255, 0), 2);
 			putText(frame, "[ isDark ON ]", signalPrintPosition + Point(80, 50), 0, 1, mint, 2);
 			printf("isDark() return true\n");
@@ -1267,8 +1272,9 @@ int isDark(Mat& frame, const double percent, int debug) {
 	{
 		if (debug)
 		{
-			putText(frame, "darkRate = " + toString(100.0 - brightRate) + '%', signalPrintPosition, 0, 1, Scalar(0, 255, 0), 2);
-			printf("isDark() return false");
+			rectangle(frame, Point(0, 0), Point(grayFrame.cols, grayFrame.rows /2), Scalar(0), 2);
+			putText(frame, "darkRate = " + toString(100.0 - brightRate) + '%', signalPrintPosition+Point(0,100), 0, 1, Scalar(0, 255, 0), 2);
+			printf("isDark() return false\n");
 		}
 		return 0;
 	}

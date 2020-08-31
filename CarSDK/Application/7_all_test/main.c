@@ -1356,34 +1356,54 @@ void* mission_thread(void* arg)
 										}
 										usleep(50000);
 									}
-									DesiredDistance(23, 400, 1100);
+									SteeringServoControl_Write(1250);
+									usleep(300000);
+									DesireSpeed_Write(30);
+									usleep(50000);
+									while (1) {
+										if (abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <=2 ) {
+											step_h = SECOND_BACKWARD;
+											break;
+										}
+										usleep(30000);
+									}
 									usleep(200000);
-									step_h = SECOND_BACKWARD;
 									break;
 
 								case SECOND_BACKWARD:
 									sprintf(data->imgData.missionString, "SECOND_BACKWARD");
-									sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
+									//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
 									int difference = DistanceSensor_cm(2) - DistanceSensor_cm(3);
 									if (difference < -2)
 									{
-										sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
+										//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
 										DesiredDistance(-23, 400, 1300);
 										usleep(200000);
+										if (abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2) {
+											DesireSpeed_Write(0);
+											usleep(200000);
+											break;
+										}
 										DesiredDistance(23, 400, 1700);
 										usleep(200000);
 									}
 									else if (difference > 2)
 									{
-										sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
+										//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
 										DesiredDistance(-23, 400, 1700);
 										usleep(200000);
+										if (abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2) {
+											DesireSpeed_Write(0);
+											usleep(200000);
+											break;
+										}
+										DesiredDist
 										DesiredDistance(23, 400, 1300);
 										usleep(200000);
 									}
 									if (abs(difference) <= 2)
 									{
-										sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
+										//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
 										DesireSpeed_Write(0);
 										usleep(200000);
 										SteeringServoControl_Write(1500);

@@ -178,6 +178,7 @@ struct MissionData
 	bool overtakingFlag; // 추월차로 플래그 ->MS 이후 overtaking struct 추가할 것
 	bool changeMissionState;
 	int frame_priority;
+	int finish_distance;
 
 	struct Parking parkingData;			// 주차에 필요한 플래그를 담는 구조체
 	struct Overtaking overtakingData;	// 추월에 필요한 플래그 담는 구조체
@@ -215,6 +216,7 @@ struct ImgProcessData
 	bool bdark;				// 터널 탐지 ON/OFF
 	bool bcheckPriority;	// 우선정지 표지판 탐지 ON/OFF
 	bool bcheckSignalLight; // 신호등 탐지 ON/OFF
+	bool bcheckFinishLine;	// 피니시라인 탐지 ON/OFF
 	char missionString[20]; // 오버레이에 표시할 문자열
 	int topMode;			// 탑뷰 모드 (0, 1, 2)
 	int debugMode;			// 디버그 모드(0~ 7)
@@ -391,6 +393,13 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				{ /*거리가 40(360-40)이하로 탐지된 경우 영상처리 종료*/
 					t_data->missionData.finishData.checkFront = false;
 				}
+			}
+
+			if (t_data->imgData.bcheckFinishLine)
+			{
+				topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, 1);
+
+				t_data->missionData.finish_distance = calculDistance_FinishLine(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
 			}
 
 			if (t_data->imgData.bcheckSignalLight)
@@ -1042,8 +1051,8 @@ void* mission_thread(void* arg)
 
 			start = DONE;
 			flyover = READY;
+			data->missionData.ms[0] = start;
 			data->missionData.ms[1] = flyover;
-
 			data->imgData.bmission = false;
 			data->imgData.bprintString = false;
 			data->imgData.bauto = true;
@@ -1881,12 +1890,13 @@ void* mission_thread(void* arg)
 
 		if (signalLight && signalLight != DONE)
 		{
-			if (0 /*StopLine(4)*/)
+			if (1)
 			{
 				DesireSpeed_Write(0);
 				data->imgData.bmission = true;
 				data->imgData.bprintString = true;
 				data->imgData.bcheckSignalLight = true;
+				data->missionData.signalLightData.state = DETECT_RED;
 				sprintf(data->imgData.missionString, "signalLight");
 				printf("signalLight\n");
 
@@ -1912,7 +1922,10 @@ void* mission_thread(void* arg)
 					DesiredDistance(40, 1150, 1000);
 				}
 
+				signalLight = DONE;
 				finish = READY;
+				data->missionData.ms[7] = signalLight;
+				data->missionData.ms[8] = finish;
 				data->imgData.bmission = false;
 				data->imgData.bprintString = false;
 			}
@@ -1920,43 +1933,62 @@ void* mission_thread(void* arg)
 
 		if (finish && finish != DONE)
 		{
-			data->missionData.finishData.checkFront = false; /*비활성화*/
-			if (1)											 /*노란색 가로 직선이 일정이하로 떨어지면 입력*/
-			{												 //Encoder 사용해서 일정 직진하면 종료하게 설정
-				//끝나고 삐소리
-				/*이미 이동 상태*/
-				data->missionData.finishData.distEndLine = -1000;
-				data->imgData.bmission = true;
-				data->imgData.bprintString = true;
-				/*box filtering*/
-				data->missionData.finishData.checkFront = true;/*전방 노란라인 탐지 활성화*/
-				/*encoding을 이용한 전진*/
-				//data->missionData.finishData.encodingStart = false;
-				/*check front signal waiting*/
-				while (data->missionData.finishData.checkFront == true || data->missionData.finishData.distEndLine == -1000)
-				{
-					usleep(500000);
-					/*checkFront 가 false가 되어 종료 됐거나 distEndline값이 무의미하지 않을경우 종료*/
-					if (data->missionData.finishData.checkFront == false || data->missionData.finishData.distEndLine > 320)
-					{
-						sprintf(data->imgData.missionString, "End Check Front");
-						break; /*앞에 탐지시 종료*/
-					}
-					sprintf(data->imgData.missionString, "Check Front");
-				}
-				/*더이상 확인하지 않도록 종료(double check)*/
-				data->missionData.finishData.checkFront = false;
-				DesireSpeed_Write(0);
-				/*이동 후 종료*/
-				Winker_Write(ALL_ON);
-				usleep(1000000);
-				Winker_Write(ALL_OFF);
-				/*밑에 흰색이 하나라도 탐지되는지 확인 후 있다면 정지*/
-				///추가필요/////
+			// if(0)
+			// {
+			// data->missionData.finishData.checkFront = false; /*비활성화*/
+			// if (1)											 /*노란색 가로 직선이 일정이하로 떨어지면 입력*/
+			// {												 //Encoder 사용해서 일정 직진하면 종료하게 설정
+			// 	//끝나고 삐소리
+			// 	/*이미 이동 상태*/
+			// 	data->missionData.finishData.distEndLine = -1000;
+			// 	data->imgData.bmission = true;
+			// 	data->imgData.bprintString = true;
+			// 	/*box filtering*/
+			// 	data->missionData.finishData.checkFront = true;/*전방 노란라인 탐지 활성화*/
+			// 	/*encoding을 이용한 전진*/
+			// 	//data->missionData.finishData.encodingStart = false;
+			// 	/*check front signal waiting*/
+			// 	while (data->missionData.finishData.checkFront == true || data->missionData.finishData.distEndLine == -1000)
+			// 	{
+			// 		usleep(500000);
+			// 		/*checkFront 가 false가 되어 종료 됐거나 distEndline값이 무의미하지 않을경우 종료*/
+			// 		if (data->missionData.finishData.checkFront == false || data->missionData.finishData.distEndLine > 320)
+			// 		{
+			// 			sprintf(data->imgData.missionString, "End Check Front");
+			// 			break; /*앞에 탐지시 종료*/
+			// 		}
+			// 		sprintf(data->imgData.missionString, "Check Front");
+			// 	}
+			// 	/*더이상 확인하지 않도록 종료(double check)*/
+			// 	data->missionData.finishData.checkFront = false;
+			// 	DesireSpeed_Write(0);
+			// 	/*이동 후 종료*/
+			// 	Winker_Write(ALL_ON);
+			// 	usleep(1000000);
+			// 	Winker_Write(ALL_OFF);
+			// 	/*밑에 흰색이 하나라도 탐지되는지 확인 후 있다면 정지*/
+			// 	///추가필요/////
+			// }
 
+			if(1)
+			{
+				DesireSpeed_Write(0);
+				data->imgData.bmission = true;
+				data->imgData.bcheckFinishLine = true;
+				DesireSpeed_Write(30);
+				while(data->missionData.finish_distance == -1)
+				{
+					usleep(100000);
+				}
+				int rest_distance = data->missionData.finish_distance;
+				rest_distance -= 4;
+				DesiredDistance(50, 500*(rest_distance/26.0),1500);
 				sprintf(data->imgData.missionString, "Finish Driving");
 				printf("finish\n");
 
+				buzzer(3,500000,500000);
+
+				data->imgData.bauto = false;
 				data->imgData.bmission = false;
 				data->imgData.bprintString = false;
 				finish = DONE;
@@ -2200,6 +2232,7 @@ int main(int argc, char** argv)
 	tdata.imgData.bdark = false;
 	tdata.imgData.bcheckPriority = false;
 	tdata.imgData.bcheckSignalLight = false;
+	tdata.imgData.bcheckFinishLine = false;
 	tdata.imgData.bprintString = false;
 	tdata.imgData.bprintSensor = true;
 	tdata.imgData.bprintMission = true;
@@ -2222,6 +2255,7 @@ int main(int argc, char** argv)
 	tdata.missionData.broundabout = false;
 	tdata.missionData.changeMissionState = false;
 	tdata.missionData.frame_priority = 0;
+	tdata.missionData.finish_distance = -1;
 	tdata.missionData.parkingData.bparking = false;
 	tdata.missionData.parkingData.horizontalFlag = false;
 	tdata.missionData.parkingData.verticalFlag = false;

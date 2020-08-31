@@ -285,6 +285,14 @@ extern "C" {
 		return priorityStop(srcRGB, dstRGB, 10, 0);
 	}
 
+	int calculDistance_FinishLine(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
+	{
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		Mat dstRGB(h, w, CV_8UC3, outBuf);
+
+		return calculDistance_toFinish(srcRGB, dstRGB, 46, 23);
+	}
+
 	void debugFiltering(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int mode)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
@@ -345,7 +353,8 @@ extern "C" {
 		}
 		else if (mode == 9)
 		{
-			int retval = calculDistance_toFinish(srcRGB, dstRGB, 50, 20);
+			topview_transform(inBuf, w, h, inBuf,1);
+			int retval = calculDistance_toFinish(srcRGB, dstRGB, 46, 22);
 			printf("return val = %d\n", retval);
 		}
 		else if (mode == 10)

@@ -1095,6 +1095,10 @@ void* mission_thread(void* arg)
 		{
 			if (DistanceSensor_cm(2) <= 28) //처음 벽이 감지되었을 경우
 			{
+				struct timeval st_p, et_p;
+				gettimeofday(&st_p, NULL);
+
+
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "Parking");
 				int parking_width = 0;
@@ -1347,7 +1351,7 @@ void* mission_thread(void* arg)
 									DesiredDistance(-30, 370, 1500);
 									usleep(200000);
 									SteeringServoControl_Write(1900);
-									usleep(500000);
+									usleep(300000);
 									DesireSpeed_Write(-30);
 									usleep(50000);
 									while (1)
@@ -1380,39 +1384,39 @@ void* mission_thread(void* arg)
 									if (difference < -2)
 									{
 										//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-										DesiredDistance(-23, 400, 1300);
+										DesiredDistance(-30, 400, 1300);
 										usleep(200000);
 										if (abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2) {
 											DesireSpeed_Write(0);
 											usleep(200000);
 											break;
 										}
-										DesiredDistance(23, 400, 1700);
+										DesiredDistance(30, 400, 1700);
 										usleep(200000);
 									}
 									else if (difference > 2)
 									{
 										//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-										DesiredDistance(-23, 400, 1700);
+										DesiredDistance(-30, 400, 1700);
 										usleep(200000);
 										if (abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2) {
 											DesireSpeed_Write(0);
 											usleep(200000);
 											break;
 										}
-										DesiredDistance(23, 400, 1300);
+										DesiredDistance(30, 400, 1300);
 										usleep(200000);
 									}
 									if (abs(difference) <= 2)
 									{
 										//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
 										DesireSpeed_Write(0);
-										usleep(200000);
+										usleep(100000);
 										SteeringServoControl_Write(1500);
-										usleep(1500000);
+										usleep(1000000);
 										step_h = SECOND_FORWARD;
 										Winker_Write(ALL_ON);
-										buzzer(2, 500000, 500000);
+										buzzer(1, 0, 300000);
 										Winker_Write(ALL_OFF);
 									}
 									break;
@@ -1424,52 +1428,52 @@ void* mission_thread(void* arg)
 
 								case SECOND_FORWARD:
 									sprintf(data->imgData.missionString, "SECOND_FORWARD");
-									DesireSpeed_Write(-20);
-									usleep(200000);
+									DesireSpeed_Write(-30);
+									usleep(100000);
 									if (DistanceSensor_cm(4) <= 6)
 									{
 										DesireSpeed_Write(0);
 										SteeringServoControl_Write(1750);
-										usleep(500000);
+										usleep(300000);
 										step_h = ESCAPE;
 									}
 									break;
 
 								case ESCAPE:
 									sprintf(data->imgData.missionString, "ESCAPE");
-									DesireSpeed_Write(20);
+									DesireSpeed_Write(30);
 									usleep(100000);
 									if (DistanceSensor_cm(1) <= 6 || DistanceSensor_cm(1) >= 20)
 									{
 										DesireSpeed_Write(0);
 										SteeringServoControl_Write(1500);
-										usleep(500000);
+										usleep(300000);
 										step_h = ESCAPE_2;
 									}
 									break;
 
 								case ESCAPE_2:
 									sprintf(data->imgData.missionString, "ESCAPE_2");
-									DesireSpeed_Write(-20);
+									DesireSpeed_Write(-30);
 									usleep(100000);
 									if (DistanceSensor_cm(4) <= 6 || DistanceSensor_cm(3) <= 6)
 									{
 										DesireSpeed_Write(0);
 										SteeringServoControl_Write(1900);
-										usleep(500000);
+										usleep(300000);
 										step_h = ESCAPE_3;
 									}
 									break;
 
 								case ESCAPE_3:
 									sprintf(data->imgData.missionString, "ESCAPE_3");
-									DesiredDistance(20, 700, 1900);
+									DesiredDistance(30, 700, 1900);
 									step_h = FINISH;
 									break;
 
 								case FINISH:
 									sprintf(data->imgData.missionString, "FINISH");
-									DesiredDistance(20, 500, 1300);
+									DesiredDistance(30, 500, 1300);
 									data->missionData.parkingData.horizontalFlag = 0;
 									break;
 
@@ -1480,6 +1484,9 @@ void* mission_thread(void* arg)
 							}
 						}
 						state = DONE_P;
+
+						gettimeofday(&et_p, NULL);
+						printf("parking time : %d\n", ((et_p.tv_sec - st_p.tv_sec) * 1000) + ((int)et_p.tv_usec / 1000 - (int)st_p.tv_usec / 1000));
 
 						if (parking == READY)
 							parking = REMAIN;

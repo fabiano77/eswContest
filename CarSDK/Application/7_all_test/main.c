@@ -1576,10 +1576,10 @@ void* mission_thread(void* arg)
 
 					case ROUND_GO_1:
 						//DesiredDistance(speed, 600, 1500); //앞 센서 받아오면서 일정거리 가는 함수 추가.
-						onlyDistance(speed, 500);
+						onlyDistance(speed, 400);
 						sprintf(data->imgData.missionString, "ROUND_GO_1-2");
 						printf("ROUND_GO_1_2\n");
-						usleep(1000000);
+						usleep(100000);
 
 						data->imgData.bmission = false;
 						onlyDistance(speed, 1000);
@@ -1591,8 +1591,9 @@ void* mission_thread(void* arg)
 						break;
 
 					case ROUND_STOP:
-						if ((DistanceSensor_cm(4) <= 15) || (DistanceSensor_cm(5) <= 15))
+						if ((DistanceSensor_cm(4) <= 8) || (DistanceSensor_cm(5) <= 6))
 						{
+							speed = 60;
 							DesireSpeed_Write(speed);
 							sprintf(data->imgData.missionString, "ROUND_GO_2");
 							printf("ROUND_GO_2\n");
@@ -1602,13 +1603,13 @@ void* mission_thread(void* arg)
 						break;
 
 					case ROUND_GO_2:
-						if ((DistanceSensor_cm(4) <= 15) || (DistanceSensor_cm(5) <= 15))
+						if ((DistanceSensor_cm(4) <= 8) || (DistanceSensor_cm(5) <= 6))
 						{
 							printf("speed up \n");
 							if (speed < 80)
 								speed += 10;
 						}
-						else if ((DistanceSensor_cm(1) <= 15) || (DistanceSensor_cm(6) <= 15))
+						else if ((DistanceSensor_cm(1) <= 8) || (DistanceSensor_cm(6) <= 6))
 						{
 							DesireSpeed_Write(0);
 							printf("stop and speed down \n");
@@ -1621,6 +1622,7 @@ void* mission_thread(void* arg)
 						//if (abs(data->controlData.steerVal - 1500) < 60)
 						if (data->controlData.steerVal - 1500 < 10) // steerVal 1500 이상으로 유지되다가 직진 구간이 나올 때
 						{
+
 							sprintf(data->imgData.missionString, "DONE_R");
 							printf("DONE_R");
 

@@ -458,7 +458,10 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 					printf("img thread : isPriorityStop() return 1; frame =%d\n", t_data->missionData.frame_priority);
 				}
 				else
-					t_data->missionData.frame_priority--;
+				{
+					if (t_data->missionData.frame_priority > 0)
+						t_data->missionData.frame_priority--;
+				}
 			}
 
 			if (t_data->imgData.bdark)

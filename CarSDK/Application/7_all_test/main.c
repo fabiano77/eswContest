@@ -43,7 +43,7 @@
 #define FPS_TEXT_Y 260			  //240
 #define FPS_TEXT_COLOR 0xffffffff //while
 
-#define BASIC_SPEED 40		// 프로그램 기본 바퀴속도, autoSteer와 주로 사용.
+#define BASIC_SPEED 55		// 프로그램 기본 바퀴속도, autoSteer와 주로 사용.
 #define BUZZER_PULSE 100000	// 기본 부저 길이
 
 /******************** enumerator ********************/
@@ -1348,7 +1348,7 @@ void* mission_thread(void* arg)
 						}
 						else if (data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
 						{
-							DesiredDistance(45, 230, 1500);
+							DesiredDistance(60, 230, 1500);
 							// 주차 각 수정 부분
 							while (data->missionData.parkingData.horizontalFlag)
 							{
@@ -1357,13 +1357,13 @@ void* mission_thread(void* arg)
 								{
 								case FIRST_BACKWARD:
 									sprintf(data->imgData.missionString, "FIRST_BACKWARD");
-									DesiredDistance(-40, 820, 1050);
+									DesiredDistance(-60, 820, 1050);
 									//usleep(200000);
-									DesiredDistance(-40, 370, 1500);
+									DesiredDistance(-60, 370, 1500);
 									//usleep(200000);
 									SteeringServoControl_Write(1900);
 									usleep(100000);
-									DesireSpeed_Write(-30);
+									DesireSpeed_Write(-35);
 									usleep(50000);
 									while (1)
 									{
@@ -1376,7 +1376,7 @@ void* mission_thread(void* arg)
 									}
 									SteeringServoControl_Write(1250);
 									usleep(150000);
-									DesireSpeed_Write(30);
+									DesireSpeed_Write(35);
 									usleep(50000);
 									while (1) {
 										if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <=3 )||DistanceSensor_cm(1) <=4) {
@@ -1396,27 +1396,27 @@ void* mission_thread(void* arg)
 									if (difference < -2)
 									{
 										//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-										DesiredDistance(-30, 400, 1300);
+										DesiredDistance(-40, 400, 1300);
 										//usleep(200000);
 										if (abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2) {
 											DesireSpeed_Write(0);
 											usleep(20000);
 											break;
 										}
-										DesiredDistance(30, 400, 1700);
+										DesiredDistance(40, 400, 1700);
 										//usleep(200000);
 									}
 									else if (difference > 2)
 									{
 										//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-										DesiredDistance(-30, 400, 1700);
+										DesiredDistance(-40, 400, 1700);
 										//usleep(200000);
 										if (abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2) {
 											DesireSpeed_Write(0);
 											usleep(20000);
 											break;
 										}
-										DesiredDistance(30, 400, 1300);
+										DesiredDistance(40, 400, 1300);
 										//usleep(200000);
 									}
 									if (abs(difference) <= 2)
@@ -1440,7 +1440,7 @@ void* mission_thread(void* arg)
 
 								case SECOND_FORWARD:
 									sprintf(data->imgData.missionString, "SECOND_FORWARD");
-									DesireSpeed_Write(-30);
+									DesireSpeed_Write(-40);
 									usleep(30000);
 									if (DistanceSensor_cm(4) <= 5)
 									{
@@ -1455,7 +1455,7 @@ void* mission_thread(void* arg)
 
 								case ESCAPE:
 									sprintf(data->imgData.missionString, "ESCAPE");
-									DesireSpeed_Write(35);
+									DesireSpeed_Write(40);
 									usleep(100000);
 									if (DistanceSensor_cm(1) <= 8 || DistanceSensor_cm(1) >= 20)
 									{
@@ -1468,7 +1468,7 @@ void* mission_thread(void* arg)
 
 								case ESCAPE_2:
 									sprintf(data->imgData.missionString, "ESCAPE_2");
-									DesireSpeed_Write(-35);
+									DesireSpeed_Write(-40);
 									usleep(100000);
 									if (DistanceSensor_cm(4) <= 9 || DistanceSensor_cm(3) <= 5)
 									{
@@ -1480,13 +1480,13 @@ void* mission_thread(void* arg)
 
 								case ESCAPE_3:
 									sprintf(data->imgData.missionString, "ESCAPE_3");
-									DesiredDistance(40, 600, 1950);
+									DesiredDistance(60, 600, 1950);
 									step_h = FINISH;
 									break;
 
 								case FINISH:
 									sprintf(data->imgData.missionString, "FINISH");
-									DesiredDistance(40, 700, 1300);
+									DesiredDistance(60, 700, 1300);
 									data->missionData.parkingData.horizontalFlag = 0;
 									break;
 

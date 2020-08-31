@@ -339,7 +339,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		/* 라인 필터링이나 canny 결과 확인 */
 		if (t_data->imgData.bdebug)
 		{
-			if(t_data->imgData.debugMode == 9)
+			if (t_data->imgData.debugMode == 9)
 				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
 			debugFiltering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.debugMode);
 		}
@@ -367,6 +367,75 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				//srcbuf를 활용하여 capture한 영상을 변환
 			}
 
+			/* 신호등 확인 */
+			if (t_data->imgData.bcheckSignalLight)
+			{
+				switch (t_data->missionData.signalLightData.state)
+				{
+				case DETECT_RED:
+					if (checkRed(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf))
+					{
+						buzzer(1, 0, BUZZER_PULSE);
+						sprintf(data->imgData.missionString, "check YELLOW");
+						t_data->missionData.signalLightData.state = DETECT_YELLOW;
+					}
+					break;
+
+				case DETECT_YELLOW:
+					if (checkYellow(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf))
+					{
+						buzzer(1, 0, BUZZER_PULSE);
+						sprintf(data->imgData.missionString, "check GREEN");
+						t_data->missionData.signalLightData.state = DETECT_GREEN;
+						t_data->missionData.signalLightData.Accumulation_greenVal = 0;
+						t_data->missionData.signalLightData.ignore_frame = 3;
+					}
+					break;
+
+				case DETECT_GREEN:
+					if (t_data->missionData.signalLightData.ignore_frame)
+					{
+						if (checkGreen(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf))
+							t_data->missionData.signalLightData.ignore_frame--;
+					}
+					else
+					{
+						t_data->missionData.signalLightData.Accumulation_greenVal += checkGreen(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+						if (t_data->missionData.signalLightData.Accumulation_greenVal >= 3)
+						{
+							buzzer(2, BUZZER_PULSE, BUZZER_PULSE);
+							t_data->missionData.signalLightData.state = DETECTION_FINISH;
+							t_data->missionData.signalLightData.finalDirection = 1;
+						}
+						else if (t_data->missionData.signalLightData.Accumulation_greenVal <= -3)
+						{
+							buzzer(1, 0, BUZZER_PULSE * 2);
+							t_data->missionData.signalLightData.state = DETECTION_FINISH;
+							t_data->missionData.signalLightData.finalDirection = -1;
+						}
+					}
+					break;
+
+				case DETECTION_FINISH:
+					t_data->imgData.bcheckSignalLight = false;
+					break;
+				}
+			}
+
+			/* 피니시 라인과의 거리 측정 */
+			if (t_data->imgData.bcheckFinishLine)
+			{
+				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
+
+				topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, 1);
+
+				t_data->missionData.finish_distance = calculDistance_FinishLine(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+				if (t_data->missionData.finish_distance != -1)
+				{
+					t_data->imgData.bcheckFinishLine = false;
+				}
+			}
+
 			/*끝날 때 사용*/
 			if (t_data->missionData.finishData.checkFront == true)
 			{
@@ -391,70 +460,9 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 						t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
 					}
 				}
-				else if(t_data->missionData.finishData.distEndLine<320)
+				else if (t_data->missionData.finishData.distEndLine < 320)
 				{ /*거리가 40(360-40)이하로 탐지된 경우 영상처리 종료*/
 					t_data->missionData.finishData.checkFront = false;
-				}
-			}
-
-			if (t_data->imgData.bcheckFinishLine)
-			{
-				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
-
-				topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, 1);
-
-				t_data->missionData.finish_distance = calculDistance_FinishLine(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
-			}
-
-			if (t_data->imgData.bcheckSignalLight)
-			{
-				switch (t_data->missionData.signalLightData.state)
-				{
-				case DETECT_RED:
-					if (checkRed(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf))
-					{
-						buzzer(1, 0, BUZZER_PULSE);
-						t_data->missionData.signalLightData.state = DETECT_YELLOW;
-					}
-					break;
-
-				case DETECT_YELLOW:
-					if (checkYellow(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf))
-					{
-						buzzer(1, 0, BUZZER_PULSE);
-						t_data->missionData.signalLightData.state = DETECT_GREEN;
-						t_data->missionData.signalLightData.Accumulation_greenVal = 0;
-						t_data->missionData.signalLightData.ignore_frame = 3;
-					}
-					break;
-
-				case DETECT_GREEN:
-					if (t_data->missionData.signalLightData.ignore_frame)
-					{
-						if (checkGreen(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf))
-							t_data->missionData.signalLightData.ignore_frame--;
-					}
-					else
-					{
-						t_data->missionData.signalLightData.Accumulation_greenVal += checkGreen(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
-						if (t_data->missionData.signalLightData.Accumulation_greenVal >= 3)
-						{
-							buzzer(2, BUZZER_PULSE, BUZZER_PULSE);
-							t_data->missionData.signalLightData.state = DETECTION_FINISH;
-							t_data->missionData.signalLightData.finalDirection = 1;
-						}
-						else if (t_data->missionData.signalLightData.Accumulation_greenVal <= -3)
-						{
-							buzzer(1, 0, BUZZER_PULSE*2);
-							t_data->missionData.signalLightData.state = DETECTION_FINISH;
-							t_data->missionData.signalLightData.finalDirection = -1;
-						}
-					}
-					break;
-
-				case DETECTION_FINISH:
-					t_data->imgData.bcheckSignalLight = false;
-					break;
 				}
 			}
 		}
@@ -551,7 +559,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 			t_data->imgData.dump_request = false;
 		}
 
-		/*		현재 영상 .avi파일로 녹화		*/	
+		/*		현재 영상 .avi파일로 녹화		*/
 		if (t_data->imgData.bvideoRecord)
 		{
 			memcpy(t_data->img_data_buf, srcbuf, VPE_OUTPUT_IMG_SIZE);
@@ -958,6 +966,9 @@ void* video_record_thread(void* arg)
 	int fps = 10;
 	int delay_ms = 1000 / fps;
 
+	// st체크를 이곳에서 하고, et체크를 두 번째 while에 하여 매 프레임마다 delay_ms만큼 누산시키어
+	// 프레임이 찍히는 시점과 영상에서의 해당 시점을 근사하도록 한다. (0.1초 절대값 캡처 대신 영상의 전체길이의 비율로)
+	
 	while (1)
 	{
 		gettimeofday(&st, NULL);
@@ -976,11 +987,11 @@ void* video_record_thread(void* arg)
 			opencv_videowrite(data->img_data_buf);
 		}
 
-		while(1)
+		while (1)
 		{
 			gettimeofday(&et, NULL);
 			optime_ms = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
-			if (optime_ms > delay_ms) 
+			if (optime_ms > delay_ms)
 			{
 				break;
 			}
@@ -988,7 +999,7 @@ void* video_record_thread(void* arg)
 			{
 				usleep(5000);
 			}
-		} 
+		}
 	}
 }
 
@@ -1024,7 +1035,7 @@ void* mission_thread(void* arg)
 			DesireSpeed_Write(0);
 			data->imgData.bmission = true;
 			data->imgData.bprintString = true;
-			sprintf(data->imgData.missionString, "start");
+			sprintf(data->imgData.missionString, "start - Wait");
 
 			enum StartState state = WAIT_S;
 
@@ -1034,12 +1045,18 @@ void* mission_thread(void* arg)
 				{
 				case WAIT_S:
 					if (DistanceSensor_cm(1) < 8)
+					{
+						sprintf(data->imgData.missionString, "start - front_close");
 						state = FRONT_CLOSE_S;
+					}
 					break;
 
 				case FRONT_CLOSE_S:
 					if (DistanceSensor_cm(1) > 8)
+					{
+						sprintf(data->imgData.missionString, "start - front_open");
 						state = FRONT_OPEN_S;
+					}
 					break;
 
 				case FRONT_OPEN_S:
@@ -1091,9 +1108,9 @@ void* mission_thread(void* arg)
 			if (data->missionData.frame_priority >= 2) //우선정지표지판 2프레임 검출.
 			{
 				DesireSpeed_Write(0);
+				Winker_Write(ALL_ON);
 				while (data->imgData.bcheckPriority)
 				{
-					Winker_Write(ALL_ON);
 					if (data->missionData.frame_priority == 0)	//우선정지표지판 사라지면
 					{
 						data->imgData.bcheckPriority = false;	//imgProcess에서 우선정지표지판 체크 비활성화
@@ -1383,7 +1400,7 @@ void* mission_thread(void* arg)
 									DesireSpeed_Write(35);
 									usleep(50000);
 									while (1) {
-										if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <=3 )||DistanceSensor_cm(1) <=4) {
+										if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 3) || DistanceSensor_cm(1) <= 4) {
 											DesireSpeed_Write(0);
 											step_h = SECOND_BACKWARD;
 											break;
@@ -1503,7 +1520,8 @@ void* mission_thread(void* arg)
 						state = DONE_P;
 
 						gettimeofday(&et_p, NULL);
-						printf("parking time : %d\n", ((et_p.tv_sec - st_p.tv_sec) * 1000) + ((int)et_p.tv_usec / 1000 - (int)st_p.tv_usec / 1000));
+						int parkingTime = ((et_p.tv_sec - st_p.tv_sec) * 1000) + ((int)et_p.tv_usec / 1000 - (int)st_p.tv_usec / 1000)) / 1000;
+						printf("parking time : %d\n", parkingTime);
 
 						if (parking == READY)
 							parking = REMAIN;
@@ -1534,48 +1552,51 @@ void* mission_thread(void* arg)
 
 		if (tunnel && tunnel != DONE)
 		{
-			if (data->missionData.btunnel && DistanceSensor_cm(2) < 30 && DistanceSensor_cm(6) < 30)
+			if (data->missionData.btunnel)
 			{
-				data->imgData.bprintString = true;
-				data->imgData.bmission = true;
-				data->imgData.bdark = false;
-
-				frontLightOnOff(data->controlData.lightFlag, true);
-				sprintf(data->imgData.missionString, "mission thread : tunnel detect");
-
-				while (true)
+				if (DistanceSensor_cm(2) < 30 && DistanceSensor_cm(6) < 30)
 				{
-					data->missionData.loopTime = timeCheck(&time);
-					int c2 = DistanceSensor_cm(2);
-					int c6 = DistanceSensor_cm(6);
-					if (Tunnel_isEnd(c2, c6, 50, 50))
+					data->imgData.bprintString = true;
+					data->imgData.bmission = true;
+					data->imgData.bdark = false;
+
+					frontLightOnOff(data->controlData.lightFlag, true);
+					sprintf(data->imgData.missionString, "mission thread : tunnel detect");
+
+					while (true)
 					{
-						sprintf(data->imgData.missionString, "tunnel out");
-						break;
+						data->missionData.loopTime = timeCheck(&time);
+						int c2 = DistanceSensor_cm(2);
+						int c6 = DistanceSensor_cm(6);
+						if (Tunnel_isEnd(c2, c6, 50, 50))
+						{
+							sprintf(data->imgData.missionString, "tunnel out");
+							break;
+						}
+
+						data->controlData.steerVal = Tunnel_SteerVal2(c2, c6);
+						sprintf(data->imgData.missionString, "steer = %d, %d : %d", data->controlData.steerVal, c2, c6);
+
+						SteeringServoControl_Write(data->controlData.steerVal);
+
+						usleep(10000);
 					}
+					DesireSpeed_Write(0);
 
-					data->controlData.steerVal = Tunnel_SteerVal2(c2, c6);
-					sprintf(data->imgData.missionString, "steer = %d, %d : %d", data->controlData.steerVal, c2, c6);
+					frontLightOnOff(data->controlData.lightFlag, false);
 
-					SteeringServoControl_Write(data->controlData.steerVal);
+					buzzer(1, 0, 500000);
+					usleep(100000);
 
-					usleep(10000);
+					DesiredDistance(-40, 400, 1500);
+					usleep(100000);
+
+					printf("Tunnel OUT\n");
+					tunnel = DONE;
+					data->imgData.bmission = false;
+					data->imgData.bprintString = false;
+					data->missionData.btunnel = false;
 				}
-				DesireSpeed_Write(0);
-
-				frontLightOnOff(data->controlData.lightFlag, false);
-
-				buzzer(1, 0, 500000);
-				usleep(100000);
-
-				DesiredDistance(-40, 400, 1500);
-				usleep(100000);
-
-				printf("Tunnel OUT\n");
-				tunnel = DONE;
-				data->imgData.bmission = false;
-				data->imgData.bprintString = false;
-				data->missionData.btunnel = false;
 			}
 		}
 
@@ -1767,6 +1788,7 @@ void* mission_thread(void* arg)
 							else
 							{ /*전방 미탐지*/
 								state = SIDE_ON;
+								sprintf(data->imgData.missionString, "Detect Side");
 								/*전진하는 동안 전방 센서가 20 이상 멀어지면 SIDE_ON으로 진행*/
 								DesireSpeed_Write(BASIC_SPEED);
 							}
@@ -1795,6 +1817,7 @@ void* mission_thread(void* arg)
 							{
 								/*전진하는 동안 전방 센서가 20 이상 멀어지면 SIDE_ON으로 진행*/
 								state = SIDE_ON;
+								sprintf(data->imgData.missionString, "Detect Side");
 								DesireSpeed_Write(BASIC_SPEED);
 							}
 						}
@@ -1805,7 +1828,6 @@ void* mission_thread(void* arg)
 						break;
 
 					case SIDE_ON:
-						sprintf(data->imgData.missionString, "Detect Side");
 						/*Auto Steering 동작*/
 						data->imgData.bmission = false;
 						/* 현재 장애물이 어디있느냐에 따라 side 센서(2,3 or 4,5)로 감지하는 코드*/
@@ -1824,6 +1846,7 @@ void* mission_thread(void* arg)
 								{
 									obstacle = false;
 									state = SIDE_OFF;
+									sprintf(data->imgData.missionString, "Side OFF");
 								}
 							}
 						}
@@ -1842,6 +1865,7 @@ void* mission_thread(void* arg)
 								{
 									obstacle = false;
 									state = SIDE_OFF;
+									sprintf(data->imgData.missionString, "Side OFF");
 								}
 							}
 						}
@@ -1853,7 +1877,6 @@ void* mission_thread(void* arg)
 						break;
 
 					case SIDE_OFF:
-						sprintf(data->imgData.missionString, "Side OFF");
 						/*원래 차선으로 복귀하는 코드*/
 						data->imgData.bmission = true; //Auto Steering off
 						//right
@@ -1884,7 +1907,8 @@ void* mission_thread(void* arg)
 					default:
 						break;
 					}
-					usleep(1500000);
+					//usleep(1500000);
+					usleep(50000);		// 1,500 ms -> 50ms 로 변경, 09/01 AM 00:50 -KDH
 				}
 				signalLight = READY;
 				data->imgData.bmission = false;
@@ -1901,23 +1925,41 @@ void* mission_thread(void* arg)
 				data->imgData.bprintString = true;
 				data->imgData.bcheckSignalLight = true;
 				data->missionData.signalLightData.state = DETECT_RED;
-				sprintf(data->imgData.missionString, "signalLight");
+				sprintf(data->imgData.missionString, "check RED");
 				printf("signalLight\n");
 
 				while (data->imgData.bcheckSignalLight)
 					usleep(200000); //영상처리에서 일련의 과정이 끝날 때 까지 기다린다.
 
+				DesireSpeed_Write(BASIC_SPEED);
+
+				bool once_back = false;
+				while (1)	// 신호등 구조물과의 거리를 23,24cm 로 맞추기 위해 전진
+				{
+					int front_distance = DistanceSensor_cm(1);
+					if (front_distance < 23)
+					{
+						once_back = true;
+						DesireSpeed_Write(-20);
+					}
+					else if (front_distance <= 24)
+						break;
+					else if (once_back && front_distance > 24)
+						DesireSpeed_Write(20);
+					usleep(50000);
+				}
+
 				if (data->missionData.signalLightData.finalDirection == 1)
 				{
 					sprintf(data->imgData.missionString, "Right signal");
 					printf("\tRight signal\n");
-					DesiredDistance(40, 1150, 1000);
+					DesiredDistance(40, 1170, 1000);
 				}
 				else if (data->missionData.signalLightData.finalDirection == -1)
 				{
 					sprintf(data->imgData.missionString, "Left signal");
 					printf("\tLeft signal\n");
-					DesiredDistance(40, 1150, 2000);
+					DesiredDistance(40, 1170, 2000);
 				}
 				else
 				{
@@ -1974,23 +2016,30 @@ void* mission_thread(void* arg)
 			// 	///추가필요/////
 			// }
 
-			if(1)
+			if (1)	//무조건 진입
 			{
 				DesireSpeed_Write(0);
 				data->imgData.bmission = true;
+				sprintf(data->imgData.missionString, "Finish line check");
+				data->imgData.bprintString = true;
 				data->imgData.bcheckFinishLine = true;
+
 				DesireSpeed_Write(30);
-				while(data->missionData.finish_distance == -1)
+				while (data->missionData.finish_distance == -1)
 				{
-					usleep(100000);
+					usleep(5000);	//5ms
 				}
+				DesireSpeed_Write(0);
+				data->imgData.bcheckFinishLine = false;
+
 				int rest_distance = data->missionData.finish_distance;
 				rest_distance -= 4;
-				DesiredDistance(50, 500*(rest_distance/26.0),1500);
 				sprintf(data->imgData.missionString, "Finish Driving");
-				printf("finish\n");
+				DesiredDistance(40, 500 * (rest_distance / 26.0), 1500);		// encoder = 500 -> 26cm로 측정
 
-				buzzer(3,500000,500000);
+				printf("finish end\n");
+				sprintf(data->imgData.missionString, "All mission complete !");
+				buzzer(3, 500000, 500000);
 
 				data->imgData.bauto = false;
 				data->imgData.bmission = false;
@@ -2026,7 +2075,7 @@ void* mission_thread(void* arg)
 			data->missionData.ms[8] = finish;
 		}
 
-		usleep(100000); //100ms
+		usleep(50000); //50ms
 	}
 }
 

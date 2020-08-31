@@ -290,7 +290,7 @@ extern "C" {
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
-		return calculDistance_toFinish(srcRGB, dstRGB, 46, 23);
+		return calculDistance_toFinish(srcRGB, dstRGB, 52, 25);
 	}
 
 	void debugFiltering(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int mode)

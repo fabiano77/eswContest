@@ -339,6 +339,8 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		/* 라인 필터링이나 canny 결과 확인 */
 		if (t_data->imgData.bdebug)
 		{
+			if(t_data->imgData.debugMode == 9)
+				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
 			debugFiltering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.debugMode);
 		}
 
@@ -397,6 +399,8 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 
 			if (t_data->imgData.bcheckFinishLine)
 			{
+				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
+
 				topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, 1);
 
 				t_data->missionData.finish_distance = calculDistance_FinishLine(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);

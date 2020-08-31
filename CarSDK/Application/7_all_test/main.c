@@ -1550,6 +1550,7 @@ void* mission_thread(void* arg)
 				sprintf(data->imgData.missionString, "round about");
 				printf("roundabout IN\n");
 				int speed = BASIC_SPEED;
+				int flag_END = 0;
 
 				DesireSpeed_Write(0);
 				data->imgData.bspeedControl = false;
@@ -1620,14 +1621,21 @@ void* mission_thread(void* arg)
 						}
 						DesireSpeed_Write(speed);
 						//if (abs(data->controlData.steerVal - 1500) < 60)
-						if (data->controlData.steerVal - 1500 < 10) // steerVal 1500 이상으로 유지되다가 직진 구간이 나올 때
+						if (data->controlData.steerVal - 1500 < 30) // steerVal 1500 이상으로 유지되다가 직진 구간이 나올 때
 						{
+							if (flag_END < 3) flag_END++;
 
-							sprintf(data->imgData.missionString, "DONE_R");
-							printf("DONE_R");
+							if (flag_END == 3) {
+								sprintf(data->imgData.missionString, "DONE_R");
+								printf("DONE_R");
 
-							state = DONE_R;
+								state = DONE_R;
+							}
 						}
+						else {
+							if (flag_END > 0) flag_END--;
+						}
+
 						break;
 
 					case DONE_R:

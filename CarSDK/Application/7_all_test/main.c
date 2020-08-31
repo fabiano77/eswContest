@@ -1400,7 +1400,6 @@ void* mission_thread(void* arg)
 											usleep(200000);
 											break;
 										}
-										DesiredDist
 										DesiredDistance(23, 400, 1300);
 										usleep(200000);
 									}

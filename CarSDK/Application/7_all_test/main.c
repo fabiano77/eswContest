@@ -1093,7 +1093,7 @@ void* mission_thread(void* arg)
 
 		if (parking && parking != DONE)
 		{
-			if (DistanceSensor_cm(2) <= 20) //처음 벽이 감지되었을 경우
+			if (DistanceSensor_cm(2) <= 28) //처음 벽이 감지되었을 경우
 			{
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "Parking");
@@ -1112,8 +1112,8 @@ void* mission_thread(void* arg)
 				{
 					data->missionData.loopTime = timeCheck(&time);
 
-					data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 23) ? true : false;
-					data->missionData.parkingData.rearRight = (DistanceSensor_cm(3) <= 23) ? true : false;
+					data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 28) ? true : false;
+					data->missionData.parkingData.rearRight = (DistanceSensor_cm(3) <= 28) ? true : false;
 
 					switch (state)
 					{
@@ -1333,7 +1333,7 @@ void* mission_thread(void* arg)
 						}
 						else if (data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
 						{
-							DesiredDistance(30, 300, 1500);
+							DesiredDistance(30, 260, 1500);
 							// 주차 각 수정 부분
 							while (data->missionData.parkingData.horizontalFlag)
 							{
@@ -1342,13 +1342,13 @@ void* mission_thread(void* arg)
 								{
 								case FIRST_BACKWARD:
 									sprintf(data->imgData.missionString, "FIRST_BACKWARD");
-									DesiredDistance(-23, 820, 1100);
+									DesiredDistance(-30, 820, 1050);
 									usleep(200000);
-									DesiredDistance(-23, 300, 1500);
+									DesiredDistance(-30, 370, 1500);
 									usleep(200000);
 									SteeringServoControl_Write(1900);
 									usleep(500000);
-									DesireSpeed_Write(-23);
+									DesireSpeed_Write(-30);
 									usleep(50000);
 									while (1)
 									{
@@ -1539,7 +1539,7 @@ void* mission_thread(void* arg)
 		if (roundabout && roundabout != DONE)
 		{
 			//printf("roundabout 분기 \n");
-			if (STOP_WhiteLine(4))
+			if (StopLine(5))
 			{
 				data->imgData.bwhiteLine = true;
 				data->imgData.bprintString = true;
@@ -1579,7 +1579,7 @@ void* mission_thread(void* arg)
 						usleep(100000);
 
 						data->imgData.bmission = false;
-						onlyDistance(speed, 1000);
+						onlyDistance(speed, 1250);
 
 						sprintf(data->imgData.missionString, "ROUND_STOP");
 						printf("ROUND_STOP\n");
@@ -1588,9 +1588,9 @@ void* mission_thread(void* arg)
 						break;
 
 					case ROUND_STOP:
-						if ((DistanceSensor_cm(4) <= 8) || (DistanceSensor_cm(5) <= 6))
+						if ((DistanceSensor_cm(4) <= 25) /*|| (DistanceSensor_cm(5) <= 6)*/)
 						{
-							speed = 60;
+							speed = 70;
 							DesireSpeed_Write(speed);
 							sprintf(data->imgData.missionString, "ROUND_GO_2");
 							printf("ROUND_GO_2\n");
@@ -1600,18 +1600,18 @@ void* mission_thread(void* arg)
 						break;
 
 					case ROUND_GO_2:
-						if ((DistanceSensor_cm(4) <= 8) || (DistanceSensor_cm(5) <= 6))
+						if ((DistanceSensor_cm(4) <= 8)/* || (DistanceSensor_cm(5) <= 6)*/)
 						{
 							printf("speed up \n");
 							if (speed < 80)
-								speed += 10;
+								speed += 5;
 						}
-						else if ((DistanceSensor_cm(1) <= 8) || (DistanceSensor_cm(6) <= 6))
+						else if ((DistanceSensor_cm(1) <= 8)/* || (DistanceSensor_cm(6) <= 6)*/)
 						{
 							DesireSpeed_Write(0);
 							printf("stop and speed down \n");
 							if (speed > 20)
-								speed -= 10;
+								speed -= 5;
 							usleep(1900000);
 							break;
 						}

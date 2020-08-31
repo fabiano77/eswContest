@@ -689,8 +689,8 @@ int HLP_maxLineGap = 125;	//260
 
 int flag_tunnel;
 int first_tunnel = 0;
-int MAXTHR_tunnel = 10;
-int MINTHR_tunnel = 5;
+int MAXTHR_tunnel = 6;
+int MINTHR_tunnel = 3;
 
 VideoWriter outputVideo;
 

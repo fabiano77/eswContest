@@ -466,11 +466,14 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 
 			if (t_data->imgData.bdark)
 			{
-				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 65))
+				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 55))
 				{
-					printf("img thread : Tunnel detect\n");
+					printf("img thread : dark\n");
 					t_data->missionData.btunnel = true;
-					t_data->imgData.bdark = false;
+				}
+				else
+				{
+					t_data->missionData.btunnel = false;
 				}
 			}
 
@@ -1488,25 +1491,15 @@ void* mission_thread(void* arg)
 
 		if (tunnel && tunnel != DONE)
 		{
-			if (data->missionData.btunnel)
+			if (data->missionData.btunnel && DistanceSensor_cm(2) < 30 && DistanceSensor_cm(6) < 30)
 			{
 				data->imgData.bprintString = true;
+				data->imgData.bmission = true;
+				data->imgData.bdark = false;
 
 				frontLightOnOff(data->controlData.lightFlag, true);
 				sprintf(data->imgData.missionString, "mission thread : tunnel detect");
 
-				while (true)
-				{
-					data->missionData.loopTime = timeCheck(&time);
-					//if (Tunnel_isStart(DistanceSensor_cm(2), DistanceSensor_cm(6), DistanceSensor_cm(3), DistanceSensor_cm(5)))
-					if ((DistanceSensor_cm(2) < 30) && (DistanceSensor_cm(6) < 30))
-					{
-						sprintf(data->imgData.missionString, "tunnel in");
-						break;
-					}
-					usleep(100000);
-				}
-				data->imgData.bmission = true;
 				while (true)
 				{
 					data->missionData.loopTime = timeCheck(&time);
@@ -1519,7 +1512,7 @@ void* mission_thread(void* arg)
 					}
 
 					data->controlData.steerVal = Tunnel_SteerVal2(c2, c6);
-					sprintf(data->imgData.missionString, "steer= %d, %d : %d", data->controlData.steerVal, c2, c6);
+					sprintf(data->imgData.missionString, "steer = %d, %d : %d", data->controlData.steerVal, c2, c6);
 
 					SteeringServoControl_Write(data->controlData.steerVal);
 
@@ -1530,10 +1523,10 @@ void* mission_thread(void* arg)
 				frontLightOnOff(data->controlData.lightFlag, false);
 
 				buzzer(1, 0, 500000);
-				usleep(2000000);
+				usleep(100000);
 
-				DesiredDistance(-40, 300, 1500);
-				usleep(2000000);
+				DesiredDistance(-40, 400, 1500);
+				usleep(100000);
 
 				printf("Tunnel OUT\n");
 				tunnel = DONE;

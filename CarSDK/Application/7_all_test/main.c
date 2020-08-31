@@ -1609,7 +1609,7 @@ void* mission_thread(void* arg)
 					case ROUND_STOP:
 						if ((DistanceSensor_cm(4) <= 25) /*|| (DistanceSensor_cm(5) <= 6)*/)
 						{
-							speed = 70;
+							speed = 80;
 							DesireSpeed_Write(speed);
 							sprintf(data->imgData.missionString, "ROUND_GO_2");
 							printf("ROUND_GO_2\n");
@@ -1622,15 +1622,15 @@ void* mission_thread(void* arg)
 						if ((DistanceSensor_cm(4) <= 8)/* || (DistanceSensor_cm(5) <= 6)*/)
 						{
 							printf("speed up \n");
-							if (speed < 80)
+							if (speed < 100)
 								speed += 5;
 						}
 						else if ((DistanceSensor_cm(1) <= 8)/* || (DistanceSensor_cm(6) <= 6)*/)
 						{
 							DesireSpeed_Write(0);
 							printf("stop and speed down \n");
-							if (speed > 20)
-								speed -= 5;
+							if (speed > 30)
+								speed -= 10;
 							usleep(1900000);
 							break;
 						}

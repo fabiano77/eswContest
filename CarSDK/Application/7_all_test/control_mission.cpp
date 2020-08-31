@@ -180,7 +180,7 @@ extern "C"
 				printf("DesireDistance(): encoder ERROR!\n");
 		}
 		SteeringServoControl_Write(SettingSteering);
-		usleep(500000);
+		usleep(100000);
 		DesireSpeed_Write(SettingSpeed);
 		if (SettingSpeed < 0)
 			CarLight_Write(0x02);

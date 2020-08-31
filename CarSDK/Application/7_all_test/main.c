@@ -1183,7 +1183,8 @@ void* mission_thread(void* arg)
 								{
 								case FIRST_BACKWARD_V:
 									sprintf(data->imgData.missionString, "FIRST_BACKWARD_V");
-									SteeringServoControl_Write(1050);
+									SteeringServoControl_Write(1200);
+									// 회전 각 수정 부분
 									usleep(500000);
 									DesireSpeed_Write(-23);
 									usleep(200000);
@@ -1326,7 +1327,8 @@ void* mission_thread(void* arg)
 						}
 						else if (data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
 						{
-							DesiredDistance(30, 150, 1500);
+							DesiredDistance(30, 300, 1500);
+							// 주차 각 수정 부분
 							while (data->missionData.parkingData.horizontalFlag)
 							{
 								data->missionData.loopTime = timeCheck(&time);

@@ -1881,7 +1881,7 @@ void* mission_thread(void* arg)
 
 		if (signalLight && signalLight != DONE)
 		{
-			if (0 /*StopLine(4)*/)
+			if (1)
 			{
 				DesireSpeed_Write(0);
 				data->imgData.bmission = true;

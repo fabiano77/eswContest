@@ -345,7 +345,8 @@ extern "C" {
 		}
 		else if (mode == 9)
 		{
-			int retval = calculDistance_toFinish(srcRGB, dstRGB, 50, 20);
+			topview_transform(inBuf, w, h, inBuf,1);
+			int retval = calculDistance_toFinish(srcRGB, dstRGB, 46, 22);
 			printf("return val = %d\n", retval);
 		}
 		else if (mode == 10)

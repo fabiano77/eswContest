@@ -410,18 +410,19 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 							buzzer(2, BUZZER_PULSE, BUZZER_PULSE);
 							t_data->missionData.signalLightData.state = DETECTION_FINISH;
 							t_data->missionData.signalLightData.finalDirection = 1;
+							t_data->imgData.bcheckSignalLight = false;
 						}
 						else if (t_data->missionData.signalLightData.Accumulation_greenVal <= -3)
 						{
 							buzzer(1, 0, BUZZER_PULSE * 2);
 							t_data->missionData.signalLightData.state = DETECTION_FINISH;
 							t_data->missionData.signalLightData.finalDirection = -1;
+							t_data->imgData.bcheckSignalLight = false;
 						}
 					}
 					break;
 
 				case DETECTION_FINISH:
-					t_data->imgData.bcheckSignalLight = false;
 					break;
 				}
 			}
@@ -1950,6 +1951,7 @@ void* mission_thread(void* arg)
 				while (data->imgData.bcheckSignalLight)
 					usleep(200000); //영상처리에서 일련의 과정이 끝날 때 까지 기다린다.
 
+				sprintf(data->imgData.missionString, "Distance control");
 				DesireSpeed_Write(BASIC_SPEED);
 
 				bool once_back = false;
@@ -1962,7 +1964,10 @@ void* mission_thread(void* arg)
 						DesireSpeed_Write(-20);
 					}
 					else if (front_distance <= 24)
+					{
+						DesireSpeed_Write(0);
 						break;
+					}
 					else if (once_back && front_distance > 24)
 						DesireSpeed_Write(20);
 					usleep(50000);
@@ -1970,14 +1975,14 @@ void* mission_thread(void* arg)
 
 				if (data->missionData.signalLightData.finalDirection == 1)
 				{
-					sprintf(data->imgData.missionString, "Right signal");
-					printf("\tRight signal\n");
+					sprintf(data->imgData.missionString, "Turn right");
+					printf("\tTurn right\n");
 					DesiredDistance(40, 1170, 1000);
 				}
 				else if (data->missionData.signalLightData.finalDirection == -1)
 				{
-					sprintf(data->imgData.missionString, "Left signal");
-					printf("\tLeft signal\n");
+					sprintf(data->imgData.missionString, "Turn left");
+					printf("\tTurn left\n");
 					DesiredDistance(40, 1170, 2000);
 				}
 				else

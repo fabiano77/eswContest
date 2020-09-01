@@ -327,6 +327,8 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 	uint32_t optime;
 	struct timeval st, et;
 	unsigned char* cam_pbuf[4];
+	bool delay_flag = false;
+
 	if (get_framebuf(cambuf, cam_pbuf) == 0)
 	{
 		memcpy(srcbuf, cam_pbuf[0], VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
@@ -376,6 +378,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 					if (checkRed(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf))
 					{
 						buzzer(1, 0, BUZZER_PULSE);
+						delay_flag = true;
 						sprintf(data->imgData.missionString, "check YELLOW");
 						t_data->missionData.signalLightData.state = DETECT_YELLOW;
 					}
@@ -385,6 +388,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 					if (checkYellow(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf))
 					{
 						buzzer(1, 0, BUZZER_PULSE);
+						delay_flag = true;
 						sprintf(data->imgData.missionString, "check GREEN");
 						t_data->missionData.signalLightData.state = DETECT_GREEN;
 						t_data->missionData.signalLightData.Accumulation_greenVal = 0;
@@ -563,6 +567,13 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		if (t_data->imgData.bvideoRecord)
 		{
 			memcpy(t_data->img_data_buf, srcbuf, VPE_OUTPUT_IMG_SIZE);
+		}
+
+		/* 신호등 검출화면을 유지하기 위한 delay */
+		if (delay_flag)
+		{
+			usleep(500000);
+			delay_flag = false;
 		}
 
 		memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
@@ -968,7 +979,7 @@ void* video_record_thread(void* arg)
 
 	// st체크를 이곳에서 하고, et체크를 두 번째 while에 하여 매 프레임마다 delay_ms만큼 누산시키어
 	// 프레임이 찍히는 시점과 영상에서의 해당 시점을 근사하도록 한다. (0.1초 절대값 캡처 대신 영상의 전체길이의 비율로)
-	
+
 	while (1)
 	{
 		gettimeofday(&st, NULL);

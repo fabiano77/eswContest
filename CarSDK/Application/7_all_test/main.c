@@ -978,6 +978,12 @@ void* video_record_thread(void* arg)
 	int delay_ms = 1000 / fps;
 	int current_frame = 0;
 
+	while (!data->imgData.bvideoRecord)
+	{
+		usleep(500000);
+	}
+	printf("\tvideo_record_thred() : ON\n");
+
 	// st체크를 이곳에서 하고, et체크를 두 번째 while에 하여 매 프레임마다 delay_ms만큼 누산시키어
 	// 프레임이 찍히는 시점과 영상에서의 해당 시점을 근사하도록 한다. (0.1초 절대값 캡처 대신 영상의 전체길이의 비율로)
 	gettimeofday(&st, NULL);

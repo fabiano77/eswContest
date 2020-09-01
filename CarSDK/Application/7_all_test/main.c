@@ -976,13 +976,15 @@ void* video_record_thread(void* arg)
 	bool videoEnd = false;
 	int fps = 10;
 	int delay_ms = 1000 / fps;
+	int current_frame = 0;
 
 	// st체크를 이곳에서 하고, et체크를 두 번째 while에 하여 매 프레임마다 delay_ms만큼 누산시키어
 	// 프레임이 찍히는 시점과 영상에서의 해당 시점을 근사하도록 한다. (0.1초 절대값 캡처 대신 영상의 전체길이의 비율로)
+	gettimeofday(&st, NULL);
 
 	while (1)
 	{
-		gettimeofday(&st, NULL);
+		current_frame++;
 
 		if (videoEnd)
 		{
@@ -998,17 +1000,17 @@ void* video_record_thread(void* arg)
 			opencv_videowrite(data->img_data_buf);
 		}
 
-		while (1)
+		while (1)	//영상 녹화 싱크를 맞춰주기 위한 delay
 		{
 			gettimeofday(&et, NULL);
-			optime_ms = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
-			if (optime_ms > delay_ms)
+			recordTime_ms = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
+			if (recordTime_ms > (delay_ms * current_frame))
 			{
 				break;
 			}
 			else
 			{
-				usleep(5000);
+				usleep(5000);	// 5ms delay
 			}
 		}
 	}

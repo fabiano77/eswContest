@@ -258,7 +258,7 @@ extern "C" {
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
-		return checkRedSignal(srcRGB, dstRGB, 20, 1);
+		return checkRedSignal(srcRGB, dstRGB, 1.7, 1);
 	}
 
 	int checkYellow(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
@@ -266,7 +266,7 @@ extern "C" {
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
-		return checkYellowSignal(srcRGB, dstRGB, 20, 1);
+		return checkYellowSignal(srcRGB, dstRGB, 1.7, 1);
 	}
 
 	int checkGreen(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
@@ -274,7 +274,7 @@ extern "C" {
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
-		return checkGreenSignal(srcRGB, dstRGB, 20, 1);
+		return checkGreenSignal(srcRGB, dstRGB, 1.7, 1);
 	}
 
 	bool isPriorityStop(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
@@ -332,15 +332,15 @@ extern "C" {
 		}
 		else if (mode == 4)
 		{
-			checkRedSignal(srcRGB, dstRGB, 20, 1);
+			checkRedSignal(srcRGB, dstRGB, 1.7, 1);
 		}
 		else if (mode == 5)
 		{
-			checkYellowSignal(srcRGB, dstRGB, 20, 1);
+			checkYellowSignal(srcRGB, dstRGB, 1.7, 1);
 		}
 		else if (mode == 6)
 		{
-			checkGreenSignal(srcRGB, dstRGB, 20, 1);
+			checkGreenSignal(srcRGB, dstRGB, 1.7, 1);
 		}
 		else if (mode == 7)
 		{
@@ -690,6 +690,7 @@ Scalar green(0, 255, 0);
 Scalar blue(255, 0, 0);
 Scalar purple(255, 102, 165);
 Scalar orange(0, 169, 237);
+Mat roiMat;
 Vec4i leftGuide;
 Vec4i rightGuide;
 Vec4i centerGuide[5];
@@ -706,11 +707,14 @@ int first_tunnel = 0;
 int MAXTHR_tunnel = 6;
 int MINTHR_tunnel = 3;
 
+int S = 50;
+int V = 75;
+
 VideoWriter outputVideo;
 
-// static void on_trackbar(int, void*)
-// {
-// }
+static void on_trackbar(int, void*)
+{
+}
 
 void settingStatic(int w, int h)
 {
@@ -750,8 +754,10 @@ void settingStatic(int w, int h)
 	leftGuide = Vec4i(0, 200, 200, 0) * (w / 640.0);
 	rightGuide = Vec4i(440, 0, 640, 200) * (w / 640.0);
 
-	Rect_signalDetect = Rect(15, 20, w - 30, h / 4);
+	Rect_signalDetect = Rect(15, 0, w - 30, h / 4);
 
+	roiMat = Mat(Size(640, 360), CV_8UC3, Scalar(0));
+	rectangle(roiMat, Rect_signalDetect, Scalar(255, 255, 255), -1);
 
 	cout << "settingStatic" << endl;
 }
@@ -1217,6 +1223,8 @@ string toString(double A)
 {
 	stringstream ss;
 	string text;
+	ss << fixed;
+	ss.precision(2);
 	ss << A;
 	ss >> text;
 	return text;
@@ -1252,7 +1260,7 @@ int isDark(Mat& frame, const double percent, int debug) {
 	int pixelValue(0);
 	for (int i = 0; i < grayFrame.cols; i += 1)		// i += 10 에서 바꿈 08.27 AM 01:58
 	{
-		for (int j = 0; j < grayFrame.rows /2; j += 1)	// j += 10 에서 바꿈 08.27 AM 01:58
+		for (int j = 0; j < grayFrame.rows / 2; j += 1)	// j += 10 에서 바꿈 08.27 AM 01:58
 		{
 			pixelValue += grayFrame.at<uchar>(j, i);
 			pixelCnt++;
@@ -1270,7 +1278,7 @@ int isDark(Mat& frame, const double percent, int debug) {
 	{
 		if (debug)
 		{
-			rectangle(frame, Point(0, 0), Point(grayFrame.cols, grayFrame.rows /2), Scalar(0), 2);
+			rectangle(frame, Point(0, 0), Point(grayFrame.cols, grayFrame.rows / 2), Scalar(0), 2);
 			putText(frame, "darkRate = " + toString(100.0 - brightRate) + '%', signalPrintPosition + Point(0, 100), 0, 1, Scalar(0, 255, 0), 2);
 			putText(frame, "[ isDark ON ]", signalPrintPosition + Point(80, 50), 0, 1, mint, 2);
 			printf("isDark() return true\n");
@@ -1281,8 +1289,8 @@ int isDark(Mat& frame, const double percent, int debug) {
 	{
 		if (debug)
 		{
-			rectangle(frame, Point(0, 0), Point(grayFrame.cols, grayFrame.rows /2), Scalar(0), 2);
-			putText(frame, "darkRate = " + toString(100.0 - brightRate) + '%', signalPrintPosition+Point(0,100), 0, 1, Scalar(0, 255, 0), 2);
+			rectangle(frame, Point(0, 0), Point(grayFrame.cols, grayFrame.rows / 2), Scalar(0), 2);
+			putText(frame, "darkRate = " + toString(100.0 - brightRate) + '%', signalPrintPosition + Point(0, 100), 0, 1, Scalar(0, 255, 0), 2);
 			printf("isDark() return false\n");
 		}
 		return 0;
@@ -1366,9 +1374,9 @@ bool priorityStop(Mat& src, Mat& dst, double percent, bool debug)
 
 int checkRedSignal(Mat& src, Mat& dst, double percent, bool debug)
 {
-	Scalar lower_red1(0, 100, 150);
+	Scalar lower_red1(0, 50, 120);		//50 120
 	Scalar upper_red1(12, 255, 255);
-	Scalar lower_red2(168, 100, 150);
+	Scalar lower_red2(168, 50, 120);
 	Scalar upper_red2(180, 255, 255);
 
 	Mat src_hsv;
@@ -1392,7 +1400,7 @@ int checkRedSignal(Mat& src, Mat& dst, double percent, bool debug)
 			{
 				if (src_red.at<uchar>(y, x))
 				{
-					dst.at<Vec3b>(y, x) = Vec3b(0, 0, 255);
+					//dst.at<Vec3b>(y, x) = Vec3b(0, 0, 255);
 				}
 				else
 				{
@@ -1402,12 +1410,11 @@ int checkRedSignal(Mat& src, Mat& dst, double percent, bool debug)
 		}
 	}
 
-	putText(dst, "red Pixel : " + toString(redRatio) + '%', signalPrintPosition, 0, 1, Scalar(255, 0, 0), 2);
+	putText(dst, "red Pixel : " + toString(redRatio) + '%', signalPrintPosition, 0, 1, Scalar(0, 255, 0), 2);
 
 	if (redRatio > percent)
 	{
-		putText(dst, "RED signal!", Point(src.cols / 5, src.rows * 0.65), 0, 2, Scalar(255), 3);
-		putText(dst, "RED signal!", Point(src.cols / 5, src.rows * 0.65), 0, 2, Scalar(255, 255, 0), 3);
+		putText(dst, "RED signal!", signalPrintPosition + Point(0, -40), 0, 1.2, pink, 3);
 
 		return true;
 	}
@@ -1417,7 +1424,7 @@ int checkRedSignal(Mat& src, Mat& dst, double percent, bool debug)
 
 int checkYellowSignal(Mat& src, Mat& dst, double percent, bool debug)
 {
-	Scalar lower_yellow(18, 100, 150);
+	Scalar lower_yellow(18, 50, 120);	//50 120
 	Scalar upper_yellow(42, 255, 255);
 
 	Mat src_hsv;
@@ -1438,7 +1445,7 @@ int checkYellowSignal(Mat& src, Mat& dst, double percent, bool debug)
 			{
 				if (src_yellow.at<uchar>(y, x))
 				{
-					dst.at<Vec3b>(y, x) = Vec3b(0, 255, 255);
+					//dst.at<Vec3b>(y, x) = Vec3b(0, 255, 255);
 				}
 				else
 				{
@@ -1452,8 +1459,7 @@ int checkYellowSignal(Mat& src, Mat& dst, double percent, bool debug)
 
 	if (yellowRatio > percent)
 	{
-		putText(dst, "YELLOW signal!", Point(src.cols / 5, src.rows * 0.65), 0, 2, Scalar(255), 3);
-		putText(dst, "YELLOW signal!", Point(src.cols / 5, src.rows * 0.65), 0, 2, Scalar(255, 255, 0), 3);
+		putText(dst, "YELLOW signal!", signalPrintPosition + Point(0, -40), 0, 1.2, pink, 3);
 
 		return true;
 	}
@@ -1463,18 +1469,81 @@ int checkYellowSignal(Mat& src, Mat& dst, double percent, bool debug)
 
 int checkGreenSignal(Mat& src, Mat& dst, double percent, bool debug)
 {
-	Scalar lower_green(43, 50, 130);
+	Scalar lower_green(38, S, V); //50 75
 	Scalar upper_green(77, 255, 255);
 
 	Mat src_hsv;
+	Mat src_edge;
 
 	Mat src_green;
 	cvtColor(src, src_hsv, COLOR_BGR2HSV);
+	src_hsv = src_hsv & roiMat;
 	inRange(src_hsv, lower_green, upper_green, src_green);
+
 
 	int greenPixel = countPixel(src_green, Rect_signalDetect);
 	double greenRatio((double)greenPixel / Rect_signalDetect.area());	//검출된 픽셀수를 전체 픽셀수로 나눈 비율
 	greenRatio *= 100.0;
+
+	putText(dst, "green Pixel : " + toString(greenRatio) + '%', signalPrintPosition, 0, 1, Scalar(0, 255, 0), 2);
+
+	createTrackbar("S", "trackbar", &S, 100, on_trackbar);
+	createTrackbar("V", "trackbar", &V, 100, on_trackbar);
+	namedWindow("trackbar", WINDOW_NORMAL);
+	moveWindow("trackbar", 320 * 5, 180 * 5);
+
+	/* 초록색 검출된 행렬을 같은 열끼리 모두 더한 후, 최대값이 나온 열을 찾는다 */
+	int column_accumulation[640] = { 0, };
+	int column_max = -1;
+	int maxPosition = 0;
+	for (int x = 0; x < src.cols; x++)
+	{
+		for (int y = 0; y < src.rows; y++)
+		{
+			if (src_green.at<uchar>(y, x))
+				column_accumulation[x]++;
+		}
+		if (column_accumulation[x] >= column_max)
+		{
+			column_max = column_accumulation[x];
+			maxPosition = x;
+		}
+	}
+
+	/* 최대값이 나온 열을 기준으로 좌우 길이를 구한다 */
+	int left_length = 0;
+	int left_area = 0;
+	int right_length = 0;
+	int right_area = 0;
+	double left_length_ratio;
+	double left_area_ratio;
+	double right_length_ratio;
+	double right_area_ratio;
+	for (int x = maxPosition - 1; x >= 0; x--)
+	{
+		if (column_accumulation[x])
+		{
+			left_length++;
+			left_area += column_accumulation[x];
+		}
+		else
+			break;
+	}
+	for (int x = maxPosition + 1; x < src.cols; x++)
+	{
+		if (column_accumulation[x])
+		{
+			right_length++;
+			right_area += column_accumulation[x];
+		}
+		else
+			break;
+	}
+	left_length_ratio = ((double)left_length / (left_length + right_length)) * 100.0;
+	right_length_ratio = 100 - left_length_ratio;
+	left_area_ratio = ((double)left_area / (left_area + right_area)) * 100.0;
+	right_area_ratio = 100 - left_area_ratio;
+
 
 	if (debug)
 	{
@@ -1484,7 +1553,7 @@ int checkGreenSignal(Mat& src, Mat& dst, double percent, bool debug)
 			{
 				if (src_green.at<uchar>(y, x))
 				{
-					dst.at<Vec3b>(y, x) = Vec3b(0, 255, 0);
+					//dst.at<Vec3b>(y, x) = Vec3b(0, 255, 0);
 				}
 				else
 				{
@@ -1492,19 +1561,57 @@ int checkGreenSignal(Mat& src, Mat& dst, double percent, bool debug)
 				}
 			}
 		}
-	}
 
-	putText(dst, "green Pixel : " + toString(greenRatio) + '%', signalPrintPosition, 0, 1, Scalar(255, 0, 0), 2);
+		for (int x = 0; x < src.cols; x++)
+		{
+			if (column_accumulation[x] == 0)
+				continue;
+			else
+			{
+				line(src, Point(x, Rect_signalDetect.y + Rect_signalDetect.height),
+					Point(x, Rect_signalDetect.y + Rect_signalDetect.height - column_accumulation[x]), Scalar(0, 0, 255), 1);
+			}
+		}
+		Point maxPoint(maxPosition, Rect_signalDetect.y + Rect_signalDetect.height);
+		line(src, maxPoint, maxPoint + Point(0, -column_accumulation[maxPosition]), mint, 1);
+
+		line(src, maxPoint + Point(0, -column_accumulation[maxPosition]), maxPoint + Point(-left_length, -column_accumulation[maxPosition]), orange, 2);
+
+		line(src, maxPoint + Point(0, -column_accumulation[maxPosition]), maxPoint + Point(right_length, -column_accumulation[maxPosition]), purple, 2);
+
+
+		putText(dst, "length ratio = " + toString(left_length_ratio) + " : " + toString(right_length_ratio), signalPrintPosition + Point(0, +30), 0, 0.64, Scalar(0, 255, 0), 2);
+		putText(dst, "area ratio = " + toString(left_area_ratio) + " : " + toString(right_area_ratio), signalPrintPosition + Point(0, +60), 0, 0.64, Scalar(0, 255, 0), 2);
+	}
 
 	if (greenRatio > percent)
 	{
-		putText(dst, "GREEN signal!", Point(src.cols / 5, src.rows * 0.65), 0, 2, Scalar(255), 3);
-		putText(dst, "GREEN signal!", Point(src.cols / 5, src.rows * 0.65), 0, 2, Scalar(255, 255, 0), 3);
-
-		return true;
+		if (left_area_ratio > 42)
+		{
+			putText(dst, "GREEN Right!", signalPrintPosition + Point(0, -40), 0, 1.2, pink, 3);
+			return 1;
+		}
+		else
+		{
+			putText(dst, "ERROR", signalPrintPosition + Point(0, -40), 0, 1.2, red, 3);
+			return 0;
+		}
+	}
+	else if (greenRatio > percent / 3.0)
+	{
+		if (left_area_ratio < 42)
+		{
+			putText(dst, "GREEN Left!", signalPrintPosition + Point(0, -40), 0, 1.2, pink, 3);
+			return -1;
+		}
+		else
+		{
+			putText(dst, "WAIT", signalPrintPosition + Point(0, -40), 0, 1.2, red, 3);
+			return 0;
+		}
 	}
 	else
-		return false;
+		return 0;
 }
 
 int countPixel(Mat& src, Rect ROI)

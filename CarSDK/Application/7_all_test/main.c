@@ -379,7 +379,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 					{
 						buzzer(1, 0, BUZZER_PULSE);
 						delay_flag = true;
-						sprintf(data->imgData.missionString, "check YELLOW");
+						sprintf(t_data->imgData.missionString, "check YELLOW");
 						t_data->missionData.signalLightData.state = DETECT_YELLOW;
 					}
 					break;
@@ -389,7 +389,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 					{
 						buzzer(1, 0, BUZZER_PULSE);
 						delay_flag = true;
-						sprintf(data->imgData.missionString, "check GREEN");
+						sprintf(t_data->imgData.missionString, "check GREEN");
 						t_data->missionData.signalLightData.state = DETECT_GREEN;
 						t_data->missionData.signalLightData.Accumulation_greenVal = 0;
 						t_data->missionData.signalLightData.ignore_frame = 3;
@@ -973,11 +973,11 @@ void* video_record_thread(void* arg)
 {
 	struct thr_data* data = (struct thr_data*)arg;
 	struct timeval st, et;
-	int optime_ms;
 	bool videoEnd = false;
 	int fps = 10;
 	int delay_ms = 1000 / fps;
 	int current_frame = 0;
+	int recordTime_ms;
 
 	while (!data->imgData.bvideoRecord)
 	{
@@ -1540,7 +1540,7 @@ void* mission_thread(void* arg)
 						state = DONE_P;
 
 						gettimeofday(&et_p, NULL);
-						int parkingTime = ((et_p.tv_sec - st_p.tv_sec) * 1000) + ((int)et_p.tv_usec / 1000 - (int)st_p.tv_usec / 1000)) / 1000;
+						int parkingTime = (((et_p.tv_sec - st_p.tv_sec) * 1000) + ((int)et_p.tv_usec / 1000 - (int)st_p.tv_usec / 1000)) / 1000;
 						printf("parking time : %d\n", parkingTime);
 
 						if (parking == READY)

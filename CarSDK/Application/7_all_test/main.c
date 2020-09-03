@@ -1248,12 +1248,11 @@ void* mission_thread(void* arg)
 
 						if (data->missionData.parkingData.verticalFlag && data->missionData.parkingData.horizontalFlag == false)
 						{
-							printf("sibal\n");
 							DesireSpeed_Write(0);
 							usleep(500000);
 							EncoderCounter_Write(0);
 							usleep(200000);
-							DesiredDistance(30, 150, 1500);
+							DesiredDistance(30, 200, 1500);
 							usleep(200000);
 							while (data->missionData.parkingData.verticalFlag)
 							{
@@ -1262,7 +1261,7 @@ void* mission_thread(void* arg)
 								{
 								case FIRST_BACKWARD_V:
 									sprintf(data->imgData.missionString, "FIRST_BACKWARD_V");
-									SteeringServoControl_Write(1200);
+									SteeringServoControl_Write(1050);
 									// 회전 각 수정 부분
 									usleep(500000);
 									DesireSpeed_Write(-23);
@@ -1332,7 +1331,7 @@ void* mission_thread(void* arg)
 									sprintf(data->imgData.missionString, "OVER_STEER");
 									//DesiredDistance(23, 100, 1300);
 									//usleep(200000);
-									DesiredDistance(23, 500, 1500);
+									DesiredDistance(-23, 500, 1500);
 									usleep(300000);
 									//DesiredDistance(23, 200, 1700);
 									//usleep(200000);

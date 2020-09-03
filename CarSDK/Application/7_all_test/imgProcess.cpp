@@ -895,11 +895,11 @@ void lineFiltering(Mat& src, Mat& dst, int mode)
 	if (mode == 1)//흰색차선 인식 모드
 	{
 		Scalar lower_white(75, 30, 200); // bgr white
-
 		Scalar upper_white(255, 255, 255);
 		Mat whiteBinMat;
 
-		inRange(src, lower_white, upper_white, whiteBinMat);
+		inRange(hsv, lower_white, upper_white, whiteBinMat);
+
 		//addWeighted(binMat, 1.0, whiteBinMat, 1.0, 0.0, binMat);	//추출한 노란색과 흰색 객체를 합친 binMat생성
 		binMat = binMat + whiteBinMat;
 	}

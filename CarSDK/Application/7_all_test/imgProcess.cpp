@@ -439,6 +439,8 @@ extern "C" {
 				grad_left = -grad_right;
 				leftup_x = 640 - rightup_x;
 				leftdown_x = 640 - rightdown_x;
+				line_right = Vec4i(rightup_x, height_up, rightdown_x, height_down);
+				line_left = Vec4i(leftup_x, height_up, leftdown_x, height_down);
 			}
 			else {//>0:left
 				grad_left = slope(line_left);
@@ -448,6 +450,8 @@ extern "C" {
 				grad_right = -grad_left;
 				rightup_x = 640 - leftup_x;
 				rightdown_x = 640 - leftdown_x;
+				line_right = Vec4i(rightup_x, height_up, rightdown_x, height_down);
+				line_left = Vec4i(leftup_x, height_up, leftdown_x, height_down);
 			}
 		}
 		else {
@@ -474,11 +478,10 @@ extern "C" {
 		}
 		/*Point that meets upper and lower bound*/
 		/*Calculate up or down point*/
-		Point point_rightup, point_rightdown, point_leftup, point_leftdown;
-		point_rightup = Point(rightup_x, height_up);
-		point_rightdown = Point(rightdown_x, height_down);
-		point_leftup = Point(leftup_x, height_up);
-		point_leftdown = Point(leftdown_x, height_down);
+		Point point_rightup(rightup_x, height_up);
+		Point point_rightdown(rightdown_x, height_down);
+		Point point_leftup(leftup_x, height_up);
+		Point point_leftdown(leftdown_x, height_down);
 
 		/*Count Gray*/
 		Mat img_filtered, img_hsv;

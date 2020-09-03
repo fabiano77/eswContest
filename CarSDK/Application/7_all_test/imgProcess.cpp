@@ -386,8 +386,8 @@ extern "C" {
 		int width = w;
 		int height = h;
 		/*filtering value setting in 진리관*/
-		Scalar upper_gray(255, 100, 160);
-		Scalar lower_gray(90, 0, 0);
+		//Scalar upper_gray(255, 100, 160);
+		//Scalar lower_gray(90, 0, 0);
 		/** value setting in 기자재실 **/
 		Scalar upper_gray(255, 100, 210);
 		Scalar lower_gray(90, 0, 100);

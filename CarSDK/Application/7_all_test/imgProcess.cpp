@@ -353,7 +353,7 @@ extern "C" {
 		}
 		else if (mode == 9)
 		{
-			topview_transform(inBuf, w, h, inBuf,1);
+			topview_transform(inBuf, w, h, inBuf, 1);
 			int retval = calculDistance_toFinish(srcRGB, dstRGB, 46, 22);
 			printf("return val = %d\n", retval);
 		}
@@ -431,18 +431,19 @@ extern "C" {
 				rightup_x = getPointX_at_Y(line_left, height_up);
 				rightdown_x = getPointX_at_Y(line_left, height_down);
 
-				grad_left = 1000;
-				leftup_x = width / 2;
-				leftdown_x = width / 2;
+				/*좌우 반전*/
+				grad_left = -grad_right;
+				leftup_x = 640 - rightup_x;
+				leftdown_x = 640 - rightdown_x;
 			}
 			else {//>0:left
-				grad_right = -1000;
-				rightup_x = width / 2;
-				rightdown_x = width / 2;
-
 				grad_left = slope(line_left);
 				leftup_x = getPointX_at_Y(line_left, height_up);
 				leftdown_x = getPointX_at_Y(line_left, height_down);
+				/*좌우 반전 값을 대입*/
+				grad_right = -grad_left;
+				rightup_x = 640 - leftup_x;
+				rightdown_x = 640 - leftdown_x;
 			}
 		}
 		else {
@@ -661,7 +662,7 @@ extern "C" {
 		gettimeofday(&timestamp, NULL);
 		today = localtime(&timestamp.tv_sec);
 
-		string name(toString(today->tm_hour) + toString(today->tm_min) + toString(today->tm_sec)+".jpg");
+		string name(toString(today->tm_hour) + toString(today->tm_min) + toString(today->tm_sec) + ".jpg");
 
 		fileOutimage(srcRGB, name);
 	}

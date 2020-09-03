@@ -1927,13 +1927,14 @@ void *mission_thread(void *arg)
 
 					case SIDE_OFF:
 						/*원래 차선으로 복귀하는 코드*/
+						usleep(10000);
 						data->imgData.bmission = true; //Auto Steering off
 						//right
 						if (data->missionData.overtakingData.headingDirection == RIGHT)
 						{
 							/*복귀 좌회전 방향 설정 및 전진*/
 							Winker_Write(LEFT_ON);
-							DesiredDistance(50, thresDistance, 1900);
+							DesiredDistance(50, thresDistance+100, 1900);
 							Winker_Write(ALL_OFF);
 						}
 						//left
@@ -1941,7 +1942,7 @@ void *mission_thread(void *arg)
 						{
 							/*복귀 우회전 방향 설정*/
 							Winker_Write(RIGHT_ON);
-							DesiredDistance(50, thresDistance, 1100);
+							DesiredDistance(50, thresDistance+100, 1100);
 							Winker_Write(ALL_OFF);
 						}
 						/*알고리즘 전진*/

@@ -43,7 +43,7 @@
 #define FPS_TEXT_Y 260			  //240
 #define FPS_TEXT_COLOR 0xffffffff //while
 
-#define BASIC_SPEED 55		// 프로그램 기본 바퀴속도, autoSteer와 주로 사용.
+#define BASIC_SPEED 65		// 프로그램 기본 바퀴속도, autoSteer와 주로 사용.
 #define BUZZER_PULSE 100000 // 기본 부저 길이
 
 /******************** enumerator ********************/
@@ -779,11 +779,14 @@ void *input_thread(void *arg)
 					scanf("%d", &data->imgData.debugMode);
 					buzzer(1, 0, buzzerPulseWidth_us);
 					data->imgData.bdebug = !data->imgData.bdebug;
+					if (data->imgData.debugMode == 3)
+						CameraYServoControl_Write(1610);
 					printf("\t debug ON\n");
 				}
 				else
 				{
 					data->imgData.bdebug = !data->imgData.bdebug;
+					CameraYServoControl_Write(1660);
 					printf("\t debug OFF\n");
 				}
 			}
@@ -2348,7 +2351,7 @@ int main(int argc, char **argv)
 	tdata.imgData.bcheckSignalLight = false;
 	tdata.imgData.bcheckFinishLine = false;
 	tdata.imgData.bprintString = false;
-	tdata.imgData.bprintSensor = true;
+	tdata.imgData.bprintSensor = false;
 	tdata.imgData.bprintMission = true;
 	sprintf(tdata.imgData.missionString, "(null)");
 

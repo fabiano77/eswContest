@@ -59,7 +59,7 @@ int isDark(Mat& frame, const double percent, int debug);
 
 int Tunnel_isStart(Mat& frame, const double percent);
 
-bool priorityStop(Mat& src, Mat& dst, double percent, bool debug);
+bool priorityStop(Mat& src, Mat& dst, int length, bool debug);
 
 int checkRedSignal(Mat& src, Mat& dst, double percent, bool debug);
 
@@ -282,7 +282,7 @@ extern "C" {
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
-		return priorityStop(srcRGB, dstRGB, 10, 0);
+		return priorityStop(srcRGB, dstRGB, 250, 0);
 	}
 
 	int calculDistance_FinishLine(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
@@ -344,7 +344,7 @@ extern "C" {
 		}
 		else if (mode == 7)
 		{
-			priorityStop(srcRGB, dstRGB, 10, 1);
+			priorityStop(srcRGB, dstRGB, 250, 1);
 		}
 		else if (mode == 8)
 		{
@@ -1319,7 +1319,7 @@ int Tunnel_isStart(Mat& frame, const double percent) {
 	return 0;
 }
 
-bool priorityStop(Mat& src, Mat& dst, double percent, bool debug)
+bool priorityStop(Mat& src, Mat& dst, int length, bool debug)
 {
 	Scalar lower_red1(0, 100, 150);
 	Scalar upper_red1(12, 255, 255);
@@ -1336,16 +1336,57 @@ bool priorityStop(Mat& src, Mat& dst, double percent, bool debug)
 	inRange(src_hsv, lower_red2, upper_red2, src_red2);
 	src_red = src_red1 | src_red2;
 
-	int redPixel = countPixel(src_red, Rect(0, 0, src.cols, src.rows));
-	double redRatio((double)redPixel / Rect(0, 0, src.cols, src.rows).area());	//검출된 픽셀수를 전체 픽셀수로 나눈 비율
-	redRatio *= 100.0;
+	int column_accumulation[640] = { 0, };
+	int column_max = -1;
+	int maxPosition = 0;
+	for (int x = 0; x < src.cols; x++)
+	{
+		for (int y = 0; y < src.rows; y++)
+		{
+			if (src_red.at<uchar>(y, x))
+				column_accumulation[x]++;
+		}
+		if (column_accumulation[x] >= column_max)
+		{
+			column_max = column_accumulation[x];
+			maxPosition = x;
+		}
+	}
 
+	int left_length = 0;
+	int right_length = 0;
+	if (column_max != -1)
+	{
+		for (int x = maxPosition - 1; x > 0; x--)
+		{
+			if (column_accumulation[x])
+			{
+				left_length++;
+			}
+			else
+				break;
+		}
+		for (int x = maxPosition + 1; x < src.cols; x++)
+		{
+			if (column_accumulation[x])
+			{
+				right_length++;
+			}
+			else
+				break;
+		}
+	}
+	int total_length = left_length + right_length;
+
+	//int redPixel = countPixel(src_red, Rect(0, 0, src.cols, src.rows));
+	//double redRatio((double)redPixel / Rect(0, 0, src.cols, src.rows).area());	//검출된 픽셀수를 전체 픽셀수로 나눈 비율
+	//redRatio *= 100.0;
 
 	//클래스멤버로 저장되어있는 src_red 활용.
-	Canny(src_red, src_edge, 118, 242);	//빨간색만 남은 frame의 윤곽을 1채널 Mat객체로 추출
+	//Canny(src_red, src_edge, 118, 242);	//빨간색만 남은 frame의 윤곽을 1채널 Mat객체로 추출
 
-	vector<Vec4i> lines;		//검출될 직선이 저장될 객체
-	HoughLinesP(src_edge, lines, 1, CV_PI / 180, 75, 15, 5);
+	//vector<Vec4i> lines;		//검출될 직선이 저장될 객체
+	//HoughLinesP(src_edge, lines, 1, CV_PI / 180, 75, 15, 5);
 
 	if (debug)
 	{
@@ -1353,26 +1394,27 @@ bool priorityStop(Mat& src, Mat& dst, double percent, bool debug)
 		{
 			for (int y = 0; y < src.rows; y++)
 			{
-				dst.at<Vec3b>(y, x)[0] = src_red.at<uchar>(y, x);
-				dst.at<Vec3b>(y, x)[1] = src_red.at<uchar>(y, x);
-				dst.at<Vec3b>(y, x)[2] = src_red.at<uchar>(y, x);
+				uchar pixelVal = src_red.at<uchar>(y, x);
+				dst.at<Vec3b>(y, x) = Vec3b(pixelVal, pixelVal, pixelVal);
 			}
 		}
-		putText(dst, "red Pixel : " + toString(redRatio) + '%', signalPrintPosition, 0, 1, Scalar(255, 0, 0), 2);
-		putText(dst, "Line Count : " + toString((int)lines.size()), signalPrintPosition + Point(0, 30), 0, 1, Scalar(255), 2);
-		for (unsigned int i = 0; i < lines.size(); i++)
-		{
-			line(dst, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), pink, 2);
-		}
+		putText(dst, "red Length : " + toString(total_length) + '%', signalPrintPosition, 0, 1, Scalar(255, 0, 0), 2);
+		//putText(dst, "red Pixel : " + toString(redRatio) + '%', signalPrintPosition, 0, 1, Scalar(255, 0, 0), 2);
+		//putText(dst, "Line Count : " + toString((int)lines.size()), signalPrintPosition + Point(0, 30), 0, 1, Scalar(255), 2);
+		//for (unsigned int i = 0; i < lines.size(); i++)
+		//{
+		//	line(dst, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), pink, 2);
+		//}
 	}
 
-	if (redRatio > percent)
+	if (total_length > length)
 	{
-		if (lines.size() >= 2)
-		{
-			putText(dst, "[Priority STOP!]", Point(src.cols / 9, src.rows * 0.65), 0, 1.5, Scalar(255, 123, 0), 3);
-			return true;
-		}
+		return true;
+		//if (lines.size() >= 2)
+		//{
+		//	putText(dst, "[Priority STOP!]", Point(src.cols / 9, src.rows * 0.65), 0, 1.5, Scalar(255, 123, 0), 3);
+		//	return true;
+		//}
 	}
 	return false;
 }

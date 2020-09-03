@@ -282,7 +282,7 @@ extern "C" {
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
-		return priorityStop(srcRGB, dstRGB, 250, 0);
+		return priorityStop(srcRGB, dstRGB, 270, 0);
 	}
 
 	int calculDistance_FinishLine(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
@@ -1383,7 +1383,7 @@ bool priorityStop(Mat& src, Mat& dst, int length, bool debug)
 
 	//vector<Vec4i> lines;		//검출될 직선이 저장될 객체
 	//HoughLinesP(src_edge, lines, 1, CV_PI / 180, 75, 15, 5);
-
+	//
 	if (debug)
 	{
 		for (int x = 0; x < src.cols; x++)
@@ -1394,7 +1394,7 @@ bool priorityStop(Mat& src, Mat& dst, int length, bool debug)
 				dst.at<Vec3b>(y, x) = Vec3b(pixelVal, pixelVal, pixelVal);
 			}
 		}
-		putText(dst, "red Length : " + toString(total_length) + '%', signalPrintPosition, 0, 1, Scalar(255, 0, 0), 2);
+		putText(dst, "red Length : " + toString(total_length), signalPrintPosition, 0, 1, Scalar(0, 255, 0), 2);
 		//putText(dst, "red Pixel : " + toString(redRatio) + '%', signalPrintPosition, 0, 1, Scalar(255, 0, 0), 2);
 		//putText(dst, "Line Count : " + toString((int)lines.size()), signalPrintPosition + Point(0, 30), 0, 1, Scalar(255), 2);
 		//for (unsigned int i = 0; i < lines.size(); i++)
@@ -1405,6 +1405,7 @@ bool priorityStop(Mat& src, Mat& dst, int length, bool debug)
 
 	if (total_length > length)
 	{
+		putText(dst, "Priority stop", signalPrintPosition + Point(0, -40), 0, 1.2, pink, 3);
 		return true;
 		//if (lines.size() >= 2)
 		//{

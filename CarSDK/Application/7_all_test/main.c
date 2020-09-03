@@ -203,6 +203,7 @@ struct ImgProcessData
 {
 	uint32_t loopTime;		// img 스레드 루프 시간
 	bool dump_request;		// 덤프요청
+	bool bskip;
 	bool bvideoRecord;		// 동영상 녹화 시작
 	bool bvideoSave;		// 동영상 파일 저장
 	bool bcalibration;		// 캘리브레이션
@@ -527,7 +528,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
 			}
 
-			if (t_data->imgData.btopview)
+			if (t_data->imgData.btopview && t_data->imgData.bskip == false)
 			{
 				topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
 			}
@@ -592,7 +593,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		/* 신호등 검출화면을 유지하기 위한 delay */
 		if (delay_flag)
 		{
-			usleep(500000);
+			usleep(1000000); // 1000ms
 			delay_flag = false;
 		}
 
@@ -1144,6 +1145,7 @@ void *mission_thread(void *arg)
 
 			if (data->missionData.frame_priority >= 2) //우선정지표지판 2프레임 검출.
 			{
+				data->imgData.bskip = true;
 				DesireSpeed_Write(0);
 				Winker_Write(ALL_ON);
 				while (data->imgData.bcheckPriority)
@@ -1157,6 +1159,7 @@ void *mission_thread(void *arg)
 				Winker_Write(ALL_OFF);
 				DesireSpeed_Write(BASIC_SPEED);
 				priority = DONE;
+				data->imgData.bskip = false;
 			}
 		}
 
@@ -1971,6 +1974,7 @@ void *mission_thread(void *arg)
 			if (1)
 			{
 				DesireSpeed_Write(0);
+				SteeringServoControl_Write(1500);
 				data->imgData.bmission = true;
 				data->imgData.bprintString = true;
 				data->imgData.bcheckSignalLight = true;
@@ -2072,7 +2076,9 @@ void *mission_thread(void *arg)
 
 			if (1) //무조건 진입
 			{
+				
 				DesireSpeed_Write(0);
+				SteeringServoControl_Write(1500);
 				data->imgData.bmission = true;
 				sprintf(data->imgData.missionString, "Finish line check");
 				data->imgData.bprintString = true;
@@ -2325,6 +2331,7 @@ int main(int argc, char **argv)
 	/******************** imgProcess Data ********************/
 	cSettingStatic(VPE_OUTPUT_W, VPE_OUTPUT_H);
 	tdata.imgData.dump_request = false;
+	tdata.imgData.bskip = false;
 	tdata.imgData.bvideoRecord = false;
 	tdata.imgData.bvideoSave = false;
 	tdata.imgData.bcalibration = false;
@@ -2352,6 +2359,7 @@ int main(int argc, char **argv)
 	CarLight_Write(0x00);
 	tdata.controlData.lightFlag = 0x00;
 	CameraXServoControl_Write(1500);
+	SteeringServoControl_Write(1500);
 	tdata.controlData.steerVal = 1500;
 	CameraYServoControl_Write(1660);
 	tdata.controlData.cameraY = 1660;

@@ -1487,10 +1487,10 @@ int checkGreenSignal(Mat& src, Mat& dst, double percent, bool debug)
 
 	putText(dst, "green Pixel : " + toString(greenRatio) + '%', signalPrintPosition, 0, 1, Scalar(0, 255, 0), 2);
 
-	createTrackbar("S", "trackbar", &S, 100, on_trackbar);
-	createTrackbar("V", "trackbar", &V, 100, on_trackbar);
-	namedWindow("trackbar", WINDOW_NORMAL);
-	moveWindow("trackbar", 320 * 5, 180 * 5);
+	// createTrackbar("S", "trackbar", &S, 100, on_trackbar);
+	// createTrackbar("V", "trackbar", &V, 100, on_trackbar);
+	// namedWindow("trackbar", WINDOW_NORMAL);
+	// moveWindow("trackbar", 320 * 5, 180 * 5);
 
 	/* 초록색 검출된 행렬을 같은 열끼리 모두 더한 후, 최대값이 나온 열을 찾는다 */
 	int column_accumulation[640] = { 0, };

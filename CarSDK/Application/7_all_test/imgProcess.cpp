@@ -385,10 +385,14 @@ extern "C" {
 		int height_down = 220;
 		int width = w;
 		int height = h;
-		/*filtering value setting*/
-		Scalar upper_gray(255, 100, 160);
-		Scalar lower_gray(90, 0, 0);
+		/*filtering value setting in 진리관*/
+		//Scalar upper_gray(255, 100, 160);
+		//Scalar lower_gray(90, 0, 0);
+		/** value setting in 기자재실 **/
+		Scalar upper_gray(255, 100, 210);
+		Scalar lower_gray(90, 0, 100);
 		/***************************************/
+
 		/*Convert Color*/
 		int color_convert = 1;
 		Mat img_white;
@@ -435,6 +439,8 @@ extern "C" {
 				grad_left = -grad_right;
 				leftup_x = 640 - rightup_x;
 				leftdown_x = 640 - rightdown_x;
+				line_right = Vec4i(rightup_x, height_up, rightdown_x, height_down);
+				line_left = Vec4i(leftup_x, height_up, leftdown_x, height_down);
 			}
 			else {//>0:left
 				grad_left = slope(line_left);
@@ -444,6 +450,8 @@ extern "C" {
 				grad_right = -grad_left;
 				rightup_x = 640 - leftup_x;
 				rightdown_x = 640 - leftdown_x;
+				line_right = Vec4i(rightup_x, height_up, rightdown_x, height_down);
+				line_left = Vec4i(leftup_x, height_up, leftdown_x, height_down);
 			}
 		}
 		else {
@@ -470,11 +478,10 @@ extern "C" {
 		}
 		/*Point that meets upper and lower bound*/
 		/*Calculate up or down point*/
-		Point point_rightup, point_rightdown, point_leftup, point_leftdown;
-		point_rightup = Point(rightup_x, height_up);
-		point_rightdown = Point(rightdown_x, height_down);
-		point_leftup = Point(leftup_x, height_up);
-		point_leftdown = Point(leftdown_x, height_down);
+		Point point_rightup(rightup_x, height_up);
+		Point point_rightdown(rightdown_x, height_down);
+		Point point_leftup(leftup_x, height_up);
+		Point point_leftdown(leftdown_x, height_down);
 
 		/*Count Gray*/
 		Mat img_filtered, img_hsv;
@@ -492,7 +499,7 @@ extern "C" {
 		{ //y
 			int lower_x;//lower bound for calculate rectangular form
 			if (grad_left >= 1000) {//무의미한 값 제거
-				lower_x = width / 2;
+				lower_x = width / 2 - 60;
 			}
 			else {
 				lower_x = getPointX_at_Y(line_left, y);//왼쪽은 if문 불필요 (오른쪽 부분 참조)
@@ -521,7 +528,7 @@ extern "C" {
 		for (int y = point_rightup.y; y < point_rightdown.y; y++)//up.y<down.y
 		{ //y
 			int upper_x;//upper bound for calculate rectangular form
-			if (grad_right <= -1000) { upper_x = width / 2; }//무의미한 값 제거
+			if (grad_right <= -1000) { upper_x = width / 2 + 60; }//무의미한 값 제거
 			else {
 				/*line_left에 만 값이 들어있을 때 line_type이 1일 때*/
 				if (slope(line_left) > 0) {

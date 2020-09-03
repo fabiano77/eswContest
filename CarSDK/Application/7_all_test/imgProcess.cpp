@@ -499,7 +499,7 @@ extern "C" {
 		{ //y
 			int lower_x;//lower bound for calculate rectangular form
 			if (grad_left >= 1000) {//무의미한 값 제거
-				lower_x = width / 2;
+				lower_x = width / 2 - 60;
 			}
 			else {
 				lower_x = getPointX_at_Y(line_left, y);//왼쪽은 if문 불필요 (오른쪽 부분 참조)
@@ -528,7 +528,7 @@ extern "C" {
 		for (int y = point_rightup.y; y < point_rightdown.y; y++)//up.y<down.y
 		{ //y
 			int upper_x;//upper bound for calculate rectangular form
-			if (grad_right <= -1000) { upper_x = width / 2; }//무의미한 값 제거
+			if (grad_right <= -1000) { upper_x = width / 2 - 60; }//무의미한 값 제거
 			else {
 				/*line_left에 만 값이 들어있을 때 line_type이 1일 때*/
 				if (slope(line_left) > 0) {

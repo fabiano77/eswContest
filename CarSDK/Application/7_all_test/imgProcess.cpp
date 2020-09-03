@@ -494,7 +494,7 @@ extern "C" {
 				lower_x = width / 2;
 			}
 			else {
-				lower_x = getPointX_at_Y(line_left, point_leftup.y);//왼쪽은 if문 불필요 (오른쪽 부분 참조)
+				lower_x = getPointX_at_Y(line_left, y);//왼쪽은 if문 불필요 (오른쪽 부분 참조)
 			}
 
 			for (int x = 0; x < lower_x; x++) // left Gray detection
@@ -524,10 +524,10 @@ extern "C" {
 			else {
 				/*line_left에 만 값이 들어있을 때 line_type이 1일 때*/
 				if (slope(line_left) > 0) {
-					upper_x = getPointX_at_Y(line_left, point_rightup.y);
+					upper_x = getPointX_at_Y(line_left, y);
 				}
 				else {
-					upper_x = getPointX_at_Y(line_right, point_rightup.y);
+					upper_x = getPointX_at_Y(line_right, y);
 				}
 			}
 			for (int x = upper_x; x < width; x++) // left Gray detection

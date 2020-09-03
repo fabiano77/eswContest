@@ -153,6 +153,8 @@ struct Overtaking
 	bool sideSensorFlag;				   // 차량의 사이드 탐지 활성화 플래그
 	enum DirectionState headingDirection;  //차량의 이동방향 결정
 	enum CameraVerticalState updownCamera; //카메라를 위로 올릴지 말지 결정하는 부분
+	char leftFlag;
+	char rightFlag;
 };
 
 struct Finish
@@ -353,19 +355,34 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 			if (t_data->missionData.overtakingFlag &&
 				t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
 			{
-				usleep(500000);
+				usleep(100000);
 				/*check를 위한 camera up*/
 				bool check_direction;
 				check_direction = checkObstacle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+				/*오른쪽인지 왼쪽인지 매 번 확인*/
 				if (check_direction == true)
 				{ //true=>left
-					t_data->missionData.overtakingData.headingDirection = LEFT;
+					t_data->missionData.overtakingData.leftFlag++;
 				}
 				else
 				{ //false =>right
-					t_data->missionData.overtakingData.headingDirection = RIGHT;
+					t_data->missionData.overtakingData.rightFlag++;
 				}
-				t_data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
+
+
+				/*3회 판단 이후 확인*/
+				if ((t_data->missionData.overtakingData.rightFlag + t_data->missionData.overtakingData.leftFlag) >= 3) {
+					/*오른쪽 flag가 큰경우*/
+					if (t_data->missionData.overtakingData.rightFlag > t_data->missionData.overtakingData.leftFlag) {
+						t_data->missionData.overtakingData.headingDirection = RIGHT;
+					}
+					/*왼쪽 flag가 큰경우*/
+					else {
+						t_data->missionData.overtakingData.headingDirection = LEFT;
+					}
+					/*상황 재진입 막기 위한 Camera Down*/
+					t_data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
+				}
 				//srcbuf를 활용하여 capture한 영상을 변환
 			}
 
@@ -2341,6 +2358,8 @@ int main(int argc, char** argv)
 	tdata.missionData.overtakingFlag = false;
 	tdata.missionData.overtakingData.updownCamera = CAMERA_DOWN;
 	tdata.missionData.overtakingData.headingDirection = STOP;
+	tdata.missionData.overtakingData.leftFlag = 0;
+	tdata.missionData.overtakingData.rightFlag = 0;
 	tdata.missionData.signalLightData.finalDirection = 0;
 	tdata.missionData.finishData.checkFront = false;
 	int i = 0;

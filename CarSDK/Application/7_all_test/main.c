@@ -1870,7 +1870,7 @@ void* mission_thread(void* arg)
 						if (data->missionData.overtakingData.headingDirection == RIGHT)
 						{
 							/*장애물 통과 확인*/
-							if (DistanceSensor_cm(5) < 30 && DistanceSensor_cm(6) < 30)
+							if (DistanceSensor_cm(5) > 30 && DistanceSensor_cm(6) < 30)
 							{
 								obstacle = true;
 							}
@@ -1884,12 +1884,13 @@ void* mission_thread(void* arg)
 									sprintf(data->imgData.missionString, "Side OFF");
 								}
 							}
+							usleep(50000);
 						}
 						//left
 						else if (data->missionData.overtakingData.headingDirection == LEFT)
 						{
 							/*장애물 통과 확인*/
-							if (DistanceSensor_cm(2) < 30 && DistanceSensor_cm(2) < 30)
+							if (DistanceSensor_cm(3) > 30 && DistanceSensor_cm(2) < 30)
 							{
 								obstacle = true;
 							}
@@ -1903,6 +1904,7 @@ void* mission_thread(void* arg)
 									sprintf(data->imgData.missionString, "Side OFF");
 								}
 							}
+							usleep(500000);
 						}
 						//error and go back step
 						else

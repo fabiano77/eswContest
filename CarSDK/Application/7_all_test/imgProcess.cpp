@@ -899,7 +899,6 @@ void lineFiltering(Mat& src, Mat& dst, int mode)
 		Mat whiteBinMat;
 
 		inRange(hsv, lower_white, upper_white, whiteBinMat);
-
 		//addWeighted(binMat, 1.0, whiteBinMat, 1.0, 0.0, binMat);	//추출한 노란색과 흰색 객체를 합친 binMat생성
 		binMat = binMat + whiteBinMat;
 	}

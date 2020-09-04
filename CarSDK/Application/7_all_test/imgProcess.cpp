@@ -389,8 +389,8 @@ extern "C" {
 		//Scalar upper_gray(255, 100, 160);
 		//Scalar lower_gray(90, 0, 0);
 		/** value setting in 기자재실 **/
-		Scalar upper_gray(255, 100, 210);
-		Scalar lower_gray(90, 0, 100);
+		//Scalar upper_gray(255, 100, 210);
+		//Scalar lower_gray(90, 0, 100);
 		/***************************************/
 
 		/*Convert Color*/
@@ -424,8 +424,8 @@ extern "C" {
 		if (line_type == 0) {//미탐지 시
 			grad_right = -1000;
 			grad_left = 1000;
-			rightup_x = 0;
-			rightdown_x = 0;
+			rightup_x = width/2+60;
+			rightdown_x = width/2+60;
 			leftup_x = 0;
 			leftdown_x = 0;
 		}
@@ -463,7 +463,7 @@ extern "C" {
 			leftup_x = getPointX_at_Y(line_left, height_up);
 			leftdown_x = getPointX_at_Y(line_left, height_down);
 		}
-		/*check inadequate value*/
+		/*check inadequate value and fix it*/
 		if (leftup_x > width / 2) {
 			leftup_x = width / 2;
 		}
@@ -473,8 +473,8 @@ extern "C" {
 		if (rightup_x < width / 2) {
 			rightup_x = width / 2;
 		}
-		if (leftdown_x > width) {
-			leftdown_x = width;
+		if (rightdown_x > width) {
+			rightdown_x = width;
 		}
 		/*Point that meets upper and lower bound*/
 		/*Calculate up or down point*/
@@ -484,15 +484,16 @@ extern "C" {
 		Point point_leftdown(leftdown_x, height_down);
 
 		/*Count Gray*/
-		Mat img_filtered, img_hsv;
-		cvtColor(img_roi, img_hsv, COLOR_BGR2HSV);
-		inRange(img_hsv, lower_gray, upper_gray, img_filtered);
+		/*check hsv*/
+		//Mat img_filtered, img_hsv;
+		//cvtColor(img_roi, img_hsv, COLOR_BGR2HSV);
+		/* Count by the number of Canny Edge point */
+		cannyEdge(img_roi, img_filtered);
+		/*Count by HSV scale  Gray point*/
+		//inRange(img_hsv, lower_gray, upper_gray, img_filtered);
 		//left
 		int count_left = 0;
 		int count_right = 0;
-		int count_left_total = 0;
-		int count_right_total = 0;
-		//float rate_left, rate_right;
 		/* Count Left and Right Gray Scale */
 		//left
 		for (int y = point_leftup.y; y < point_leftdown.y; y++)//up.y<down.y
@@ -511,19 +512,16 @@ extern "C" {
 				//img_filtered를 사용해야 회색의 범위를 찾음
 				if (color_value > 128)
 				{
-					srcRGB.at<Vec3b>(y, x) = Vec3b(255, 0, 0);
 					count_left++;
+					srcRGB.at<Vec3b>(y, x) = Vec3b(0, 255, 0);
 				}
 				else
 				{
 					srcRGB.at<Vec3b>(y, x) = Vec3b(0, 0, 255);
 				}
 
-				count_left_total++;
 			}
 		}
-		float grayrate_left = (float)count_left / count_left_total * 100.0;
-		printf("Left rate is %f %% \n", grayrate_left);
 		//right
 		for (int y = point_rightup.y; y < point_rightdown.y; y++)//up.y<down.y
 		{ //y
@@ -545,35 +543,31 @@ extern "C" {
 				//img_filtered를 사용해야 회색의 범위를 찾음
 				if (color_value > 128)
 				{
-					srcRGB.at<Vec3b>(y, x) = Vec3b(255, 0, 0);
 					count_right++;
+					srcRGB.at<Vec3b>(y, x) = Vec3b(0, 255, 0);
 				}
 				else
 				{
 					srcRGB.at<Vec3b>(y, x) = Vec3b(0, 0, 255);
 				}
-				count_right_total++;
 			}
 		}
-
-		float grayrate_right = (float)count_right / count_right_total * 100.0;
-		printf("Right rate is %f %% \n", grayrate_right);
 		/**************************************/
 
 		/*Show image*/
 		Point location(width / 2, height * 6 / 8);// Location that is Detected Sign 
 		Point location2(width / 2, height / 8);// Location that is time of calculation
-		Point location_left(width / 4, height * 7 / 8); // Location that is rate of gray detected(left)
-		Point location_right(width * 3 / 4, height * 7 / 8); //Location that is rate of gray detected(right)
+		Point location_left(width / 4, height * 7 / 8); // Location that is point of edge detected(left)
+		Point location_right(width * 3 / 4, height * 7 / 8); //Location that is point of edge detected(right)
 
 		int font = FONT_ITALIC; // italic font
 		double fontScale = 0.8;
 
-		putText(srcRGB, toString((double)grayrate_left) + "%", location_left, font, fontScale, Scalar(255, 0, 0), 2);
-		putText(srcRGB, toString((double)grayrate_right) + "%", location_right, font, fontScale, Scalar(255, 0, 0), 2);
+		putText(srcRGB, toString((double)count_left), location_left, font, fontScale, Scalar(255, 0, 0), 2);
+		putText(srcRGB, toString((double)count_right), location_right, font, fontScale, Scalar(255, 0, 0), 2);
 		/*Choose Left or Right*/
 		//선이 없는 경우 배제하는 것도 필요
-		if (grayrate_left > grayrate_right)
+		if (count_left > count_right)
 		{
 			putText(srcRGB, "Left to go", location, font, fontScale, Scalar(0, 0, 255), 2);
 			printf("Going left");

@@ -610,3 +610,141 @@ void RoundAbout_Init()
 	flag_stop = -1;
 	flag_end = -1;
 }
+
+
+void manualControl(struct ControlData* cdata, char key)
+{
+	int i;
+	switch (key)
+	{
+	case 'a': //steering left		: servo 조향값 (2000(좌) ~ 1500(중) ~ 1000(우)
+		cdata->steerVal += 50;
+		SteeringServoControl_Write(cdata->steerVal);
+		printf("angle_steering = %d\n", cdata->steerVal);
+		printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read()); //default = 1500, 0x5dc
+		break;
+
+	case 'd': //steering right	: servo 조향값 (2000(좌) ~ 1500(중) ~ 1000(우)
+		cdata->steerVal -= 50;
+		SteeringServoControl_Write(cdata->steerVal);
+		printf("angle_steering = %d\n", cdata->steerVal);
+		printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read()); //default = 1500, 0x5dc
+		break;
+
+	case 's':
+		DesireSpeed_Write(0);
+		break;
+
+	case 'w': //go forward
+
+		cdata->desireSpeedVal = cdata->settingSpeedVal;
+		DesireSpeed_Write(cdata->desireSpeedVal);
+		break;
+
+	case 'x': //go backward	speed 음수 인가하면 후진.
+
+		cdata->desireSpeedVal = -cdata->settingSpeedVal;
+		DesireSpeed_Write(cdata->desireSpeedVal);
+		break;
+
+		// case 'j':	//cam left
+		// 	angle_cameraX += 50;
+		// 	CameraXServoControl_Write(angle_cameraX);
+		// 	printf("angle_cameraX = %d\n", angle_cameraX);
+		// 	printf("CameraXServoControl_Read() = %d\n", CameraXServoControl_Read());    //default = 1500, 0x5dc
+		// 	break;
+
+		// case 'l':	//cam right
+		// 	angle_cameraX -= 50;
+		// 	CameraXServoControl_Write(angle_cameraX);
+		// 	printf("angle_cameraX = %d\n", angle_cameraX);
+		// 	printf("CameraXServoControl_Read() = %d\n", CameraXServoControl_Read());    //default = 1500, 0x5dc
+		// 	break;
+
+	case 'i': //cam up
+		cdata->cameraY -= 50;
+		CameraYServoControl_Write(cdata->cameraY);
+		printf("cdata->cameraY = %d\n", cdata->cameraY);
+		printf("CameraYServoControl_Read() = %d\n", CameraYServoControl_Read()); //default = 1500, 0x5dc
+		break;
+
+	case 'k': //cam down
+		cdata->cameraY += 50;
+		CameraYServoControl_Write(cdata->cameraY);
+		printf("angle_cameraY = %d\n", cdata->cameraY);
+		printf("CameraYServoControl_Read() = %d\n", CameraYServoControl_Read()); //default = 1500, 0x5dc
+		break;
+
+	case '1': //speed up		최대 스피드 500
+		cdata->settingSpeedVal += 10;
+		printf("speed = %d\n", cdata->settingSpeedVal);
+		break;
+
+	case '2': //speed down
+		cdata->settingSpeedVal -= 10;
+		printf("speed = %d\n", cdata->settingSpeedVal);
+		break;
+
+	case 'q': //Flashing left winker 3 s
+
+		Winker_Write(LEFT_ON);
+		usleep(3000000); // 3 000 000 us
+		Winker_Write(ALL_OFF);
+		break;
+
+	case 'e': //Flashing right winker 3 s
+
+		Winker_Write(RIGHT_ON);
+		usleep(3000000); // 3 000 000 us
+		Winker_Write(ALL_OFF);
+		break;
+
+	case 'z':										//front lamp on/off
+		cdata->lightFlag = cdata->lightFlag ^ 0x01; // 00000000 ^ 00000001 (XOR)���� : 0����Ʈ�� XOR�����Ѵ�.
+		CarLight_Write(cdata->lightFlag);
+		break;
+
+	case 'c':										//rear lamp on/off
+		cdata->lightFlag = cdata->lightFlag ^ 0x02; // 00000000 ^ 00000010 (XOR)���� : 1����Ʈ�� XOR�����Ѵ�.
+		CarLight_Write(cdata->lightFlag);
+		break;
+
+	case ' ': //alarm
+		for (i = 0; i < 2; i++)
+		{
+			Alarm_Write(ON);
+			usleep(200000);
+			Alarm_Write(OFF);
+			usleep(200000);
+		}
+		break;
+
+	case '0':
+		SpeedPIDProportional_Write(40);
+		SpeedPIDIntegral_Write(40);
+		SpeedPIDProportional_Write(40);
+		break;
+	case '\n':
+		break;
+
+	default:
+		printf("wrong key input.\n");
+		break;
+	}
+}
+
+
+uint32_t timeCheck(struct timeval* tempTime)
+{
+	struct timeval prevTime = *tempTime;
+	struct timeval nowTime;
+	gettimeofday(&nowTime, NULL);
+
+	uint32_t retVal = ((nowTime.tv_sec - prevTime.tv_sec) * 1000) + ((int)nowTime.tv_usec / 1000 - (int)prevTime.tv_usec / 1000);
+	if ((*tempTime).tv_sec == 0)
+		retVal = 0;
+
+	*tempTime = nowTime;
+
+	return retVal;
+}

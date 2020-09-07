@@ -293,12 +293,12 @@ extern "C"
 		}
 		else
 		{
-			if (Distance1 < lower_StopDistance)
+			if (Distance1 < lower_StopDistance){
 				if (flag_wait < 2)
 					flag_wait++;
 				else if (flag_wait > 0)
 					flag_wait--;
-
+			}
 			if (flag_wait == 2)
 			{
 				flag_wait = -1;
@@ -328,7 +328,7 @@ extern "C"
 			if (flag_wait > 0)
 				flag_wait--;
 
-			if (flag_stop = 0)
+			if (flag_stop == 0)
 			{
 				flag_stop = -1;
 				return 0;
@@ -587,6 +587,8 @@ extern "C"
 			return int(basicSpeed * 1.25);
 		else if (absSteer <= 500)
 			return int(basicSpeed * 1.35);
+		else
+			return basicSpeed;	
 	}
 
 	void buzzer(int numOfTimes, int interval_us, int pulseWidth_us)

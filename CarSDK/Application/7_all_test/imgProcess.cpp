@@ -497,7 +497,7 @@ extern "C" {
 
 		/*Count Gray*/
 		/*check hsv*/
-		//Mat img_filtered, img_hsv;
+		Mat img_filtered;//, img_hsv;
 		//cvtColor(img_roi, img_hsv, COLOR_BGR2HSV);
 		/* Count by the number of Canny Edge point */
 		cannyEdge(img_roi, img_filtered);

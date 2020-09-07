@@ -21,6 +21,8 @@ extern "C" {
 	void displayPrintSensor(unsigned char* outBuf, int w, int h,
 		int c1, int c2, int c3, int c4, int c5, int c6, int stopline);
 
+	void overlayPrintAngle(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int angle);
+
 	int checkRed(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
 
 	int checkYellow(unsigned char* inBuf, int w, int h, unsigned char* outBuf);

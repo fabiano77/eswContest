@@ -216,6 +216,7 @@ struct ImgProcessData
 	bool bprintString;		// 오버레이에 문자열 표시 ON/OFF
 	bool bprintMission;		// 오버레이에 미션정보 표시 ON/OFF
 	bool bprintSensor;		// 오버레이에 센서값 표시 ON/OFF
+	bool bprintTire;		// 오버레이에 바퀴각도 표시 ON/OFF
 	bool bdark;				// 터널 탐지 ON/OFF
 	bool bcheckPriority;	// 우선정지 표지판 탐지 ON/OFF
 	bool bcheckSignalLight; // 신호등 탐지 ON/OFF
@@ -576,6 +577,10 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 							   DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3),
 							   DistanceSensor_cm(4), DistanceSensor_cm(5), DistanceSensor_cm(6), StopLine(4));
 		}
+		if (t_data->imgData.bprintTire)
+		{
+			overlayPrintAngle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->controlData.steerVal);
+		}
 
 		/*		현재 영상 .bmp파일로 저장		*/
 		if (t_data->imgData.dump_request)
@@ -728,6 +733,7 @@ void *input_thread(void *arg)
 	MSG("\t stop   : check line sensor");
 	MSG("\t mission: mission display output on/off");
 	MSG("\t sensor : sensor  display output on/off");
+	MSG("\t tire   : tire    display output on/off");
 	MSG("\t ms	   : mission on/off");
 	MSG("\t dump   : save image file");
 	MSG("\t video  : video record start");
@@ -929,6 +935,15 @@ void *input_thread(void *arg)
 					printf("\t print sensor ON\n");
 				else
 					printf("\t print sensor OFF\n");
+			}
+			else if (0 == strncmp(cmd_input, "tire", 4))
+			{
+				buzzer(1, 0, buzzerPulseWidth_us);
+				data->imgData.bprintTire = !data->imgData.bprintTire;
+				if (data->imgData.bprintTire)
+					printf("\t print tire ON\n");
+				else
+					printf("\t print tire OFF\n");
 			}
 			else if (0 == strncmp(cmd_input, "ms", 2))
 			{
@@ -1266,6 +1281,7 @@ void *mission_thread(void *arg)
 								case FIRST_BACKWARD_V:
 									sprintf(data->imgData.missionString, "FIRST_BACKWARD_V");
 									SteeringServoControl_Write(1050);
+									data->controlData.steerVal = 1050;	//오버레이 연동
 									// 회전 각 수정 부분
 									usleep(500000);
 									DesireSpeed_Write(-60);
@@ -1281,6 +1297,7 @@ void *mission_thread(void *arg)
 								case SECOND_BACKWARD_V:
 									sprintf(data->imgData.missionString, "SECOND_BACKWARD_V");
 									SteeringServoControl_Write(1500);
+									data->controlData.steerVal = 1500;	//오버레이 연동
 									usleep(100000);
 									DesireSpeed_Write(-35);
 									usleep(50000);
@@ -1423,6 +1440,7 @@ void *mission_thread(void *arg)
 									DesiredDistance(-60, 370, 1500);
 									//usleep(200000);
 									SteeringServoControl_Write(1900);
+									data->controlData.steerVal = 1900;	//오버레이 연동
 									usleep(100000);
 									DesireSpeed_Write(-35);
 									usleep(50000);
@@ -1436,6 +1454,7 @@ void *mission_thread(void *arg)
 										usleep(50000);
 									}
 									SteeringServoControl_Write(1250);
+									data->controlData.steerVal = 1250;	//오버레이 연동
 									usleep(150000);
 									DesireSpeed_Write(35);
 									usleep(50000);
@@ -1490,6 +1509,7 @@ void *mission_thread(void *arg)
 										DesireSpeed_Write(0);
 										usleep(100000);
 										SteeringServoControl_Write(1500);
+										data->controlData.steerVal = 1500;	//오버레이 연동
 										usleep(1000000);
 										step_h = SECOND_FORWARD;
 										Winker_Write(ALL_ON);
@@ -1512,6 +1532,7 @@ void *mission_thread(void *arg)
 										DesireSpeed_Write(0);
 										usleep(10000);
 										SteeringServoControl_Write(1750);
+										data->controlData.steerVal = 1750;	//오버레이 연동
 										usleep(100000);
 
 										step_h = ESCAPE;
@@ -1526,6 +1547,7 @@ void *mission_thread(void *arg)
 									{
 										DesireSpeed_Write(0);
 										SteeringServoControl_Write(1400);
+										data->controlData.steerVal = 1400;	//오버레이 연동
 										usleep(150000);
 										step_h = ESCAPE_2;
 									}
@@ -1978,6 +2000,7 @@ void *mission_thread(void *arg)
 			{
 				DesireSpeed_Write(0);
 				SteeringServoControl_Write(1500);
+				data->controlData.steerVal = 1500;	//오버레이 연동
 				data->imgData.bmission = true;
 				data->imgData.bprintString = true;
 				data->imgData.bcheckSignalLight = true;
@@ -2082,6 +2105,7 @@ void *mission_thread(void *arg)
 				
 				DesireSpeed_Write(0);
 				SteeringServoControl_Write(1500);
+				data->controlData.steerVal = 1500;	//오버레이 연동
 				data->imgData.bmission = true;
 				sprintf(data->imgData.missionString, "Finish line check");
 				data->imgData.bprintString = true;
@@ -2353,6 +2377,7 @@ int main(int argc, char **argv)
 	tdata.imgData.bprintString = false;
 	tdata.imgData.bprintSensor = false;
 	tdata.imgData.bprintMission = true;
+	tdata.imgData.bprintTire = true;
 	sprintf(tdata.imgData.missionString, "(null)");
 
 	/******************** Control Data ********************/
@@ -2502,3 +2527,5 @@ int main(int argc, char **argv)
 
 	return ret;
 }
+
+//data->controlData.steerVal = 1050;	//오버레이 연동

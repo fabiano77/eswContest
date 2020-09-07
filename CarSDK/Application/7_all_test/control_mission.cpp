@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <sys/signal.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <time.h>
 #include <string.h>
 #include <pthread.h>
@@ -16,6 +17,7 @@
 #include <linux/i2c-dev.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "control_mission.h"
 #include "car_lib.h"
 
@@ -182,8 +184,6 @@ extern "C"
 		SteeringServoControl_Write(SettingSteering);
 		usleep(100000);
 		DesireSpeed_Write(SettingSpeed);
-		if (SettingSpeed < 0)
-			CarLight_Write(0x02);
 		while (1)
 		{
 			if (SettingSpeed > 0)
@@ -219,9 +219,7 @@ extern "C"
 			}
 			usleep(50000); // 10ms
 		}
-		if (SettingSpeed < 0)
-			CarLight_Write(0x00);
-		cout << "\tDesiredDistance() :encoder = " << on_encoder << endl;
+		//cout << "\tDesiredDistance() :encoder = " << on_encoder << endl;
 	}
 
 	void onlyDistance(int SettingSpeed, int SettingDistance)
@@ -602,19 +600,7 @@ extern "C"
 		}
 	}
 
-} //extern "C"
-
-void RoundAbout_Init()
-{
-	flag_go = -1;
-	check_start = 0;
-	flag_wait = -1;
-	flag_stop = -1;
-	flag_end = -1;
-}
-
-
-void manualControl(struct ControlData* cdata, char key)
+	void manualControl(struct ControlData* cdata, char key)
 {
 	int i;
 	switch (key)
@@ -735,8 +721,7 @@ void manualControl(struct ControlData* cdata, char key)
 	}
 }
 
-
-uint32_t timeCheck(struct timeval* tempTime)
+	uint32_t timeCheck(struct timeval* tempTime)
 {
 	struct timeval prevTime = *tempTime;
 	struct timeval nowTime;
@@ -750,3 +735,16 @@ uint32_t timeCheck(struct timeval* tempTime)
 
 	return retVal;
 }
+
+} //extern "C"
+
+void RoundAbout_Init()
+{
+	flag_go = -1;
+	check_start = 0;
+	flag_wait = -1;
+	flag_stop = -1;
+	flag_end = -1;
+}
+
+

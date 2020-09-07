@@ -79,15 +79,15 @@ extern "C" {
 
 	enum CameraVerticalState
 	{
-		CAMERA_UP,	//Àå¾Ö¹° ÀÎ½ÄÀ» À§ÇØ ¿Ã¸°»óÅÂ
-		CAMERA_DOWN //¿ø·¡ »óÅÂ -->ÀÌ ºÎºÐ Á¶Á¤ ÇÊ¿ä MS
+		CAMERA_UP,	//ï¿½ï¿½Ö¹ï¿½ ï¿½Î½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã¸ï¿½ï¿½ï¿½ï¿½ï¿½
+		CAMERA_DOWN //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ -->ï¿½ï¿½ ï¿½Îºï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½ MS
 	};
 
 	enum DirectionState
 	{
 		LEFT,
 		RIGHT,
-		STOP //¾Õ¿¡ Àå¾Ö¹°ÀÌ ÀÖ´Ù¸é ½ºÅ¾(overtakingÀÌ onÀÏ ¶§¸¸)
+		STOP //ï¿½Õ¿ï¿½ ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½ ï¿½Ö´Ù¸ï¿½ ï¿½ï¿½Å¾(overtakingï¿½ï¿½ onï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 	};
 
 	enum SignalLightState
@@ -103,24 +103,24 @@ extern "C" {
 	{
 		bool frontRight;
 		bool rearRight;
-		bool bparking;		 // ÁÖÂ÷ Áß °Å¸® Á¤º¸ Ãâ·ÂÀ» À§ÇÑ º¯¼ö
-		bool verticalFlag;	 // ¼öÁ÷ ÁÖÂ÷ È°¼ºÈ­¸¦ ³ªÅ¸³»´Â ÇÃ·¡±×
-		bool horizontalFlag; // ¼öÆò ÁÖÂ÷ È°¼ºÈ­¸¦ ³ªÅ¸³»´Â ÇÃ·¡±×
+		bool bparking;		 // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Å¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+		bool verticalFlag;	 // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È°ï¿½ï¿½È­ï¿½ï¿½ ï¿½ï¿½Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½ï¿½
+		bool horizontalFlag; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È°ï¿½ï¿½È­ï¿½ï¿½ ï¿½ï¿½Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½ï¿½
 	};
 
 	struct Overtaking
 	{
-		bool sideSensorFlag;				   // Â÷·®ÀÇ »çÀÌµå Å½Áö È°¼ºÈ­ ÇÃ·¡±×
-		enum DirectionState headingDirection;  //Â÷·®ÀÇ ÀÌµ¿¹æÇâ °áÁ¤
-		enum CameraVerticalState updownCamera; //Ä«¸Þ¶ó¸¦ À§·Î ¿Ã¸±Áö ¸»Áö °áÁ¤ÇÏ´Â ºÎºÐ
+		bool sideSensorFlag;				   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ìµï¿½ Å½ï¿½ï¿½ È°ï¿½ï¿½È­ ï¿½Ã·ï¿½ï¿½ï¿½
+		enum DirectionState headingDirection;  //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+		enum CameraVerticalState updownCamera; //Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½Îºï¿½
 		char leftFlag;
 		char rightFlag;
 	};
 
 	struct Finish
 	{
-		bool checkFront; //¾ÕÀÇ ¼öÁ÷ ³ë¶õ¼± ÆÄ¾Ç
-		int distEndLine; //°á½Â¼±±îÁöÀÇ °Å¸®
+		bool checkFront; //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ä¾ï¿½
+		int distEndLine; //ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Å¸ï¿½
 	};
 
 	struct SignalLight
@@ -134,17 +134,17 @@ extern "C" {
 	/******************** thread struct ********************/
 	struct MissionData
 	{
-		uint32_t loopTime; // mission ½º·¹µå ·çÇÁ ½Ã°£
+		uint32_t loopTime; // mission ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½
 		bool broundabout;
 		bool btunnel;
-		bool overtakingFlag; // Ãß¿ùÂ÷·Î ÇÃ·¡±× ->MS ÀÌÈÄ overtaking struct Ãß°¡ÇÒ °Í
+		bool overtakingFlag; // ï¿½ß¿ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½ï¿½ ->MS ï¿½ï¿½ï¿½ï¿½ overtaking struct ï¿½ß°ï¿½ï¿½ï¿½ ï¿½ï¿½
 		bool changeMissionState;
 		int frame_priority;
 		int finish_distance;
 
-		struct Parking parkingData;			// ÁÖÂ÷¿¡ ÇÊ¿äÇÑ ÇÃ·¡±×¸¦ ´ã´Â ±¸Á¶Ã¼
-		struct Overtaking overtakingData;	// Ãß¿ù¿¡ ÇÊ¿äÇÑ ÇÃ·¡±× ´ã´Â ±¸Á¶Ã¼
-		struct SignalLight signalLightData; // ½ÅÈ£µî¿¡ ÇÊ¿äÇÑ º¯¼ö¸¦ ´ã´Â ±¸Á¶Ã¼
+		struct Parking parkingData;			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½×¸ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ã¼
+		struct Overtaking overtakingData;	// ï¿½ß¿ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ã¼
+		struct SignalLight signalLightData; // ï¿½ï¿½È£ï¿½î¿¡ ï¿½Ê¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ã¼
 		struct Finish finishData;
 		enum MissionState ms[9]; //
 	};
@@ -161,106 +161,89 @@ extern "C" {
 
 	struct ImgProcessData
 	{
-		uint32_t loopTime;		// img ½º·¹µå ·çÇÁ ½Ã°£
-		bool dump_request;		// ´ýÇÁ¿äÃ»
+		uint32_t loopTime;		// img ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½
+		bool dump_request;		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»
 		bool bskip;
-		bool bvideoRecord;		// µ¿¿µ»ó ³ìÈ­ ½ÃÀÛ
-		bool bvideoSave;		// µ¿¿µ»ó ÆÄÀÏ ÀúÀå
-		bool bcalibration;		// Ä¶¸®ºê·¹ÀÌ¼Ç
-		bool bdebug;			// µð¹ö±×¸ðµå ON/OFF
-		bool btopview;			// Å¾ºä ON/OFF
-		bool bmission;			// ¹Ì¼ÇÁøÀÔ ON/OFF (Â÷¼±ÀÎ½Ä »ç¿ëÇÏÁö ¾Ê°ÔµÊ)
-		bool bauto;				// ÀÚµ¿ Á¶Çâ ON/OFF
-		bool bspeedControl;		// ÀÚµ¿ Á¶ÇâÀÇ ¼Óµµ°³ÀÔ ON/OFF
-		bool bwhiteLine;		// ÀÚµ¿ Á¶ÇâÀÇ Èò»ö ¼± Å½Áö ON/OFF
-		bool bprintString;		// ¿À¹ö·¹ÀÌ¿¡ ¹®ÀÚ¿­ Ç¥½Ã ON/OFF
-		bool bprintMission;		// ¿À¹ö·¹ÀÌ¿¡ ¹Ì¼ÇÁ¤º¸ Ç¥½Ã ON/OFF
-		bool bprintSensor;		// ¿À¹ö·¹ÀÌ¿¡ ¼¾¼­°ª Ç¥½Ã ON/OFF
-		bool bprintTire;		// ¿À¹ö·¹ÀÌ¿¡ ¹ÙÄû°¢µµ Ç¥½Ã ON/OFF
-		bool bdark;				// ÅÍ³Î Å½Áö ON/OFF
-		bool bcheckPriority;	// ¿ì¼±Á¤Áö Ç¥ÁöÆÇ Å½Áö ON/OFF
-		bool bcheckSignalLight; // ½ÅÈ£µî Å½Áö ON/OFF
-		bool bcheckFinishLine;	// ÇÇ´Ï½Ã¶óÀÎ Å½Áö ON/OFF
-		char missionString[20]; // ¿À¹ö·¹ÀÌ¿¡ Ç¥½ÃÇÒ ¹®ÀÚ¿­
-		int topMode;			// Å¾ºä ¸ðµå (0, 1, 2)
-		int debugMode;			// µð¹ö±× ¸ðµå(0~ 7)
+		bool bvideoRecord;		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È­ ï¿½ï¿½ï¿½ï¿½
+		bool bvideoSave;		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+		bool bcalibration;		// Ä¶ï¿½ï¿½ï¿½ê·¹ï¿½Ì¼ï¿½
+		bool bdebug;			// ï¿½ï¿½ï¿½ï¿½×¸ï¿½ï¿½ ON/OFF
+		bool btopview;			// Å¾ï¿½ï¿½ ON/OFF
+		bool bmission;			// ï¿½Ì¼ï¿½ï¿½ï¿½ï¿½ï¿½ ON/OFF (ï¿½ï¿½ï¿½ï¿½ï¿½Î½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê°Ôµï¿½)
+		bool bauto;				// ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½ ON/OFF
+		bool bspeedControl;		// ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Óµï¿½ï¿½ï¿½ï¿½ï¿½ ON/OFF
+		bool bwhiteLine;		// ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ Å½ï¿½ï¿½ ON/OFF
+		bool bprintString;		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì¿ï¿½ ï¿½ï¿½ï¿½Ú¿ï¿½ Ç¥ï¿½ï¿½ ON/OFF
+		bool bprintMission;		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì¿ï¿½ ï¿½Ì¼ï¿½ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½ ON/OFF
+		bool bprintSensor;		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½ ON/OFF
+		bool bprintTire;		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½ ON/OFF
+		bool bdark;				// ï¿½Í³ï¿½ Å½ï¿½ï¿½ ON/OFF
+		bool bcheckPriority;	// ï¿½ì¼±ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½ï¿½ï¿½ Å½ï¿½ï¿½ ON/OFF
+		bool bcheckSignalLight; // ï¿½ï¿½È£ï¿½ï¿½ Å½ï¿½ï¿½ ON/OFF
+		bool bcheckFinishLine;	// ï¿½Ç´Ï½Ã¶ï¿½ï¿½ï¿½ Å½ï¿½ï¿½ ON/OFF
+		char missionString[20]; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì¿ï¿½ Ç¥ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ú¿ï¿½
+		int topMode;			// Å¾ï¿½ï¿½ ï¿½ï¿½ï¿½ (0, 1, 2)
+		int debugMode;			// ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½(0~ 7)
 	};
 
-	struct thr_data
-	{
-		struct display* disp;
-		struct v4l2* v4l2;
-		struct vpe* vpe;
-		struct buffer** input_bufs;
-		struct ControlData controlData;
-		struct MissionData missionData;
-		struct ImgProcessData imgData;
-		unsigned char img_data_buf[VPE_OUTPUT_IMG_SIZE];
-
-		int msgq_id;
-
-		bool bfull_screen;
-		bool bstream_start;
-		pthread_t threads[4]; //½º·¹µå°³¼ö
-	};
 
 int DistanceSensor_cm(int channel);
-//Return : Àû¿Ü¼± ¼¾¼­ °ª(cm)À» ¹ÝÈ¯ÇÑ´Ù. (°Å¸®°¡ °¡±î¿ï¼ö·Ï ¼ýÀÚ³ôÀ½)
+//Return : ï¿½ï¿½ï¿½Ü¼ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½(cm)ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ñ´ï¿½. (ï¿½Å¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ú³ï¿½ï¿½ï¿½)
 
 int sensor_dist(int channel, int input);
-// Return : Àû¿Ü¼± ¼¾¼­ °ªÀ» ÃøÁ¤°ª ±âÁØÀ¸·Î ¸ÊÇÎÇÏ¿© cm ´ÜÀ§·Î ¹ÝÈ¯ÇÑ´Ù.
+// Return : ï¿½ï¿½ï¿½Ü¼ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ cm ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ñ´ï¿½.
 
 signed int Encoder_Read(void);
-// return : ÇöÀç ÀÎÄÚ´õ °ªÀ» ¹ÝÈ¯ÇÑ´Ù
+// return : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ú´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ñ´ï¿½
 
 int StopLine(int Lineflag);
-// Return : Lineflagº¸´Ù 1·Î °¨ÁöµÈ °ªÀÌ ´õ Å©¸é Á¤Áö¼±À» °¨ÁöÇÑ °ÍÀ¸·Î ÆÇ´ÜÇÏ°í true¸¦ ¹ÝÈ¯ÇÑ´Ù.
+// Return : Lineflagï¿½ï¿½ï¿½ï¿½ 1ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ Å©ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç´ï¿½ï¿½Ï°ï¿½ trueï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ñ´ï¿½.
 
 int STOP_WhiteLine(int Lineflag);
 
 void DesiredDistance(int SettingSpeed, int SettingDistance, int SettingSteering);
-// Postcondition : SettingSpeedÀÇ ¼Óµµ(¾ç¼ö´Â ÀüÁø, À½¼ö´Â ÈÄÁø)·Î SettingDistanceÀÇ step ¸¸Å­ ¿òÁ÷ÀÎ´Ù.
+// Postcondition : SettingSpeedï¿½ï¿½ ï¿½Óµï¿½(ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)ï¿½ï¿½ SettingDistanceï¿½ï¿½ step ï¿½ï¿½Å­ ï¿½ï¿½ï¿½ï¿½ï¿½Î´ï¿½.
 
 void onlyDistance(int SettingSpeed, int SettingDistance);
 //ds
 
 int RoundAbout_isStart(const int Distance1);
-// Return : ¾Õ¿¡ Â÷·®ÀÌ Áö³ª°¥ °æ¿ì ÀÏÁ¤ ÇÁ·¹ÀÓ ÈÄ Ãâ¹ßÇÏ¸ç 1À» ¹ÝÈ¯ÇÑ´Ù.
+// Return : ï¿½Õ¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ 1ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ñ´ï¿½.
 
 int RoundAbout_isDelay(const int Distance1);
-// Return : ¾Õ¿¡ Â÷·®ÀÌ ³ªÅ¸³¯ °æ¿ì ¿ì¼± Á¤ÁöÇÏ¸ç 1À» ¹ÝÈ¯ÇÑ´Ù. ±× ÈÄ ÀÏÁ¤ ÇÁ·¹ÀÓ ÈÄ Ãâ¹ßÇÏ¸ç 0À» ¹ÝÈ¯ÇÑ´Ù.
+// Return : ï¿½Õ¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ì¼± ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ 1ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ñ´ï¿½. ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ 0ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ñ´ï¿½.
 
 int RoundAbout_isEnd(const int Distance1, const int Distance2);
-// Return : ¾Õ, µÚ °Å¸®¼¾¼­¿¡ ÀÏÁ¤ °£°Ý¸¸Å­ ¾Æ¹«°Íµµ ÀâÈ÷Áö ¾Ê´Â´Ù¸é 1À» ¹ÝÈ¯ÇÑ´Ù.
+// Return : ï¿½ï¿½, ï¿½ï¿½ ï¿½Å¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ý¸ï¿½Å­ ï¿½Æ¹ï¿½ï¿½Íµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê´Â´Ù¸ï¿½ 1ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ñ´ï¿½.
 
 //int Tunnel_isTunnel(const int Distance1, const int Distance2, const int Distance3, const int Distance4);
 
 int Tunnel_isStart(const int Distance2, const int Distance6, const int Distance3, const int Distance5);
 
 int Tunnel_isEnd(const int Distance1, const int Distance2, const int Distance3, const int Distance4);
-// Return : ¾Õ, µÚ ¼¾¼­°¡ ¼ø¼­´ë·Î °¨ÁöµÇÁö ¾ÊÀ¸¸é 1À» ¹ÝÈ¯ÇÑ´Ù.
+// Return : ï¿½ï¿½, ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 1ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ñ´ï¿½.
 
 int Tunnel_SteerVal(const int Distance1, const int Distance2);
-// Return : ¾ç ¿· ¼¾¼­ÀÇ °Å¸®Â÷¸¦ ÀÌ¿ëÇÏ¿© ¾Ë¸ÂÀº Á¶Çâ°¢À» ¹ÝÈ¯ÇÑ´Ù.
+// Return : ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Å¸ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½Ï¿ï¿½ ï¿½Ë¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½â°¢ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ñ´ï¿½.
 int Tunnel_SteerVal2(const int Distance1, const int Distance2);
 
 void frontLightOnOff(unsigned short lightFlag, int on);
-// Postcondition : ÀÎÀÚ°¡ 1ÀÏ°æ¿ì ÀüÁ¶µî on, 0ÀÏ°æ¿ì off
+// Postcondition : ï¿½ï¿½ï¿½Ú°ï¿½ 1ï¿½Ï°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ on, 0ï¿½Ï°ï¿½ï¿½ off
 
 void rearLightOnOff(unsigned short lightFlag, int on);
-// Postcondition : ÀÎÀÚ°¡ 1ÀÏ°æ¿ì ÈÄ¹Ìµî on, 0ÀÏ°æ¿ì off
+// Postcondition : ï¿½ï¿½ï¿½Ú°ï¿½ 1ï¿½Ï°ï¿½ï¿½ ï¿½Ä¹Ìµï¿½ on, 0ï¿½Ï°ï¿½ï¿½ off
 
 int auto_speedMapping(int steerVal, const int basicSpeed);
-// Return :autoSteer ·Î µµÃâÇÑ Á¶Çâ°ª¿¡ µû¶ó ¼Óµµ¸¦ ¹ÝÈ¯ÇØÁØ´Ù.
+// Return :autoSteer ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½â°ªï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Óµï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½ï¿½ï¿½Ø´ï¿½.
 
 void buzzer(int numOfTimes, int interval_us, int pulseWidth_us);
-// numOfTimes		: ºÎÀú°¡ ¿ï¸®´Â È½¼ö
-// interval_us		: ºÎÀú »çÀÌÀÇ ½Ã°£°£°Ý
-// pulseWidth_us	: ºÎÀúÇÏ³ª´ç ¿ï¸®´Â ½Ã°£
+// numOfTimes		: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¸®ï¿½ï¿½ È½ï¿½ï¿½
+// interval_us		: ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ï¿½ï¿½ï¿½ï¿½
+// pulseWidth_us	: ï¿½ï¿½ï¿½ï¿½ï¿½Ï³ï¿½ï¿½ï¿½ ï¿½ï¸®ï¿½ï¿½ ï¿½Ã°ï¿½
 
-static void manualControl(struct ControlData* cdata, char key);
+void manualControl(struct ControlData* cdata, char key);
 
-static uint32_t timeCheck(struct timeval* tempTime);
+uint32_t timeCheck(struct timeval* tempTime);
 
 #ifdef __cplusplus
 }

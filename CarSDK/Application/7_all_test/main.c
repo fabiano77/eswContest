@@ -46,24 +46,25 @@
 #define BASIC_SPEED 65		// 프로그램 기본 바퀴속도, autoSteer와 주로 사용.
 #define BUZZER_PULSE 100000 // 기본 부저 길이
 
+// 각종 structure는 control_mission.h 에 이동됨. 9/8(화)
 
 struct thr_data
-	{
-		struct display* disp;
-		struct v4l2* v4l2;
-		struct vpe* vpe;
-		struct buffer** input_bufs;
-		struct ControlData controlData;
-		struct MissionData missionData;
-		struct ImgProcessData imgData;
-		unsigned char img_data_buf[VPE_OUTPUT_IMG_SIZE];
+{
+	struct display* disp;
+	struct v4l2* v4l2;
+	struct vpe* vpe;
+	struct buffer** input_bufs;
+	struct ControlData controlData;
+	struct MissionData missionData;
+	struct ImgProcessData imgData;
+	unsigned char img_data_buf[VPE_OUTPUT_IMG_SIZE];
 
-		int msgq_id;
+	int msgq_id;
 
-		bool bfull_screen;
-		bool bstream_start;
-		pthread_t threads[4]; //�����尳��
-	};
+	bool bfull_screen;
+	bool bstream_start;
+	pthread_t threads[4]; //�����尳��
+};
 
 static struct thr_data* ptr_data;
 /******************** function ********************/
@@ -71,10 +72,10 @@ static void DesireDistance(int SettingSpeed, int SettingDistance, int SettingSte
 
 static void SteeringServo_Write(signed short angle);
 
-static int allocate_input_buffers(struct thr_data *data)
+static int allocate_input_buffers(struct thr_data* data)
 {
 	int i;
-	struct vpe *vpe = data->vpe;
+	struct vpe* vpe = data->vpe;
 
 	data->input_bufs = calloc(NUMBUF, sizeof(*data->input_bufs));
 	for (i = 0; i < NUMBUF; i++)
@@ -93,7 +94,7 @@ static int allocate_input_buffers(struct thr_data *data)
 	return 0;
 }
 
-static void free_input_buffers(struct buffer **buffer, uint32_t n, bool bmultiplanar)
+static void free_input_buffers(struct buffer** buffer, uint32_t n, bool bmultiplanar)
 {
 	uint32_t i;
 	for (i = 0; i < n; i++)
@@ -112,10 +113,10 @@ static void free_input_buffers(struct buffer **buffer, uint32_t n, bool bmultipl
 	free(buffer);
 }
 
-static void draw_operatingtime(struct display *disp, uint32_t time, uint32_t itime, uint32_t mtime)
+static void draw_operatingtime(struct display* disp, uint32_t time, uint32_t itime, uint32_t mtime)
 {
 	FrameBuffer tmpFrame;
-	unsigned char *pbuf[4];
+	unsigned char* pbuf[4];
 	char strmtime[128];
 	char strtime[128];
 	char stritime[128];
@@ -147,12 +148,12 @@ static void draw_operatingtime(struct display *disp, uint32_t time, uint32_t iti
 /************************************************/
 /*	Function - img_process						*/
 /************************************************/
-static void img_process(struct display *disp, struct buffer *cambuf, struct thr_data *t_data, float *map1, float *map2)
+static void img_process(struct display* disp, struct buffer* cambuf, struct thr_data* t_data, float* map1, float* map2)
 {
 	unsigned char srcbuf[VPE_OUTPUT_W * VPE_OUTPUT_H * 3];
 	uint32_t optime;
 	struct timeval st, et;
-	unsigned char *cam_pbuf[4];
+	unsigned char* cam_pbuf[4];
 	bool delay_flag = false;
 
 	if (get_framebuf(cambuf, cam_pbuf) == 0)
@@ -389,15 +390,15 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		if (t_data->imgData.bprintMission)
 		{
 			displayPrintMission(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H,
-								(int)t_data->missionData.ms[0], (int)t_data->missionData.ms[1], (int)t_data->missionData.ms[2],
-								(int)t_data->missionData.ms[3], (int)t_data->missionData.ms[4], (int)t_data->missionData.ms[5],
-								(int)t_data->missionData.ms[6], (int)t_data->missionData.ms[7], (int)t_data->missionData.ms[8]);
+				(int)t_data->missionData.ms[0], (int)t_data->missionData.ms[1], (int)t_data->missionData.ms[2],
+				(int)t_data->missionData.ms[3], (int)t_data->missionData.ms[4], (int)t_data->missionData.ms[5],
+				(int)t_data->missionData.ms[6], (int)t_data->missionData.ms[7], (int)t_data->missionData.ms[8]);
 		}
 		if (t_data->imgData.bprintSensor)
 		{
 			displayPrintSensor(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H,
-							   DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3),
-							   DistanceSensor_cm(4), DistanceSensor_cm(5), DistanceSensor_cm(6), StopLine(4));
+				DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3),
+				DistanceSensor_cm(4), DistanceSensor_cm(5), DistanceSensor_cm(6), StopLine(4));
 		}
 		if (t_data->imgData.bprintTire)
 		{
@@ -434,12 +435,12 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 /************************************************/
 /*	Thread - image_process_thread				*/
 /************************************************/
-void *image_process_thread(void *arg)
+void* image_process_thread(void* arg)
 {
-	struct thr_data *data = (struct thr_data *)arg;
-	struct v4l2 *v4l2 = data->v4l2;
-	struct vpe *vpe = data->vpe;
-	struct buffer *capt;
+	struct thr_data* data = (struct thr_data*)arg;
+	struct v4l2* v4l2 = data->v4l2;
+	struct vpe* vpe = data->vpe;
+	struct buffer* capt;
 	struct timeval st, et;
 	bool isFirst = true;
 	int index;
@@ -517,9 +518,9 @@ void *image_process_thread(void *arg)
 /************************************************/
 /*	Thread - input_thread						*/
 /************************************************/
-void *input_thread(void *arg)
+void* input_thread(void* arg)
 {
-	struct thr_data *data = (struct thr_data *)arg;
+	struct thr_data* data = (struct thr_data*)arg;
 
 	int total_encoder = 0;
 	int forward_encoder = 0;
@@ -561,7 +562,7 @@ void *input_thread(void *arg)
 	MSG("\t video  : video record start");
 	MSG("\t save   : save video file");
 	MSG("\n");
-	
+
 	int buzzerPulseWidth_us = 100000;
 
 	while (1)
@@ -828,9 +829,9 @@ void *input_thread(void *arg)
 	return NULL;
 }
 
-void *video_record_thread(void *arg)
+void* video_record_thread(void* arg)
 {
-	struct thr_data *data = (struct thr_data *)arg;
+	struct thr_data* data = (struct thr_data*)arg;
 	struct timeval st, et;
 	bool videoEnd = false;
 	int fps = 10;
@@ -885,9 +886,9 @@ void *video_record_thread(void *arg)
 /************************************************/
 /*	Thread - mission_thread						*/
 /************************************************/
-void *mission_thread(void *arg)
+void* mission_thread(void* arg)
 {
-	struct thr_data *data = (struct thr_data *)arg;
+	struct thr_data* data = (struct thr_data*)arg;
 	struct timeval time;
 	time.tv_sec = 0;
 
@@ -1680,7 +1681,7 @@ void *mission_thread(void *arg)
 							}
 						}
 						else if (data->missionData.overtakingData.headingDirection == LEFT &&
-								 data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
+							data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
 						{
 
 							sprintf(data->imgData.missionString, "Left to go");
@@ -1777,7 +1778,7 @@ void *mission_thread(void *arg)
 						{
 							/*복귀 좌회전 방향 설정 및 전진*/
 							Winker_Write(LEFT_ON);
-							DesireDistance(50, thresDistance+100, 1900);
+							DesireDistance(50, thresDistance + 100, 1900);
 							Winker_Write(ALL_OFF);
 						}
 						//left
@@ -1785,7 +1786,7 @@ void *mission_thread(void *arg)
 						{
 							/*복귀 우회전 방향 설정*/
 							Winker_Write(RIGHT_ON);
-							DesireDistance(50, thresDistance+100, 1100);
+							DesireDistance(50, thresDistance + 100, 1100);
 							Winker_Write(ALL_OFF);
 						}
 						/*알고리즘 전진*/
@@ -1825,7 +1826,7 @@ void *mission_thread(void *arg)
 
 				while (data->imgData.bcheckSignalLight)
 					usleep(200000); //영상처리에서 일련의 과정이 끝날 때 까지 기다린다.
-					
+
 				data->imgData.bprintTire = true;
 				sprintf(data->imgData.missionString, "Distance control");
 				DesireSpeed_Write(BASIC_SPEED);
@@ -1918,7 +1919,7 @@ void *mission_thread(void *arg)
 
 			if (1) //무조건 진입
 			{
-				
+
 				DesireSpeed_Write(0);
 				SteeringServo_Write(1500);
 				data->imgData.bmission = true;
@@ -1981,7 +1982,7 @@ void *mission_thread(void *arg)
 	}
 }
 
-static struct thr_data *pexam_data = NULL;
+static struct thr_data* pexam_data = NULL;
 
 void signal_handler(int sig)
 {
@@ -2013,14 +2014,14 @@ void signal_handler(int sig)
 /************************************************/
 /*	MAIN	main	MAIN	main				*/
 /************************************************/
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-	struct v4l2 *v4l2;
-	struct vpe *vpe;
+	struct v4l2* v4l2;
+	struct vpe* vpe;
 	struct thr_data tdata;
 	ptr_data = &tdata;
 	int disp_argc = 3;
-	char *disp_argv[] = {"dummy", "-s", "4:480x272", "\0"}; // 추후 변경 여부 확인 후 처리..
+	char* disp_argv[] = { "dummy", "-s", "4:480x272", "\0" }; // 추후 변경 여부 확인 후 처리..
 	int ret = 0;
 	memset(tdata.img_data_buf, 0, sizeof(tdata.img_data_buf));
 
@@ -2135,8 +2136,8 @@ int main(int argc, char **argv)
 	vpe->translen = 1;
 
 	MSG("Input(Camera) = %d x %d (%.4s)\nOutput(LCD) = %d x %d (%.4s)",
-		vpe->src.width, vpe->src.height, (char *)&vpe->src.fourcc,
-		vpe->dst.width, vpe->dst.height, (char *)&vpe->dst.fourcc);
+		vpe->src.width, vpe->src.height, (char*)&vpe->src.fourcc,
+		vpe->dst.width, vpe->dst.height, (char*)&vpe->dst.fourcc);
 	// 입출력 이미지의 크기 및 포맷정보 출력
 	// 입력 이미지 : 1280x720, Format = UYUV422
 	// 출력 이미지 : 320x180. Format = BGR24
@@ -2211,14 +2212,16 @@ int main(int argc, char **argv)
 
 void DesireDistance(int SettingSpeed, int SettingDistance, int SettingSteering)
 {
-	if(SettingSpeed<0) rearLightOnOff(ptr_data->controlData.lightFlag, 1);
 	ptr_data->controlData.steerVal = SettingSteering;
+
+	if (SettingSpeed < 0) rearLightOnOff(ptr_data->controlData.lightFlag, 1);
 	DesiredDistance(SettingSpeed, SettingDistance, SettingSteering);
-	if(SettingSpeed<0) rearLightOnOff(ptr_data->controlData.lightFlag, 0);
+	if (SettingSpeed < 0) rearLightOnOff(ptr_data->controlData.lightFlag, 0);
 }
 
 void SteeringServo_Write(signed short angle)
 {
 	ptr_data->controlData.steerVal = angle;	//오버레이 연동
+
 	SteeringServoControl_Write(angle);
 }

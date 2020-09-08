@@ -776,10 +776,10 @@ void settingStatic(int w, int h)
 	roiMat = Mat(Size(640, 360), CV_8UC3, Scalar(0));
 	rectangle(roiMat, Rect_signalDetect, Scalar(255, 255, 255), -1);
 
-	//Tire = imread("./picture/tire.png", IMREAD_UNCHANGED);			//in Linux
-	//backimg = imread("./picture/background.png", IMREAD_UNCHANGED);	//in Linux
-	Tire = imread("picture/tire.png", IMREAD_UNCHANGED);				//in Windows
-	backimg = imread("picture/background.png", IMREAD_UNCHANGED);		//in Windows
+	Tire = imread("./overlay_pictures/tire.png", IMREAD_UNCHANGED);			//in Linux
+	backimg = imread("./overlay_pictures/background.png", IMREAD_UNCHANGED);	//in Linux
+	//Tire = imread("pictures/tire.png", IMREAD_UNCHANGED);				//in Windows
+	//backimg = imread("pictures/background.png", IMREAD_UNCHANGED);		//in Windows
 	if (Tire.type() == 0 || backimg.type() == 0) btire = false;
 
 	cout << "settingStatic" << endl;

@@ -1468,10 +1468,10 @@ void* mission_thread(void* arg)
 							int parkingTime = (((et_p.tv_sec - st_p.tv_sec) * 1000) + ((int)et_p.tv_usec / 1000 - (int)st_p.tv_usec / 1000)) / 1000;
 							printf("parking time : %d\n", parkingTime);
 
-							if (parking == READY)
-								parking = REMAIN;
-							else if (parking == REMAIN)
+							if (parking == REMAIN)
 								parking = DONE;
+							else if (parking == READY)
+								parking = REMAIN;
 
 							break;
 
@@ -1485,12 +1485,10 @@ void* mission_thread(void* arg)
 					if (parking == REMAIN)
 					{
 						printf("First Parking is Done!\n");
-						usleep(5000000);
 					}
 					if (parking == DONE)
 					{
-						printf("Second Parking is Dome!\n");
-						usleep(5000000);
+						printf("Second Parking is Done!\n");
 					}
 				}
 			}

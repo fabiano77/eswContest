@@ -269,6 +269,43 @@ extern "C"
 			CarLight_Write(0x00);
 	}
 
+	int RoundAbout_isStart(const int Distance1)
+	{
+		if (!first_RoundAbout++)
+			RoundAbout_Init();
+		int lower_StopDistance = 25;
+		int uper_StopDistance = 30;
+
+		if (flag_go > 0)
+		{
+			if (Distance1 > uper_StopDistance)
+				flag_go--;
+		}
+		else if (flag_go == 0)
+		{
+			if (!check_start)
+			{
+				check_start = 1;
+				flag_wait = -1;
+			}
+		}
+		else
+		{
+			if (Distance1 < lower_StopDistance) {
+				if (flag_wait < 2)
+					flag_wait++;
+				else if (flag_wait > 0)
+					flag_wait--;
+			}
+			if (flag_wait == 2)
+			{
+				flag_wait = -1;
+				flag_go = 25; // �ش� �������� ���� �� ����� ����
+			}
+		}
+		return check_start;
+	}
+
 	int Tunnel_isEnd(const int Distance1, const int Distance2, const int Distance3, const int Distance4)
 	{
 		/* 2,6 - 3,5 (1,2 - 3,4)
@@ -558,42 +595,6 @@ void RoundAbout_Init()
 }
 
 /* 
-	int RoundAbout_isStart(const int Distance1)
-	{
-		if (!first_RoundAbout++)
-			RoundAbout_Init();
-		int lower_StopDistance = 25;
-		int uper_StopDistance = 30;
-
-		if (flag_go > 0)
-		{
-			if (Distance1 > uper_StopDistance)
-				flag_go--;
-		}
-		else if (flag_go == 0)
-		{
-			if (!check_start)
-			{
-				check_start = 1;
-				flag_wait = -1;
-			}
-		}
-		else
-		{
-			if (Distance1 < lower_StopDistance){
-				if (flag_wait < 2)
-					flag_wait++;
-				else if (flag_wait > 0)
-					flag_wait--;
-			}
-			if (flag_wait == 2)
-			{
-				flag_wait = -1;
-				flag_go = 25; // �ش� �������� ���� �� ����� ����
-			}
-		}
-		return check_start;
-	}
 
 	int RoundAbout_isDelay(const int Distance1)
 	{

@@ -208,6 +208,9 @@ void DesiredDistance(int SettingSpeed, int SettingDistance, int SettingSteering)
 void onlyDistance(int SettingSpeed, int SettingDistance);
 //ds
 
+int RoundAbout_isStart(const int Distance1);
+//
+
 int Tunnel_isEnd(const int Distance1, const int Distance2, const int Distance3, const int Distance4);
 // Return : ��, �� ������ ������� �������� ������ 1�� ��ȯ�Ѵ�.
 

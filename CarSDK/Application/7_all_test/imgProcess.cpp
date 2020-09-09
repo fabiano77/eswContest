@@ -935,7 +935,7 @@ void lineFiltering(Mat& src, Mat& dst, int mode)
 	int h1(14), s(60), v(100); // 예선영상 14, 0, 240
 	int h2(46);
 	Mat hsv;
-	Mat binMat();
+	Mat binMat;
 	if (mode == 0 || mode == 1) //노란차선 인식 모드
 	{
 		Scalar lower_yellow(h1, s, v);

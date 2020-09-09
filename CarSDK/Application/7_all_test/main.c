@@ -1018,439 +1018,442 @@ void* mission_thread(void* arg)
 
 		if (parking && parking != DONE)
 		{
-			if (DistanceSensor_cm(2) <= 28) //처음 벽이 감지되었을 경우
+			if ((data->controlData.steerVal <= 1600 && data->controlData.steerVal >= 1400) || parking == REMAIN) 
 			{
-				struct timeval st_p, et_p;
-				gettimeofday(&st_p, NULL);
-
-				data->imgData.bprintString = true;
-				sprintf(data->imgData.missionString, "Parking");
-				int parking_width = 0;
-				//int first_error_distance = 0;
-				//int second_error_distance = 0;
-				//int first_error_flag = 1;
-				bool wrong_detection = 1;
-				int encoderVal = 0;
-
-				enum ParkingState state = FIRST_WALL;
-				enum HorizontalStep step_h = FIRST_BACKWARD;
-				enum VerticalStep step_v = FIRST_BACKWARD_V;
-
-				while (state && wrong_detection) // state == END가 아닌이상 루프 진행
+				if (DistanceSensor_cm(2) <= 28) //처음 벽이 감지되었을 경우
 				{
-					data->missionData.loopTime = timeCheck(&time);
+					struct timeval st_p, et_p;
+					gettimeofday(&st_p, NULL);
 
-					data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 28) ? true : false;
-					data->missionData.parkingData.rearRight = (DistanceSensor_cm(3) <= 28) ? true : false;
+					data->imgData.bprintString = true;
+					sprintf(data->imgData.missionString, "Parking");
+					int parking_width = 0;
+					//int first_error_distance = 0;
+					//int second_error_distance = 0;
+					//int first_error_flag = 1;
+					bool wrong_detection = 1;
+					int encoderVal = 0;
 
-					switch (state)
+					enum ParkingState state = FIRST_WALL;
+					enum HorizontalStep step_h = FIRST_BACKWARD;
+					enum VerticalStep step_v = FIRST_BACKWARD_V;
+
+					while (state && wrong_detection) // state == END가 아닌이상 루프 진행
 					{
-					case FIRST_WALL:
-						sprintf(data->imgData.missionString, "First Wall");
-						if (data->missionData.parkingData.frontRight == false)
-						{
-							state = DISTANCE_CHECK;
-							EncoderCounter_Write(0);
-						}
-						break;
+						data->missionData.loopTime = timeCheck(&time);
 
-					case DISTANCE_CHECK:
-						/*
-						주차 폭에 대한 거리를 측정하기 위해 거리 측정 시작
-						*/
+						data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 28) ? true : false;
+						data->missionData.parkingData.rearRight = (DistanceSensor_cm(3) <= 28) ? true : false;
 
-						/*
-						우선 정지 표지판을 감지하면 주차에서 탈출되도록 조치 
-						*/
-						if (data->missionData.frame_priority)
+						switch (state)
 						{
-							wrong_detection = 0;
+						case FIRST_WALL:
+							sprintf(data->imgData.missionString, "First Wall");
+							if (data->missionData.parkingData.frontRight == false)
+							{
+								state = DISTANCE_CHECK;
+								EncoderCounter_Write(0);
+							}
 							break;
-						}
-						// Encoder 측정
-						encoderVal = Encoder_Read();
-						if (encoderVal != 65278)
-						{
-							parking_width = encoderVal;
-							sprintf(data->imgData.missionString, "parking_width : %d", parking_width);
-							if (parking_width >= 2000)
+
+						case DISTANCE_CHECK:
+							/*
+							주차 폭에 대한 거리를 측정하기 위해 거리 측정 시작
+							*/
+
+							/*
+							우선 정지 표지판을 감지하면 주차에서 탈출되도록 조치
+							*/
+							if (data->missionData.frame_priority)
 							{
 								wrong_detection = 0;
 								break;
 							}
-							// 주차 공간 측정이 안되는 경우, 잘못된 주차 분기 진입으로 판단하고 탈출.
-						}
-						if (data->missionData.parkingData.frontRight == true)
-						{
-							/*
-							거리 측정 종료 -> 측정 거리를 변수에 담는다.
-							*/
-							printf("Result Width : %-3d\n", parking_width);
-
-							if (parking_width <= 850)
-								data->missionData.parkingData.verticalFlag = true;
-							else
-								data->missionData.parkingData.horizontalFlag = true;
-
-							state = SECOND_WALL;
-						}
-						break;
-
-					case SECOND_WALL:
-						sprintf(data->imgData.missionString, "Second Wall");
-						if (data->missionData.parkingData.rearRight == true)
-						{
-							state = PARKING_START;
-							data->imgData.bmission = true;
-							// 두번 째 벽에 차량 우측 후방 센서가 걸린 상태이다. -> 수직 또는 수평 주차 진행.
-						}
-						break;
-
-					case PARKING_START:
-						sprintf(data->imgData.missionString, "Parking Start");
-						/*
-						수직 및 수평 주차 구문 추가.
-						*/
-
-						if (data->missionData.parkingData.verticalFlag && data->missionData.parkingData.horizontalFlag == false)
-						{
-							// DesireSpeed_Write(0);
-							// usleep(50000);
-							// EncoderCounter_Write(0);
-							// usleep(50000);
-							DesireDistance(60, 200, 1500);
-							while (data->missionData.parkingData.verticalFlag)
+							// Encoder 측정
+							encoderVal = Encoder_Read();
+							if (encoderVal != 65278)
 							{
-								data->missionData.loopTime = timeCheck(&time);
-								switch (step_v)
+								parking_width = encoderVal;
+								sprintf(data->imgData.missionString, "parking_width : %d", parking_width);
+								if (parking_width >= 2000)
 								{
-								case FIRST_BACKWARD_V:
-									sprintf(data->imgData.missionString, "FIRST_BACKWARD_V");
-									SteeringServo_Write(1050);
-									// 회전 각 수정 부분
-									usleep(150000);
-									DesireSpeed_Write(-60);
-									usleep(200000);
-									if (DistanceSensor_cm(3) <= 13 && DistanceSensor_cm(5) <= 13)
-									{
-										DesireSpeed_Write(0);
-										usleep(50000);
-										step_v = SECOND_BACKWARD_V;
-									}
-									break;
-
-								case SECOND_BACKWARD_V:
-									sprintf(data->imgData.missionString, "SECOND_BACKWARD_V");
-									SteeringServo_Write(1500);
-									usleep(100000);
-									DesireSpeed_Write(-35);
-									usleep(50000);
-									// 바퀴를 일자로 맞춰주고 후진한다.
-									if (DistanceSensor_cm(2) <= 11)
-									{
-										DesireSpeed_Write(0);
-										usleep(50000);
-										step_v = RIGHT_FRONT_V;
-										break;
-									}
-									else if (DistanceSensor_cm(6) <= 11)
-									{
-										DesireSpeed_Write(0);
-										usleep(50000);
-										step_v = LEFT_FRONT_V;
-										break;
-									}
-									if (DistanceSensor_cm(5) <= 6)
-									{
-										// 언더스티어 상황
-										printf("under steer\n");
-										DesireSpeed_Write(0);
-										usleep(200000);
-										step_v = UNDER_STEER_V;
-										break;
-									}
-									else if (DistanceSensor_cm(3) <= 6)
-									{
-										// 오버스티어 상황
-										printf("over steer\n");
-										DesireSpeed_Write(0);
-										usleep(50000);
-										step_v = OVER_STEER_V;
-										break;
-									}
-									break;
-
-								case UNDER_STEER_V:
-									sprintf(data->imgData.missionString, "UNDER_STEER");
-									DesireDistance(60, 100, 1300);
-									usleep(30000);
-									DesireDistance(60, 100, 1500);
-									usleep(30000);
-									DesireDistance(60, 200, 1700);
-									usleep(30000);
-
-									step_v = SECOND_BACKWARD_V;
-									break;
-
-								case OVER_STEER_V:
-									sprintf(data->imgData.missionString, "OVER_STEER");
-									//DesireDistance(23, 100, 1300);
-									//usleep(200000);
-									DesireDistance(-60, 500, 1500);
-									//usleep(300000);
-									//DesireDistance(23, 200, 1700);
-									//usleep(200000);
-									step_v = SECOND_BACKWARD_V;
-									break;
-
-								case RIGHT_FRONT_V:
-									sprintf(data->imgData.missionString, "RIGHT_FRONT_V");
-									int right_difference = DistanceSensor_cm(2) - DistanceSensor_cm(3);
-									DesireDistance(60, 100, 1500 - (right_difference * 100));
-									//usleep(200000);
-									DesireDistance(-60, 400, 1500);
-									//usleep(200000);
-									if (abs(right_difference) < 3)
-									{
-										DesireSpeed_Write(0);
-										usleep(50000);
-										step_v = FIRST_FORWARD_V;
-									}
-									break;
-
-								case LEFT_FRONT_V:
-									sprintf(data->imgData.missionString, "RIGHT_FRONT_V");
-									int left_difference = DistanceSensor_cm(6) - DistanceSensor_cm(5);
-									DesireDistance(60, 100, 1500 + (left_difference * 100));
-									//usleep(200000);
-									DesireDistance(-60, 400, 1500);
-									//usleep(200000);
-									if (abs(left_difference) < 3)
-									{
-										DesireSpeed_Write(0);
-										usleep(50000);
-										step_v = FIRST_FORWARD_V;
-									}
-									break;
-
-								case FIRST_FORWARD_V:
-									sprintf(data->imgData.missionString, "FIRST_FORWARD_V");
-									DesireDistance(-50, 400, 1500);
-									usleep(1000000);
-									step_v = SECOND_FORWARD_V;
-									Winker_Write(ALL_ON);
-									buzzer(1, 0, 300000);
-									Winker_Write(ALL_OFF);
-									break;
-
-								case SECOND_FORWARD_V:
-									sprintf(data->imgData.missionString, "SECOND_FORWARD_V");
-									DesireSpeed_Write(60);
-									usleep(50000);
-									if (DistanceSensor_cm(2) >= 20 && DistanceSensor_cm(6) >= 20)
-									{
-										DesireSpeed_Write(0);
-										usleep(50000);
-										DesireDistance(60, 200, 1500);
-										step_v = FINISH_V;
-									}
-									break;
-
-								case FINISH_V:
-									sprintf(data->imgData.missionString, "FINISH_V");
-									DesireDistance(60, 1150, 1050);
-									data->missionData.parkingData.verticalFlag = 0;
-									break;
-
-								default:
+									wrong_detection = 0;
 									break;
 								}
-								usleep(150000);
+								// 주차 공간 측정이 안되는 경우, 잘못된 주차 분기 진입으로 판단하고 탈출.
 							}
-						}
-						else if (data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
-						{
-							DesireDistance(60, 230, 1500);
-							// 주차 각 수정 부분
-							while (data->missionData.parkingData.horizontalFlag)
+							if (data->missionData.parkingData.frontRight == true)
 							{
-								data->missionData.loopTime = timeCheck(&time);
-								switch (step_h)
-								{
-								case FIRST_BACKWARD:
-									sprintf(data->imgData.missionString, "FIRST_BACKWARD");
-									DesireDistance(-60, 820, 1050);
-									//usleep(200000);
-									DesireDistance(-60, 370, 1500);
-									//usleep(200000);
-									SteeringServo_Write(1900);
-									usleep(100000);
-									DesireSpeed_Write(-35);
-									usleep(50000);
-									while (1)
-									{
-										if (DistanceSensor_cm(4) <= 6)
-										{
-											DesireSpeed_Write(0);
-											break;
-										}
-										usleep(50000);
-									}
-									SteeringServo_Write(1250);
-									usleep(150000);
-									DesireSpeed_Write(35);
-									usleep(50000);
-									while (1)
-									{
-										if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 3) || DistanceSensor_cm(1) <= 4)
-										{
-											DesireSpeed_Write(0);
-											step_h = SECOND_BACKWARD;
-											break;
-										}
-										usleep(30000);
-									}
-									usleep(50000);
-									break;
+								/*
+								거리 측정 종료 -> 측정 거리를 변수에 담는다.
+								*/
+								printf("Result Width : %-3d\n", parking_width);
 
-								case SECOND_BACKWARD:
-									sprintf(data->imgData.missionString, "SECOND_BACKWARD");
-									//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-									int difference = DistanceSensor_cm(2) - DistanceSensor_cm(3);
-									if (difference < -2)
+								if (parking_width <= 850)
+									data->missionData.parkingData.verticalFlag = true;
+								else
+									data->missionData.parkingData.horizontalFlag = true;
+
+								state = SECOND_WALL;
+							}
+							break;
+
+						case SECOND_WALL:
+							sprintf(data->imgData.missionString, "Second Wall");
+							if (data->missionData.parkingData.rearRight == true)
+							{
+								state = PARKING_START;
+								data->imgData.bmission = true;
+								// 두번 째 벽에 차량 우측 후방 센서가 걸린 상태이다. -> 수직 또는 수평 주차 진행.
+							}
+							break;
+
+						case PARKING_START:
+							sprintf(data->imgData.missionString, "Parking Start");
+							/*
+							수직 및 수평 주차 구문 추가.
+							*/
+
+							if (data->missionData.parkingData.verticalFlag && data->missionData.parkingData.horizontalFlag == false)
+							{
+								// DesireSpeed_Write(0);
+								// usleep(50000);
+								// EncoderCounter_Write(0);
+								// usleep(50000);
+								DesireDistance(60, 200, 1500);
+								while (data->missionData.parkingData.verticalFlag)
+								{
+									data->missionData.loopTime = timeCheck(&time);
+									switch (step_v)
 									{
-										//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-										DesireDistance(-40, 400, 1300);
-										//usleep(200000);
-										if (abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2)
+									case FIRST_BACKWARD_V:
+										sprintf(data->imgData.missionString, "FIRST_BACKWARD_V");
+										SteeringServo_Write(1050);
+										// 회전 각 수정 부분
+										usleep(150000);
+										DesireSpeed_Write(-60);
+										usleep(200000);
+										if (DistanceSensor_cm(3) <= 13 && DistanceSensor_cm(5) <= 13)
 										{
 											DesireSpeed_Write(0);
-											usleep(20000);
-											break;
+											usleep(50000);
+											step_v = SECOND_BACKWARD_V;
 										}
-										DesireDistance(40, 400, 1700);
-										//usleep(200000);
-									}
-									else if (difference > 2)
-									{
-										//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-										DesireDistance(-40, 400, 1700);
-										//usleep(200000);
-										if (abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2)
-										{
-											DesireSpeed_Write(0);
-											usleep(20000);
-											break;
-										}
-										DesireDistance(40, 400, 1300);
-										//usleep(200000);
-									}
-									if (abs(difference) <= 2)
-									{
-										//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-										DesireSpeed_Write(0);
-										usleep(100000);
+										break;
+
+									case SECOND_BACKWARD_V:
+										sprintf(data->imgData.missionString, "SECOND_BACKWARD_V");
 										SteeringServo_Write(1500);
+										usleep(100000);
+										DesireSpeed_Write(-35);
+										usleep(50000);
+										// 바퀴를 일자로 맞춰주고 후진한다.
+										if (DistanceSensor_cm(2) <= 11)
+										{
+											DesireSpeed_Write(0);
+											usleep(50000);
+											step_v = RIGHT_FRONT_V;
+											break;
+										}
+										else if (DistanceSensor_cm(6) <= 11)
+										{
+											DesireSpeed_Write(0);
+											usleep(50000);
+											step_v = LEFT_FRONT_V;
+											break;
+										}
+										if (DistanceSensor_cm(5) <= 6)
+										{
+											// 언더스티어 상황
+											printf("under steer\n");
+											DesireSpeed_Write(0);
+											usleep(200000);
+											step_v = UNDER_STEER_V;
+											break;
+										}
+										else if (DistanceSensor_cm(3) <= 6)
+										{
+											// 오버스티어 상황
+											printf("over steer\n");
+											DesireSpeed_Write(0);
+											usleep(50000);
+											step_v = OVER_STEER_V;
+											break;
+										}
+										break;
+
+									case UNDER_STEER_V:
+										sprintf(data->imgData.missionString, "UNDER_STEER");
+										DesireDistance(60, 100, 1300);
+										usleep(30000);
+										DesireDistance(60, 100, 1500);
+										usleep(30000);
+										DesireDistance(60, 200, 1700);
+										usleep(30000);
+
+										step_v = SECOND_BACKWARD_V;
+										break;
+
+									case OVER_STEER_V:
+										sprintf(data->imgData.missionString, "OVER_STEER");
+										//DesireDistance(23, 100, 1300);
+										//usleep(200000);
+										DesireDistance(-60, 500, 1500);
+										//usleep(300000);
+										//DesireDistance(23, 200, 1700);
+										//usleep(200000);
+										step_v = SECOND_BACKWARD_V;
+										break;
+
+									case RIGHT_FRONT_V:
+										sprintf(data->imgData.missionString, "RIGHT_FRONT_V");
+										int right_difference = DistanceSensor_cm(2) - DistanceSensor_cm(3);
+										DesireDistance(60, 100, 1500 - (right_difference * 100));
+										//usleep(200000);
+										DesireDistance(-60, 400, 1500);
+										//usleep(200000);
+										if (abs(right_difference) < 3)
+										{
+											DesireSpeed_Write(0);
+											usleep(50000);
+											step_v = FIRST_FORWARD_V;
+										}
+										break;
+
+									case LEFT_FRONT_V:
+										sprintf(data->imgData.missionString, "RIGHT_FRONT_V");
+										int left_difference = DistanceSensor_cm(6) - DistanceSensor_cm(5);
+										DesireDistance(60, 100, 1500 + (left_difference * 100));
+										//usleep(200000);
+										DesireDistance(-60, 400, 1500);
+										//usleep(200000);
+										if (abs(left_difference) < 3)
+										{
+											DesireSpeed_Write(0);
+											usleep(50000);
+											step_v = FIRST_FORWARD_V;
+										}
+										break;
+
+									case FIRST_FORWARD_V:
+										sprintf(data->imgData.missionString, "FIRST_FORWARD_V");
+										DesireDistance(-50, 400, 1500);
 										usleep(1000000);
-										step_h = SECOND_FORWARD;
+										step_v = SECOND_FORWARD_V;
 										Winker_Write(ALL_ON);
 										buzzer(1, 0, 300000);
 										Winker_Write(ALL_OFF);
-									}
-									break;
+										break;
 
-									//case FIRST_FORWARD:
-									//	DesireDistance(30, 250, 1000);
-									//	step = SECOND_FORWARD;
-									//	break;
-
-								case SECOND_FORWARD:
-									sprintf(data->imgData.missionString, "SECOND_FORWARD");
-									DesireSpeed_Write(-40);
-									usleep(30000);
-									if (DistanceSensor_cm(4) <= 5)
-									{
-										DesireSpeed_Write(0);
-										usleep(10000);
-										SteeringServo_Write(1750);
-										usleep(100000);
-
-										step_h = ESCAPE;
-									}
-									break;
-
-								case ESCAPE:
-									sprintf(data->imgData.missionString, "ESCAPE");
-									DesireSpeed_Write(40);
-									usleep(100000);
-									if (DistanceSensor_cm(1) <= 8 || DistanceSensor_cm(1) >= 20)
-									{
-										DesireSpeed_Write(0);
-										SteeringServo_Write(1400);
-										usleep(150000);
-										step_h = ESCAPE_2;
-									}
-									break;
-
-								case ESCAPE_2:
-									sprintf(data->imgData.missionString, "ESCAPE_2");
-									DesireSpeed_Write(-40);
-									usleep(100000);
-									if (DistanceSensor_cm(4) <= 9 || DistanceSensor_cm(3) <= 5)
-									{
-										DesireSpeed_Write(0);
+									case SECOND_FORWARD_V:
+										sprintf(data->imgData.missionString, "SECOND_FORWARD_V");
+										DesireSpeed_Write(60);
 										usleep(50000);
-										step_h = ESCAPE_3;
+										if (DistanceSensor_cm(2) >= 20 && DistanceSensor_cm(6) >= 20)
+										{
+											DesireSpeed_Write(0);
+											usleep(50000);
+											DesireDistance(60, 200, 1500);
+											step_v = FINISH_V;
+										}
+										break;
+
+									case FINISH_V:
+										sprintf(data->imgData.missionString, "FINISH_V");
+										DesireDistance(60, 1150, 1050);
+										data->missionData.parkingData.verticalFlag = 0;
+										break;
+
+									default:
+										break;
 									}
-									break;
-
-								case ESCAPE_3:
-									sprintf(data->imgData.missionString, "ESCAPE_3");
-									DesireDistance(60, 600, 1950);
-									step_h = FINISH;
-									break;
-
-								case FINISH:
-									sprintf(data->imgData.missionString, "FINISH");
-									DesireDistance(60, 700, 1300);
-									data->missionData.parkingData.horizontalFlag = 0;
-									break;
-
-								default:
-									break;
+									usleep(150000);
 								}
-								usleep(150000);
 							}
+							else if (data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
+							{
+								DesireDistance(60, 230, 1500);
+								// 주차 각 수정 부분
+								while (data->missionData.parkingData.horizontalFlag)
+								{
+									data->missionData.loopTime = timeCheck(&time);
+									switch (step_h)
+									{
+									case FIRST_BACKWARD:
+										sprintf(data->imgData.missionString, "FIRST_BACKWARD");
+										DesireDistance(-60, 820, 1050);
+										//usleep(200000);
+										DesireDistance(-60, 370, 1500);
+										//usleep(200000);
+										SteeringServo_Write(1900);
+										usleep(100000);
+										DesireSpeed_Write(-35);
+										usleep(50000);
+										while (1)
+										{
+											if (DistanceSensor_cm(4) <= 6)
+											{
+												DesireSpeed_Write(0);
+												break;
+											}
+											usleep(50000);
+										}
+										SteeringServo_Write(1250);
+										usleep(150000);
+										DesireSpeed_Write(35);
+										usleep(50000);
+										while (1)
+										{
+											if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 3) || DistanceSensor_cm(1) <= 4)
+											{
+												DesireSpeed_Write(0);
+												step_h = SECOND_BACKWARD;
+												break;
+											}
+											usleep(30000);
+										}
+										usleep(50000);
+										break;
+
+									case SECOND_BACKWARD:
+										sprintf(data->imgData.missionString, "SECOND_BACKWARD");
+										//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
+										int difference = DistanceSensor_cm(2) - DistanceSensor_cm(3);
+										if (difference < -2)
+										{
+											//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
+											DesireDistance(-40, 400, 1300);
+											//usleep(200000);
+											if (abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2)
+											{
+												DesireSpeed_Write(0);
+												usleep(20000);
+												break;
+											}
+											DesireDistance(40, 400, 1700);
+											//usleep(200000);
+										}
+										else if (difference > 2)
+										{
+											//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
+											DesireDistance(-40, 400, 1700);
+											//usleep(200000);
+											if (abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2)
+											{
+												DesireSpeed_Write(0);
+												usleep(20000);
+												break;
+											}
+											DesireDistance(40, 400, 1300);
+											//usleep(200000);
+										}
+										if (abs(difference) <= 2)
+										{
+											//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
+											DesireSpeed_Write(0);
+											usleep(100000);
+											SteeringServo_Write(1500);
+											usleep(1000000);
+											step_h = SECOND_FORWARD;
+											Winker_Write(ALL_ON);
+											buzzer(1, 0, 300000);
+											Winker_Write(ALL_OFF);
+										}
+										break;
+
+										//case FIRST_FORWARD:
+										//	DesireDistance(30, 250, 1000);
+										//	step = SECOND_FORWARD;
+										//	break;
+
+									case SECOND_FORWARD:
+										sprintf(data->imgData.missionString, "SECOND_FORWARD");
+										DesireSpeed_Write(-40);
+										usleep(30000);
+										if (DistanceSensor_cm(4) <= 5)
+										{
+											DesireSpeed_Write(0);
+											usleep(10000);
+											SteeringServo_Write(1750);
+											usleep(100000);
+
+											step_h = ESCAPE;
+										}
+										break;
+
+									case ESCAPE:
+										sprintf(data->imgData.missionString, "ESCAPE");
+										DesireSpeed_Write(40);
+										usleep(100000);
+										if (DistanceSensor_cm(1) <= 8 || DistanceSensor_cm(1) >= 20)
+										{
+											DesireSpeed_Write(0);
+											SteeringServo_Write(1400);
+											usleep(150000);
+											step_h = ESCAPE_2;
+										}
+										break;
+
+									case ESCAPE_2:
+										sprintf(data->imgData.missionString, "ESCAPE_2");
+										DesireSpeed_Write(-40);
+										usleep(100000);
+										if (DistanceSensor_cm(4) <= 9 || DistanceSensor_cm(3) <= 5)
+										{
+											DesireSpeed_Write(0);
+											usleep(50000);
+											step_h = ESCAPE_3;
+										}
+										break;
+
+									case ESCAPE_3:
+										sprintf(data->imgData.missionString, "ESCAPE_3");
+										DesireDistance(60, 600, 1950);
+										step_h = FINISH;
+										break;
+
+									case FINISH:
+										sprintf(data->imgData.missionString, "FINISH");
+										DesireDistance(60, 700, 1300);
+										data->missionData.parkingData.horizontalFlag = 0;
+										break;
+
+									default:
+										break;
+									}
+									usleep(150000);
+								}
+							}
+							state = DONE_P;
+
+							gettimeofday(&et_p, NULL);
+							int parkingTime = (((et_p.tv_sec - st_p.tv_sec) * 1000) + ((int)et_p.tv_usec / 1000 - (int)st_p.tv_usec / 1000)) / 1000;
+							printf("parking time : %d\n", parkingTime);
+
+							if (parking == READY)
+								parking = REMAIN;
+							else if (parking == REMAIN)
+								parking = DONE;
+
+							break;
+
+						default:
+							break;
 						}
-						state = DONE_P;
-
-						gettimeofday(&et_p, NULL);
-						int parkingTime = (((et_p.tv_sec - st_p.tv_sec) * 1000) + ((int)et_p.tv_usec / 1000 - (int)st_p.tv_usec / 1000)) / 1000;
-						printf("parking time : %d\n", parkingTime);
-
-						if (parking == READY)
-							parking = REMAIN;
-						else if (parking == REMAIN)
-							parking = DONE;
-
-						break;
-
-					default:
-						break;
+						usleep(50000);
 					}
-					usleep(50000);
-				}
-				data->imgData.bmission = false;
-				data->imgData.bprintString = false;
-				if (parking == REMAIN)
-				{
-					printf("First Parking is Done!\n");
-					usleep(5000000);
-				}
-				if (parking == DONE)
-				{
-					printf("Second Parking is Dome!\n");
-					usleep(5000000);
+					data->imgData.bmission = false;
+					data->imgData.bprintString = false;
+					if (parking == REMAIN)
+					{
+						printf("First Parking is Done!\n");
+						usleep(5000000);
+					}
+					if (parking == DONE)
+					{
+						printf("Second Parking is Dome!\n");
+						usleep(5000000);
+					}
 				}
 			}
 		}

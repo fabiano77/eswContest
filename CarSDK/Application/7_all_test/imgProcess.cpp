@@ -805,6 +805,7 @@ void settingStatic(int w, int h)
 	//Tire = imread("pictures/tire.png", IMREAD_UNCHANGED);				//in Windows
 	//backimg = imread("pictures/background.png", IMREAD_UNCHANGED);		//in Windows
 	if (Tire.type() == 0 || backimg.type() == 0) btire = false;
+	else btire = true;
 
 	cout << "settingStatic" << endl;
 }
@@ -856,6 +857,7 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 		if (linePointY_atCenter > centerGuide[0][1])	// 선형적으로 조향.
 		{
 			proximity = 500 * (linePointY_atCenter - centerGuide[0][1]) / (h - centerGuide[0][1]);
+			proximity *= 1.2;  //곡선 조향 민감도 증가
 			if (proximity > 500) proximity = 500;
 		}
 
@@ -1886,7 +1888,9 @@ void overlayTire(Mat& src, Mat& dst, double angle)
 {
 	if (btire)
 	{
-		double t_angle = angle / 10.;
+		double t_angle = angle-1500;
+		t_angle = -t_angle / 10.;
+
 		Mat rotatedTire;
 		//Mat M = getRotationMatrix2D(Point2f(Tire.cols / 2.f, Tire.rows / 2.f), -t_angle, 1);
 		Mat M = getRotationMatrix2D(Point2f(41.5f, 41.5f), -t_angle, 1);

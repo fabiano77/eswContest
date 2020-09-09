@@ -43,7 +43,7 @@
 #define FPS_TEXT_Y 260			  //240
 #define FPS_TEXT_COLOR 0xffffffff //while
 
-#define BASIC_SPEED 65		// 프로그램 기본 바퀴속도, autoSteer와 주로 사용.
+#define BASIC_SPEED 55		// 프로그램 기본 바퀴속도, autoSteer와 주로 사용.
 #define BUZZER_PULSE 100000 // 기본 부저 길이
 
 // 각종 structure는 control_mission.h 에 이동됨. 9/8(화)
@@ -337,7 +337,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 
 			if (t_data->imgData.bdark)
 			{
-				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 55))
+				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 40))
 				{
 					printf("img thread : dark\n");
 					t_data->missionData.btunnel = true;
@@ -932,6 +932,15 @@ void* mission_thread(void* arg)
 	enum MissionState finish = NONE;
 
 	//int i = 0;
+	data->missionData.ms[0] = start;
+	data->missionData.ms[1] = flyover;
+	data->missionData.ms[2] = priority;
+	data->missionData.ms[3] = parking;
+	data->missionData.ms[4] = tunnel;
+	data->missionData.ms[5] = roundabout;
+	data->missionData.ms[6] = overtake;
+	data->missionData.ms[7] = signalLight;
+	data->missionData.ms[8] = finish;
 
 	//각 미션이 수행되고나면 detect를 하지 않도록 변수설정.
 
@@ -942,6 +951,7 @@ void* mission_thread(void* arg)
 		if (start && start != DONE)
 		{
 			DesireSpeed_Write(0);
+			data->missionData.ms[0] = start;
 			data->imgData.bmission = true;
 			data->imgData.bprintString = true;
 			sprintf(data->imgData.missionString, "start - Wait");
@@ -982,7 +992,7 @@ void* mission_thread(void* arg)
 			start = DONE;
 			flyover = READY;
 			data->missionData.ms[0] = start;
-			data->missionData.ms[1] = flyover;
+			//data->missionData.ms[1] = flyover;
 			data->imgData.bmission = false;
 			data->imgData.bprintString = false;
 			data->imgData.bauto = true;
@@ -991,6 +1001,7 @@ void* mission_thread(void* arg)
 
 		if (flyover && flyover != DONE)
 		{
+			//오른쪽 거리센서가 안잡히면 탈출하는 것으로 예상.
 			//data->imgData.bmission = true;
 			int escapeCnt = 4;
 			data->imgData.bprintString = true;
@@ -1026,6 +1037,7 @@ void* mission_thread(void* arg)
 					}
 					usleep(100000);
 				}
+				usleep(1000000);    //1초 대기
 				Winker_Write(ALL_OFF);
 				DesireSpeed_Write(BASIC_SPEED);
 				priority = DONE;
@@ -1075,16 +1087,27 @@ void* mission_thread(void* arg)
 						/*
 						주차 폭에 대한 거리를 측정하기 위해 거리 측정 시작
 						*/
+
+						/*
+						우선 정지 표지판을 감지하면 주차에서 탈출되도록 조치 
+						*/
+						if (data->missionData.frame_priority)
+						{
+							wrong_detection = 0;
+							break;
+						}
+						// Encoder 측정
 						encoderVal = Encoder_Read();
 						if (encoderVal != 65278)
 						{
 							parking_width = encoderVal;
 							sprintf(data->imgData.missionString, "parking_width : %d", parking_width);
-							if (parking_width >= 2500)
+							if (parking_width >= 2000)
 							{
 								wrong_detection = 0;
 								break;
 							}
+							// 주차 공간 측정이 안되는 경우, 잘못된 주차 분기 진입으로 판단하고 탈출.
 						}
 						if (data->missionData.parkingData.frontRight == true)
 						{
@@ -1463,52 +1486,50 @@ void* mission_thread(void* arg)
 
 		if (tunnel && tunnel != DONE)
 		{
-			if (data->missionData.btunnel)
+			data->imgData.bdark = true;
+			if (data->missionData.btunnel && DistanceSensor_cm(2) < 20 && DistanceSensor_cm(6) < 20)
 			{
-				if (DistanceSensor_cm(2) < 30 && DistanceSensor_cm(6) < 30)
+				data->imgData.bprintString = true;
+				data->imgData.bmission = true;
+				data->imgData.bdark = false;
+
+				frontLightOnOff(data->controlData.lightFlag, true);
+				sprintf(data->imgData.missionString, "mission thread : tunnel detect");
+
+				while (true)
 				{
-					data->imgData.bprintString = true;
-					data->imgData.bmission = true;
-					data->imgData.bdark = false;
-
-					frontLightOnOff(data->controlData.lightFlag, true);
-					sprintf(data->imgData.missionString, "mission thread : tunnel detect");
-
-					while (true)
+					data->missionData.loopTime = timeCheck(&time);
+					int c2 = DistanceSensor_cm(2);
+					int c6 = DistanceSensor_cm(6);
+					if (Tunnel_isEnd(c2, c6, 50, 50))
 					{
-						data->missionData.loopTime = timeCheck(&time);
-						int c2 = DistanceSensor_cm(2);
-						int c6 = DistanceSensor_cm(6);
-						if (Tunnel_isEnd(c2, c6, 50, 50))
-						{
-							sprintf(data->imgData.missionString, "tunnel out");
-							break;
-						}
-
-						data->controlData.steerVal = Tunnel_SteerVal2(c2, c6);
-						sprintf(data->imgData.missionString, "steer = %d, %d : %d", data->controlData.steerVal, c2, c6);
-
-						SteeringServo_Write(data->controlData.steerVal);
-
-						usleep(10000);
+						sprintf(data->imgData.missionString, "tunnel out");
+						break;
 					}
-					DesireSpeed_Write(0);
 
-					frontLightOnOff(data->controlData.lightFlag, false);
+					data->controlData.steerVal = Tunnel_SteerVal(c2, c6);
+					sprintf(data->imgData.missionString, "steer = %d, %d : %d", data->controlData.steerVal, c2, c6);
 
-					buzzer(1, 0, 500000);
-					usleep(100000);
+					SteeringServo_Write(data->controlData.steerVal);
 
-					DesireDistance(-40, 400, 1500);
-					usleep(100000);
-
-					printf("Tunnel OUT\n");
-					tunnel = DONE;
-					data->imgData.bmission = false;
-					data->imgData.bprintString = false;
-					data->missionData.btunnel = false;
+					usleep(10000);
 				}
-			}
+				DesireSpeed_Write(0);
+
+				frontLightOnOff(data->controlData.lightFlag, false);
+
+				buzzer(1, 0, 500000);
+				usleep(100000);
+
+				DesireDistance(-40, 400, 1500);
+				usleep(100000);
+
+				printf("Tunnel OUT\n");
+				tunnel = DONE;
+				data->imgData.bmission = false;
+				data->imgData.bprintString = false;
+				data->missionData.btunnel = false;
+			}			
 		}
 
 		if (roundabout && roundabout != DONE)
@@ -1633,212 +1654,215 @@ void* mission_thread(void* arg)
 
 		if (overtake && overtake != DONE)
 		{
-			data->imgData.bwhiteLine = true; // 흰색 직선 O
 			/* 분기진입 명령 지시 */
-			if (DistanceSensor_cm(1) < 30) //전방 장애물 감지 //주차 상황이 아닐때, 분기진입 가능
+			if (data->controlData.steerVal <= 1600 &&
+				data->controlData.steerVal >= 1400)
 			{
-				data->imgData.btopview = false;	 //topview off
-				data->imgData.bmission = true;	 //영상처리 X
-				data->imgData.bwhiteLine = true; // 흰색 직선 O
-				data->imgData.bprintString = true;
-				sprintf(data->imgData.missionString, "overtake");
-				printf("overtake \n");
-				enum OvertakeState state = FRONT_DETECT;
-				data->missionData.overtakingData.headingDirection = STOP;
-				data->missionData.overtakingFlag = true;
-				data->imgData.bwhiteLine = true;
-				bool obstacle = false;
-				int thresDistance = 450;
-				/*차량 정지*/
-				DesireSpeed_Write(0);
-
-				while (state)
+				if (DistanceSensor_cm(1) < 30) //전방 장애물 감지 //주차 상황이 아닐때, 분기진입 가능
 				{
-					data->missionData.loopTime = timeCheck(&time);
-					switch (state)
+					data->imgData.btopview = false;	 //topview off
+					data->imgData.bmission = true;	 //영상처리 X
+					//data->imgData.bwhiteLine = true; // 흰색 직선 O
+					data->imgData.bprintString = true;
+					sprintf(data->imgData.missionString, "overtake");
+					printf("overtake \n");
+					enum OvertakeState state = FRONT_DETECT;
+					data->missionData.overtakingData.headingDirection = STOP;
+					data->missionData.overtakingFlag = true;
+					data->imgData.bwhiteLine = true;
+					bool obstacle = false;
+					int thresDistance = 450;
+					/*차량 정지*/
+					DesireSpeed_Write(0);
+
+					while (state)
 					{
-					case FRONT_DETECT:
-						/* 장애물 좌우판단을 위한 카메라 각도조절 */
-						sprintf(data->imgData.missionString, "Front Detect");
-						if (data->missionData.overtakingData.headingDirection == STOP)
+						data->missionData.loopTime = timeCheck(&time);
+						switch (state)
 						{
-							data->controlData.cameraY = 1610;
-							CameraYServoControl_Write(data->controlData.cameraY);
-							data->missionData.overtakingData.updownCamera = CAMERA_UP;
-						}
-						/* 장애물 좌우 판단 및 비어있는 차선으로 전진하려는 코드*/
-						while (data->missionData.overtakingData.headingDirection == STOP)
-						{
-							data->missionData.loopTime = timeCheck(&time);
-							usleep(50000);
-						}
-						/*판단 받으면 Camera 원래 위치로 돌림*/
-						if (data->missionData.overtakingData.headingDirection != STOP)
-						{
-							data->controlData.cameraY = 1660;
-							CameraYServoControl_Write(data->controlData.cameraY);
-							data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
-							data->imgData.btopview = true; //top view on
-						}
-						else
-						{
+						case FRONT_DETECT:
+							/* 장애물 좌우판단을 위한 카메라 각도조절 */
+							sprintf(data->imgData.missionString, "Front Detect");
+							if (data->missionData.overtakingData.headingDirection == STOP)
+							{
+								data->controlData.cameraY = 1610;
+								CameraYServoControl_Write(data->controlData.cameraY);
+								data->missionData.overtakingData.updownCamera = CAMERA_UP;
+							}
+							/* 장애물 좌우 판단 및 비어있는 차선으로 전진하려는 코드*/
+							while (data->missionData.overtakingData.headingDirection == STOP)
+							{
+								data->missionData.loopTime = timeCheck(&time);
+								usleep(50000);
+							}
+							/*판단 받으면 Camera 원래 위치로 돌림*/
+							if (data->missionData.overtakingData.headingDirection != STOP)
+							{
+								data->controlData.cameraY = 1660;
+								CameraYServoControl_Write(data->controlData.cameraY);
+								data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
+								data->imgData.btopview = true; //top view on
+							}
+							else
+							{
+								break;
+							}
+							/*판단 이후 해당 방향 전진*/
+							if (data->missionData.overtakingData.headingDirection == RIGHT &&
+								data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
+							{
+								sprintf(data->imgData.missionString, "Right to go");
+								/*출발*/
+								Winker_Write(RIGHT_ON);
+								DesireDistance(50, thresDistance, 1100);
+								Winker_Write(ALL_OFF);
+								/* 센서 오류 인식 방지*/
+								usleep(500000);
+								/*thresDistance이상 가서 전방 거리 재확인*/
+								if (DistanceSensor_cm(1) < 20)
+								{
+									sprintf(data->imgData.missionString, "Detect Error");
+									/*정지, 후진 및 방향 전환*/
+									DesireDistance(-50, thresDistance, 1100);
+									/*정지 및 방향 전환 명령*/
+									data->missionData.overtakingData.headingDirection = LEFT;
+								}
+								else
+								{ /*전방 미탐지*/
+									state = SIDE_ON;
+									sprintf(data->imgData.missionString, "Detect Side");
+									/*전진하는 동안 전방 센서가 20 이상 멀어지면 SIDE_ON으로 진행*/
+									DesireSpeed_Write(BASIC_SPEED);
+								}
+							}
+							else if (data->missionData.overtakingData.headingDirection == LEFT &&
+								data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
+							{
+
+								sprintf(data->imgData.missionString, "Left to go");
+								/*출발*/
+								Winker_Write(LEFT_ON);
+								DesireDistance(50, thresDistance, 1900);
+								Winker_Write(ALL_OFF);
+								/* 센서 오류 인식 방지*/
+								usleep(500000);
+								/*thresDistance이상 가서 전방 거리 재확인*/
+								if (DistanceSensor_cm(1) < 20)
+								{
+									/*정지, 후진 및 방향 전환*/
+									sprintf(data->imgData.missionString, "Detect Error");
+									DesireDistance(-50, thresDistance, 1900);
+									/*정지 후 방향 전환 명령*/
+									data->missionData.overtakingData.headingDirection = RIGHT;
+								}
+								else
+								{
+									/*전진하는 동안 전방 센서가 20 이상 멀어지면 SIDE_ON으로 진행*/
+									state = SIDE_ON;
+									sprintf(data->imgData.missionString, "Detect Side");
+									DesireSpeed_Write(BASIC_SPEED);
+								}
+							}
+							else
+							{ /*STOP이 유지되는 경우 멈춤*/
+							}
+
+							break;
+
+						case SIDE_ON:
+							/*Auto Steering 동작*/
+							data->imgData.bmission = false;
+							/* 현재 장애물이 어디있느냐에 따라 side 센서(2,3 or 4,5)로 감지하는 코드*/
+							//right
+							if (data->missionData.overtakingData.headingDirection == RIGHT)
+							{
+								/*장애물 통과 확인*/
+								if (DistanceSensor_cm(5) < 30 || DistanceSensor_cm(6) < 30)
+								{
+									obstacle = true;
+								}
+								else if (obstacle == true)
+								{
+									/*장애물 통과*/
+									if (DistanceSensor_cm(5) > 30 && DistanceSensor_cm(6) > 30)
+									{
+										DesireSpeed_Write(0);
+										usleep(50000);
+										obstacle = false;
+										state = SIDE_OFF;
+										sprintf(data->imgData.missionString, "Side OFF");
+									}
+								}
+								usleep(50000);
+							}
+							//left
+							else if (data->missionData.overtakingData.headingDirection == LEFT)
+							{
+								/*장애물 통과 확인*/
+								if (DistanceSensor_cm(3) < 30 || DistanceSensor_cm(2) < 30)
+								{
+									obstacle = true;
+								}
+								else if (obstacle == true)
+								{
+									/*장애물 통과*/
+									if (DistanceSensor_cm(3) > 30 && DistanceSensor_cm(2) > 30)
+									{
+										DesireSpeed_Write(0);
+										usleep(50000);
+										obstacle = false;
+										state = SIDE_OFF;
+										sprintf(data->imgData.missionString, "Side OFF");
+									}
+								}
+								usleep(500000);
+							}
+							//error and go back step
+							else
+							{
+								state = FRONT_DETECT;
+							}
+							break;
+
+						case SIDE_OFF:
+							/*원래 차선으로 복귀하는 코드*/
+							usleep(10000);
+							data->imgData.bmission = true; //Auto Steering off
+							//right
+							if (data->missionData.overtakingData.headingDirection == RIGHT)
+							{
+								/*복귀 좌회전 방향 설정 및 전진*/
+								Winker_Write(LEFT_ON);
+								DesireDistance(50, thresDistance + 100, 1900);
+								Winker_Write(ALL_OFF);
+							}
+							//left
+							else if (data->missionData.overtakingData.headingDirection == LEFT)
+							{
+								/*복귀 우회전 방향 설정*/
+								Winker_Write(RIGHT_ON);
+								DesireDistance(50, thresDistance + 100, 1100);
+								Winker_Write(ALL_OFF);
+							}
+							/*알고리즘 전진*/
+							data->imgData.bmission = false;
+							sprintf(data->imgData.missionString, "End Overtaking");
+							DesireSpeed_Write(BASIC_SPEED);
+							state = DONE_O;
+							overtake = DONE;
+							data->missionData.overtakingFlag = false;
+							break;
+
+						default:
 							break;
 						}
-						/*판단 이후 해당 방향 전진*/
-						if (data->missionData.overtakingData.headingDirection == RIGHT &&
-							data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
-						{
-							sprintf(data->imgData.missionString, "Right to go");
-							/*출발*/
-							Winker_Write(RIGHT_ON);
-							DesireDistance(50, thresDistance, 1100);
-							Winker_Write(ALL_OFF);
-							/* 센서 오류 인식 방지*/
-							usleep(500000);
-							/*thresDistance이상 가서 전방 거리 재확인*/
-							if (DistanceSensor_cm(1) < 20)
-							{
-								sprintf(data->imgData.missionString, "Detect Error");
-								/*정지, 후진 및 방향 전환*/
-								DesireDistance(-50, thresDistance, 1100);
-								/*정지 및 방향 전환 명령*/
-								data->missionData.overtakingData.headingDirection = LEFT;
-							}
-							else
-							{ /*전방 미탐지*/
-								state = SIDE_ON;
-								sprintf(data->imgData.missionString, "Detect Side");
-								/*전진하는 동안 전방 센서가 20 이상 멀어지면 SIDE_ON으로 진행*/
-								DesireSpeed_Write(BASIC_SPEED);
-							}
-						}
-						else if (data->missionData.overtakingData.headingDirection == LEFT &&
-							data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
-						{
-
-							sprintf(data->imgData.missionString, "Left to go");
-							/*출발*/
-							Winker_Write(LEFT_ON);
-							DesireDistance(50, thresDistance, 1900);
-							Winker_Write(ALL_OFF);
-							/* 센서 오류 인식 방지*/
-							usleep(500000);
-							/*thresDistance이상 가서 전방 거리 재확인*/
-							if (DistanceSensor_cm(1) < 20)
-							{
-								/*정지, 후진 및 방향 전환*/
-								sprintf(data->imgData.missionString, "Detect Error");
-								DesireDistance(-50, thresDistance, 1900);
-								/*정지 후 방향 전환 명령*/
-								data->missionData.overtakingData.headingDirection = RIGHT;
-							}
-							else
-							{
-								/*전진하는 동안 전방 센서가 20 이상 멀어지면 SIDE_ON으로 진행*/
-								state = SIDE_ON;
-								sprintf(data->imgData.missionString, "Detect Side");
-								DesireSpeed_Write(BASIC_SPEED);
-							}
-						}
-						else
-						{ /*STOP이 유지되는 경우 멈춤*/
-						}
-
-						break;
-
-					case SIDE_ON:
-						/*Auto Steering 동작*/
-						data->imgData.bmission = false;
-						/* 현재 장애물이 어디있느냐에 따라 side 센서(2,3 or 4,5)로 감지하는 코드*/
-						//right
-						if (data->missionData.overtakingData.headingDirection == RIGHT)
-						{
-							/*장애물 통과 확인*/
-							if (DistanceSensor_cm(5) < 30 || DistanceSensor_cm(6) < 30)
-							{
-								obstacle = true;
-							}
-							else if (obstacle == true)
-							{
-								/*장애물 통과*/
-								if (DistanceSensor_cm(5) > 30 && DistanceSensor_cm(6) > 30)
-								{
-									DesireSpeed_Write(0);
-									usleep(50000);
-									obstacle = false;
-									state = SIDE_OFF;
-									sprintf(data->imgData.missionString, "Side OFF");
-								}
-							}
-							usleep(50000);
-						}
-						//left
-						else if (data->missionData.overtakingData.headingDirection == LEFT)
-						{
-							/*장애물 통과 확인*/
-							if (DistanceSensor_cm(3) < 30 || DistanceSensor_cm(2) < 30)
-							{
-								obstacle = true;
-							}
-							else if (obstacle == true)
-							{
-								/*장애물 통과*/
-								if (DistanceSensor_cm(3) > 30 && DistanceSensor_cm(2) > 30)
-								{
-									DesireSpeed_Write(0);
-									usleep(50000);
-									obstacle = false;
-									state = SIDE_OFF;
-									sprintf(data->imgData.missionString, "Side OFF");
-								}
-							}
-							usleep(500000);
-						}
-						//error and go back step
-						else
-						{
-							state = FRONT_DETECT;
-						}
-						break;
-
-					case SIDE_OFF:
-						/*원래 차선으로 복귀하는 코드*/
-						usleep(10000);
-						data->imgData.bmission = true; //Auto Steering off
-						//right
-						if (data->missionData.overtakingData.headingDirection == RIGHT)
-						{
-							/*복귀 좌회전 방향 설정 및 전진*/
-							Winker_Write(LEFT_ON);
-							DesireDistance(50, thresDistance + 100, 1900);
-							Winker_Write(ALL_OFF);
-						}
-						//left
-						else if (data->missionData.overtakingData.headingDirection == LEFT)
-						{
-							/*복귀 우회전 방향 설정*/
-							Winker_Write(RIGHT_ON);
-							DesireDistance(50, thresDistance + 100, 1100);
-							Winker_Write(ALL_OFF);
-						}
-						/*알고리즘 전진*/
-						data->imgData.bmission = false;
-						sprintf(data->imgData.missionString, "End Overtaking");
-						DesireSpeed_Write(BASIC_SPEED);
-						state = DONE_O;
-						overtake = DONE;
-						data->missionData.overtakingFlag = false;
-						break;
-
-					default:
-						break;
+						//usleep(1500000);
+						usleep(50000); // 1,500 ms -> 50ms 로 변경, 09/01 AM 00:50 -KDH
 					}
-					//usleep(1500000);
-					usleep(50000); // 1,500 ms -> 50ms 로 변경, 09/01 AM 00:50 -KDH
+					signalLight = READY;
+					data->imgData.bmission = false;
+					data->imgData.bprintString = false;
 				}
-				//signalLight = READY;
-				data->imgData.bmission = false;
-				data->imgData.bprintString = false;
 			}
 		}
 

@@ -98,7 +98,7 @@ extern "C" {
 		Mat Mat_map1(h, w, CV_32FC1, map1);
 		Mat Mat_map2(h, w, CV_32FC1, map2);
 
-		
+
 
 		Mat disCoeffs;
 		Mat cameraMatrix = Mat(3, 3, CV_32FC1);
@@ -692,7 +692,7 @@ extern "C" {
 		closeVideoWrite();
 	}
 
-	bool checkWhiteLine(unsigned char* inBuf,int w, int h) {
+	bool checkWhiteLine(unsigned char* inBuf, int w, int h) {
 		//original img;
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Rect roi(20, 180, 620, 240);
@@ -705,7 +705,7 @@ extern "C" {
 		cvtColor(srcRGB, img_hsv, COLOR_BGR2HSV);
 		/*White Filtering*/
 		Mat img_filtered;
-		inRange(img_hsv, lower_white, upper_white,img_filtered);
+		inRange(img_hsv, lower_white, upper_white, img_filtered);
 		vector<Vec4f> lines;
 		HoughLinesP(img_filtered, lines, 1, CV_PI / 180, 80, 50, 20);
 		if (lines.size() > 0) {
@@ -935,7 +935,7 @@ void lineFiltering(Mat& src, Mat& dst, int mode)
 	int h1(14), s(60), v(100); // 예선영상 14, 0, 240
 	int h2(46);
 	Mat hsv;
-	Mat binMat;
+	Mat binMat();
 	if (mode == 0 || mode == 1) //노란차선 인식 모드
 	{
 		Scalar lower_yellow(h1, s, v);
@@ -953,7 +953,12 @@ void lineFiltering(Mat& src, Mat& dst, int mode)
 
 		inRange(hsv, lower_white, upper_white, whiteBinMat);
 		//addWeighted(binMat, 1.0, whiteBinMat, 1.0, 0.0, binMat);	//추출한 노란색과 흰색 객체를 합친 binMat생성
-		binMat = binMat + whiteBinMat;
+		if (mode == 1) {
+			binMat = binMat + whiteBinMat;
+		}
+		else {
+			binMat = whiteBinMat;
+		}
 	}
 
 	dst = binMat;
@@ -1888,7 +1893,7 @@ void overlayTire(Mat& src, Mat& dst, double angle)
 {
 	if (btire)
 	{
-		double t_angle = angle-1500;
+		double t_angle = angle - 1500;
 		t_angle = -t_angle / 10.;
 
 		Mat rotatedTire;

@@ -700,7 +700,7 @@ extern "C" {
 		Mat roiRGB = srcRGB(roi);
 		/*convert rgb to hsv*/
 		Mat img_hsv;
-		Scalar lower_white(75, 30, 200);
+		Scalar lower_white(75, 20, 200);
 		Scalar upper_white(255, 255, 255);
 		cvtColor(srcRGB, lower_white, upper_white, img_hsv);
 		/*White Filtering*/

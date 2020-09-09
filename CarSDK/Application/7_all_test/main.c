@@ -354,6 +354,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 			}
 
 			if (t_data->imgData.bcheckFrontWhite && t_data->missionData.finish_distance == -1) {
+				
 				t_data->missionData.checkWhiteLineFlag = checkWhiteLine(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H);
 				if (t_data->missionData.checkWhiteLineFlag) {
 					t_data->imgData.btopview = false;
@@ -387,12 +388,13 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				}
 			}
 			if (t_data->missionData.checkWhiteLineFlag) {
+				
 				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
-
+				
 				topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, 1);
-
+				
 				t_data->missionData.finish_distance = calculDistance_FinishLine(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
-				printf("finish distance %d", t_data->missionData.finish_distance);
+				if(t_data->missionData.finish_distance != -1)printf("finish distance %d\n", t_data->missionData.finish_distance);
 				t_data->missionData.checkWhiteLineFlag = false;
 				t_data->imgData.btopview = true;
 				t_data->imgData.bauto = true;
@@ -578,6 +580,7 @@ void* input_thread(void* arg)
 	MSG("\t encoder: ");
 	MSG("\t back   : ");
 	MSG("\t stop   : check line sensor");
+	MSG("\t white  : white line ON/OFF");
 	MSG("\t mission: mission display output on/off");
 	MSG("\t sensor : sensor  display output on/off");
 	MSG("\t tire   : tire    display output on/off");
@@ -774,6 +777,16 @@ void* input_thread(void* arg)
 				else
 					printf("\t print mission OFF\n");
 			}
+			else if (0 == strncmp(cmd_input, "white", 5))
+			{
+				buzzer(1, 0, buzzerPulseWidth_us);
+				data->imgData.bwhiteLine = !data->imgData.bwhiteLine;
+				if (data->imgData.bprintSensor)
+				
+					printf("\t whiteLine ON\n");
+				else
+					printf("\t whiteLine OFF\n");
+			}
 			else if (0 == strncmp(cmd_input, "sensor", 6))
 			{
 				buzzer(1, 0, buzzerPulseWidth_us);
@@ -783,6 +796,7 @@ void* input_thread(void* arg)
 				else
 					printf("\t print sensor OFF\n");
 			}
+			
 			else if (0 == strncmp(cmd_input, "tire", 4))
 			{
 				buzzer(1, 0, buzzerPulseWidth_us);

@@ -695,7 +695,7 @@ extern "C" {
 	bool checkWhiteLine(unsigned char* inBuf, int w, int h) {
 		//original img;
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
-		Rect roi(20, 140, 600, 220);
+		Rect roi(20, 220, 600, 140);
 		/*resize for detect White Line*/
 		Mat roiRGB = srcRGB(roi);
 		/*convert rgb to hsv*/
@@ -703,11 +703,16 @@ extern "C" {
 		Scalar lower_white(75, 20, 200);
 		Scalar upper_white(255, 255, 255);
 		cvtColor(roiRGB, img_hsv, COLOR_BGR2HSV);
+		
 		/*White Filtering*/
 		Mat img_filtered;
+		Mat img_canny;
 		inRange(img_hsv, lower_white, upper_white, img_filtered);
-		vector<Vec4f> lines;
-		HoughLinesP(img_filtered, lines, 1, CV_PI / 180, 80, 50, 20);
+		cannyEdge(img_filtered, img_canny);
+		
+		vector<Vec4i> lines;
+		HoughLinesP(img_canny, lines, 1, CV_PI / 180, 80, 50, 20);
+		
 		if (lines.size() > 0) {
 			return true;
 		}

@@ -139,6 +139,7 @@ extern "C" {
 		bool btunnel;
 		bool overtakingFlag; // �߿����� �÷��� ->MS ���� overtaking struct �߰��� ��
 		bool changeMissionState;
+		bool checkWhiteLineFlag;
 		int frame_priority;
 		int finish_distance;
 

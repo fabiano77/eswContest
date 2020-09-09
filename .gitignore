@@ -26,7 +26,6 @@ CarSDK/Application/7_all_test/drawing.lo
 CarSDK/Application/7_all_test/exam_cv.lo
 CarSDK/Application/7_all_test/input_cmd.lo
 CarSDK/Application/7_all_test/util.lo
-CarSDK/Application/7_all_test/v4l2.lo
 CarSDK/Application/7_all_test/vpe-common.lo
 CarSDK/Application/7_all_test/camera_opencv_disp
 CarSDK/Application/2_2_camera_RGB_dump_test/camera_vpe_dump_disp

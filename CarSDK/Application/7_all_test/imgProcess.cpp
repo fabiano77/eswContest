@@ -43,7 +43,7 @@ int lineDeviation(Mat& dst, Vec4i line1, Vec4i line2);
 
 string toString(int A);
 
-string toString(double A);
+string toString(double A, int num = 2);
 
 Point centerPoint(Vec4i line);
 
@@ -80,6 +80,10 @@ void fileOutimage(Mat& src, string str);
 void closeVideoWrite();
 
 double calculDistance_toFinish(Mat& src, Mat& dst, const int distance_top, const int distance_bottom);
+
+void overlayImage(Mat& src, Mat& dst, const Mat& image, Point location);
+
+void overlayTire(Mat& src, Mat& dst, double angle);
 //
 
 extern "C" {
@@ -251,6 +255,14 @@ extern "C" {
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
 		outputSensor(dstRGB, w, h, c1, c2, c3, c4, c5, c6, stopline);
+	}
+
+	void overlayPrintAngle(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int angle)
+	{
+		Mat dstRGB(h, w, CV_8UC3, outBuf);
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+
+		overlayTire(dstRGB, srcRGB, angle);
 	}
 
 	int checkRed(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
@@ -485,7 +497,7 @@ extern "C" {
 
 		/*Count Gray*/
 		/*check hsv*/
-		//Mat img_filtered, img_hsv;
+		Mat img_filtered;//, img_hsv;
 		//cvtColor(img_roi, img_hsv, COLOR_BGR2HSV);
 		/* Count by the number of Canny Edge point */
 		cannyEdge(img_roi, img_filtered);
@@ -693,6 +705,8 @@ Scalar blue(255, 0, 0);
 Scalar purple(255, 102, 165);
 Scalar orange(0, 169, 237);
 Mat roiMat;
+Mat Tire;
+Mat backimg;
 Vec4i leftGuide;
 Vec4i rightGuide;
 Vec4i centerGuide[5];
@@ -708,6 +722,7 @@ int flag_tunnel;
 int first_tunnel = 0;
 int MAXTHR_tunnel = 6;
 int MINTHR_tunnel = 3;
+bool btire = true;
 
 int S = 50;
 int V = 75;
@@ -721,8 +736,8 @@ static void on_trackbar(int, void*)
 void settingStatic(int w, int h)
 {
 	string filename("video.avi");
-	//outputVideo.open(filename, VideoWriter::fourcc('D', 'I', 'V', 'X'), 10, Size(640, 360), true);
-	outputVideo.open(filename, CV_FOURCC('D', 'I', 'V', 'X'), 10, Size(640, 360), true);
+	//outputVideo.open(filename, VideoWriter::fourcc('D', 'I', 'V', 'X'), 10, Size(640, 360), true);	//Windows
+	//outputVideo.open(filename, CV_FOURCC('D', 'I', 'V', 'X'), 10, Size(640, 360), true);				//Linux
 
 
 	color[0] = Scalar(255, 255, 0);
@@ -761,6 +776,12 @@ void settingStatic(int w, int h)
 	roiMat = Mat(Size(640, 360), CV_8UC3, Scalar(0));
 	rectangle(roiMat, Rect_signalDetect, Scalar(255, 255, 255), -1);
 
+	Tire = imread("./overlay_pictures/tire.png", IMREAD_UNCHANGED);			//in Linux
+	backimg = imread("./overlay_pictures/background.png", IMREAD_UNCHANGED);	//in Linux
+	//Tire = imread("pictures/tire.png", IMREAD_UNCHANGED);				//in Windows
+	//backimg = imread("pictures/background.png", IMREAD_UNCHANGED);		//in Windows
+	if (Tire.type() == 0 || backimg.type() == 0) btire = false;
+
 	cout << "settingStatic" << endl;
 }
 
@@ -771,13 +792,13 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 	Mat src_yel;
 	Mat src_can;
 	//Mat temp(h, w, CV_8UC3);
-	Point printPosition(230, 120);
+	Point printPosition(270, 100);
 
 	lineFiltering(src, src_yel, whiteMode);
 	cannyEdge(src_yel, src_can);
 
 	int lineType;	// 0 == 라인이 없다, 1 == 라인이 한개, 2 == 라인이 두개.
-	Vec8i l = hough_ransacLine(src_can, src, w, h, 15, true, lineType, 0.1, 30.0);
+	Vec8i l = hough_ransacLine(src_can, src, w, h, 15, false, lineType, 0.1, 30.0);
 	Vec4i firstLine(l[0], l[1], l[2], l[3]);
 	Vec4i secondLine(l[4], l[5], l[6], l[7]);
 
@@ -794,8 +815,8 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 		/*										곡선 구간									*/
 		/************************************************************************************/
 		int proximity(0);	//외곽 차선이 차체와 얼마나 근접하였는지 값 (0~500)
-		int bias = slopeSign(firstLine) * 90 * (640.0 / w);	//좌, 우회전에 따른 가이드라인 바이어스.
-		int linePointY_atCenter = getPointY_at_X(firstLine, (w / 2) + bias);
+		int bias = slopeSign(firstLine) * 90;	//좌, 우회전에 따른 가이드라인 바이어스.
+		int linePointY_atCenter = getPointY_at_X(firstLine, 320 + bias);
 		for (int i = 0; i < guideCnt; i++)
 		{
 			//가이드 직선 표시 & 직선의 근접도 판단.
@@ -866,7 +887,8 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 	if (lineType == 2)
 		line(src, Point(secondLine[0], secondLine[1]), Point(secondLine[2], secondLine[3]), pink, 5);
 
-	putText(src, "Steering = " + ((retval == 9999) ? "?" : toString(retval)), printPosition, 0, 0.8, Scalar(255, 255, 255), 2);
+	//putText(src, "angle" + ((retval == 9999) ? "?" : toString(retval / 10., 1)), printPosition, 0, 0.8, Scalar(255, 255, 255), 2);
+	//putText(src, "Steering = " + ((retval == 9999) ? "?" : toString(retval)), printPosition, 0, 0.8, Scalar(255, 255, 255), 2);
 	//putText(src, (abs(retval) < 20) ? "[ ^ ]" : (retval < 0) ? "[<<<]" : "[>>>]", printPosition + Point(55, 30), 0, 0.8, Scalar(255, 255, 255), 2);
 
 	if (retval != 9999)
@@ -919,7 +941,8 @@ void cannyEdge(Mat& src, Mat& dst)
 
 Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType, const double lowThresAngle, const double highThresAngle)
 {
-	Point printPoint(210 * (w / 640.0), 180 * (h / 360.0));
+	//Point printPoint(210 * (w / 640.0), 180 * (h / 360.0));
+	Point printPoint(210, 180);
 	vector<Point2i> P;
 	Vec4i firstLine;
 	Vec4i secondLine;
@@ -952,7 +975,7 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 		if (abs(slope(lines[i])) > highThresAngle				//수직 직선 예외처리
 			|| abs(slope(lines[i])) < lowThresAngle)			//수평 직선 예외처리
 		{
-			line(dst, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(), 2);
+			if (printMode) line(dst, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(), 2);
 			lines.erase(lines.begin() + i);
 			i--;
 			continue;
@@ -974,26 +997,32 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 	{
 		if (i == 0)
 		{
-			if (lowLinePosition == 1) cuttingHeight = h * (1 / 3.0);
-			else if (lowLinePosition == 2) cuttingHeight = h * (1 / 2.0);
-			else cuttingHeight = h * (20 / 100.0);
+			if (lowLinePosition == 1) cuttingHeight = h * (1 / 3.);
+			else if (lowLinePosition == 2) cuttingHeight = h * (1 / 2.);
+			else cuttingHeight = h * (20 / 100.);
 
-			putText(dst, "ROI = " + toString(lowLinePosition), Point(15, cuttingHeight - 10), 2, 0.58, Scalar(0, 0, 255), 1);
-			line(dst, Point(0, cuttingHeight), Point(w, cuttingHeight), Scalar(0, 0, 255), 1);
+			if (printMode)
+			{
+				putText(dst, "ROI = " + toString(lowLinePosition), Point(15, cuttingHeight - 10), 2, 0.58, Scalar(0, 0, 255), 1);
+				line(dst, Point(0, cuttingHeight), Point(w, cuttingHeight), Scalar(0, 0, 255), 1);
+			}
 		}
 
 		if (centerPoint(lines[i]).y < cuttingHeight)
 		{
-			line(dst, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(), 2);
+			if (printMode) line(dst, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(), 2);
 			lines.erase(lines.begin() + i);
 			i--;
 		}
 
 	}
 
-	for (unsigned int j = 0; j < lines.size(); j++)
+	if (printMode)
 	{
-		line(dst, Point(lines[j][0], lines[j][1]), Point(lines[j][2], lines[j][3]), Scalar(255, 255, 255), 2);
+		for (unsigned int j = 0; j < lines.size(); j++)
+		{
+			line(dst, Point(lines[j][0], lines[j][1]), Point(lines[j][2], lines[j][3]), Scalar(255, 255, 255), 2);
+		}
 	}
 
 	if (lines.size() < 1)
@@ -1002,8 +1031,8 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 		return Vec8i();
 	}
 
-	Vec4i rightLine(0, -1, 0, 0);		//최우측 직선
-	Vec4i leftLine(w, -1, w, 0);		//최좌측 직선
+	Vec4i rightLine(0, -1, 0, 0);			//최우측 직선
+	Vec4i leftLine(640, -1, 640, 0);		//최좌측 직선
 	for (unsigned int i = 0; i < lines.size(); i++)
 	{
 		if (leftLine[0] > lines[i][0])
@@ -1047,7 +1076,7 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 	else //if (slopeSign(leftLine) == slopeSign(rightLine))	//좌우 직선의 기울기부호가 같으면
 	{
 		detectedLineType = 1;
-		Point highest(-1, h);		//최상단 점
+		Point highest(-1, 640);		//최상단 점
 		Point lowest(-1, 0);		//최하단 점
 		for (unsigned int i = 0; i < lines.size(); i++)
 		{
@@ -1221,12 +1250,12 @@ string toString(int A)
 	return text;
 }
 
-string toString(double A)
+string toString(double A, int num)
 {
 	stringstream ss;
 	string text;
 	ss << fixed;
-	ss.precision(2);
+	ss.precision(num);
 	ss << A;
 	ss >> text;
 	return text;
@@ -1796,4 +1825,53 @@ double calculDistance_toFinish(Mat& src, Mat& dst, const int distance_top, const
 	putText(src, "Distance = " + toString(distance), printPosition, 0, 0.8, Scalar(255, 255, 255), 2);
 	line(src, Point(320, 360), Point(320, pixelDistance), mint, 10);
 	return distance;
+}
+
+void overlayImage(Mat& src, Mat& dst, const Mat& image, Point location)
+{
+	src.copyTo(dst);
+	//for (int y = std::max(location.y, 0); y < src.rows; ++y)
+	for (int y = location.y; y < src.rows; ++y)
+	{
+		int fY = y - location.y;
+		if (fY >= image.rows) break;
+
+		//for (int x = std::max(location.x, 0); x < src.cols; ++x)
+		for (int x = location.x; x < src.cols; ++x)
+		{
+			int fX = x - location.x;
+			if (fX >= image.cols) break;
+
+			double opacity = ((double)image.data[fY * image.step + fX * image.channels() + 3]) / 255.;
+
+			for (int c = 0; opacity > 0 && c < dst.channels(); ++c)
+			{
+				unsigned char imagePx = image.data[fY * image.step + fX * image.channels() + c];
+				unsigned char srcPx = src.data[y * src.step + x * src.channels() + c];
+				//dst.data[y * dst.step + dst.channels() * x + c] = srcPx * (1. - opacity) + imagePx * opacity;
+				dst.data[y * dst.step + dst.channels() * x + c] = srcPx * (1. - opacity) + imagePx * opacity;
+			}
+		}
+	}
+}
+
+void overlayTire(Mat& src, Mat& dst, double angle)
+{
+	if (btire)
+	{
+		double t_angle = angle / 10.;
+		Mat rotatedTire;
+		//Mat M = getRotationMatrix2D(Point2f(Tire.cols / 2.f, Tire.rows / 2.f), -t_angle, 1);
+		Mat M = getRotationMatrix2D(Point2f(41.5f, 41.5f), -t_angle, 1);
+
+		warpAffine(Tire, rotatedTire, M, Size());
+		overlayImage(src, dst, backimg, Point(205, 53));
+		overlayImage(src, dst, rotatedTire, Point(205, 50));
+		overlayImage(src, dst, rotatedTire, Point(335, 50));
+		putText(src, ((abs(t_angle) >= 10.) ? "Angle:" : "Angle: ") + (string)((t_angle >= 0) ? "+" : "") + toString(t_angle, 1) + "`", Point(243, 97), 0, 0.73, Scalar(255, 255, 255), 2);
+	}
+	else
+	{
+		cout << "no image file(tire, background)" << endl;
+	}
 }

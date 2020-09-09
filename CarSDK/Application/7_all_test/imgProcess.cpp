@@ -702,7 +702,7 @@ extern "C" {
 		Mat img_hsv;
 		Scalar lower_white(75, 20, 200);
 		Scalar upper_white(255, 255, 255);
-		cvtColor(srcRGB, lower_white, upper_white, img_hsv);
+		cvtColor(srcRGB, img_hsv, COLOR_BGR2HSV);
 		/*White Filtering*/
 		Mat img_filtered;
 		inRange(img_hsv, lower_white, upper_white,img_filtered);

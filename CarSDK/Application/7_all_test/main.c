@@ -392,6 +392,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, 1);
 
 				t_data->missionData.finish_distance = calculDistance_FinishLine(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+				printf("finish distance %d", t_data->missionData.finish_distance);
 				t_data->missionData.checkWhiteLineFlag = false;
 				t_data->imgData.btopview = true;
 				t_data->imgData.bauto = true;
@@ -1532,9 +1533,9 @@ void* mission_thread(void* arg)
 		if (roundabout && roundabout != DONE)
 		{
 			//printf("roundabout 분기 \n");
-			if (StopLine(5) || data->missionData.finish_distance!=-1)
+			if (data->missionData.finish_distance!=-1)
 			{
-				onlyDistance(BASIC_SPEED, data->missionData.finish_distance);
+				onlyDistance(BASIC_SPEED, float(data->missionData.finish_distance)/26.0*500);
 				data->missionData.finish_distance = -1;
 				data->imgData.bwhiteLine = true;
 				data->imgData.bprintString = true;

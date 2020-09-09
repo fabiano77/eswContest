@@ -269,139 +269,6 @@ extern "C"
 			CarLight_Write(0x00);
 	}
 
-	int RoundAbout_isStart(const int Distance1)
-	{
-		if (!first_RoundAbout++)
-			RoundAbout_Init();
-		int lower_StopDistance = 25;
-		int uper_StopDistance = 30;
-
-		if (flag_go > 0)
-		{
-			if (Distance1 > uper_StopDistance)
-				flag_go--;
-		}
-		else if (flag_go == 0)
-		{
-			if (!check_start)
-			{
-				check_start = 1;
-				flag_wait = -1;
-			}
-		}
-		else
-		{
-			if (Distance1 < lower_StopDistance){
-				if (flag_wait < 2)
-					flag_wait++;
-				else if (flag_wait > 0)
-					flag_wait--;
-			}
-			if (flag_wait == 2)
-			{
-				flag_wait = -1;
-				flag_go = 25; // �ش� �������� ���� �� ����� ����
-			}
-		}
-		return check_start;
-	}
-
-	int RoundAbout_isDelay(const int Distance1)
-	{
-		if (Distance1 < lower_RoundDistance)
-		{
-			if (flag_wait < 2)
-				flag_wait++;
-
-			if (flag_wait == 2)
-			{
-				flag_wait = -1;
-				flag_stop = 25; // �ش� �����Ӹ�ŭ ����
-				return 1;
-			}
-			return 0;
-		}
-		else
-		{
-			if (flag_wait > 0)
-				flag_wait--;
-
-			if (flag_stop == 0)
-			{
-				flag_stop = -1;
-				return 0;
-			}
-			else if (flag_stop > 0)
-			{
-				if (Distance1 >= uper_RoundDistance)
-				{
-					flag_stop--;
-				}
-				return 1;
-			}
-			else
-			{
-				return 0;
-			}
-		}
-	}
-
-	int RoundAbout_isEnd(const int Distance1, const int Distance2)
-	{
-		if ((Distance1 > 40) && (Distance2 > 40))
-		{									   // �Ÿ� ������ �ƹ��͵� ������ ���� ��
-			if (flag_end < THR_RoundAbout_END) // �ش� �������� ������ �б� ���
-				flag_end++;
-		}
-		else
-		{
-			if (flag_end > 0)
-				flag_end--;
-		}
-
-		if (flag_end > THR_RoundAbout_END)
-		{
-			flag_end = -1;
-			return 1;
-		}
-		return 0;
-	}
-
-	/*int Tunnel_isTunnel(const int Distance1, const int Distance2, const int Distance3, const int Distance4) {
-		if (!first_Tunnel++) flag_Tunnel = 0;
-
-		if ((Distance1 < 30) && (Distance2 < 30)) {
-			if(flag_Tunnel < 2)
-				flag_Tunnel++;
-		}
-		else {
-			if (flag_Tunnel > 0)
-				flag_Tunnel--;
-		}
-
-		if ((Distance3 < 30) && (Distance4 < 30)) {
-			if ((flag_Tunnel >= 2) && (flag_Tunnel < 4))
-				flag_Tunnel++;
-		}
-		else {
-			if (flag_Tunnel >= 2)
-				flag_Tunnel--;
-		}
-
-		if (flag_Tunnel == 4) {
-			return 1;
-		}
-		return 0;
-	}*/
-
-	int Tunnel_isStart(const int Distance2, const int Distance6, const int Distance3, const int Distance5)
-	{
-		if (Distance2 <= 30 && Distance3 <= 30 && Distance5 <= 30 && Distance6 <= 30)
-			return 1;
-		else
-			return 0;
-	}
-
 	int Tunnel_isEnd(const int Distance1, const int Distance2, const int Distance3, const int Distance4)
 	{
 		/* 2,6 - 3,5 (1,2 - 3,4)
@@ -449,68 +316,6 @@ extern "C"
 	}
 
 	int Tunnel_SteerVal(const int Distance1, const int Distance2)
-	{
-		// ���� 19 , ���� 40
-		// �߾��� 10, 10�� ���;���
-		absDist = abs(Distance1 - Distance2);
-		int i;
-		if (absDist < 2)
-		{
-			i = 0;
-			if (++flag_steer[0] == 2)
-			{
-				steerVal = 0;
-			}
-		}
-		else if (absDist < 4)
-		{
-			i = 1;
-			if (++flag_steer[1] == 2)
-			{
-				steerVal = 80;
-			}
-		}
-		else if (absDist < 6)
-		{
-			i = 2;
-			if (++flag_steer[2] == 2)
-			{
-				steerVal = 180;
-			}
-		}
-		else if (absDist < 8)
-		{
-			i = 3;
-			if (++flag_steer[3] == 2)
-			{
-				steerVal = 300;
-			}
-		}
-		else
-		{
-			i = 4;
-			if (++flag_steer[4] == 2)
-			{
-				steerVal = 420;
-			}
-		}
-
-		if (flag_steer[i] == 2)
-		{
-			flag_steer[i] = 0;
-			if (Distance1 < Distance2)
-				steerVal = -steerVal;
-		}
-		for (int j = 0; j < 5; j++)
-		{
-			if ((flag_steer[j] > 0) && (j != i))
-				flag_steer[j]--;
-		}
-		printf("steer : %d, [%d, %d]\n", steerVal, Distance2, Distance1);
-		return 1500 - steerVal;
-	}
-
-	int Tunnel_SteerVal2(const int Distance1, const int Distance2)
 	{
 
 		absDist = abs(Distance1 - Distance2);
@@ -747,4 +552,201 @@ void RoundAbout_Init()
 	flag_end = -1;
 }
 
+/* 
+	int RoundAbout_isStart(const int Distance1)
+	{
+		if (!first_RoundAbout++)
+			RoundAbout_Init();
+		int lower_StopDistance = 25;
+		int uper_StopDistance = 30;
 
+		if (flag_go > 0)
+		{
+			if (Distance1 > uper_StopDistance)
+				flag_go--;
+		}
+		else if (flag_go == 0)
+		{
+			if (!check_start)
+			{
+				check_start = 1;
+				flag_wait = -1;
+			}
+		}
+		else
+		{
+			if (Distance1 < lower_StopDistance){
+				if (flag_wait < 2)
+					flag_wait++;
+				else if (flag_wait > 0)
+					flag_wait--;
+			}
+			if (flag_wait == 2)
+			{
+				flag_wait = -1;
+				flag_go = 25; // �ش� �������� ���� �� ����� ����
+			}
+		}
+		return check_start;
+	}
+
+	int RoundAbout_isDelay(const int Distance1)
+	{
+		if (Distance1 < lower_RoundDistance)
+		{
+			if (flag_wait < 2)
+				flag_wait++;
+
+			if (flag_wait == 2)
+			{
+				flag_wait = -1;
+				flag_stop = 25; // �ش� �����Ӹ�ŭ ����
+				return 1;
+			}
+			return 0;
+		}
+		else
+		{
+			if (flag_wait > 0)
+				flag_wait--;
+
+			if (flag_stop == 0)
+			{
+				flag_stop = -1;
+				return 0;
+			}
+			else if (flag_stop > 0)
+			{
+				if (Distance1 >= uper_RoundDistance)
+				{
+					flag_stop--;
+				}
+				return 1;
+			}
+			else
+			{
+				return 0;
+			}
+		}
+	}
+
+	int RoundAbout_isEnd(const int Distance1, const int Distance2)
+	{
+		if ((Distance1 > 40) && (Distance2 > 40))
+		{									   // �Ÿ� ������ �ƹ��͵� ������ ���� ��
+			if (flag_end < THR_RoundAbout_END) // �ش� �������� ������ �б� ���
+				flag_end++;
+		}
+		else
+		{
+			if (flag_end > 0)
+				flag_end--;
+		}
+
+		if (flag_end > THR_RoundAbout_END)
+		{
+			flag_end = -1;
+			return 1;
+		}
+		return 0;
+	}
+
+	int Tunnel_isTunnel(const int Distance1, const int Distance2, const int Distance3, const int Distance4) {
+		if (!first_Tunnel++) flag_Tunnel = 0;
+
+		if ((Distance1 < 30) && (Distance2 < 30)) {
+			if(flag_Tunnel < 2)
+				flag_Tunnel++;
+		}
+		else {
+			if (flag_Tunnel > 0)
+				flag_Tunnel--;
+		}
+
+		if ((Distance3 < 30) && (Distance4 < 30)) {
+			if ((flag_Tunnel >= 2) && (flag_Tunnel < 4))
+				flag_Tunnel++;
+		}
+		else {
+			if (flag_Tunnel >= 2)
+				flag_Tunnel--;
+		}
+
+		if (flag_Tunnel == 4) {
+			return 1;
+		}
+		return 0;
+	}
+
+int Tunnel_isStart(const int Distance2, const int Distance6, const int Distance3, const int Distance5)
+{
+	if (Distance2 <= 30 && Distance3 <= 30 && Distance5 <= 30 && Distance6 <= 30)
+		return 1;
+	else
+		return 0;
+}
+
+int Tunnel_SteerVal(const int Distance1, const int Distance2)
+	{
+		// ���� 19 , ���� 40
+		// �߾��� 10, 10�� ���;���
+		absDist = abs(Distance1 - Distance2);
+		int i;
+		if (absDist < 2)
+		{
+			i = 0;
+			if (++flag_steer[0] == 2)
+			{
+				steerVal = 0;
+			}
+		}
+		else if (absDist < 4)
+		{
+			i = 1;
+			if (++flag_steer[1] == 2)
+			{
+				steerVal = 80;
+			}
+		}
+		else if (absDist < 6)
+		{
+			i = 2;
+			if (++flag_steer[2] == 2)
+			{
+				steerVal = 180;
+			}
+		}
+		else if (absDist < 8)
+		{
+			i = 3;
+			if (++flag_steer[3] == 2)
+			{
+				steerVal = 300;
+			}
+		}
+		else
+		{
+			i = 4;
+			if (++flag_steer[4] == 2)
+			{
+				steerVal = 420;
+			}
+		}
+
+		if (flag_steer[i] == 2)
+		{
+			flag_steer[i] = 0;
+			if (Distance1 < Distance2)
+				steerVal = -steerVal;
+		}
+		for (int j = 0; j < 5; j++)
+		{
+			if ((flag_steer[j] > 0) && (j != i))
+				flag_steer[j]--;
+		}
+		printf("steer : %d, [%d, %d]\n", steerVal, Distance2, Distance1);
+		return 1500 - steerVal;
+	}
+
+
+*/

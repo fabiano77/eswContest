@@ -1445,52 +1445,49 @@ void* mission_thread(void* arg)
 
 		if (tunnel && tunnel != DONE)
 		{
-			if (data->missionData.btunnel)
+			if (data->missionData.btunnel && DistanceSensor_cm(2) < 20 && DistanceSensor_cm(6) < 20)
 			{
-				if (DistanceSensor_cm(2) < 30 && DistanceSensor_cm(6) < 30)
+				data->imgData.bprintString = true;
+				data->imgData.bmission = true;
+				data->imgData.bdark = false;
+
+				frontLightOnOff(data->controlData.lightFlag, true);
+				sprintf(data->imgData.missionString, "mission thread : tunnel detect");
+
+				while (true)
 				{
-					data->imgData.bprintString = true;
-					data->imgData.bmission = true;
-					data->imgData.bdark = false;
-
-					frontLightOnOff(data->controlData.lightFlag, true);
-					sprintf(data->imgData.missionString, "mission thread : tunnel detect");
-
-					while (true)
+					data->missionData.loopTime = timeCheck(&time);
+					int c2 = DistanceSensor_cm(2);
+					int c6 = DistanceSensor_cm(6);
+					if (Tunnel_isEnd(c2, c6, 50, 50))
 					{
-						data->missionData.loopTime = timeCheck(&time);
-						int c2 = DistanceSensor_cm(2);
-						int c6 = DistanceSensor_cm(6);
-						if (Tunnel_isEnd(c2, c6, 50, 50))
-						{
-							sprintf(data->imgData.missionString, "tunnel out");
-							break;
-						}
-
-						data->controlData.steerVal = Tunnel_SteerVal2(c2, c6);
-						sprintf(data->imgData.missionString, "steer = %d, %d : %d", data->controlData.steerVal, c2, c6);
-
-						SteeringServo_Write(data->controlData.steerVal);
-
-						usleep(10000);
+						sprintf(data->imgData.missionString, "tunnel out");
+						break;
 					}
-					DesireSpeed_Write(0);
 
-					frontLightOnOff(data->controlData.lightFlag, false);
+					data->controlData.steerVal = Tunnel_SteerVal(c2, c6);
+					sprintf(data->imgData.missionString, "steer = %d, %d : %d", data->controlData.steerVal, c2, c6);
 
-					buzzer(1, 0, 500000);
-					usleep(100000);
+					SteeringServo_Write(data->controlData.steerVal);
 
-					DesireDistance(-40, 400, 1500);
-					usleep(100000);
-
-					printf("Tunnel OUT\n");
-					tunnel = DONE;
-					data->imgData.bmission = false;
-					data->imgData.bprintString = false;
-					data->missionData.btunnel = false;
+					usleep(10000);
 				}
-			}
+				DesireSpeed_Write(0);
+
+				frontLightOnOff(data->controlData.lightFlag, false);
+
+				buzzer(1, 0, 500000);
+				usleep(100000);
+
+				DesireDistance(-40, 400, 1500);
+				usleep(100000);
+
+				printf("Tunnel OUT\n");
+				tunnel = DONE;
+				data->imgData.bmission = false;
+				data->imgData.bprintString = false;
+				data->missionData.btunnel = false;
+			}			
 		}
 
 		if (roundabout && roundabout != DONE)

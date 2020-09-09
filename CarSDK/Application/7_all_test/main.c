@@ -353,27 +353,11 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
 			}
 
-			if (!(t_data->missionData.checkWhiteLineFlag)) {
+			if (t_data->missionData.finish_distance == -1) {
 				t_data->missionData.checkWhiteLineFlag = checkWhiteLine(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H);
-				t_data->imgData.btopview = false;
-				t_data->imgData.bauto = false;
 				if (t_data->missionData.checkWhiteLineFlag) {
-				
-					OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
-
-					topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, 1);
-
-					t_data->missionData.finish_distance = calculDistance_FinishLine(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
-					t_data->missionData.checkWhiteLineFlag = false;
-					if (t_data->missionData.finish_distance != -1)
-					{
-						t_data->missionData.checkWhiteLineFlag = true;
-					}
-					else {
-						t_data->missionData.checkWhiteLineFlag = false;
-						t_data->imgData.btopview = true;
-						t_data->imgData.bauto = true;
-					}
+					t_data->imgData.btopview = false;
+					t_data->imgData.bauto = false;
 				}
 
 			}
@@ -401,6 +385,16 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 						t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
 					}
 				}
+			}
+			if (t_data->missionData.checkWhiteLineFlag) {
+				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
+
+				topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, 1);
+
+				t_data->missionData.finish_distance = calculDistance_FinishLine(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+				t_data->missionData.checkWhiteLineFlag = false;
+				t_data->imgData.btopview = true;
+				t_data->imgData.bauto = true;
 			}
 
 			/*checkWhiteLineFlag가 True인 경우, RoundAbout */
@@ -1089,7 +1083,7 @@ void* mission_thread(void* arg)
 						*/
 
 						/*
-						우선 정지 표지판을 감지하면 주차에서 탈출되도록 조치 
+						우선 정지 표지판을 감지하면 주차에서 탈출되도록 조치
 						*/
 						if (data->missionData.frame_priority)
 						{
@@ -1529,13 +1523,13 @@ void* mission_thread(void* arg)
 				data->imgData.bmission = false;
 				data->imgData.bprintString = false;
 				data->missionData.btunnel = false;
-			}			
+			}
 		}
 
 		if (roundabout && roundabout != DONE)
 		{
 			//printf("roundabout 분기 \n");
-			if (StopLine(5) || data->missionData.checkWhiteLineFlag)
+			if (StopLine(5) || data->missionData.finish_distance!=-1)
 			{
 				onlyDistance(BASIC_SPEED, data->missionData.finish_distance);
 				data->missionData.finish_distance = -1;

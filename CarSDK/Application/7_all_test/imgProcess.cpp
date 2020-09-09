@@ -695,7 +695,7 @@ extern "C" {
 	bool checkWhiteLine(unsigned char* inBuf, int w, int h) {
 		//original img;
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
-		Rect roi(20, 180, 620, 240);
+		Rect roi(20, 140, 600, 220);
 		/*resize for detect White Line*/
 		Mat roiRGB = srcRGB(roi);
 		/*convert rgb to hsv*/

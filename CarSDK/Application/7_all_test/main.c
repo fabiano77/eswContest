@@ -1533,7 +1533,7 @@ void* mission_thread(void* arg)
 		{
 			data->imgData.bcheckFrontWhite = true;
 			//printf("roundabout 분기 \n");
-			if (StopLine(5) || data->missionData.finish_distance!=-1)
+			if (/*StopLine(5) ||*/ data->missionData.finish_distance!=-1)
 			{
 				onlyDistance(BASIC_SPEED, data->missionData.finish_distance);
 				data->missionData.finish_distance = -1;

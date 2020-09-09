@@ -577,16 +577,21 @@ extern "C"
 	{
 		int absSteer = abs(steerVal);
 
+		// if (absSteer < 200)
+		// 	return basicSpeed;
+		// else if (absSteer < 300)
+		// 	return int(basicSpeed * 1.15);
+		// else if (absSteer < 400)
+		// 	return int(basicSpeed * 1.25);
+		// else if (absSteer <= 500)
+		// 	return int(basicSpeed * 1.35);
+		// else
+		// 	return basicSpeed;	
+
 		if (absSteer < 200)
 			return basicSpeed;
-		else if (absSteer < 300)
-			return int(basicSpeed * 1.15);
-		else if (absSteer < 400)
-			return int(basicSpeed * 1.25);
-		else if (absSteer <= 500)
-			return int(basicSpeed * 1.35);
 		else
-			return basicSpeed;	
+			return basicSpeed*(1 + 0.3*(absSteer-200)/300);	
 	}
 
 	void buzzer(int numOfTimes, int interval_us, int pulseWidth_us)

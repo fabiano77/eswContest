@@ -403,22 +403,22 @@ extern "C" {
 		/** value setting in 기자재실 **/
 		//Scalar upper_gray(255, 100, 210);
 		//Scalar lower_gray(90, 0, 100);
-		/***************************************/
-
+		/****Add format***********************************/
+		Mat img_sharpen, img_canny, img_white, img_roi;
 		/*Convert Color*/
 		int color_convert = 1;
-		Mat img_white;
 		Point roi_points[4] = { Point(0,100),Point(0,360),Point(640,360),Point(640,100) };
-		Mat img_roi;
 		regionOfInterest(srcRGB, img_roi, roi_points);
 		lineFiltering(img_roi, img_white, color_convert);
+
+		/* Sharpen Edge for detecting */
+		int ksize = 1;
+		Laplacian(img_white, img_sharpen, CV_8U, ksize);
 		/*Canny Image*/
-		Mat img_canny;
 		cannyEdge(img_white, img_canny);
 		/*Hough Ransac*/
 		Mat img_ransac;
 		int line_type;
-
 		Vec8i ransac_points = hough_ransacLine(img_canny, srcRGB, 640, 360, 17, 1, line_type, 0.5, 30);
 
 		cout << "line type = " << line_type << endl;
@@ -436,8 +436,8 @@ extern "C" {
 		if (line_type == 0) {//미탐지 시
 			grad_right = -1000;
 			grad_left = 1000;
-			rightup_x = width/2+60;
-			rightdown_x = width/2+60;
+			rightup_x = width / 2 + 60;
+			rightdown_x = width / 2 + 60;
 			leftup_x = 0;
 			leftdown_x = 0;
 		}
@@ -579,7 +579,7 @@ extern "C" {
 		putText(srcRGB, toString((double)count_right), location_right, font, fontScale, Scalar(255, 0, 0), 2);
 		/*Choose Left or Right*/
 		//선이 없는 경우 배제하는 것도 필요
-		if (count_left > count_right)
+		if (count_left < count_right)
 		{
 			putText(srcRGB, "Left to go", location, font, fontScale, Scalar(0, 0, 255), 2);
 			printf("Going left");

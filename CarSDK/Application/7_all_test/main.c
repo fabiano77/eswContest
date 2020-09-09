@@ -1058,16 +1058,27 @@ void* mission_thread(void* arg)
 						/*
 						주차 폭에 대한 거리를 측정하기 위해 거리 측정 시작
 						*/
+
+						/*
+						우선 정지 표지판을 감지하면 주차에서 탈출되도록 조치 
+						*/
+						if (data->missionData.frame_priority)
+						{
+							wrong_detection = 0;
+							break;
+						}
+						// Encoder 측정
 						encoderVal = Encoder_Read();
 						if (encoderVal != 65278)
 						{
 							parking_width = encoderVal;
 							sprintf(data->imgData.missionString, "parking_width : %d", parking_width);
-							if (parking_width >= 2500)
+							if (parking_width >= 2000)
 							{
 								wrong_detection = 0;
 								break;
 							}
+							// 주차 공간 측정이 안되는 경우, 잘못된 주차 분기 진입으로 판단하고 탈출.
 						}
 						if (data->missionData.parkingData.frontRight == true)
 						{
@@ -1447,52 +1458,49 @@ void* mission_thread(void* arg)
 		if (tunnel && tunnel != DONE)
 		{
 			data->imgData.bdark = true;
-			if (data->missionData.btunnel)
+			if (data->missionData.btunnel && DistanceSensor_cm(2) < 20 && DistanceSensor_cm(6) < 20)
 			{
-				if (DistanceSensor_cm(2) < 30 && DistanceSensor_cm(6) < 30)
+				data->imgData.bprintString = true;
+				data->imgData.bmission = true;
+				data->imgData.bdark = false;
+
+				frontLightOnOff(data->controlData.lightFlag, true);
+				sprintf(data->imgData.missionString, "mission thread : tunnel detect");
+
+				while (true)
 				{
-					data->imgData.bprintString = true;
-					data->imgData.bmission = true;
-					data->imgData.bdark = false;
-
-					frontLightOnOff(data->controlData.lightFlag, true);
-					sprintf(data->imgData.missionString, "mission thread : tunnel detect");
-
-					while (true)
+					data->missionData.loopTime = timeCheck(&time);
+					int c2 = DistanceSensor_cm(2);
+					int c6 = DistanceSensor_cm(6);
+					if (Tunnel_isEnd(c2, c6, 50, 50))
 					{
-						data->missionData.loopTime = timeCheck(&time);
-						int c2 = DistanceSensor_cm(2);
-						int c6 = DistanceSensor_cm(6);
-						if (Tunnel_isEnd(c2, c6, 50, 50))
-						{
-							sprintf(data->imgData.missionString, "tunnel out");
-							break;
-						}
-
-						data->controlData.steerVal = Tunnel_SteerVal2(c2, c6);
-						sprintf(data->imgData.missionString, "steer = %d, %d : %d", data->controlData.steerVal, c2, c6);
-
-						SteeringServo_Write(data->controlData.steerVal);
-
-						usleep(10000);
+						sprintf(data->imgData.missionString, "tunnel out");
+						break;
 					}
-					DesireSpeed_Write(0);
 
-					frontLightOnOff(data->controlData.lightFlag, false);
+					data->controlData.steerVal = Tunnel_SteerVal(c2, c6);
+					sprintf(data->imgData.missionString, "steer = %d, %d : %d", data->controlData.steerVal, c2, c6);
 
-					buzzer(1, 0, 500000);
-					usleep(100000);
+					SteeringServo_Write(data->controlData.steerVal);
 
-					DesireDistance(-40, 400, 1500);
-					usleep(100000);
-
-					printf("Tunnel OUT\n");
-					tunnel = DONE;
-					data->imgData.bmission = false;
-					data->imgData.bprintString = false;
-					data->missionData.btunnel = false;
+					usleep(10000);
 				}
-			}
+				DesireSpeed_Write(0);
+
+				frontLightOnOff(data->controlData.lightFlag, false);
+
+				buzzer(1, 0, 500000);
+				usleep(100000);
+
+				DesireDistance(-40, 400, 1500);
+				usleep(100000);
+
+				printf("Tunnel OUT\n");
+				tunnel = DONE;
+				data->imgData.bmission = false;
+				data->imgData.bprintString = false;
+				data->missionData.btunnel = false;
+			}			
 		}
 
 		if (roundabout && roundabout != DONE)

@@ -314,6 +314,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 					t_data->missionData.finishData.checkFront = false;
 				}
 			}
+
 		}
 
 		/* 기본 상태에서 처리되는 영상처리 */
@@ -352,6 +353,31 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
 			}
 
+			if (!(t_data->missionData.checkWhiteLineFlag)) {
+				t_data->missionData.checkWhiteLineFlag = checkWhiteLine(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H);
+				t_data->imgData.btopview = false;
+				t_data->imgData.bauto = false;
+				if (t_data->missionData.checkWhiteLineFlag) {
+				
+					OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
+
+					topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, 1);
+
+					t_data->missionData.finish_distance = calculDistance_FinishLine(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+					t_data->missionData.checkWhiteLineFlag = false;
+					if (t_data->missionData.finish_distance != -1)
+					{
+						t_data->missionData.checkWhiteLineFlag = true;
+					}
+					else {
+						t_data->missionData.checkWhiteLineFlag = false;
+						t_data->imgData.btopview = true;
+						t_data->imgData.bauto = true;
+					}
+				}
+
+			}
+
 			if (t_data->imgData.btopview && t_data->imgData.bskip == false)
 			{
 				topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
@@ -376,6 +402,9 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 					}
 				}
 			}
+
+			/*checkWhiteLineFlag가 True인 경우, RoundAbout */
+
 		}
 
 		/********************************************************/
@@ -1509,8 +1538,10 @@ void* mission_thread(void* arg)
 		if (roundabout && roundabout != DONE)
 		{
 			//printf("roundabout 분기 \n");
-			if (StopLine(5))
+			if (StopLine(5) || data->missionData.checkWhiteLineFlag)
 			{
+				onlyDistance(BASIC_SPEED, data->missionData.finish_distance);
+				data->missionData.finish_distance = -1;
 				data->imgData.bwhiteLine = true;
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "round about");
@@ -1620,6 +1651,7 @@ void* mission_thread(void* arg)
 				data->missionData.broundabout = false;
 				data->imgData.bspeedControl = true;
 				data->imgData.bprintString = false;
+				data->missionData.finish_distance = -1;
 			}
 		}
 
@@ -2119,6 +2151,7 @@ int main(int argc, char** argv)
 	tdata.missionData.overtakingData.rightFlag = 0;
 	tdata.missionData.signalLightData.finalDirection = 0;
 	tdata.missionData.finishData.checkFront = false;
+	tdata.missionData.checkWhiteLineFlag = false;
 	int i = 0;
 	for (i = 0; i < 8; i++)
 	{

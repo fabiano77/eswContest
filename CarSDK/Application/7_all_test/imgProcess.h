@@ -63,6 +63,7 @@ extern "C" {
 
 	void opencv_videoclose(void);
 
+	bool checkWhiteLine(unsigned char* inBuf, int w, int h);
 
 #ifdef __cplusplus
 }

@@ -934,12 +934,12 @@ void lineFiltering(Mat& src, Mat& dst, int mode)
 	//debug추가하면서 고침. 08/21 12시33분.
 	int h1(14), s(60), v(100); // 예선영상 14, 0, 240
 	int h2(46);
+	Mat hsv;
+	Mat binMat;
 	if (mode == 0 || mode == 1) //노란차선 인식 모드
 	{
 		Scalar lower_yellow(h1, s, v);
 		Scalar upper_yellow(h2, 255, 255);
-		Mat hsv;
-		Mat binMat;
 
 		cvtColor(src, hsv, COLOR_BGR2HSV);					//HSV색영역
 		inRange(hsv, lower_yellow, upper_yellow, binMat);	//2진 Mat객체 binMat생성

@@ -1046,16 +1046,27 @@ void* mission_thread(void* arg)
 						/*
 						주차 폭에 대한 거리를 측정하기 위해 거리 측정 시작
 						*/
+
+						/*
+						우선 정지 표지판을 감지하면 주차에서 탈출되도록 조치 
+						*/
+						if (data->missionData.frame_priority)
+						{
+							wrong_detection = 0;
+							break;
+						}
+						// Encoder 측정
 						encoderVal = Encoder_Read();
 						if (encoderVal != 65278)
 						{
 							parking_width = encoderVal;
 							sprintf(data->imgData.missionString, "parking_width : %d", parking_width);
-							if (parking_width >= 2500)
+							if (parking_width >= 2000)
 							{
 								wrong_detection = 0;
 								break;
 							}
+							// 주차 공간 측정이 안되는 경우, 잘못된 주차 분기 진입으로 판단하고 탈출.
 						}
 						if (data->missionData.parkingData.frontRight == true)
 						{

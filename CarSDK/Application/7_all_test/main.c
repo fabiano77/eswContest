@@ -1485,7 +1485,7 @@ void* mission_thread(void* arg)
 		if (roundabout && roundabout != DONE)
 		{
 			//printf("roundabout 분기 \n");
-			if (StopLine(5))
+			if (StopLine(5)|| )
 			{
 				data->imgData.bwhiteLine = true;
 				data->imgData.bprintString = true;
@@ -1596,6 +1596,7 @@ void* mission_thread(void* arg)
 				data->missionData.broundabout = false;
 				data->imgData.bspeedControl = true;
 				data->imgData.bprintString = false;
+				data->missionData.finish_distance = -1;
 			}
 		}
 

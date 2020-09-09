@@ -98,7 +98,7 @@ extern "C" {
 		Mat Mat_map1(h, w, CV_32FC1, map1);
 		Mat Mat_map2(h, w, CV_32FC1, map2);
 
-
+		
 
 		Mat disCoeffs;
 		Mat cameraMatrix = Mat(3, 3, CV_32FC1);
@@ -691,6 +691,30 @@ extern "C" {
 	{
 		closeVideoWrite();
 	}
+
+	bool checkWhiteLine(unsigned char* inBuf,int w, int h) {
+		//original img;
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		Rect roi(20, 180, 620, 240);
+		/*resize for detect White Line*/
+		Mat roiRGB = srcRGB(roi);
+		/*convert rgb to hsv*/
+		Mat img_hsv;
+		Scalar lower_white(75, 30, 200);
+		Scalar upper_white(255, 255, 255);
+		cvtColor(srcRGB, lower_white, upper_white, img_hsv);
+		/*White Filtering*/
+		Mat img_filtered;
+		inRange(img_hsv, lower_white, upper_white,img_filtered);
+		vector<Vec4f> lines;
+		HoughLinesP(img_filtered, lines, 1, CV_PI / 180, 80, 50, 20);
+		if (lines.size() > 0) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
 }	// extern "C"
 
 
@@ -908,15 +932,18 @@ void lineFiltering(Mat& src, Mat& dst, int mode)
 	//debug추가하면서 고침. 08/21 12시33분.
 	int h1(14), s(60), v(100); // 예선영상 14, 0, 240
 	int h2(46);
-	Scalar lower_yellow(h1, s, v);
-	Scalar upper_yellow(h2, 255, 255);
-	Mat hsv;
-	Mat binMat;
+	if (mode == 0 || mode == 1) //노란차선 인식 모드
+	{
+		Scalar lower_yellow(h1, s, v);
+		Scalar upper_yellow(h2, 255, 255);
+		Mat hsv;
+		Mat binMat;
 
-	cvtColor(src, hsv, COLOR_BGR2HSV);					//HSV색영역
-	inRange(hsv, lower_yellow, upper_yellow, binMat);	//2진 Mat객체 binMat생성
+		cvtColor(src, hsv, COLOR_BGR2HSV);					//HSV색영역
+		inRange(hsv, lower_yellow, upper_yellow, binMat);	//2진 Mat객체 binMat생성
+	}
 
-	if (mode == 1)//흰색차선 인식 모드
+	if (mode == 1 || mode == 2)//흰색차선 인식 모드
 	{
 		Scalar lower_white(75, 30, 200); // bgr white
 		Scalar upper_white(255, 255, 255);

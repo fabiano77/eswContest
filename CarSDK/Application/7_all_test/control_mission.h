@@ -179,6 +179,7 @@ extern "C" {
 		bool bprintSensor;		// �������̿� ������ ǥ�� ON/OFF
 		bool bprintTire;		// �������̿� �������� ǥ�� ON/OFF
 		bool bdark;				// �ͳ� Ž�� ON/OFF
+		bool bcheckFrontWhite;
 		bool bcheckPriority;	// �켱���� ǥ���� Ž�� ON/OFF
 		bool bcheckSignalLight; // ��ȣ�� Ž�� ON/OFF
 		bool bcheckFinishLine;	// �ǴϽö��� Ž�� ON/OFF

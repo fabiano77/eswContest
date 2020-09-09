@@ -353,7 +353,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
 			}
 
-			if (t_data->missionData.finish_distance == -1) {
+			if (t_data->imgData.bcheckFrontWhite && t_data->missionData.finish_distance == -1) {
 				t_data->missionData.checkWhiteLineFlag = checkWhiteLine(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H);
 				if (t_data->missionData.checkWhiteLineFlag) {
 					t_data->imgData.btopview = false;
@@ -1532,6 +1532,7 @@ void* mission_thread(void* arg)
 
 		if (roundabout && roundabout != DONE)
 		{
+			data->imgData.bcheckFrontWhite = true;
 			//printf("roundabout 분기 \n");
 			if (data->missionData.finish_distance!=-1)
 			{
@@ -1646,6 +1647,7 @@ void* mission_thread(void* arg)
 				data->missionData.broundabout = false;
 				data->imgData.bspeedControl = true;
 				data->imgData.bprintString = false;
+				data->imgData.bcheckFrontWhite = false;
 				data->missionData.finish_distance = -1;
 			}
 		}
@@ -2106,6 +2108,7 @@ int main(int argc, char** argv)
 	tdata.imgData.bspeedControl = true;
 	tdata.imgData.bmission = false;
 	tdata.imgData.bdark = false;
+	tdata.imgData.bcheckFrontWhite = false;
 	tdata.imgData.bcheckPriority = false;
 	tdata.imgData.bcheckSignalLight = false;
 	tdata.imgData.bcheckFinishLine = false;

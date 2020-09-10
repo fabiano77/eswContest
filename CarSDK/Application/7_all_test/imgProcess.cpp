@@ -735,13 +735,13 @@ extern "C" {
 
 		int distance;
 
-		OpenCV_remap(inBuf, VPE_OUTPUT_W, VPE_OUTPUT_H, inBuf, map1, map2);
+		OpenCV_remap(inBuf, w, h, inBuf, map1, map2);
 
-		topview_transform(inBuf, VPE_OUTPUT_W, VPE_OUTPUT_H, inBuf, 1);
+		topview_transform(inBuf, w, h, inBuf, 1);
 
-		distance = calculDistance_FinishLine(inBuf, VPE_OUTPUT_W, VPE_OUTPUT_H, inBuf);
-
-		copyTo(copyRGB, srcRGB, Mat());
+		distance = calculDistance_FinishLine(inBuf, w, h, inBuf);
+		
+		copyRGB.copyTo(srcRGB);
 		//원본 영상 복구
 		
 		return distance;

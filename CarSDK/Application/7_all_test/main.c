@@ -155,6 +155,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 	struct timeval st, et;
 	unsigned char *cam_pbuf[4];
 	bool delay_flag = false;
+	bool checking_stopline = false;
 
 	if (get_framebuf(cambuf, cam_pbuf) == 0)
 	{
@@ -251,6 +252,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 						t_data->missionData.signalLightData.Accumulation_greenVal += checkGreen(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
 						if (t_data->missionData.signalLightData.Accumulation_greenVal >= 3)
 						{
+							delay_flag = true;
 							buzzer(2, BUZZER_PULSE, BUZZER_PULSE);
 							t_data->missionData.signalLightData.state = DETECTION_FINISH;
 							t_data->missionData.signalLightData.finalDirection = 1;
@@ -258,6 +260,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 						}
 						else if (t_data->missionData.signalLightData.Accumulation_greenVal <= -3)
 						{
+							delay_flag = true;
 							buzzer(1, 0, BUZZER_PULSE * 2);
 							t_data->missionData.signalLightData.state = DETECTION_FINISH;
 							t_data->missionData.signalLightData.finalDirection = -1;
@@ -334,6 +337,21 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				}
 			}
 
+			if (t_data->imgData.bcheckFrontWhite && t_data->missionData.finish_distance == -1)
+			{
+				checking_stopline = checkWhiteLine(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H);
+
+				if (checking_stopline)
+				{
+					t_data->missionData.finish_distance = stopLine_distance(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, map1, map2);
+
+					if (t_data->missionData.finish_distance != -1)
+					{
+						printf("stopLine distance %d\n", t_data->missionData.finish_distance);
+					}
+				}
+			}
+
 			if (t_data->imgData.bdark)
 			{
 				if (Tunnel(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, 40))
@@ -350,17 +368,6 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 			if (t_data->imgData.bcalibration)
 			{
 				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
-			}
-
-			if (t_data->imgData.bcheckFrontWhite && t_data->missionData.finish_distance == -1)
-			{
-
-				t_data->missionData.checkWhiteLineFlag = checkWhiteLine(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H);
-				if (t_data->missionData.checkWhiteLineFlag)
-				{
-					t_data->imgData.btopview = false;
-					t_data->imgData.bauto = false;
-				}
 			}
 
 			if (t_data->imgData.btopview && t_data->imgData.bskip == false)
@@ -387,21 +394,6 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					}
 				}
 			}
-			if (t_data->missionData.checkWhiteLineFlag)
-			{
-
-				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
-
-				topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, 1);
-
-				t_data->missionData.finish_distance = calculDistance_FinishLine(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
-				if (t_data->missionData.finish_distance != -1)
-					printf("finish distance %d\n", t_data->missionData.finish_distance);
-				t_data->missionData.checkWhiteLineFlag = false;
-				t_data->imgData.btopview = true;
-				t_data->imgData.bauto = true;
-			}
-
 			/*checkWhiteLineFlag가 True인 경우, RoundAbout */
 		}
 
@@ -410,6 +402,11 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		/********************************************************/
 
 		/* 영상처리후 오버레이로 정보 등등 출력.*/
+		if (checking_stopline)
+		{
+			checking_stopline = false;
+			displayPrintStopLine(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H);
+		}
 		if (t_data->imgData.bprintString)
 		{
 			displayPrintStr(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, t_data->imgData.missionString);
@@ -448,7 +445,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		/* 신호등 검출화면을 유지하기 위한 delay */
 		if (delay_flag)
 		{
-			usleep(1000000); // 1000ms
+			usleep(1700000); // 1700ms == 1.7s
 			delay_flag = false;
 		}
 
@@ -1547,12 +1544,14 @@ void *mission_thread(void *arg)
 
 		if (roundabout && roundabout != DONE)
 		{
-			data->imgData.bcheckFrontWhite = true;
-			//printf("roundabout 분기 \n");
-			if (/*StopLine(5) ||*/ data->missionData.finish_distance != -1)
+			data->imgData.bcheckFrontWhite = true;	// 전방 정지선 영상으로 탐지 ON
+			
+			if (/*StopLine(5) ||*/ data->missionData.finish_distance != -1)	//영상으로 정지선의 거리가 측정되면
 			{
-				onlyDistance(BASIC_SPEED, (data->missionData.finish_distance / 26.0) * 500);
+				onlyDistance(BASIC_SPEED, (data->missionData.finish_distance / 26.0) * 500);	//정지선까지 가서 stop
 				data->missionData.finish_distance = -1;
+				
+				/* 기존의 roundabout분기 진입 */
 				data->imgData.bwhiteLine = true;
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "round about");
@@ -1883,8 +1882,13 @@ void *mission_thread(void *arg)
 
 		if (signalLight && signalLight != DONE)
 		{
-			if (1)
+			data->imgData.bcheckFrontWhite = true;	// 전방 정지선 영상으로 탐지 ON
+
+			if (/*StopLine(5) ||*/ data->missionData.finish_distance != -1)	//영상으로 정지선의 거리가 측정되면
 			{
+				onlyDistance(BASIC_SPEED, (data->missionData.finish_distance / 26.0) * 500);	//정지선까지 가서 stop
+				data->missionData.finish_distance = -1;
+
 				DesireSpeed_Write(0);
 				SteeringServo_Write(1500);
 				data->imgData.bmission = true;

@@ -257,6 +257,13 @@ extern "C" {
 		outputSensor(dstRGB, w, h, c1, c2, c3, c4, c5, c6, stopline);
 	}
 
+	void displayPrintStopLine(unsigned char* outBuf, int w, int h)
+	{
+		Mat dstRGB(h, w, CV_8UC3, outBuf);
+
+		putText(dstRGB, "(check stopLine)", Point(210, 320), 0, 0.85, Scalar(255, 255, 0), 2);
+	}
+
 	void overlayPrintAngle(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int angle)
 	{
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
@@ -719,6 +726,25 @@ extern "C" {
 		else {
 			return false;
 		}
+	}
+
+	int stopLine_distance(unsigned char* inBuf, int w, int h, float* map1, float* map2)
+	{
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		Mat copyRGB = srcRGB.clone();
+
+		int distance;
+
+		OpenCV_remap(inBuf, VPE_OUTPUT_W, VPE_OUTPUT_H, inBuf, map1, map2);
+
+		topview_transform(inBuf, VPE_OUTPUT_W, VPE_OUTPUT_H, inBuf, 1);
+
+		distance = calculDistance_FinishLine(inBuf, VPE_OUTPUT_W, VPE_OUTPUT_H, inBuf);
+
+		copyTo(copyRGB, srcRGB, Mat());
+		//원본 영상 복구
+		
+		return distance;
 	}
 }	// extern "C"
 

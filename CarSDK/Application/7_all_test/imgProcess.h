@@ -21,6 +21,8 @@ extern "C" {
 	void displayPrintSensor(unsigned char* outBuf, int w, int h,
 		int c1, int c2, int c3, int c4, int c5, int c6, int stopline);
 
+	void displayPrintStopLine(unsigned char* outBuf, int w, int h);
+
 	void overlayPrintAngle(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int angle);
 
 	int checkRed(unsigned char* inBuf, int w, int h, unsigned char* outBuf);
@@ -64,6 +66,8 @@ extern "C" {
 	void opencv_videoclose(void);
 
 	bool checkWhiteLine(unsigned char* inBuf, int w, int h);
+
+	int stopLine_distance(unsigned char* inBuf, int w, int h, float* map1, float* map2);
 
 #ifdef __cplusplus
 }

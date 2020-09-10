@@ -735,21 +735,12 @@ extern "C" {
 
 		int distance;
 
-<<<<<<< HEAD
 		OpenCV_remap(inBuf, w, h, inBuf, map1, map2);
 
 		topview_transform(inBuf, w, h, inBuf, 1);
 
 		distance = calculDistance_FinishLine(inBuf, w, h, inBuf);
 		
-=======
-		OpenCV_remap(inBuf, w, w, inBuf, map1, map2);
-
-		topview_transform(inBuf, w, w, inBuf, 1);
-
-		distance = calculDistance_FinishLine(inBuf, w, w, inBuf);
-
->>>>>>> 64bd200a82912aa148792195d32edb78fac2c8d3
 		copyRGB.copyTo(srcRGB);
 		//원본 영상 복구
 		

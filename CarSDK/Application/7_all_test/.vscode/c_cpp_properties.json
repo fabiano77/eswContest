@@ -4,12 +4,13 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/../../**",
+                "${workspaceFolder}/../../CrossCompiler/sysroots/cortexa15t2hf-vfp-neon-linux-gnueabi/usr/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
-            "cStandard": "gnu11",
+            "cStandard": "c11",
             "cppStandard": "gnu++14",
-            "intelliSenseMode": "gcc-x64"
+            "intelliSenseMode": "clang-x64"
         }
     ],
     "version": 4

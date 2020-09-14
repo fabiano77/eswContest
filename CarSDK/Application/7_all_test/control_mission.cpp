@@ -161,14 +161,37 @@ extern "C"
 		return 0;
 	}
 
+	void SteeringServo_Write_uart(signed short angle)
+	{
+		while (sensor_using_flag)
+		{
+			usleep(500);	//0.5ms
+		}
+		sensor_using_flag = true;
+		SteeringServoControl_Write(angle);
+		sensor_using_flag = false;
+	}
+
+	void DesireSpeed_Write_uart(signed short speed)
+	{
+		while (sensor_using_flag)
+		{
+			usleep(500);	//0.5ms
+		}
+		sensor_using_flag = true;
+		DesireSpeed_Write(speed);
+		sensor_using_flag = false;
+	}
+
 	void DesiredDistance(int SettingSpeed, int SettingDistance, int SettingSteering)
 	{
 		//cout << "speed = " << SettingSpeed << "dist = " << SettingDistance << "steer = " << SettingSteering << endl;
 		DesireSpeed_Write(0);
+		usleep(20000);
 		int init_encoder = 0;
 		int on_encoder = 0;
 		EncoderCounter_Write(init_encoder);
-		usleep(50000);
+		usleep(20000);
 		int read_encoder = Encoder_Read();
 		int error_flag = 0;
 		while (read_encoder != 0)
@@ -181,7 +204,7 @@ extern "C"
 			if (error_flag++ > 10)
 				printf("DesireDistance(): encoder ERROR!\n");
 		}
-		SteeringServoControl_Write(SettingSteering);
+		SteeringServo_Write_uart(SettingSteering);
 		usleep(100000);
 		DesireSpeed_Write(SettingSpeed);
 		while (1)
@@ -217,7 +240,7 @@ extern "C"
 					break;
 				}
 			}
-			usleep(50000); // 10ms
+			usleep(20000); // 50->20 ms 변경 09/14
 		}
 		//cout << "\tDesiredDistance() :encoder = " << on_encoder << endl;
 	}
@@ -263,7 +286,7 @@ extern "C"
 					break;
 				}
 			}
-			usleep(30000); // 10ms
+			usleep(20000); // 10ms
 		}
 		if (SettingSpeed < 0)
 			CarLight_Write(0x00);

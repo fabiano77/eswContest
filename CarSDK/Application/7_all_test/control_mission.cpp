@@ -127,20 +127,26 @@ extern "C"
 		int i;
 		for (i = 0; i < 8; i++)
 		{
-			if ((i % 4) == 0) printf(" ");
-			if ((sensor & byte))
+			if(i == 0) printf(" "); //첫 번째 비트 무시
+			else
 			{
-				printf("1");	// black				
-			}
-			else 
-			{
-				printf("0");	// white
-				flag++;
+				if ((i % 4) <= 1) printf(" ");
+				if ((sensor & byte))
+				{
+					//printf("1");	// black				
+					printf("_");
+				}
+				else 
+				{
+					//printf("0");	// white
+					printf("w");
+					flag++;
+				}	
 			}
 			sensor = sensor << 1;
 		}
 		cout << " // cnt white = " << flag << endl;
-		printf("LineSensor_Read() = %d \n", sensor);
+		//printf("LineSensor_Read() = %d \n", sensor);
 		if (flag > Lineflag)
 		{
 			return 1;
@@ -486,32 +492,32 @@ extern "C"
 	{
 	case 'a': //steering left		: servo 조향값 (2000(좌) ~ 1500(중) ~ 1000(우)
 		cdata->steerVal += 50;
-		SteeringServoControl_Write(cdata->steerVal);
+		SteeringServo_Write_uart(cdata->steerVal);
 		printf("angle_steering = %d\n", cdata->steerVal);
 		printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read()); //default = 1500, 0x5dc
 		break;
 
 	case 'd': //steering right	: servo 조향값 (2000(좌) ~ 1500(중) ~ 1000(우)
 		cdata->steerVal -= 50;
-		SteeringServoControl_Write(cdata->steerVal);
+		SteeringServo_Write_uart(cdata->steerVal);
 		printf("angle_steering = %d\n", cdata->steerVal);
 		printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read()); //default = 1500, 0x5dc
 		break;
 
 	case 's':
-		DesireSpeed_Write(0);
+		DesireSpeed_Write_uart(0);
 		break;
 
 	case 'w': //go forward
 
 		cdata->desireSpeedVal = cdata->settingSpeedVal;
-		DesireSpeed_Write(cdata->desireSpeedVal);
+		DesireSpeed_Write_uart(cdata->desireSpeedVal);
 		break;
 
 	case 'x': //go backward	speed 음수 인가하면 후진.
 
 		cdata->desireSpeedVal = -cdata->settingSpeedVal;
-		DesireSpeed_Write(cdata->desireSpeedVal);
+		DesireSpeed_Write_uart(cdata->desireSpeedVal);
 		break;
 
 		// case 'j':	//cam left

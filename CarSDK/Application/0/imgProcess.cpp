@@ -1,4 +1,5 @@
 ﻿#include "imgProcess.h"
+#include <sys/time.h>
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
@@ -726,11 +727,22 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 	if (!first++) settingStatic(w, h);
 
 	// 필터링 frame -> frame_gray
+
+	uint32_t optime;
+	struct timeval st, et;
+	gettimeofday(&st, NULL);
 	filtering_Object(frame);
+	gettimeofday(&et, NULL);
+	optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
+	cout << " filtering_Object : " << optime << "[ms]" <<endl;
 
 	// 원 객체 검출 -> circles
 	//HoughCircles(frame_gray, circles, 3, 1, 300, 150, 30, 10);
+	gettimeofday(&st, NULL);
 	HoughCircles(frame_red, circles, 3, 1, 300, 150, 30, 10);
+	gettimeofday(&et, NULL);
+	optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
+	cout << " hough circle : " << optime << "[ms]" <<endl;
 
 	// circles => (a,b) 좌표에서 반지름 r을 가지고 있음
 	// circles[0] : a
@@ -746,6 +758,8 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 	if (num_circles > 0) { // 객체가 하나라도 있을 경우
 		Point CENTER_total(0, 0);
 		int CENTER_R = 0;
+
+		gettimeofday(&st, NULL);
 
 		for (int i = 0; i < num_circles; i++) {
 			Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
@@ -870,8 +884,14 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 		
 		*steerVal = angle + 1500;
 		*speedVal = speed;
+
+		gettimeofday(&et, NULL);
+		optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
+		cout << " 1 : " << optime << "[ms]" <<endl;
 	}
 	else { // 검출된 객체가 없을 경우
+
+		gettimeofday(&st, NULL);
 		if ((CENTER == Point(0, 0)) && (CENTER_Radius == 0)) { // 지금까지 객체가 한번도 검출되지 않았을 경우
 			*steerVal = 1500;
 			*speedVal = 0;
@@ -880,6 +900,10 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 			*steerVal = angle + 1500;
 			*speedVal = 0;
 		}
+
+		gettimeofday(&et, NULL);
+		optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
+		cout << " 2 : " << optime << "[ms]" <<endl;
 	}
 
 	// putText(frame, "r = " + toString(CENTER_Radius), Point(100, 100), 0, 0.8, Scalar(255,255,255), 3);

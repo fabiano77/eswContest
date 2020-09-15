@@ -1054,7 +1054,7 @@ void *mission_thread(void *arg)
 
 		if (parking && parking != DONE)
 		{
-			if ((data->controlData.steerVal <= 1600 && data->controlData.steerVal >= 1400) || parking == REMAIN)
+			if (1)//(data->controlData.steerVal <= 1600 && data->controlData.steerVal >= 1400) || parking == REMAIN)
 			{
 				if (DistanceSensor_cm(2) <= 28) //처음 벽이 감지되었을 경우
 				{
@@ -1171,11 +1171,16 @@ void *mission_thread(void *arg)
 										usleep(150000);
 										DesireSpeed_Write(-60);
 										usleep(200000);
-										if (DistanceSensor_cm(3) <= 13 && DistanceSensor_cm(5) <= 13)
+										while(1)
 										{
-											DesireSpeed_Write(0);
-											usleep(50000);
-											step_v = SECOND_BACKWARD_V;
+											if (DistanceSensor_cm(3) <= 13 && DistanceSensor_cm(5) <= 13)
+											{
+												DesireSpeed_Write(0);
+												usleep(20000);
+												step_v = SECOND_BACKWARD_V;
+												break;
+											}
+											usleep(20000);
 										}
 										break;
 
@@ -1236,7 +1241,7 @@ void *mission_thread(void *arg)
 										sprintf(data->imgData.missionString, "OVER_STEER");
 										//DesireDistance(23, 100, 1300);
 										//usleep(200000);
-										DesireDistance(-60, 500, 1500);
+										DesireDistance(-40, 500, 1500);
 										//usleep(300000);
 										//DesireDistance(23, 200, 1700);
 										//usleep(200000);
@@ -1248,7 +1253,7 @@ void *mission_thread(void *arg)
 										int right_difference = DistanceSensor_cm(2) - DistanceSensor_cm(3);
 										DesireDistance(60, 100, 1500 - (right_difference * 100));
 										//usleep(200000);
-										DesireDistance(-60, 400, 1500);
+										DesireDistance(-40, 400, 1500);
 										//usleep(200000);
 										if (abs(right_difference) < 3)
 										{
@@ -1263,7 +1268,7 @@ void *mission_thread(void *arg)
 										int left_difference = DistanceSensor_cm(6) - DistanceSensor_cm(5);
 										DesireDistance(60, 100, 1500 + (left_difference * 100));
 										//usleep(200000);
-										DesireDistance(-60, 400, 1500);
+										DesireDistance(-40, 400, 1500);
 										//usleep(200000);
 										if (abs(left_difference) < 3)
 										{
@@ -1275,7 +1280,7 @@ void *mission_thread(void *arg)
 
 									case FIRST_FORWARD_V:
 										sprintf(data->imgData.missionString, "FIRST_FORWARD_V");
-										DesireDistance(-50, 400, 1500);
+										DesireDistance(-40, 400, 1500);
 										usleep(1000000);
 										step_v = SECOND_FORWARD_V;
 										Winker_Write(ALL_ON);
@@ -1452,7 +1457,8 @@ void *mission_thread(void *arg)
 
 									case FINISH:
 										sprintf(data->imgData.missionString, "FINISH");
-										DesireDistance(60, 700, 1300);
+										//DesireDistance(60, 700, 1300);
+										DesireDistance(60, 700, 1100);
 										data->missionData.parkingData.horizontalFlag = 0;
 										break;
 
@@ -1545,12 +1551,12 @@ void *mission_thread(void *arg)
 
 		if (roundabout && roundabout != DONE)
 		{
-			data->imgData.bcheckFrontWhite = true;	// 전방 정지선 영상으로 탐지 ON
+			//data->imgData.bcheckFrontWhite = true;	// 전방 정지선 영상으로 탐지 ON
 			
-			if (/*StopLine(5) ||*/ data->missionData.finish_distance != -1)	//영상으로 정지선의 거리가 측정되면
+			if (StopLine(4)) //|| data->missionData.finish_distance != -1)	//영상으로 정지선의 거리가 측정되면
 			{
-				onlyDistance(BASIC_SPEED, (data->missionData.finish_distance / 26.0) * 500);	//정지선까지 가서 stop
-				data->missionData.finish_distance = -1;
+				//onlyDistance(BASIC_SPEED, (data->missionData.finish_distance / 26.0) * 500);	//정지선까지 가서 stop
+				//data->missionData.finish_distance = -1;
 				
 				/* 기존의 roundabout분기 진입 */
 				data->imgData.bwhiteLine = true;

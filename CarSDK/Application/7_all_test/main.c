@@ -177,6 +177,9 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		/* 미션 진행중에 처리하는 영상처리 */
 		else if (t_data->imgData.bmission)
 		{
+			/* 자율주행의 속도조절을 위한 변수처리 */
+			t_data->controlData.beforeSpeedVal = 0;
+			
 			/* 추월차로시에 사용 */
 			if (t_data->missionData.overtakingFlag &&
 				t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
@@ -394,9 +397,15 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					}
 				}
 			}
+			else
+			{
+				/* 자율주행의 속도조절을 위한 변수처리 */
+				t_data->controlData.beforeSpeedVal = 0;
+			}
+			
 			/*checkWhiteLineFlag가 True인 경우, RoundAbout */
 		}
-
+		
 		/********************************************************/
 		/*			영상처리 종료								*/
 		/********************************************************/

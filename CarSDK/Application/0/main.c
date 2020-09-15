@@ -87,7 +87,7 @@ struct thr_data {
 	int topMode;
 	bool bfull_screen;
 	bool bstream_start;
-	pthread_t threads[4];
+	pthread_t threads[1];
 };
 
 static void manualControl(struct ControlData* cdata, char key);
@@ -173,7 +173,7 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 		*	 우리가 만든 알고리즘 함수를 넣는 부분.
 		********************************************************/
 
-		if (1) OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
+		if (0) OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
 		if (1) // tracking Object
 		{
 			int steerVal = 0;
@@ -181,18 +181,21 @@ static void img_process(struct display* disp, struct buffer* cambuf, struct thr_
 			int *ptrsteerVal = &steerVal;
 			int *ptrspeedVal = &speedVal;
 			tracking(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, ptrsteerVal, ptrspeedVal);
-			t_data->controlData.steerVal = steerVal;
-			t_data->controlData.steerWrite = 1;
-			if(speedVal == 0)
-			{
-				t_data->controlData.stopFlag = 1;
-			}
-			else
-			{
-				t_data->controlData.stopFlag = 0;
-				t_data->controlData.speedWrite = 1;
-				t_data->controlData.desireSpeedVal = speedVal;
-			}
+			SteeringServoControl_Write(steerVal);
+			DesireSpeed_Write(speedVal);
+			
+			//t_data->controlData.steerVal = steerVal;
+			//t_data->controlData.steerWrite = 1;
+			// if(speedVal == 0)
+			// {
+			// 	t_data->controlData.stopFlag = 1;
+			// }
+			// else
+			// {
+			// 	t_data->controlData.stopFlag = 0;
+			// 	t_data->controlData.speedWrite = 1;
+			// 	t_data->controlData.desireSpeedVal = speedVal;
+			// }
 		}
 
 
@@ -553,49 +556,50 @@ void* control_thread(void* arg)
 
 	while (1)
 	{
-		if (data->controlData.steerWrite == 1)
-		{
-			data->controlData.steerWrite = 0;
-			SteeringServoControl_Write(data->controlData.steerVal);
-			//usleep(100000); //100ms
-		}
+		// if (data->controlData.steerWrite == 1)
+		// {
+		// 	data->controlData.steerWrite = 0;
+		// 	SteeringServoControl_Write(data->controlData.steerVal);
+		// 	//usleep(100000); //100ms
+		// }
 
-		if (data->controlData.stopFlag == 1)
-		{
-			if (!isStop) DesireSpeed_Write(0);
-			isStop = 1;
-			err_P = 0;
-			err_I = 0;
-			err_D = 0;
-			err_B = 0;
-			//usleep(100000); //100ms
-		}
+		// if (data->controlData.stopFlag == 1)
+		// {
+		// 	if (!isStop) DesireSpeed_Write(0);
+		// 	isStop = 1;
+		// 	err_P = 0;
+		// 	err_I = 0;
+		// 	err_D = 0;
+		// 	err_B = 0;
+		// 	//usleep(100000); //100ms
+		// }
 
-		if (data->controlData.speedWrite == 1)
-		{
-			isStop = 0;
-			goal = data->controlData.desireSpeedVal;
-			currentSpeed = DesireSpeed_Read();
-			usleep(10000); //10ms
+		// if (data->controlData.speedWrite == 1)
+		// {
+		// 	isStop = 0;
+		// 	goal = data->controlData.desireSpeedVal;
+		// 	currentSpeed = DesireSpeed_Read();
+		// 	usleep(10000); //10ms
 
-			if (abs(currentSpeed - goal) < 3)
-			{
-				data->controlData.speedWrite = 0;
-				continue;
-			}
-			if (currentSpeed < -500 || currentSpeed>500) continue;
-			err_P = currentSpeed - goal;
-			err_I += err_P;
-			err_D = err_B - err_P;
-			err_B = err_P;
+		// 	if (abs(currentSpeed - goal) < 3)
+		// 	{
+		// 		data->controlData.speedWrite = 0;
+		// 		continue;
+		// 	}
+		// 	if (currentSpeed < -500 || currentSpeed>500) continue;
+		// 	err_P = currentSpeed - goal;
+		// 	err_I += err_P;
+		// 	err_D = err_B - err_P;
+		// 	err_B = err_P;
 
-			writeVal = goal - (err_P * 0.11 + err_I * 0.08 + err_D * 0.15);
-			// printf("currentSpeed = %d, writeVal = %d\n", currentSpeed, writeVal);
-			// printf("errP = %4.1f, errI = %4.1f, errD = %4.1f\n\n",err_P, err_I, err_D);
-			DesireSpeed_Write(writeVal);
+		// 	writeVal = goal - (err_P * 0.11 + err_I * 0.08 + err_D * 0.15);
+		// 	// printf("currentSpeed = %d, writeVal = %d\n", currentSpeed, writeVal);
+		// 	// printf("errP = %4.1f, errI = %4.1f, errD = %4.1f\n\n",err_P, err_I, err_D);
+		// 	DesireSpeed_Write(writeVal);
 
-			usleep(70000); //70ms
-		}
+		// 	usleep(70000); //70ms
+		// }
+		usleep(1000000);
 	}
 
 	return NULL;
@@ -877,23 +881,23 @@ int main(int argc, char** argv)
 	}
 	pthread_detach(tdata.threads[0]);
 
-	ret = pthread_create(&tdata.threads[1], NULL, capture_dump_thread, &tdata);
-	if (ret) {
-		MSG("Failed creating capture dump thread");
-	}
-	pthread_detach(tdata.threads[1]);
+	// ret = pthread_create(&tdata.threads[1], NULL, capture_dump_thread, &tdata);
+	// if (ret) {
+	// 	MSG("Failed creating capture dump thread");
+	// }
+	// pthread_detach(tdata.threads[1]);
 
-	ret = pthread_create(&tdata.threads[2], NULL, input_thread, &tdata);
-	if (ret) {
-		MSG("Failed creating input thread");
-	}
-	pthread_detach(tdata.threads[2]);
+	// ret = pthread_create(&tdata.threads[2], NULL, input_thread, &tdata);
+	// if (ret) {
+	// 	MSG("Failed creating input thread");
+	// }
+	// pthread_detach(tdata.threads[2]);
 
-	ret = pthread_create(&tdata.threads[3], NULL, control_thread, &tdata);
-	if (ret) {
-		MSG("Failed creating capture dump thread");
-	}
-	pthread_detach(tdata.threads[3]);
+	// ret = pthread_create(&tdata.threads[3], NULL, control_thread, &tdata);
+	// if (ret) {
+	// 	MSG("Failed creating capture dump thread");
+	// }
+	// pthread_detach(tdata.threads[3]);
 
 	/* register signal handler for <CTRL>+C in order to clean up */
 	if (signal(SIGINT, signal_handler) == SIG_ERR) {

@@ -206,8 +206,8 @@ extern "C" {
 
 		tracking_Object(srcRGB, w, h, true, steerVal, speedVal);
 
-		dstRGB = srcRGB;
-		printf("tracking end \n");
+		//dstRGB = srcRGB;
+		//printf("tracking end \n");
 	}
 
 }
@@ -237,8 +237,6 @@ Scalar upper_red2;
 
 Mat frame_hsv;
 Mat frame_red;
-Mat frame_red1;
-Mat frame_red2;
 Mat frame_gray;
 Mat frame;
 
@@ -285,10 +283,14 @@ void settingStatic(int w, int h)
 	rightGuide = Vec4i(320, -420, 640, 155) * (w / 640.0);
 
 	////////////////////////////////////////
-	lower_red1 = Scalar(0, 140, 170);
-	upper_red1 = Scalar(10, 255, 255);
-	lower_red2 = Scalar(170, 140, 170);
+	lower_red1 = Scalar(0, 100, 150);
+	upper_red1 = Scalar(12, 255, 255);
+	lower_red2 = Scalar(168, 100, 150);
 	upper_red2 = Scalar(180, 255, 255);
+	// 	Scalar lower_red1(0, 100, 150);
+	// Scalar upper_red1(12, 255, 255);
+	// Scalar lower_red2(168, 100, 150);
+	// Scalar upper_red2(180, 255, 255);
 	num_circles = 0;
 	CENTER = Point(0, 0);
 	CENTER_Radius = 0;
@@ -705,13 +707,19 @@ string toString(double A)
 
 void filtering_Object(Mat& frame) {
 	// RED 필터링 frame -> frame_red
+
+	frame_red = Mat();
+	Mat frame_red1;
+	Mat frame_red2;
+
 	cvtColor(frame, frame_hsv, COLOR_BGR2HSV);
 	inRange(frame_hsv, lower_red1, upper_red1, frame_red1);
 	inRange(frame_hsv, lower_red2, upper_red2, frame_red2);
 	frame_red = frame_red1 | frame_red2;
 
 	// 블러링 frame_red -> frame_gray
-	GaussianBlur(frame_red, frame_gray, Size(9, 9), 2, 2);
+	//GaussianBlur(frame_red, frame_gray, Size(9, 9), 2, 2);
+
 }
 
 void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, int* speedVal) {
@@ -721,18 +729,20 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 	filtering_Object(frame);
 
 	// 원 객체 검출 -> circles
-	HoughCircles(frame_gray, circles, 3, 1, 300, 150, 30, 10);
+	//HoughCircles(frame_gray, circles, 3, 1, 300, 150, 30, 10);
+	HoughCircles(frame_red, circles, 3, 1, 300, 150, 30, 10);
 
 	// circles => (a,b) 좌표에서 반지름 r을 가지고 있음
 	// circles[0] : a
 	// circles[1] : b
 	// circles[2] : r
 
-	cvtColor(frame_gray, frame, COLOR_GRAY2BGR);
+	//cvtColor(frame_gray, frame, COLOR_GRAY2BGR);
 
 	// 검출된 객체 개수
 	num_circles = circles.size();
-	cout <<"size " << num_circles << endl;
+
+	//cout <<"size " << num_circles << endl;
 	if (num_circles > 0) { // 객체가 하나라도 있을 경우
 		Point CENTER_total(0, 0);
 		int CENTER_R = 0;
@@ -744,7 +754,7 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 			CENTER_R += circles[i][2];
 
 			int radius = cvRound(circles[i][2]);
-			if (showCircles)
+			if (0)//showCircles)
 				circle(frame, center, radius, Scalar(0, 0, 255), 2, 0);
 		}
 
@@ -798,6 +808,7 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 			}
 			angle_flag[3]++;
 		}
+	angle = 500 * (320 - CENTER.x)/320.0;
 
 		// 원 중심의 y좌표 위치에 따른 속도 설정 - default 200 (0~500)
 		// frame 2번 이상 잡혀야지만 각이 수정된다 
@@ -806,58 +817,74 @@ void tracking_Object(Mat& frame, int w, int h, bool showCircles, int* steerVal, 
 		// 최대 반지름 120
 		// 10~30, 30~50, 
 
-		if (CENTER_Radius > 70) {
-			if (speed_flag[0] == 2) {
-				speed = 0;
-				speed_flag[0] = 0;
-			}
-			speed_flag[0]++;
+		if (CENTER_Radius >= 45) {
+			// if (speed_flag[0] == 2) {
+			speed = 0;
+			// speed_flag[0] = 0;
+			// }
+			// speed_flag[0]++;
 		}
-		else if (CENTER_Radius >= 50) {
-			if (speed_flag[1] == 2) {
-				speed = 15;
-				speed_flag[1] = 0;
-			}
-			speed_flag[1]++;
+		else if(CENTER_Radius > 5)
+		{
+			speed = 35;
 		}
-		else if (CENTER_Radius >= 35) {
-			if (speed_flag[2] == 2) {
-				speed = 27;
-				speed_flag[2] = 0;
-			}
-			speed_flag[2]++;
+		else
+		{
+			speed = 0;
 		}
-		else if (CENTER_Radius >= 20) {
-			if (speed_flag[3] == 2) {
-				speed = 40;
-				speed_flag[3] = 0;
-			}
-			speed_flag[3]++;
-		}
-		else {
-			if (speed_flag[4] == 2) {
-				speed = 50;
-				speed_flag[4] = 0;
-			}
-			speed_flag[4]++;
-		}
+
+		
+		// else if (CENTER_Radius >= 50) {
+		// 	if (speed_flag[1] == 2) {
+		// 		speed = 13;
+		// 		speed_flag[1] = 0;
+		// 	}
+		// 	speed_flag[1]++;
+		// }
+		// else if (CENTER_Radius >= 35) {
+		// 	if (speed_flag[2] == 2) {
+		// 		speed = 20;
+		// 		speed_flag[2] = 0;
+		// 	}
+		// 	speed_flag[2]++;
+		// }
+		// else if (CENTER_Radius >= 20) {
+		// 	if (speed_flag[3] == 2) {
+		// 		speed = 28;
+		// 		speed_flag[3] = 0;
+		// 	}
+		// 	speed_flag[3]++;
+		// }
+		// else {
+		// 	if (speed_flag[4] == 2) {
+		// 		speed = 35;
+		// 		speed_flag[4] = 0;
+		// 	}
+		// 	speed_flag[4]++;
+		// }
+
+		if (abs(angle) < 200)
+			speed = speed;
+		else
+			speed = speed*(1 + 0.3*(abs(angle)-200)/300);	
+		
 		*steerVal = angle + 1500;
 		*speedVal = speed;
 	}
 	else { // 검출된 객체가 없을 경우
 		if ((CENTER == Point(0, 0)) && (CENTER_Radius == 0)) { // 지금까지 객체가 한번도 검출되지 않았을 경우
-			angle = 00;
-			speed = 00;
+			*steerVal = 1500;
+			*speedVal = 0;
 		}
 		else { // 이전에 검출된 객체의 값을 따라감
 			*steerVal = angle + 1500;
-			*speedVal = speed;
+			*speedVal = 0;
 		}
 	}
 
-	putText(frame, "r = " + toString(CENTER_Radius), Point(100, 100), 0, 0.8, Scalar(255,255,255), 3);
-	putText(frame, "angle = " + toString(angle), Point(100, 130), 0, 0.8, Scalar(255, 255, 255), 3);
-	putText(frame, "speed = " + toString(speed), Point(100, 160), 0, 0.8, Scalar(255, 255, 255), 3);
+	// putText(frame, "r = " + toString(CENTER_Radius), Point(100, 100), 0, 0.8, Scalar(255,255,255), 3);
+	// putText(frame, "angle = " + toString(angle), Point(100, 130), 0, 0.8, Scalar(255, 255, 255), 3);
+	// putText(frame, "speed = " + toString(speed), Point(100, 160), 0, 0.8, Scalar(255, 255, 255), 3);
 
 	//if (showCircles)
 	//	imshow("circles", frame);

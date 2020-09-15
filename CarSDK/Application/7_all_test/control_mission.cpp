@@ -127,11 +127,20 @@ extern "C"
 		int i;
 		for (i = 0; i < 8; i++)
 		{
-			if (!(sensor & byte))
+			if ((i % 4) == 0) printf(" ");
+			if ((sensor & byte))
+			{
+				printf("1");	// black				
+			}
+			else 
+			{
+				printf("0");	// white
 				flag++;
+			}
 			sensor = sensor << 1;
 		}
-		//cout << "flag = " << flag << endl;
+		cout << " // cnt white = " << flag << endl;
+		printf("LineSensor_Read() = %d \n", sensor);
 		if (flag > Lineflag)
 		{
 			return 1;

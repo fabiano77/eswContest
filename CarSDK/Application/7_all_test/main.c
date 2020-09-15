@@ -1462,6 +1462,7 @@ void *mission_thread(void *arg)
 									usleep(150000);
 								}
 							}
+							DesireSpeed_Write(20);
 							state = DONE_P;
 
 							gettimeofday(&et_p, NULL);

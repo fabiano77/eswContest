@@ -927,7 +927,9 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 			else
 				Deviation += lineDeviation(src, firstLine, rightGuide);
 
-			Deviation *= 1.5;
+			//Deviation *= 1.5;
+			Deviation *= 1.3;
+
 			//직선 1개만 보이는 직진구간 보정.
 		}
 		retval = Deviation;

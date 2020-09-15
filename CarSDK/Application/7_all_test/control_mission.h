@@ -202,6 +202,12 @@ extern "C"
 
 	int STOP_WhiteLine(int Lineflag);
 
+	void SteeringServo_Write_uart(signed short angle);
+	//uart통신을하는 다른 센서read()함수와 간섭을 일으키지 않도록 보완.
+
+	void DesireSpeed_Write_uart(signed short speed);
+	//uart통신을하는 다른 센서read()함수와 간섭을 일으키지 않도록 보완.
+
 	void DesiredDistance(int SettingSpeed, int SettingDistance, int SettingSteering);
 	// Postcondition : SettingSpeed�� �ӵ�(����� ����, ������ ����)�� SettingDistance�� step ��ŭ �����δ�.
 

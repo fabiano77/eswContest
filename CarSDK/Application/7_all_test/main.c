@@ -308,7 +308,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					if (t_data->controlData.desireSpeedVal != t_data->controlData.beforeSpeedVal)
 					{
 						//이전 속도와 달라졌을 때만 속도값 인가.
-						DesireSpeed_Write(t_data->controlData.desireSpeedVal);
+						DesireSpeed_Write_uart(t_data->controlData.desireSpeedVal);
 						t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
 					}
 				}
@@ -381,7 +381,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				if (steerVal != 9999)
 				{
 					t_data->controlData.steerVal = 1500 - steerVal;
-					SteeringServoControl_Write(t_data->controlData.steerVal);
+					SteeringServo_Write_uart(t_data->controlData.steerVal);
 				}
 				if (t_data->imgData.bspeedControl)
 				{
@@ -389,7 +389,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					if (t_data->controlData.desireSpeedVal != t_data->controlData.beforeSpeedVal)
 					{
 						//이전 속도와 달라졌을 때만 속도값 인가.
-						DesireSpeed_Write(t_data->controlData.desireSpeedVal);
+						DesireSpeed_Write_uart(t_data->controlData.desireSpeedVal);
 						t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
 					}
 				}
@@ -1462,6 +1462,7 @@ void *mission_thread(void *arg)
 									usleep(150000);
 								}
 							}
+							DesireSpeed_Write(20);
 							state = DONE_P;
 
 							gettimeofday(&et_p, NULL);
@@ -2301,5 +2302,5 @@ void SteeringServo_Write(signed short angle)
 {
 	ptr_data->controlData.steerVal = angle; //오버레이 연동
 
-	SteeringServoControl_Write(angle);
+	SteeringServo_Write_uart(angle);
 }

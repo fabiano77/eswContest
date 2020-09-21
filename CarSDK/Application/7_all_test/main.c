@@ -1219,7 +1219,7 @@ void *mission_thread(void *arg)
 											// 언더스티어 상황
 											printf("under steer\n");
 											DesireSpeed_Write(0);
-											usleep(200000);
+											usleep(50000);
 											step_v = UNDER_STEER_V;
 											break;
 										}
@@ -1421,46 +1421,30 @@ void *mission_thread(void *arg)
 									case SECOND_FORWARD:
 										sprintf(data->imgData.missionString, "SECOND_FORWARD");
 										DesireSpeed_Write(-40);
-										usleep(30000);
+										usleep(10000);
 										if (DistanceSensor_cm(4) <= 5)
 										{
 											DesireSpeed_Write(0);
 											usleep(10000);
-											SteeringServo_Write(1750);
-											usleep(100000);
-
 											step_h = ESCAPE;
 										}
 										break;
 
 									case ESCAPE:
 										sprintf(data->imgData.missionString, "ESCAPE");
-										DesireSpeed_Write(40);
-										usleep(100000);
-										if (DistanceSensor_cm(1) <= 8 || DistanceSensor_cm(1) >= 20)
-										{
-											DesireSpeed_Write(0);
-											SteeringServo_Write(1400);
-											usleep(150000);
-											step_h = ESCAPE_2;
-										}
+										DesiredDistance(60, 350, 1900);
+										step_h = ESCAPE_2;
 										break;
 
 									case ESCAPE_2:
 										sprintf(data->imgData.missionString, "ESCAPE_2");
-										DesireSpeed_Write(-40);
-										usleep(100000);
-										if (DistanceSensor_cm(4) <= 9 || DistanceSensor_cm(3) <= 5)
-										{
-											DesireSpeed_Write(0);
-											usleep(50000);
-											step_h = ESCAPE_3;
-										}
+										DesiredDistance(-50, 250, 1500);
+										step_h = ESCAPE_3;
 										break;
 
 									case ESCAPE_3:
 										sprintf(data->imgData.missionString, "ESCAPE_3");
-										DesireDistance(60, 600, 1950);
+										DesireDistance(60, 450, 1900);
 										step_h = FINISH;
 										break;
 
@@ -1474,10 +1458,10 @@ void *mission_thread(void *arg)
 									default:
 										break;
 									}
-									usleep(150000);
+									usleep(120000);
 								}
 							}
-							DesireSpeed_Write(20);
+							DesireSpeed_Write(35);
 							state = DONE_P;
 
 							gettimeofday(&et_p, NULL);

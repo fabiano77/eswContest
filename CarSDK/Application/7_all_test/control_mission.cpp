@@ -202,11 +202,11 @@ extern "C"
 	{
 		//cout << "speed = " << SettingSpeed << "dist = " << SettingDistance << "steer = " << SettingSteering << endl;
 		DesireSpeed_Write(0);
-		usleep(20000);
+		usleep(5000);
 		int init_encoder = 0;
 		int on_encoder = 0;
 		EncoderCounter_Write(init_encoder);
-		usleep(20000);
+		usleep(10000);
 		int read_encoder = Encoder_Read();
 		int error_flag = 0;
 		while (read_encoder != 0)
@@ -220,7 +220,7 @@ extern "C"
 				printf("DesireDistance(): encoder ERROR!\n");
 		}
 		SteeringServo_Write_uart(SettingSteering);
-		usleep(100000);
+		usleep(80000);
 		DesireSpeed_Write(SettingSpeed);
 		while (1)
 		{
@@ -237,7 +237,7 @@ extern "C"
 			else
 			{
 				//후면 충돌 감지
-				if (DistanceSensor_cm(4) <= 6)
+				if (DistanceSensor_cm(4) <= 7)
 				{
 					DesireSpeed_Write(0);
 					cout << "\tDesiredDistance() : rear detection!" << endl;
@@ -255,7 +255,7 @@ extern "C"
 					break;
 				}
 			}
-			usleep(20000); // 50->20 ms 변경 09/14
+			usleep(10000); // 50->20 ms 변경 09/14
 		}
 		//cout << "\tDesiredDistance() :encoder = " << on_encoder << endl;
 	}

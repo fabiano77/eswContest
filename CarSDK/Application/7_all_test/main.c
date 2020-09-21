@@ -1532,15 +1532,15 @@ void *mission_thread(void *arg)
 
 					usleep(10000);
 				}
-				DesireSpeed_Write(0);
+				//DesireSpeed_Write(0);
 
 				frontLightOnOff(data->controlData.lightFlag, false);
 
-				buzzer(1, 0, 500000);
-				usleep(100000);
+				//buzzer(1, 0, 500000);
+				//usleep(100000);
 
-				DesireDistance(-40, 400, 1500);
-				usleep(100000);
+				//DesireDistance(-40, 400, 1500);
+				//usleep(100000);
 
 				printf("Tunnel OUT\n");
 				tunnel = DONE;

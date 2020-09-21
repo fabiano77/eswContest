@@ -1305,7 +1305,9 @@ int getPointY_at_X(Vec4i line, const int X)
 int lineDeviation(Mat& dst, Vec4i line1, Vec4i line2)
 {
 	//y = 10에서 직선끼리의 거리 비교.
-	return getPointX_at_Y(line1, 50) - getPointX_at_Y(line2, 50);
+	//return getPointX_at_Y(line1, 50) - getPointX_at_Y(line2, 50);    
+	//09.21 오후 3시, 로타리 끝부분의 과 조향 문제로 수정함
+	return getPointX_at_Y(line1, 100) - getPointX_at_Y(line2, 100);
 }
 
 string toString(int A)

@@ -15,17 +15,16 @@
 #include "drawing.h"
 #include "exam_cv.h"
 #include "car_lib.h"
-
-#include "mission.h"
 #include "imgProcess.h"
 #include "control_mission.h"
+#include "mission.h"
 
 #define CAPTURE_IMG_W 1280
 #define CAPTURE_IMG_H 720
 #define CAPTURE_IMG_SIZE (CAPTURE_IMG_W * CAPTURE_IMG_H * 2) // YUYU : 16bpp
 #define CAPTURE_IMG_FORMAT "uyvy"
 
-//?ï¥?ÉÅ?èÑÎ•? Î∞îÍæ∏?†§Î©? ?ù¥Î∂?Î∂ÑÎßå Î≥?Í≤ΩÌïòÎ©? ?ê®
+//?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩÔøΩ? Î∞îÍæ∏?ÔøΩÔøΩÔøΩ? ?ÔøΩÔøΩÔøΩ?Î∂ÑÎßå ÔøΩ?Í≤ΩÌïòÔøΩ? ?ÔøΩÔøΩ
 #ifndef VPEIMG
 #define VPEIMG
 #define VPE_OUTPUT_W 640
@@ -47,35 +46,12 @@
 #define FPS_TEXT_Y 260			  //240
 #define FPS_TEXT_COLOR 0xffffffff //while
 
-#define BASIC_SPEED 55		// ?îÑÎ°úÍ∑∏?û® Í∏∞Î≥∏ Î∞îÌ?¥ÏÜç?èÑ, autoSteer??? Ï£ºÎ°ú ?Ç¨?ö©.
-#define BUZZER_PULSE 100000 // Í∏∞Î≥∏ Î∂???? Í∏∏Ïù¥
+#define BASIC_SPEED 55		// ?ÔøΩÔøΩÎ°úÍ∑∏?ÔøΩÔøΩ Í∏∞Î≥∏ Î∞îÔøΩ?ÔøΩÏÜç?ÔøΩÔøΩ, autoSteer??? Ï£ºÎ°ú ?ÔøΩÔøΩ?ÔøΩÔøΩ.
+#define BUZZER_PULSE 100000 // Í∏∞Î≥∏ ÔøΩ???? Í∏∏Ïù¥
 
-// Í∞ÅÏ¢Ö structure?äî control_mission.h ?óê ?ù¥?èô?ê®. 9/8(?ôî)
-
-struct thr_data
-{
-	struct display *disp;
-	struct v4l2 *v4l2;
-	struct vpe *vpe;
-	struct buffer **input_bufs;
-	struct ControlData controlData;
-	struct MissionData missionData;
-	struct ImgProcessData imgData;
-	unsigned char img_data_buf[VPE_OUTPUT_IMG_SIZE];
-
-	int msgq_id;
-
-	bool bfull_screen;
-	bool bstream_start;
-	pthread_t threads[4]; //ÔøΩÔøΩÔøΩÔøΩÔøΩÂ∞≥ÔøΩÔøΩ
-};
-
-static struct thr_data *ptr_data;
+// Í∞ÅÏ¢Ö structure?ÔøΩÔøΩ control_mission.h ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ. 9/8(?ÔøΩÔøΩ)
+struct thr_data *ptr_data;
 /******************** function ********************/
-static void DesireDistance(int SettingSpeed, int SettingDistance, int SettingSteering);
-
-static void SteeringServo_Write(signed short angle);
-
 static int allocate_input_buffers(struct thr_data *data)
 {
 	int i;
@@ -167,10 +143,10 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		gettimeofday(&st, NULL);
 
 		/********************************************************/
-		/*			?ö∞Î¶¨Í?? ÎßåÎì† ?ïåÍ≥†Î¶¨Ï¶? ?ï®?àòÎ•? ?Ñ£?äî Î∂?Î∂?		*/
+		/*			?ÔøΩÔøΩÎ¶¨ÔøΩ?? ÎßåÎì† ?ÔøΩÔøΩÍ≥†Î¶¨ÔøΩ? ?ÔøΩÔøΩ?ÔøΩÔøΩÔøΩ? ?ÔøΩÔøΩ?ÔøΩÔøΩ ÔøΩ?ÔøΩ?		*/
 		/********************************************************/
 
-		/* ?ùº?ù∏ ?ïÑ?Ñ∞ÎßÅÏù¥?Çò canny Í≤∞Í≥º ?ôï?ù∏ */
+		/* ?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩÎßÅÏù¥?ÔøΩÔøΩ canny Í≤∞Í≥º ?ÔøΩÔøΩ?ÔøΩÔøΩ */
 		if (t_data->imgData.bdebug)
 		{
 			if (t_data->imgData.debugMode == 9)
@@ -178,21 +154,21 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 			debugFiltering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.debugMode);
 		}
 
-		/* ÎØ∏ÏÖò ÏßÑÌñâÏ§ëÏóê Ï≤òÎ¶¨?ïò?äî ?òÅ?ÉÅÏ≤òÎ¶¨ */
+		/* ÎØ∏ÏÖò ÏßÑÌñâÏ§ëÏóê Ï≤òÎ¶¨?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩÏ≤òÎ¶¨ */
 		else if (t_data->imgData.bmission)
 		{
-			/* ?ûê?ú®Ï£ºÌñâ?ùò ?Üç?èÑÏ°∞Ï†à?ùÑ ?úÑ?ïú Î≥??àòÏ≤òÎ¶¨ */
+			/* ?ÔøΩÔøΩ?ÔøΩÔøΩÏ£ºÌñâ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩÏ°∞Ï†à?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ ÔøΩ??ÔøΩÔøΩÏ≤òÎ¶¨ */
 			t_data->controlData.beforeSpeedVal = 0;
 
-			/* Ï∂îÏõîÏ∞®Î°ú?ãú?óê ?Ç¨?ö© */
+			/* Ï∂îÏõîÏ∞®Î°ú?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ */
 			if (t_data->missionData.overtakingFlag &&
 				t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
 			{
 				usleep(100000);
-				/*checkÎ•? ?úÑ?ïú camera up*/
+				/*checkÔøΩ? ?ÔøΩÔøΩ?ÔøΩÔøΩ camera up*/
 				bool check_direction;
 				check_direction = checkObstacle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
-				/*?ò§Î•∏Ï™Ω?ù∏Ïß? ?ôºÏ™ΩÏù∏Ïß? Îß? Î≤? ?ôï?ù∏*/
+				/*?ÔøΩÔøΩÎ•∏Ï™Ω?ÔøΩÔøΩÔøΩ? ?ÔøΩÔøΩÏ™ΩÏù∏ÔøΩ? ÔøΩ? ÔøΩ? ?ÔøΩÔøΩ?ÔøΩÔøΩ*/
 				if (check_direction == true)
 				{ //true=>left
 					t_data->missionData.overtakingData.leftFlag++;
@@ -202,26 +178,26 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					t_data->missionData.overtakingData.rightFlag++;
 				}
 
-				/*3?öå ?åê?ã® ?ù¥?õÑ ?ôï?ù∏*/
+				/*3?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ*/
 				if ((t_data->missionData.overtakingData.rightFlag + t_data->missionData.overtakingData.leftFlag) >= 3)
 				{
-					/*?ò§Î•∏Ï™Ω flagÍ∞? ?Å∞Í≤ΩÏö∞*/
+					/*?ÔøΩÔøΩÎ•∏Ï™Ω flagÔøΩ? ?ÔøΩÔøΩÍ≤ΩÏö∞*/
 					if (t_data->missionData.overtakingData.rightFlag > t_data->missionData.overtakingData.leftFlag)
 					{
 						t_data->missionData.overtakingData.headingDirection = RIGHT;
 					}
-					/*?ôºÏ™? flagÍ∞? ?Å∞Í≤ΩÏö∞*/
+					/*?ÔøΩÔøΩÔøΩ? flagÔøΩ? ?ÔøΩÔøΩÍ≤ΩÏö∞*/
 					else
 					{
 						t_data->missionData.overtakingData.headingDirection = LEFT;
 					}
-					/*?ÉÅ?ô© ?û¨ÏßÑÏûÖ ÎßâÍ∏∞ ?úÑ?ïú Camera Down*/
+					/*?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩÏßÑÏûÖ ÎßâÍ∏∞ ?ÔøΩÔøΩ?ÔøΩÔøΩ Camera Down*/
 					t_data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
 				}
-				//srcbufÎ•? ?ôú?ö©?ïò?ó¨ capture?ïú ?òÅ?ÉÅ?ùÑ Î≥??ôò
+				//srcbufÔøΩ? ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ capture?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ ÔøΩ??ÔøΩÔøΩ
 			}
 
-			/* ?ã†?ò∏?ì± ?ôï?ù∏ */
+			/* ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ */
 			if (t_data->imgData.bcheckSignalLight)
 			{
 				switch (t_data->missionData.signalLightData.state)
@@ -281,7 +257,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				}
 			}
 
-			/* ?îº?ãà?ãú ?ùº?ù∏Í≥ºÏùò Í±∞Î¶¨ Ï∏°Ï†ï */
+			/* ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩÍ≥ºÏùò Í±∞Î¶¨ Ï∏°Ï†ï */
 			if (t_data->imgData.bcheckFinishLine)
 			{
 				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
@@ -295,13 +271,13 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				}
 			}
 
-			/*?Åù?Ç† ?ïå ?Ç¨?ö©*/
+			/*?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ*/
 			if (t_data->missionData.finishData.checkFront == true)
 			{
-				t_data->imgData.topMode = 1; //?ïû?ù¥ ?çî ?ûòÎ≥¥Ïù¥?äî mode 1?Ç¨?ö©
+				t_data->imgData.topMode = 1; //?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩ ?ÔøΩÔøΩÎ≥¥Ïù¥?ÔøΩÔøΩ mode 1?ÔøΩÔøΩ?ÔøΩÔøΩ
 				topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
 				t_data->missionData.finishData.distEndLine = checkFront(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
-				/*Î¨¥ÏùòÎØ∏Ìïú Í∞íÏù∏ Í≤ΩÏö∞ ?ïåÍ≥†Î¶¨Ï¶òÏóê ÎßûÍ≤å steering ÏßÑÌñâ*/
+				/*Î¨¥ÏùòÎØ∏Ìïú Í∞íÏù∏ Í≤ΩÏö∞ ?ÔøΩÔøΩÍ≥†Î¶¨Ï¶òÏóê ÎßûÍ≤å steering ÏßÑÌñâ*/
 				if (t_data->missionData.finishData.distEndLine == -1000)
 				{
 					int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.bwhiteLine);
@@ -314,19 +290,19 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					}
 					if (t_data->controlData.desireSpeedVal != t_data->controlData.beforeSpeedVal)
 					{
-						//?ù¥?†Ñ ?Üç?èÑ??? ?ã¨?ùºÏ°åÏùÑ ?ïåÎß? ?Üç?èÑÍ∞? ?ù∏Í∞?.
+						//?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ??? ?ÔøΩÔøΩ?ÔøΩÔøΩÏ°åÏùÑ ?ÔøΩÔøΩÔøΩ? ?ÔøΩÔøΩ?ÔøΩÔøΩÔøΩ? ?ÔøΩÔøΩÔøΩ?.
 						DesireSpeed_Write_uart(t_data->controlData.desireSpeedVal);
 						t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
 					}
 				}
 				else if (t_data->missionData.finishData.distEndLine < 320)
-				{ /*Í±∞Î¶¨Í∞? 40(360-40)?ù¥?ïòÎ°? ?ÉêÏß??êú Í≤ΩÏö∞ ?òÅ?ÉÅÏ≤òÎ¶¨ Ï¢ÖÎ£å*/
+				{ /*Í±∞Î¶¨ÔøΩ? 40(360-40)?ÔøΩÔøΩ?ÔøΩÔøΩÔøΩ? ?ÔøΩÔøΩÔøΩ??ÔøΩÔøΩ Í≤ΩÏö∞ ?ÔøΩÔøΩ?ÔøΩÔøΩÏ≤òÎ¶¨ Ï¢ÖÎ£å*/
 					t_data->missionData.finishData.checkFront = false;
 				}
 			}
 		}
 
-		/* Í∏∞Î≥∏ ?ÉÅ?Éú?óê?Ñú Ï≤òÎ¶¨?êò?äî ?òÅ?ÉÅÏ≤òÎ¶¨ */
+		/* Í∏∞Î≥∏ ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ Ï≤òÎ¶¨?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩÏ≤òÎ¶¨ */
 		else
 		{
 			if (t_data->imgData.bcheckPriority)
@@ -395,7 +371,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					t_data->controlData.desireSpeedVal = auto_speedMapping(steerVal, BASIC_SPEED);
 					if (t_data->controlData.desireSpeedVal != t_data->controlData.beforeSpeedVal)
 					{
-						//?ù¥?†Ñ ?Üç?èÑ??? ?ã¨?ùºÏ°åÏùÑ ?ïåÎß? ?Üç?èÑÍ∞? ?ù∏Í∞?.
+						//?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ??? ?ÔøΩÔøΩ?ÔøΩÔøΩÏ°åÏùÑ ?ÔøΩÔøΩÔøΩ? ?ÔøΩÔøΩ?ÔøΩÔøΩÔøΩ? ?ÔøΩÔøΩÔøΩ?.
 						DesireSpeed_Write_uart(t_data->controlData.desireSpeedVal);
 						t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
 					}
@@ -403,18 +379,18 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 			}
 			else
 			{
-				/* ?ûê?ú®Ï£ºÌñâ?ùò ?Üç?èÑÏ°∞Ï†à?ùÑ ?úÑ?ïú Î≥??àòÏ≤òÎ¶¨ */
+				/* ?ÔøΩÔøΩ?ÔøΩÔøΩÏ£ºÌñâ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩÏ°∞Ï†à?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ ÔøΩ??ÔøΩÔøΩÏ≤òÎ¶¨ */
 				t_data->controlData.beforeSpeedVal = 0;
 			}
 
-			/*checkWhiteLineFlagÍ∞? True?ù∏ Í≤ΩÏö∞, RoundAbout */
+			/*checkWhiteLineFlagÔøΩ? True?ÔøΩÔøΩ Í≤ΩÏö∞, RoundAbout */
 		}
 
 		/********************************************************/
-		/*			?òÅ?ÉÅÏ≤òÎ¶¨ Ï¢ÖÎ£å								*/
+		/*			?ÔøΩÔøΩ?ÔøΩÔøΩÏ≤òÎ¶¨ Ï¢ÖÎ£å								*/
 		/********************************************************/
 
-		/* ?òÅ?ÉÅÏ≤òÎ¶¨?õÑ ?ò§Î≤ÑÎ†à?ù¥Î°? ?†ïÎ≥? ?ì±?ì± Ï∂úÎ†•.*/
+		/* ?ÔøΩÔøΩ?ÔøΩÔøΩÏ≤òÎ¶¨?ÔøΩÔøΩ ?ÔøΩÔøΩÎ≤ÑÎ†à?ÔøΩÔøΩÔøΩ? ?ÔøΩÔøΩÔøΩ? ?ÔøΩÔøΩ?ÔøΩÔøΩ Ï∂úÎ†•.*/
 		if (checking_stopline)
 		{
 			checking_stopline = false;
@@ -442,20 +418,20 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 			overlayPrintAngle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->controlData.steerVal);
 		}
 
-		/*		?òÑ?û¨ ?òÅ?ÉÅ .bmp?åå?ùºÎ°? ????û•		*/
+		/*		?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ .bmp?ÔøΩÔøΩ?ÔøΩÔøΩÔøΩ? ????ÔøΩÔøΩ		*/
 		if (t_data->imgData.dump_request)
 		{
 			opencv_imwrite(srcbuf);
 			t_data->imgData.dump_request = false;
 		}
 
-		/*		?òÑ?û¨ ?òÅ?ÉÅ .avi?åå?ùºÎ°? ?Öπ?ôî		*/
+		/*		?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ .avi?ÔøΩÔøΩ?ÔøΩÔøΩÔøΩ? ?ÔøΩÔøΩ?ÔøΩÔøΩ		*/
 		if (t_data->imgData.bvideoRecord)
 		{
 			memcpy(t_data->img_data_buf, srcbuf, VPE_OUTPUT_IMG_SIZE);
 		}
 
-		/* ?ã†?ò∏?ì± Í≤?Ï∂úÌôîÎ©¥ÏùÑ ?ú†Ïß??ïòÍ∏? ?úÑ?ïú delay */
+		/* ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ ÔøΩ?Ï∂úÌôîÎ©¥ÏùÑ ?ÔøΩÔøΩÔøΩ??ÔøΩÔøΩÔøΩ? ?ÔøΩÔøΩ?ÔøΩÔøΩ delay */
 		if (delay_flag)
 		{
 			usleep(1700000); // 1700ms == 1.7s
@@ -526,13 +502,13 @@ void *image_process_thread(void *arg)
 		capt = vpe->disp_bufs[index];
 
 		/********************************************************/
-		/* ?òÅ?ÉÅÏ≤òÎ¶¨ ?ãú?ûë										*/
+		/* ?ÔøΩÔøΩ?ÔøΩÔøΩÏ≤òÎ¶¨ ?ÔøΩÔøΩ?ÔøΩÔøΩ										*/
 		/********************************************************/
 
 		img_process(vpe->disp, capt, data, map1, map2);
 
 		/********************************************************/
-		/* ?òÅ?ÉÅÏ≤òÎ¶¨ Ï¢ÖÎ£å										*/
+		/* ?ÔøΩÔøΩ?ÔøΩÔøΩÏ≤òÎ¶¨ Ï¢ÖÎ£å										*/
 		/********************************************************/
 
 		if (disp_post_vid_buffer(vpe->disp, capt, 0, 0, vpe->dst.width, vpe->dst.height))
@@ -894,8 +870,8 @@ void *video_record_thread(void *arg)
 	}
 	printf("\tvideo_record_thred() : ON\n");
 
-	// stÏ≤¥ÌÅ¨Î•? ?ù¥Í≥≥Ïóê?Ñú ?ïòÍ≥?, etÏ≤¥ÌÅ¨Î•? ?ëê Î≤àÏß∏ while?óê ?ïò?ó¨ Îß? ?îÑ?†à?ûÑÎßàÎã§ delay_msÎßåÌÅº ?àÑ?Ç∞?ãú?Ç§?ñ¥
-	// ?îÑ?†à?ûÑ?ù¥ Ï∞çÌûà?äî ?ãú?†êÍ≥? ?òÅ?ÉÅ?óê?Ñú?ùò ?ï¥?ãπ ?ãú?†ê?ùÑ Í∑ºÏÇ¨?ïò?èÑÎ°? ?ïú?ã§. (0.1Ï¥? ?†à???Í∞? Ï∫°Ï≤ò ????ã† ?òÅ?ÉÅ?ùò ?†ÑÏ≤¥Í∏∏?ù¥?ùò ÎπÑÏú®Î°?)
+	// stÏ≤¥ÌÅ¨ÔøΩ? ?ÔøΩÔøΩÍ≥≥Ïóê?ÔøΩÔøΩ ?ÔøΩÔøΩÔøΩ?, etÏ≤¥ÌÅ¨ÔøΩ? ?ÔøΩÔøΩ Î≤àÏß∏ while?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ ÔøΩ? ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩÎßàÎã§ delay_msÎßåÌÅº ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ
+	// ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ Ï∞çÌûà?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩÔøΩ? ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ Í∑ºÏÇ¨?ÔøΩÔøΩ?ÔøΩÔøΩÔøΩ? ?ÔøΩÔøΩ?ÔøΩÔøΩ. (0.1ÔøΩ? ?ÔøΩÔøΩ???ÔøΩ? Ï∫°Ï≤ò ????ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩÏ≤¥Í∏∏?ÔøΩÔøΩ?ÔøΩÔøΩ ÎπÑÏú®ÔøΩ?)
 	gettimeofday(&st, NULL);
 
 	while (1)
@@ -916,7 +892,7 @@ void *video_record_thread(void *arg)
 			opencv_videowrite(data->img_data_buf);
 		}
 
-		while (1) //?òÅ?ÉÅ ?Öπ?ôî ?ã±?Å¨Î•? ÎßûÏ∂∞Ï£ºÍ∏∞ ?úÑ?ïú delay
+		while (1) //?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩÔøΩ? ÎßûÏ∂∞Ï£ºÍ∏∞ ?ÔøΩÔøΩ?ÔøΩÔøΩ delay
 		{
 			gettimeofday(&et, NULL);
 			recordTime_ms = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
@@ -962,7 +938,7 @@ void *mission_thread(void *arg)
 	data->missionData.ms[7] = signalLight;
 	data->missionData.ms[8] = finish;
 
-	//Í∞? ÎØ∏ÏÖò?ù¥ ?àò?ñâ?êòÍ≥†ÎÇòÎ©? detectÎ•? ?ïòÏß? ?ïä?èÑÎ°? Î≥??àò?Ñ§?†ï.
+	//ÔøΩ? ÎØ∏ÏÖò?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩÍ≥†ÎÇòÔøΩ? detectÔøΩ? ?ÔøΩÔøΩÔøΩ? ?ÔøΩÔøΩ?ÔøΩÔøΩÔøΩ? ÔøΩ??ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ.
 
 	while (1)
 	{
@@ -970,1081 +946,79 @@ void *mission_thread(void *arg)
 
 		if (start && start != DONE)
 		{
-			DesireSpeed_Write(0);
 			data->missionData.ms[0] = start;
-			data->imgData.bmission = true;
-			data->imgData.bprintString = true;
-			sprintf(data->imgData.missionString, "start - Wait");
-
-			enum StartState state = WAIT_S;
-
-			while (state)
-			{
-				switch (state)
-				{
-				case WAIT_S:
-					if (DistanceSensor_cm(1) < 8)
-					{
-						sprintf(data->imgData.missionString, "start - front_close");
-						state = FRONT_CLOSE_S;
-					}
-					break;
-
-				case FRONT_CLOSE_S:
-					if (DistanceSensor_cm(1) > 8)
-					{
-						sprintf(data->imgData.missionString, "start - front_open");
-						state = FRONT_OPEN_S;
-					}
-					break;
-
-				case FRONT_OPEN_S:
-					state = START_S;
-					buzzer(1, 0, BUZZER_PULSE);
-					break;
-
-				case START_S:
-					break;
-				}
-				usleep(10000);
-			}
-
+			startFunc(data);
 			start = DONE;
 			flyover = READY;
 			data->missionData.ms[0] = start;
-			//data->missionData.ms[1] = flyover;
-			data->imgData.bmission = false;
-			data->imgData.bprintString = false;
-			data->imgData.bauto = true;
-			data->imgData.bspeedControl = true;
+			data->missionData.ms[1] = flyover;
 		}
 
 		if (flyover && flyover != DONE)
 		{
-			//?ò§Î•∏Ï™Ω Í±∞Î¶¨?Ñº?ÑúÍ∞? ?ïà?û°?ûàÎ©? ?ÉàÏ∂úÌïò?äî Í≤ÉÏúºÎ°? ?òà?ÉÅ.
-			//data->imgData.bmission = true;
-			int escapeCnt = 4;
-			data->imgData.bprintString = true;
-			sprintf(data->imgData.missionString, "flyover");
-
-			while (escapeCnt)
-			{
-				if (DistanceSensor_cm(2) > 25 && DistanceSensor_cm(6) > 25)
-					escapeCnt--;
-				usleep(50000);
-			}
-			buzzer(1, 0, BUZZER_PULSE);
+			flyoverFunc(data);
 			flyover = DONE;
-			//data->imgData.bmission = false;
-			data->imgData.bprintString = false;
 		}
 
 		if (priority && priority != DONE)
 		{
-			//imgProcess?óê?Ñú ?ö∞?Ñ†?†ïÏß??ëúÏß??åê Ï≤¥ÌÅ¨ ?ôú?Ñ±?ôî
-			data->imgData.bcheckPriority = true;
-
-			if (data->missionData.frame_priority >= 2) //?ö∞?Ñ†?†ïÏß??ëúÏß??åê 2?îÑ?†à?ûÑ Í≤?Ï∂?.
-			{
-				data->imgData.bskip = true;
-				DesireSpeed_Write(0);
-				Winker_Write(ALL_ON);
-				while (data->imgData.bcheckPriority)
-				{
-					if (data->missionData.frame_priority == 0) //?ö∞?Ñ†?†ïÏß??ëúÏß??åê ?Ç¨?ùºÏß?Î©?
-					{
-						data->imgData.bcheckPriority = false; //imgProcess?óê?Ñú ?ö∞?Ñ†?†ïÏß??ëúÏß??åê Ï≤¥ÌÅ¨ ÎπÑÌôú?Ñ±?ôî
-					}
-					usleep(100000);
-				}
-				usleep(1000000); //1Ï¥? ???Í∏?
-				Winker_Write(ALL_OFF);
-				DesireSpeed_Write(BASIC_SPEED);
-				priority = DONE;
-				data->imgData.bskip = false;
-			}
+			priorityFunc(data);
+			priority = DONE;
 		}
 
 		if (parking && parking != DONE)
 		{
-			if (1) //(data->controlData.steerVal <= 1600 && data->controlData.steerVal >= 1400) || parking == REMAIN)
+			parkingFunc(data);
+			if (parking == REMAIN)
+				parking = DONE;
+			else if (parking == READY)
+				parking = REMAIN;
+			if (parking == REMAIN)
 			{
-				if (DistanceSensor_cm(2) <= 28) //Ï≤òÏùå Î≤ΩÏù¥ Í∞êÏ???êò?óà?ùÑ Í≤ΩÏö∞
-				{
-					struct timeval st_p, et_p;
-					gettimeofday(&st_p, NULL);
-
-					data->imgData.bprintString = true;
-					sprintf(data->imgData.missionString, "Parking");
-					int parking_width = 0;
-					//int first_error_distance = 0;
-					//int second_error_distance = 0;
-					//int first_error_flag = 1;
-					bool wrong_detection = 1;
-					int encoderVal = 0;
-					int escape_distance = 0;
-
-					enum ParkingState state = FIRST_WALL;
-					enum HorizontalStep step_h = FIRST_BACKWARD;
-					enum VerticalStep step_v = FIRST_BACKWARD_V;
-
-					while (state && wrong_detection) // state == ENDÍ∞? ?ïÑ?ãå?ù¥?ÉÅ Î£®ÌîÑ ÏßÑÌñâ
-					{
-						data->missionData.loopTime = timeCheck(&time);
-
-						data->missionData.parkingData.frontRight = (DistanceSensor_cm(2) <= 28) ? true : false;
-						data->missionData.parkingData.rearRight = (DistanceSensor_cm(3) <= 28) ? true : false;
-
-						switch (state)
-						{
-						case FIRST_WALL:
-							sprintf(data->imgData.missionString, "First Wall");
-							if (data->missionData.parkingData.frontRight == false)
-							{
-								state = DISTANCE_CHECK;
-								EncoderCounter_Write(0);
-							}
-							break;
-
-						case DISTANCE_CHECK:
-							/*
-							Ï£ºÏ∞® ?è≠?óê ????ïú Í±∞Î¶¨Î•? Ï∏°Ï†ï?ïòÍ∏? ?úÑ?ï¥ Í±∞Î¶¨ Ï∏°Ï†ï ?ãú?ûë
-							*/
-
-							/*
-							?ö∞?Ñ† ?†ïÏß? ?ëúÏß??åê?ùÑ Í∞êÏ???ïòÎ©? Ï£ºÏ∞®?óê?Ñú ?ÉàÏ∂úÎêò?èÑÎ°? Ï°∞Ïπò
-							*/
-							if (data->missionData.frame_priority)
-							{
-								wrong_detection = 0;
-								break;
-							}
-							// Encoder Ï∏°Ï†ï
-							encoderVal = Encoder_Read();
-							if (encoderVal != 65278)
-							{
-								parking_width = encoderVal;
-								sprintf(data->imgData.missionString, "parking_width : %d", parking_width);
-								if (parking_width >= 2000)
-								{
-									wrong_detection = 0;
-									break;
-								}
-								// Ï£ºÏ∞® Í≥µÍ∞Ñ Ï∏°Ï†ï?ù¥ ?ïà?êò?äî Í≤ΩÏö∞, ?ûòÎ™ªÎêú Ï£ºÏ∞® Î∂ÑÍ∏∞ ÏßÑÏûÖ?úºÎ°? ?åê?ã®?ïòÍ≥? ?ÉàÏ∂?.
-							}
-							if (data->missionData.parkingData.frontRight == true)
-							{
-
-								/*
-								Í±∞Î¶¨ Ï∏°Ï†ï Ï¢ÖÎ£å -> Ï∏°Ï†ï Í±∞Î¶¨Î•? Î≥??àò?óê ?ã¥?äî?ã§.
-								*/
-								printf("Result Width : %-3d\n", parking_width);
-
-								if (parking_width <= 850)
-									data->missionData.parkingData.verticalFlag = true;
-								else
-									data->missionData.parkingData.horizontalFlag = true;
-
-								state = SECOND_WALL;
-							}
-							break;
-
-						case SECOND_WALL:
-							sprintf(data->imgData.missionString, "Second Wall");
-							if (data->missionData.parkingData.rearRight == true)
-							{
-								state = PARKING_START;
-
-								data->imgData.bmission = true;
-								// ?ëêÎ≤? Ïß? Î≤ΩÏóê Ï∞®Îüâ ?ö∞Ï∏? ?õÑÎ∞? ?Ñº?ÑúÍ∞? Í±∏Î¶∞ ?ÉÅ?Éú?ù¥?ã§. -> ?àòÏß? ?òê?äî ?àò?èâ Ï£ºÏ∞® ÏßÑÌñâ.
-							}
-							break;
-
-						case PARKING_START:
-							sprintf(data->imgData.missionString, "Parking Start");
-							/*
-							?àòÏß? Î∞? ?àò?èâ Ï£ºÏ∞® Íµ¨Î¨∏ Ï∂îÍ??.
-							*/
-
-							if (data->missionData.parkingData.verticalFlag && data->missionData.parkingData.horizontalFlag == false)
-							{
-								// DesireSpeed_Write(0);
-								// usleep(50000);
-								// EncoderCounter_Write(0);
-								// usleep(50000);
-								DesireDistance(60, 200, 1500);
-								while (data->missionData.parkingData.verticalFlag)
-								{
-									data->missionData.loopTime = timeCheck(&time);
-									switch (step_v)
-									{
-									case FIRST_BACKWARD_V:
-										sprintf(data->imgData.missionString, "FIRST_BACKWARD_V");
-										SteeringServo_Write(1050);
-										// ?öå?†Ñ Í∞? ?àò?†ï Î∂?Î∂?
-										usleep(80000);
-										DesireSpeed_Write(-60);
-										//usleep(200000);
-										while (1)
-										{
-											if (DistanceSensor_cm(3) <= 13 && DistanceSensor_cm(5) <= 13)
-											{
-												DesireSpeed_Write(0);
-												//usleep(20000);
-												step_v = SECOND_BACKWARD_V;
-												break;
-											}
-											usleep(5000);
-										}
-										break;
-
-									case SECOND_BACKWARD_V:
-										sprintf(data->imgData.missionString, "SECOND_BACKWARD_V");
-										SteeringServo_Write(1500);
-										usleep(70000);
-										DesireSpeed_Write(-35);
-										//usleep(50000);
-										// Î∞îÌ?¥Î?? ?ùº?ûêÎ°? ÎßûÏ∂∞Ï£ºÍ≥† ?õÑÏßÑÌïú?ã§.
-										if (DistanceSensor_cm(2) <= 11)
-										{
-											DesireSpeed_Write(0);
-											//usleep(50000);
-											step_v = RIGHT_FRONT_V;
-											break;
-										}
-										else if (DistanceSensor_cm(6) <= 11)
-										{
-											DesireSpeed_Write(0);
-											//usleep(50000);
-											step_v = LEFT_FRONT_V;
-											break;
-										}
-										if (DistanceSensor_cm(5) <= 4)
-										{
-											// ?ñ∏?çî?ä§?ã∞?ñ¥ ?ÉÅ?ô©
-											printf("under steer\n");
-											DesireSpeed_Write(0);
-											//usleep(50000);
-											step_v = UNDER_STEER_V;
-											break;
-										}
-										else if (DistanceSensor_cm(3) <= 4)
-										{
-											// ?ò§Î≤ÑÏä§?ã∞?ñ¥ ?ÉÅ?ô©
-											printf("over steer\n");
-											DesireSpeed_Write(0);
-											//usleep(50000);
-											step_v = OVER_STEER_V;
-											break;
-										}
-										break;
-
-									case UNDER_STEER_V:
-										sprintf(data->imgData.missionString, "UNDER_STEER");
-										DesireDistance(60, 100, 1300);
-										//usleep(30000);
-										DesireDistance(60, 100, 1500);
-										//usleep(30000);
-										DesireDistance(60, 200, 1750);
-										//usleep(30000);
-										step_v = SECOND_BACKWARD_V;
-										break;
-
-									case OVER_STEER_V:
-										sprintf(data->imgData.missionString, "OVER_STEER");
-										DesireDistance(60, 100, 1700);
-										//usleep(30000);
-										DesireDistance(60, 100, 1500);
-										//usleep(30000);
-										DesireDistance(60, 200, 1250);
-										//usleep(30000);
-										step_v = SECOND_BACKWARD_V;
-										break;
-
-									case RIGHT_FRONT_V:
-										sprintf(data->imgData.missionString, "RIGHT_FRONT_V");
-										int right_difference = DistanceSensor_cm(2) - DistanceSensor_cm(3);
-										if (abs(right_difference) < 3)
-										{
-											DesireSpeed_Write(0);
-											//usleep(50000);
-											step_v = FIRST_FORWARD_V;
-											break;
-										}
-										DesireDistance(60, 100, 1500 - (right_difference * 80));
-										//usleep(200000);
-										DesireDistance(-30, 400, 1500);
-										//usleep(200000);
-										break;
-
-									case LEFT_FRONT_V:
-										sprintf(data->imgData.missionString, "RIGHT_FRONT_V");
-										int left_difference = DistanceSensor_cm(6) - DistanceSensor_cm(5);
-										if (abs(left_difference) < 3)
-										{
-											DesireSpeed_Write(0);
-											//usleep(50000);
-											step_v = FIRST_FORWARD_V;
-											break;
-										}
-										DesireDistance(60, 100, 1500 + (left_difference * 80));
-										//usleep(200000);
-										DesireDistance(-30, 400, 1500);
-										//usleep(200000);
-										break;
-
-									case FIRST_FORWARD_V:
-										sprintf(data->imgData.missionString, "FIRST_FORWARD_V");
-										DesireDistance(-30, 400, 1500);
-										//usleep(1000000);
-										step_v = SECOND_FORWARD_V;
-										Winker_Write(ALL_ON);
-										buzzer(1, 0, 300000);
-										Winker_Write(ALL_OFF);
-										break;
-
-									case SECOND_FORWARD_V:
-										sprintf(data->imgData.missionString, "SECOND_FORWARD_V");
-										DesireSpeed_Write(60);
-										//usleep(50000);
-										if (DistanceSensor_cm(2) >= 20 && DistanceSensor_cm(6) >= 20)
-										{
-											//DesireSpeed_Write(0);
-											//usleep(50000);
-											DesireDistance(60, 200, 1500);
-											step_v = FINISH_V;
-										}
-										break;
-
-									case FINISH_V:
-										sprintf(data->imgData.missionString, "FINISH_V");
-										DesireDistance(60, 1000, 1050);
-										data->missionData.parkingData.verticalFlag = 0;
-										break;
-
-									default:
-										break;
-									}
-									usleep(5000);
-								}
-							}
-							else if (data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
-							{
-								DesireDistance(60, 230, 1500);
-								// Ï£ºÏ∞® Í∞? ?àò?†ï Î∂?Î∂?
-								while (data->missionData.parkingData.horizontalFlag)
-								{
-									data->missionData.loopTime = timeCheck(&time);
-									switch (step_h)
-									{
-									case FIRST_BACKWARD:
-										sprintf(data->imgData.missionString, "FIRST_BACKWARD");
-										DesireDistance(-60, 800, 1050);
-										//usleep(200000);
-										DesireDistance(-60, 400, 1500);
-										//usleep(200000);
-										SteeringServo_Write(2000);
-										usleep(50000);
-										DesireSpeed_Write(-26);
-
-										while (1)
-										{
-											if (DistanceSensor_cm(4) <= 10)
-											{
-												DesireSpeed_Write(0);
-												break;
-											}
-											usleep(5000);
-										}
-										SteeringServo_Write(1250);
-										usleep(80000);
-										DesireSpeed_Write(40);
-										//usleep(5000);
-										while (1)
-										{
-											if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 3) || DistanceSensor_cm(1) <= 4)
-											{
-												DesireSpeed_Write(0);
-												step_h = SECOND_BACKWARD;
-												break;
-											}
-											usleep(5000);
-										}
-
-										break;
-
-									case SECOND_BACKWARD:
-										sprintf(data->imgData.missionString, "SECOND_BACKWARD");
-										//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-										int difference = DistanceSensor_cm(2) - DistanceSensor_cm(3);
-										if (difference < -2)
-										{
-											//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-											DesireDistance(-30, 400, 1300);
-											//usleep(200000);
-											if (abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2)
-											{
-												DesireSpeed_Write(0);
-												usleep(20000);
-												break;
-											}
-											DesireDistance(40, 400, 1700);
-											//usleep(200000);
-										}
-										else if (difference > 2)
-										{
-											//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-											DesireDistance(-30, 400, 1700);
-											//usleep(200000);
-											if (abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2)
-											{
-												DesireSpeed_Write(0);
-												usleep(20000);
-												break;
-											}
-											DesireDistance(40, 400, 1300);
-											//usleep(200000);
-										}
-										if (abs(difference) <= 2)
-										{
-											//sprintf(data->imgData.missionString, "d1 = %d, d2 = %d, d3 = %d", DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3));
-											DesireSpeed_Write(0);
-											escape_distance = (DistanceSensor_cm(2) + DistanceSensor_cm(3)) / 2;
-											//usleep(50000);
-											SteeringServo_Write(1500);
-											//usleep(1000000);
-											step_h = SECOND_FORWARD;
-											Winker_Write(ALL_ON);
-											buzzer(1, 0, 300000);
-											Winker_Write(ALL_OFF);
-										}
-										break;
-
-										//case FIRST_FORWARD:
-										//	DesireDistance(30, 250, 1000);
-										//	step = SECOND_FORWARD;
-										//	break;
-
-									case SECOND_FORWARD:
-										sprintf(data->imgData.missionString, "SECOND_FORWARD");
-
-										if (DistanceSensor_cm(4) <= 6)
-										{
-											step_h = ESCAPE;
-											break;
-										}
-										DesireSpeed_Write(-27);
-
-										while (1)
-										{
-											if (DistanceSensor_cm(4) <= 7)
-											{
-												DesireSpeed_Write(0);
-												usleep(5000);
-												//if (escape_distance <= 7)
-												step_h = ESCAPE;
-												//else
-												//step_h = ESCAPE_3;
-												break;
-											}
-											usleep(5000);
-										}
-										break;
-
-									case ESCAPE:
-										sprintf(data->imgData.missionString, "ESCAPE");
-										DesiredDistance(50, 250, 2000);
-										step_h = ESCAPE_2;
-										break;
-
-									case ESCAPE_2:
-										sprintf(data->imgData.missionString, "ESCAPE_2");
-										DesiredDistance(-50, 170, 1500);
-										step_h = ESCAPE_3;
-										break;
-
-									case ESCAPE_3:
-										sprintf(data->imgData.missionString, "ESCAPE_3");
-										DesireDistance(60, 600, 1900);
-										step_h = FINISH;
-										break;
-
-									case FINISH:
-										sprintf(data->imgData.missionString, "FINISH");
-										//DesireDistance(60, 700, 1300);
-										DesireDistance(60, 600, 1100);
-										data->missionData.parkingData.horizontalFlag = 0;
-										break;
-
-									default:
-										break;
-									}
-									usleep(5000);
-								}
-							}
-							DesireSpeed_Write(35);
-							state = DONE_P;
-
-							gettimeofday(&et_p, NULL);
-							float parkingTime = (((et_p.tv_sec - st_p.tv_sec) * 1000) + ((int)et_p.tv_usec / 1000 - (int)st_p.tv_usec / 1000)) / 1000.0;
-							printf("parking time : %f\n", parkingTime);
-
-							if (parking == REMAIN)
-								parking = DONE;
-							else if (parking == READY)
-								parking = REMAIN;
-
-							break;
-
-						default:
-							break;
-						}
-						usleep(50000);
-					}
-					data->imgData.bmission = false;
-					data->imgData.bprintString = false;
-					if (parking == REMAIN)
-					{
-						printf("First Parking is Done!\n");
-					}
-					if (parking == DONE)
-					{
-						printf("Second Parking is Done!\n");
-					}
-				}
+				printf("First Parking is Done!\n");
+			}
+			if (parking == DONE)
+			{
+				printf("Second Parking is Done!\n");
 			}
 		}
 
 		if (tunnel && tunnel != DONE)
 		{
-			data->imgData.bdark = true;
-			if (data->missionData.btunnel && DistanceSensor_cm(2) < 20 && DistanceSensor_cm(6) < 20)
-			{
-				data->imgData.bprintString = true;
-				data->imgData.bmission = true;
-				data->imgData.bdark = false;
-
-				frontLightOnOff(data->controlData.lightFlag, true);
-				sprintf(data->imgData.missionString, "mission thread : tunnel detect");
-
-				while (true)
-				{
-					data->missionData.loopTime = timeCheck(&time);
-					int c2 = DistanceSensor_cm(2);
-					int c6 = DistanceSensor_cm(6);
-					if (Tunnel_isEnd(c2, c6, 50, 50))
-					{
-						sprintf(data->imgData.missionString, "tunnel out");
-						break;
-					}
-
-					data->controlData.steerVal = Tunnel_SteerVal(c2, c6);
-					sprintf(data->imgData.missionString, "steer = %d, %d : %d", data->controlData.steerVal, c2, c6);
-
-					SteeringServo_Write(data->controlData.steerVal);
-
-					usleep(10000);
-				}
-				//DesireSpeed_Write(0);
-
-				frontLightOnOff(data->controlData.lightFlag, false);
-
-				//buzzer(1, 0, 500000);
-				//usleep(100000);
-
-				//DesireDistance(-40, 400, 1500);
-				//usleep(100000);
-
-				printf("Tunnel OUT\n");
-				tunnel = DONE;
-				data->imgData.bmission = false;
-				data->imgData.bprintString = false;
-				data->missionData.btunnel = false;
-			}
+			tunnelFunc(data);
+			tunnel = DONE;
 		}
 
 		if (roundabout && roundabout != DONE)
 		{
-			//data->imgData.bcheckFrontWhite = true;	// ?†ÑÎ∞? ?†ïÏß??Ñ† ?òÅ?ÉÅ?úºÎ°? ?ÉêÏß? ON
-
-			if (StopLine(4)) //|| data->missionData.finish_distance != -1)	//?òÅ?ÉÅ?úºÎ°? ?†ïÏß??Ñ†?ùò Í±∞Î¶¨Í∞? Ï∏°Ï†ï?êòÎ©?
-			{
-				//onlyDistance(BASIC_SPEED, (data->missionData.finish_distance / 26.0) * 500);	//?†ïÏß??Ñ†ÍπåÏ?? Í∞??Ñú stop
-				//data->missionData.finish_distance = -1;
-
-				/* Í∏∞Ï°¥?ùò roundaboutÎ∂ÑÍ∏∞ ÏßÑÏûÖ */
-				data->imgData.bwhiteLine = true;
-				data->imgData.bprintString = true;
-				sprintf(data->imgData.missionString, "round about");
-				printf("roundabout IN\n");
-				int speed = BASIC_SPEED;
-				int flag_END = 0;
-
-				DesireSpeed_Write(0);
-				data->imgData.bspeedControl = false;
-				//SteeringServo_Write(1500);
-				enum RoundaboutState state = WAIT_R;
-				while (state != DONE_R)
-				{
-					data->missionData.loopTime = timeCheck(&time);
-					switch (state)
-					{
-					case NONE_R:
-						break;
-
-					case WAIT_R:
-						data->imgData.bmission = true;
-						if (RoundAbout_isStart(DistanceSensor_cm(1)))
-						{
-							sprintf(data->imgData.missionString, "ROUND_GO_1-1");
-							printf("ROUND_GO_1-1\n");
-
-							state = ROUND_GO_1;
-						}
-						break;
-
-					case ROUND_GO_1:
-						//DesireDistance(speed, 600, 1500, &(data->controlData)); //?ïû ?Ñº?Ñú Î∞õÏïÑ?ò§Î©¥ÏÑú ?ùº?†ïÍ±∞Î¶¨ Í∞??äî ?ï®?àò Ï∂îÍ??.
-						onlyDistance(speed, 400);
-						sprintf(data->imgData.missionString, "ROUND_GO_1-2");
-						printf("ROUND_GO_1_2\n");
-						usleep(100000);
-
-						data->imgData.bmission = false;
-						onlyDistance(speed, 1250);
-
-						sprintf(data->imgData.missionString, "ROUND_STOP");
-						printf("ROUND_STOP\n");
-
-						state = ROUND_STOP;
-						break;
-
-					case ROUND_STOP:
-						if ((DistanceSensor_cm(4) <= 25) /*|| (DistanceSensor_cm(5) <= 6)*/)
-						{
-							speed = 80;
-							DesireSpeed_Write(speed);
-							sprintf(data->imgData.missionString, "ROUND_GO_2");
-							printf("ROUND_GO_2\n");
-
-							state = ROUND_GO_2;
-						}
-						break;
-
-					case ROUND_GO_2:
-						if ((DistanceSensor_cm(4) <= 8) /* || (DistanceSensor_cm(5) <= 6)*/)
-						{
-							printf("speed up \n");
-							if (speed < 100)
-								speed += 5;
-						}
-						else if ((DistanceSensor_cm(1) <= 8) /* || (DistanceSensor_cm(6) <= 6)*/)
-						{
-							DesireSpeed_Write(0);
-							printf("stop and speed down \n");
-							if (speed > 30)
-								speed -= 10;
-							usleep(1900000);
-							break;
-						}
-						DesireSpeed_Write(speed);
-						//if (abs(data->controlData.steerVal - 1500) < 60)
-						if (data->controlData.steerVal - 1500 < 30) // steerVal 1500 ?ù¥?ÉÅ?úºÎ°? ?ú†Ïß??êò?ã§Í∞? ÏßÅÏßÑ Íµ¨Í∞Ñ?ù¥ ?Çò?ò¨ ?ïå
-						{
-							if (flag_END < 3)
-								flag_END++;
-
-							if (flag_END == 3)
-							{
-								sprintf(data->imgData.missionString, "DONE_R");
-								printf("DONE_R");
-
-								state = DONE_R;
-							}
-						}
-						else
-						{
-							if (flag_END > 0)
-								flag_END--;
-						}
-
-						break;
-
-					case DONE_R:
-						break;
-					}
-					usleep(100000);
-				}
-
-				printf("ROUNDABOUT_OFF\n");
-				sprintf(data->imgData.missionString, "ROUNDABOUT_OFF");
-				roundabout = DONE;
-				data->missionData.broundabout = false;
-				data->imgData.bspeedControl = true;
-				data->imgData.bprintString = false;
-				data->imgData.bcheckFrontWhite = false;
-				data->missionData.finish_distance = -1;
-			}
+			//data->imgData.bcheckFrontWhite = true;	// ?ÔøΩÔøΩÔøΩ? ?ÔøΩÔøΩÔøΩ??ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩÔøΩ? ?ÔøΩÔøΩÔøΩ? ON
+			roundaboutFunc(data);
+			roundabout = DONE;
 		}
 
 		if (overtake && overtake != DONE)
 		{
-			/* Î∂ÑÍ∏∞ÏßÑÏûÖ Î™ÖÎ†π Ïß??ãú */
-			if (data->controlData.steerVal <= 1600 &&
-				data->controlData.steerVal >= 1400)
-			{
-				if (DistanceSensor_cm(1) < 30) //?†ÑÎ∞? ?û•?ï†Î¨? Í∞êÏ?? //Ï£ºÏ∞® ?ÉÅ?ô©?ù¥ ?ïÑ?ãê?ïå, Î∂ÑÍ∏∞ÏßÑÏûÖ Í∞??ä•
-				{
-					data->imgData.btopview = false; //topview off
-					data->imgData.bmission = true;	//?òÅ?ÉÅÏ≤òÎ¶¨ X
-					//data->imgData.bwhiteLine = true; // ?ù∞?Éâ ÏßÅÏÑ† O
-					data->imgData.bprintString = true;
-					sprintf(data->imgData.missionString, "overtake");
-					printf("overtake \n");
-					enum OvertakeState state = FRONT_DETECT;
-					data->missionData.overtakingData.headingDirection = STOP;
-					data->missionData.overtakingFlag = true;
-					data->imgData.bwhiteLine = true;
-					bool obstacle = false;
-					int thresDistance = 450;
-					/*Ï∞®Îüâ ?†ïÏß?*/
-					DesireSpeed_Write(0);
-
-					while (state)
-					{
-						data->missionData.loopTime = timeCheck(&time);
-						switch (state)
-						{
-						case FRONT_DETECT:
-							/* ?û•?ï†Î¨? Ï¢åÏö∞?åê?ã®?ùÑ ?úÑ?ïú Ïπ¥Î©î?ùº Í∞ÅÎèÑÏ°∞Ï†à */
-							sprintf(data->imgData.missionString, "Front Detect");
-							if (data->missionData.overtakingData.headingDirection == STOP)
-							{
-								data->controlData.cameraY = 1610;
-								CameraYServoControl_Write(data->controlData.cameraY);
-								data->missionData.overtakingData.updownCamera = CAMERA_UP;
-							}
-							/* ?û•?ï†Î¨? Ï¢åÏö∞ ?åê?ã® Î∞? ÎπÑÏñ¥?ûà?äî Ï∞®ÏÑ†?úºÎ°? ?†ÑÏßÑÌïò?†§?äî ÏΩîÎìú*/
-							while (data->missionData.overtakingData.headingDirection == STOP)
-							{
-								data->missionData.loopTime = timeCheck(&time);
-								usleep(50000);
-							}
-							/*?åê?ã® Î∞õÏúºÎ©? Camera ?õê?ûò ?úÑÏπòÎ°ú ?èåÎ¶?*/
-							if (data->missionData.overtakingData.headingDirection != STOP)
-							{
-								data->controlData.cameraY = 1660;
-								CameraYServoControl_Write(data->controlData.cameraY);
-								data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
-								data->imgData.btopview = true; //top view on
-							}
-							else
-							{
-								break;
-							}
-							/*?åê?ã® ?ù¥?õÑ ?ï¥?ãπ Î∞©Ìñ• ?†ÑÏß?*/
-							if (data->missionData.overtakingData.headingDirection == RIGHT &&
-								data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
-							{
-								sprintf(data->imgData.missionString, "Right to go");
-								/*Ï∂úÎ∞ú*/
-								Winker_Write(RIGHT_ON);
-								DesireDistance(50, thresDistance, 1100);
-								Winker_Write(ALL_OFF);
-								/* ?Ñº?Ñú ?ò§Î•? ?ù∏?ãù Î∞©Ï??*/
-								usleep(500000);
-								/*thresDistance?ù¥?ÉÅ Í∞??Ñú ?†ÑÎ∞? Í±∞Î¶¨ ?û¨?ôï?ù∏*/
-								if (DistanceSensor_cm(1) < 20)
-								{
-									sprintf(data->imgData.missionString, "Detect Error");
-									/*?†ïÏß?, ?õÑÏß? Î∞? Î∞©Ìñ• ?†Ñ?ôò*/
-									DesireDistance(-50, thresDistance, 1100);
-									/*?†ïÏß? Î∞? Î∞©Ìñ• ?†Ñ?ôò Î™ÖÎ†π*/
-									data->missionData.overtakingData.headingDirection = LEFT;
-								}
-								else
-								{ /*?†ÑÎ∞? ÎØ∏ÌÉêÏß?*/
-									state = SIDE_ON;
-									sprintf(data->imgData.missionString, "Detect Side");
-									/*?†ÑÏßÑÌïò?äî ?èô?ïà ?†ÑÎ∞? ?Ñº?ÑúÍ∞? 20 ?ù¥?ÉÅ Î©??ñ¥Ïß?Î©? SIDE_ON?úºÎ°? ÏßÑÌñâ*/
-									DesireSpeed_Write(BASIC_SPEED);
-								}
-							}
-							else if (data->missionData.overtakingData.headingDirection == LEFT &&
-									 data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
-							{
-
-								sprintf(data->imgData.missionString, "Left to go");
-								/*Ï∂úÎ∞ú*/
-								Winker_Write(LEFT_ON);
-								DesireDistance(50, thresDistance, 1900);
-								Winker_Write(ALL_OFF);
-								/* ?Ñº?Ñú ?ò§Î•? ?ù∏?ãù Î∞©Ï??*/
-								usleep(500000);
-								/*thresDistance?ù¥?ÉÅ Í∞??Ñú ?†ÑÎ∞? Í±∞Î¶¨ ?û¨?ôï?ù∏*/
-								if (DistanceSensor_cm(1) < 20)
-								{
-									/*?†ïÏß?, ?õÑÏß? Î∞? Î∞©Ìñ• ?†Ñ?ôò*/
-									sprintf(data->imgData.missionString, "Detect Error");
-									DesireDistance(-50, thresDistance, 1900);
-									/*?†ïÏß? ?õÑ Î∞©Ìñ• ?†Ñ?ôò Î™ÖÎ†π*/
-									data->missionData.overtakingData.headingDirection = RIGHT;
-								}
-								else
-								{
-									/*?†ÑÏßÑÌïò?äî ?èô?ïà ?†ÑÎ∞? ?Ñº?ÑúÍ∞? 20 ?ù¥?ÉÅ Î©??ñ¥Ïß?Î©? SIDE_ON?úºÎ°? ÏßÑÌñâ*/
-									state = SIDE_ON;
-									sprintf(data->imgData.missionString, "Detect Side");
-									DesireSpeed_Write(BASIC_SPEED);
-								}
-							}
-							else
-							{ /*STOP?ù¥ ?ú†Ïß??êò?äî Í≤ΩÏö∞ Î©àÏ∂§*/
-							}
-
-							break;
-
-						case SIDE_ON:
-							/*Auto Steering ?èô?ûë*/
-							data->imgData.bmission = false;
-							/* ?òÑ?û¨ ?û•?ï†Î¨ºÏù¥ ?ñ¥?îî?ûà?äê?Éê?óê ?î∞?ùº side ?Ñº?Ñú(2,3 or 4,5)Î°? Í∞êÏ???ïò?äî ÏΩîÎìú*/
-							//right
-							if (data->missionData.overtakingData.headingDirection == RIGHT)
-							{
-								/*?û•?ï†Î¨? ?ÜµÍ≥? ?ôï?ù∏*/
-								if (DistanceSensor_cm(5) < 30 || DistanceSensor_cm(6) < 30)
-								{
-									obstacle = true;
-								}
-								else if (obstacle == true)
-								{
-									/*?û•?ï†Î¨? ?ÜµÍ≥?*/
-									if (DistanceSensor_cm(5) > 30 && DistanceSensor_cm(6) > 30)
-									{
-										DesireSpeed_Write(0);
-										usleep(50000);
-										obstacle = false;
-										state = SIDE_OFF;
-										sprintf(data->imgData.missionString, "Side OFF");
-									}
-								}
-								usleep(50000);
-							}
-							//left
-							else if (data->missionData.overtakingData.headingDirection == LEFT)
-							{
-								/*?û•?ï†Î¨? ?ÜµÍ≥? ?ôï?ù∏*/
-								if (DistanceSensor_cm(3) < 30 || DistanceSensor_cm(2) < 30)
-								{
-									obstacle = true;
-								}
-								else if (obstacle == true)
-								{
-									/*?û•?ï†Î¨? ?ÜµÍ≥?*/
-									if (DistanceSensor_cm(3) > 30 && DistanceSensor_cm(2) > 30)
-									{
-										DesireSpeed_Write(0);
-										usleep(50000);
-										obstacle = false;
-										state = SIDE_OFF;
-										sprintf(data->imgData.missionString, "Side OFF");
-									}
-								}
-								usleep(500000);
-							}
-							//error and go back step
-							else
-							{
-								state = FRONT_DETECT;
-							}
-							break;
-
-						case SIDE_OFF:
-							/*?õê?ûò Ï∞®ÏÑ†?úºÎ°? Î≥µÍ???ïò?äî ÏΩîÎìú*/
-							usleep(10000);
-							data->imgData.bmission = true; //Auto Steering off
-							//right
-							if (data->missionData.overtakingData.headingDirection == RIGHT)
-							{
-								/*Î≥µÍ?? Ï¢åÌöå?†Ñ Î∞©Ìñ• ?Ñ§?†ï Î∞? ?†ÑÏß?*/
-								Winker_Write(LEFT_ON);
-								DesireDistance(50, thresDistance + 100, 1900);
-								Winker_Write(ALL_OFF);
-							}
-							//left
-							else if (data->missionData.overtakingData.headingDirection == LEFT)
-							{
-								/*Î≥µÍ?? ?ö∞?öå?†Ñ Î∞©Ìñ• ?Ñ§?†ï*/
-								Winker_Write(RIGHT_ON);
-								DesireDistance(50, thresDistance + 100, 1100);
-								Winker_Write(ALL_OFF);
-							}
-							/*?ïåÍ≥†Î¶¨Ï¶? ?†ÑÏß?*/
-							data->imgData.bmission = false;
-							sprintf(data->imgData.missionString, "End Overtaking");
-							DesireSpeed_Write(BASIC_SPEED);
-							state = DONE_O;
-							overtake = DONE;
-							data->missionData.overtakingFlag = false;
-							break;
-
-						default:
-							break;
-						}
-						//usleep(1500000);
-						usleep(50000); // 1,500 ms -> 50ms Î°? Î≥?Í≤?, 09/01 AM 00:50 -KDH
-					}
-					signalLight = READY;
-					data->imgData.bmission = false;
-					data->imgData.bprintString = false;
-				}
-			}
+			overtakeFunc(data);
+			overtake = DONE;
+			signalLight = READY;
 		}
 
 		if (signalLight && signalLight != DONE)
 		{
-			data->imgData.bcheckFrontWhite = true; // ?†ÑÎ∞? ?†ïÏß??Ñ† ?òÅ?ÉÅ?úºÎ°? ?ÉêÏß? ON
+			signalLightFunc(data);
 
-			if (/*StopLine(5) ||*/ data->missionData.finish_distance != -1) //?òÅ?ÉÅ?úºÎ°? ?†ïÏß??Ñ†?ùò Í±∞Î¶¨Í∞? Ï∏°Ï†ï?êòÎ©?
-			{
-				onlyDistance(BASIC_SPEED, (data->missionData.finish_distance / 26.0) * 500); //?†ïÏß??Ñ†ÍπåÏ?? Í∞??Ñú stop
-				data->missionData.finish_distance = -1;
+			signalLight = DONE;
+			finish = READY;
 
-				DesireSpeed_Write(0);
-				SteeringServo_Write(1500);
-				data->imgData.bmission = true;
-				data->imgData.bprintString = true;
-				data->imgData.bcheckSignalLight = true;
-				data->imgData.bprintTire = false;
-				data->missionData.signalLightData.state = DETECT_RED;
-				sprintf(data->imgData.missionString, "check RED");
-				printf("signalLight\n");
-
-				while (data->imgData.bcheckSignalLight)
-					usleep(200000); //?òÅ?ÉÅÏ≤òÎ¶¨?óê?Ñú ?ùº?†®?ùò Í≥ºÏ†ï?ù¥ ?Åù?Ç† ?ïå ÍπåÏ?? Í∏∞Îã§Î¶∞Îã§.
-
-				data->imgData.bprintTire = true;
-				sprintf(data->imgData.missionString, "Distance control");
-				DesireSpeed_Write(BASIC_SPEED);
-
-				bool once_back = false;
-				while (1) // ?ã†?ò∏?ì± Íµ¨Ï°∞Î¨ºÍ≥º?ùò Í±∞Î¶¨Î•? 23,24cm Î°? ÎßûÏ∂îÍ∏? ?úÑ?ï¥ ?†ÑÏß?
-				{
-					int front_distance = DistanceSensor_cm(1);
-					if (front_distance < 23)
-					{
-						once_back = true;
-						DesireSpeed_Write(-20);
-					}
-					else if (front_distance <= 24)
-					{
-						DesireSpeed_Write(0);
-						break;
-					}
-					else if (once_back && front_distance > 24)
-						DesireSpeed_Write(20);
-					usleep(50000);
-				}
-
-				if (data->missionData.signalLightData.finalDirection == 1)
-				{
-					sprintf(data->imgData.missionString, "Turn right");
-					printf("\tTurn right\n");
-					DesireDistance(40, 1170, 1000);
-				}
-				else if (data->missionData.signalLightData.finalDirection == -1)
-				{
-					sprintf(data->imgData.missionString, "Turn left");
-					printf("\tTurn left\n");
-					DesireDistance(40, 1170, 2000);
-				}
-				else
-				{
-					sprintf(data->imgData.missionString, "ERROR");
-					printf("\tERROR\n");
-					DesireDistance(40, 1150, 1000);
-				}
-
-				signalLight = DONE;
-				finish = READY;
-				data->missionData.ms[7] = signalLight;
-				data->missionData.ms[8] = finish;
-				data->imgData.bmission = false;
-				data->imgData.bprintString = false;
-			}
+			data->missionData.ms[7] = signalLight;
+			data->missionData.ms[8] = finish;
 		}
 
 		if (finish && finish != DONE)
 		{
-			// if(0)
-			// {
-			// data->missionData.finishData.checkFront = false; /*ÎπÑÌôú?Ñ±?ôî*/
-			// if (1)											 /*?Ö∏????Éâ Í∞?Î°? ÏßÅÏÑ†?ù¥ ?ùº?†ï?ù¥?ïòÎ°? ?ñ®?ñ¥Ïß?Î©? ?ûÖ?†•*/
-			// {												 //Encoder ?Ç¨?ö©?ï¥?Ñú ?ùº?†ï ÏßÅÏßÑ?ïòÎ©? Ï¢ÖÎ£å?ïòÍ≤? ?Ñ§?†ï
-			// 	//?Åù?ÇòÍ≥? ?Çê?ÜåÎ¶?
-			// 	/*?ù¥ÎØ? ?ù¥?èô ?ÉÅ?Éú*/
-			// 	data->missionData.finishData.distEndLine = -1000;
-			// 	data->imgData.bmission = true;
-			// 	data->imgData.bprintString = true;
-			// 	/*box filtering*/
-			// 	data->missionData.finishData.checkFront = true;/*?†ÑÎ∞? ?Ö∏????ùº?ù∏ ?ÉêÏß? ?ôú?Ñ±?ôî*/
-			// 	/*encoding?ùÑ ?ù¥?ö©?ïú ?†ÑÏß?*/
-			// 	//data->missionData.finishData.encodingStart = false;
-			// 	/*check front signal waiting*/
-			// 	while (data->missionData.finishData.checkFront == true || data->missionData.finishData.distEndLine == -1000)
-			// 	{
-			// 		usleep(500000);
-			// 		/*checkFront Í∞? falseÍ∞? ?êò?ñ¥ Ï¢ÖÎ£å ?êêÍ±∞ÎÇò distEndlineÍ∞íÏù¥ Î¨¥ÏùòÎØ∏ÌïòÏß? ?ïä?ùÑÍ≤ΩÏö∞ Ï¢ÖÎ£å*/
-			// 		if (data->missionData.finishData.checkFront == false || data->missionData.finishData.distEndLine > 320)
-			// 		{
-			// 			sprintf(data->imgData.missionString, "End Check Front");
-			// 			break; /*?ïû?óê ?ÉêÏß??ãú Ï¢ÖÎ£å*/
-			// 		}
-			// 		sprintf(data->imgData.missionString, "Check Front");
-			// 	}
-			// 	/*?çî?ù¥?ÉÅ ?ôï?ù∏?ïòÏß? ?ïä?èÑÎ°? Ï¢ÖÎ£å(double check)*/
-			// 	data->missionData.finishData.checkFront = false;
-			// 	DesireSpeed_Write(0);
-			// 	/*?ù¥?èô ?õÑ Ï¢ÖÎ£å*/
-			// 	Winker_Write(ALL_ON);
-			// 	usleep(1000000);
-			// 	Winker_Write(ALL_OFF);
-			// 	/*Î∞ëÏóê ?ù∞?Éâ?ù¥ ?ïò?Çò?ùº?èÑ ?ÉêÏß??êò?äîÏß? ?ôï?ù∏ ?õÑ ?ûà?ã§Î©? ?†ïÏß?*/
-			// 	///Ï∂îÍ???ïÑ?öî/////
-			// }
+			finishFunc(data);
 
-			if (1) //Î¨¥Ï°∞Í±? ÏßÑÏûÖ
-			{
-
-				DesireSpeed_Write(0);
-				SteeringServo_Write(1500);
-				data->imgData.bmission = true;
-				sprintf(data->imgData.missionString, "Finish line check");
-				data->imgData.bprintString = true;
-				data->imgData.bcheckFinishLine = true;
-
-				DesireSpeed_Write(30);
-				while (data->missionData.finish_distance == -1)
-				{
-					usleep(5000); //5ms
-				}
-				DesireSpeed_Write(0);
-				data->imgData.bcheckFinishLine = false;
-
-				int rest_distance = data->missionData.finish_distance;
-				rest_distance -= 4;
-				sprintf(data->imgData.missionString, "Finish Driving");
-				DesireDistance(40, 500 * (rest_distance / 26.0), 1500); // encoder = 500 -> 26cmÎ°? Ï∏°Ï†ï
-
-				printf("finish end\n");
-				sprintf(data->imgData.missionString, "All mission complete !");
-				buzzer(3, 500000, 500000);
-
-				data->imgData.bauto = false;
-				data->imgData.bmission = false;
-				data->imgData.bprintString = false;
-				finish = DONE;
-			}
+			finish = DONE;
 		}
 
 		if (data->missionData.changeMissionState)
@@ -2115,9 +1089,10 @@ int main(int argc, char **argv)
 	struct v4l2 *v4l2;
 	struct vpe *vpe;
 	struct thr_data tdata;
+
 	ptr_data = &tdata;
 	int disp_argc = 3;
-	char *disp_argv[] = {"dummy", "-s", "4:480x272", "\0"}; // Ï∂îÌõÑ Î≥?Í≤? ?ó¨Î∂? ?ôï?ù∏ ?õÑ Ï≤òÎ¶¨..
+	char *disp_argv[] = {"dummy", "-s", "4:480x272", "\0"}; // Ï∂îÌõÑ ÔøΩ?ÔøΩ? ?ÔøΩÔøΩÔøΩ? ?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩ Ï≤òÎ¶¨..
 	int ret = 0;
 	memset(tdata.img_data_buf, 0, sizeof(tdata.img_data_buf));
 
@@ -2202,18 +1177,18 @@ int main(int argc, char **argv)
 	{
 		return 1;
 	}
-	// vpe Íµ¨Ï°∞Ï≤? ?Éù?Ñ± Î∞? Ï¥àÍ∏∞?ôî
+	// vpe Íµ¨Ï°∞ÔøΩ? ?ÔøΩÔøΩ?ÔøΩÔøΩ ÔøΩ? Ï¥àÍ∏∞?ÔøΩÔøΩ
 	// vpe input (v4l cameradata)
 	vpe->src.width = CAPTURE_IMG_W;
 	vpe->src.height = CAPTURE_IMG_H;
 	describeFormat(CAPTURE_IMG_FORMAT, &vpe->src);
-	// ?ûÖ?†• ?ù¥ÎØ∏Ï???óê ????ïú ?åå?ùºÎØ∏ÌÑ∞(?Ç¨?ù¥Ï¶? Î∞? ?è¨Îß?)Î•? vpe ?ûÖ?†• ?ù¥ÎØ∏Ï?? Î©§Î≤Ñ?óê ?ï†?ãπ?ïú?ã§.
+	// ?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩÎØ∏ÔøΩ???ÔøΩÔøΩ ????ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩÎØ∏ÌÑ∞(?ÔøΩÔøΩ?ÔøΩÔøΩÔøΩ? ÔøΩ? ?ÔøΩÔøΩÔøΩ?)ÔøΩ? vpe ?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩÎØ∏ÔøΩ?? Î©§Î≤Ñ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ.
 
 	// vpe output (disp data)
 	vpe->dst.width = VPE_OUTPUT_W;
 	vpe->dst.height = VPE_OUTPUT_H;
 	describeFormat(VPE_OUTPUT_FORMAT, &vpe->dst);
-	// Ï∂úÎ†• ?ù¥ÎØ∏Ï???óê ????ïú ?åå?ùºÎØ∏ÌÑ∞(?Ç¨?ù¥Ï¶? Î∞? ?è¨Îß?)Î•? vpe Ï∂úÎ†• ?ù¥ÎØ∏Ï?? Î©§Î≤Ñ?óê ?ï†?ãπ?ïú?ã§.
+	// Ï∂úÎ†• ?ÔøΩÔøΩÎØ∏ÔøΩ???ÔøΩÔøΩ ????ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩÎØ∏ÌÑ∞(?ÔøΩÔøΩ?ÔøΩÔøΩÔøΩ? ÔøΩ? ?ÔøΩÔøΩÔøΩ?)ÔøΩ? vpe Ï∂úÎ†• ?ÔøΩÔøΩÎØ∏ÔøΩ?? Î©§Î≤Ñ?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ?ÔøΩÔøΩ.
 
 	vpe->disp = disp_open(disp_argc, disp_argv);
 	if (!vpe->disp)
@@ -2222,13 +1197,13 @@ int main(int argc, char **argv)
 		vpe_close(vpe);
 		return 1;
 	}
-	// ?òÅ?ÉÅ Ï∂úÎ†•?ùÑ ?úÑ?ï¥ vpe?ùò display Î©§Î≤Ñ Íµ¨Ï°∞Ï≤? Ï¥àÍ∏∞?ôî
+	// ?ÔøΩÔøΩ?ÔøΩÔøΩ Ï∂úÎ†•?ÔøΩÔøΩ ?ÔøΩÔøΩ?ÔøΩÔøΩ vpe?ÔøΩÔøΩ display Î©§Î≤Ñ Íµ¨Ï°∞ÔøΩ? Ï¥àÍ∏∞?ÔøΩÔøΩ
 
 	set_z_order(vpe->disp, vpe->disp->overlay_p.id);
 	set_global_alpha(vpe->disp, vpe->disp->overlay_p.id);
 	set_pre_multiplied_alpha(vpe->disp, vpe->disp->overlay_p.id);
 	alloc_overlay_plane(vpe->disp, OVERLAY_DISP_FORCC, 0, 0, OVERLAY_DISP_W, OVERLAY_DISP_H);
-	// z-order, alpha, multiplied-alpha ?Ñ§?†ï (overlayÎ•? ?úÑ?ïú plane Í∞? ?Ñ§?†ï)
+	// z-order, alpha, multiplied-alpha ?ÔøΩÔøΩ?ÔøΩÔøΩ (overlayÔøΩ? ?ÔøΩÔøΩ?ÔøΩÔøΩ plane ÔøΩ? ?ÔøΩÔøΩ?ÔøΩÔøΩ)
 
 	//vpe->deint = 0;
 	vpe->translen = 1;
@@ -2236,9 +1211,9 @@ int main(int argc, char **argv)
 	MSG("Input(Camera) = %d x %d (%.4s)\nOutput(LCD) = %d x %d (%.4s)",
 		vpe->src.width, vpe->src.height, (char *)&vpe->src.fourcc,
 		vpe->dst.width, vpe->dst.height, (char *)&vpe->dst.fourcc);
-	// ?ûÖÏ∂úÎ†• ?ù¥ÎØ∏Ï???ùò ?Å¨Í∏? Î∞? ?è¨Îß∑Ï†ïÎ≥? Ï∂úÎ†•
-	// ?ûÖ?†• ?ù¥ÎØ∏Ï?? : 1280x720, Format = UYUV422
-	// Ï∂úÎ†• ?ù¥ÎØ∏Ï?? : 320x180. Format = BGR24
+	// ?ÔøΩÔøΩÏ∂úÎ†• ?ÔøΩÔøΩÎØ∏ÔøΩ???ÔøΩÔøΩ ?ÔøΩÔøΩÔøΩ? ÔøΩ? ?ÔøΩÔøΩÎß∑Ï†ïÔøΩ? Ï∂úÎ†•
+	// ?ÔøΩÔøΩ?ÔøΩÔøΩ ?ÔøΩÔøΩÎØ∏ÔøΩ?? : 1280x720, Format = UYUV422
+	// Ï∂úÎ†• ?ÔøΩÔøΩÎØ∏ÔøΩ?? : 320x180. Format = BGR24
 
 	if (vpe->src.height < 0 || vpe->src.width < 0 || vpe->src.fourcc < 0 ||
 		vpe->dst.height < 0 || vpe->dst.width < 0 || vpe->dst.fourcc < 0)
@@ -2247,7 +1222,7 @@ int main(int argc, char **argv)
 	}
 
 	v4l2 = v4l2_open(vpe->src.fourcc, vpe->src.width, vpe->src.height);
-	// ?ù¥ÎØ∏Ï?? Ï∫°Ï≥êÎ•? ?úÑ?ï¥ vpe Íµ¨Ï°∞Ï≤¥Î?? Î∞îÌÉï?úºÎ°? v412 Íµ¨Ï°∞Ï≤? Ï¥àÍ∏∞?ôî
+	// ?ÔøΩÔøΩÎØ∏ÔøΩ?? Ï∫°Ï≥êÔøΩ? ?ÔøΩÔøΩ?ÔøΩÔøΩ vpe Íµ¨Ï°∞Ï≤¥ÔøΩ?? Î∞îÌÉï?ÔøΩÔøΩÔøΩ? v412 Íµ¨Ï°∞ÔøΩ? Ï¥àÍ∏∞?ÔøΩÔøΩ
 
 	if (!v4l2)
 	{
@@ -2300,27 +1275,9 @@ int main(int argc, char **argv)
 		closelog();
 		exit(EXIT_FAILURE);
 	}
-	// signal error Í≤?Ï∂?
+	// signal error ÔøΩ?ÔøΩ?
 
 	pause();
 
 	return ret;
-}
-
-void DesireDistance(int SettingSpeed, int SettingDistance, int SettingSteering)
-{
-	ptr_data->controlData.steerVal = SettingSteering;
-
-	if (SettingSpeed < 0)
-		rearLightOnOff(ptr_data->controlData.lightFlag, 1);
-	DesiredDistance(SettingSpeed, SettingDistance, SettingSteering);
-	if (SettingSpeed < 0)
-		rearLightOnOff(ptr_data->controlData.lightFlag, 0);
-}
-
-void SteeringServo_Write(signed short angle)
-{
-	ptr_data->controlData.steerVal = angle; //?ò§Î≤ÑÎ†à?ù¥ ?ó∞?èô
-
-	SteeringServo_Write_uart(angle);
 }

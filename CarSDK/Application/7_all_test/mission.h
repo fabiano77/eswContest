@@ -7,6 +7,8 @@
 #define VPE_OUTPUT_IMG_SIZE (VPE_OUTPUT_W * VPE_OUTPUT_H * 3)
 #endif
 
+#define BASIC_SPEED 55      // ????ес???? ?? ??????????, autoSteer??? ??? ??????.
+#define BUZZER_PULSE 100000 // ?? ????? ????
 struct thr_data
 {
     struct display *disp;
@@ -25,20 +27,24 @@ struct thr_data
     pthread_t threads[4];
 };
 
-void startFunc(void *arg);
+void startFunc(struct thr_data *arg);
 
-void flyoverFunc(void *arg);
+void flyoverFunc(struct thr_data *arg);
 
-void priorityFunc(void *arg);
+void priorityFunc(struct thr_data *arg);
 
-void parkingFunc(void *arg);
+void parkingFunc(struct thr_data *arg);
 
-void roundaboutFunc(void *arg);
+void roundaboutFunc(struct thr_data *arg);
 
-void tunnelFunc(void *arg);
+void tunnelFunc(struct thr_data *arg);
 
-void overtakeFunc(void *arg);
+void overtakeFunc(struct thr_data *arg);
 
-void signalLightFunc(void *arg);
+void signalLightFunc(struct thr_data *arg);
 
-void finishFunc(void *arg);
+void finishFunc(struct thr_data *arg);
+
+void DesireDistance(int SettingSpeed, int SettingDistance, int SettingSteering);
+
+void SteeringServo_Write(signed short angle);

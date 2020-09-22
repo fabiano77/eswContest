@@ -916,7 +916,8 @@ void *mission_thread(void *arg)
 	struct thr_data *data = (struct thr_data *)arg;
 	struct timeval time;
 	time.tv_sec = 0;
-
+	bool roundaboutDone = false;
+	bool overtakeDone = false;
 	enum MissionState start = NONE;
 	enum MissionState flyover = NONE;
 	enum MissionState priority = NONE;
@@ -991,16 +992,21 @@ void *mission_thread(void *arg)
 
 		if (roundabout && roundabout != DONE)
 		{
+
 			//data->imgData.bcheckFrontWhite = true;	// ?ï¿½ï¿½ï¿?? ?ï¿½ï¿½ï¿???ï¿½ï¿½ ?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½ï¿?? ?ï¿½ï¿½ï¿?? ON
-			roundaboutFunc(data);
-			roundabout = DONE;
+			roundaboutDone = roundaboutFunc(data);
+			if (roundaboutDone == true)
+				roundabout = DONE;
 		}
 
 		if (overtake && overtake != DONE)
 		{
-			overtakeFunc(data);
-			overtake = DONE;
-			signalLight = READY;
+			overtakeDone = overtakeFunc(data);
+			if (overtakeDone == true)
+			{
+				overtake = DONE;
+				signalLight = READY;
+			}
 		}
 
 		if (signalLight && signalLight != DONE)

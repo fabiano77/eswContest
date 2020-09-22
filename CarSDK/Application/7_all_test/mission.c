@@ -555,7 +555,7 @@ void parkingFunc(struct thr_data *arg)
     }
 }
 
-void roundaboutFunc(struct thr_data *arg)
+bool roundaboutFunc(struct thr_data *arg)
 {
     struct thr_data *data = (struct thr_data *)arg;
 
@@ -678,7 +678,10 @@ void roundaboutFunc(struct thr_data *arg)
         data->imgData.bprintString = false;
         data->imgData.bcheckFrontWhite = false;
         data->missionData.finish_distance = -1;
+        return true;
     }
+    else
+        return false;
 }
 
 void tunnelFunc(struct thr_data *arg)
@@ -731,7 +734,7 @@ void tunnelFunc(struct thr_data *arg)
     }
 }
 
-void overtakeFunc(struct thr_data *arg)
+bool overtakeFunc(struct thr_data *arg)
 {
     struct thr_data *data = (struct thr_data *)arg;
 
@@ -931,6 +934,7 @@ void overtakeFunc(struct thr_data *arg)
                     DesireSpeed_Write(BASIC_SPEED);
                     state = DONE_O;
                     data->missionData.overtakingFlag = false;
+                    return true;
                     break;
 
                 default:
@@ -943,6 +947,8 @@ void overtakeFunc(struct thr_data *arg)
             data->imgData.bprintString = false;
         }
     }
+    else
+        return false;
 }
 
 void signalLightFunc(struct thr_data *arg)

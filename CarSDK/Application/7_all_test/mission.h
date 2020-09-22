@@ -35,11 +35,11 @@ void priorityFunc(struct thr_data *arg);
 
 void parkingFunc(struct thr_data *arg);
 
-void roundaboutFunc(struct thr_data *arg);
+bool roundaboutFunc(struct thr_data *arg);
 
 void tunnelFunc(struct thr_data *arg);
 
-void overtakeFunc(struct thr_data *arg);
+bool overtakeFunc(struct thr_data *arg);
 
 void signalLightFunc(struct thr_data *arg);
 

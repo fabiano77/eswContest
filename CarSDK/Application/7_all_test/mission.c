@@ -20,7 +20,7 @@
 #include "imgProcess.h"
 #include "control_mission.h"
 
-extern struct thr_data *ptr_data;
+struct thr_data *ptr_data;
 // ���� structure??? control_mission.h ??? ?????????. 9/8(???)
 void startFunc(struct thr_data *arg)
 {

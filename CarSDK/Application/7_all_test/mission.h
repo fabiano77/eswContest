@@ -31,17 +31,17 @@ void startFunc(struct thr_data *arg);
 
 void flyoverFunc(struct thr_data *arg);
 
-void priorityFunc(struct thr_data *arg);
+bool priorityFunc(struct thr_data *arg);
 
-void parkingFunc(struct thr_data *arg);
+bool parkingFunc(struct thr_data *arg);
 
 bool roundaboutFunc(struct thr_data *arg);
 
-void tunnelFunc(struct thr_data *arg);
+bool tunnelFunc(struct thr_data *arg);
 
 bool overtakeFunc(struct thr_data *arg);
 
-void signalLightFunc(struct thr_data *arg);
+bool signalLightFunc(struct thr_data *arg);
 
 void finishFunc(struct thr_data *arg);
 

@@ -918,6 +918,10 @@ void *mission_thread(void *arg)
 	time.tv_sec = 0;
 	bool roundaboutDone = false;
 	bool overtakeDone = false;
+	bool signalLightDone = false;
+	bool tunnelDone = false;
+	bool parkingDone = false;
+	bool priorityDone = false;
 	enum MissionState start = NONE;
 	enum MissionState flyover = NONE;
 	enum MissionState priority = NONE;
@@ -963,31 +967,35 @@ void *mission_thread(void *arg)
 
 		if (priority && priority != DONE)
 		{
-			priorityFunc(data);
-			priority = DONE;
+			priorityDone = priorityFunc(data);
+			if (priorityDone == true)
+				priority = DONE;
 		}
 
 		if (parking && parking != DONE)
 		{
-			parkingFunc(data);
-			if (parking == REMAIN)
+			parkingDone = parkingFunc(data);
+			if (parking == REMAIN && parkingDone == true)
+			{
 				parking = DONE;
-			else if (parking == READY)
-				parking = REMAIN;
-			if (parking == REMAIN)
-			{
-				printf("First Parking is Done!\n");
-			}
-			if (parking == DONE)
-			{
 				printf("Second Parking is Done!\n");
+				parkingDone = false;
+			}
+			else if (parking == READY && parkingDone == true)
+			{
+				parking = REMAIN;
+				printf("First Parking is Done!\n");
+				parkingDone = false;
 			}
 		}
 
 		if (tunnel && tunnel != DONE)
 		{
-			tunnelFunc(data);
-			tunnel = DONE;
+			tunnelDone = tunnelFunc(data);
+			if (tunnelDone == true)
+			{
+				tunnel = DONE;
+			}
 		}
 
 		if (roundabout && roundabout != DONE)
@@ -1011,13 +1019,15 @@ void *mission_thread(void *arg)
 
 		if (signalLight && signalLight != DONE)
 		{
-			signalLightFunc(data);
+			signalLightDone = signalLightFunc(data);
+			if (signalLightDone == true)
+			{
+				signalLight = DONE;
+				finish = READY;
 
-			signalLight = DONE;
-			finish = READY;
-
-			data->missionData.ms[7] = signalLight;
-			data->missionData.ms[8] = finish;
+				data->missionData.ms[7] = signalLight;
+				data->missionData.ms[8] = finish;
+			}
 		}
 
 		if (finish && finish != DONE)
@@ -1095,7 +1105,6 @@ int main(int argc, char **argv)
 	struct v4l2 *v4l2;
 	struct vpe *vpe;
 	struct thr_data tdata;
-
 	ptr_data = &tdata;
 	int disp_argc = 3;
 	char *disp_argv[] = {"dummy", "-s", "4:480x272", "\0"}; // ì¶”í›„ ï¿??ï¿?? ?ï¿½ï¿½ï¿?? ?ï¿½ï¿½?ï¿½ï¿½ ?ï¿½ï¿½ ì²˜ë¦¬..

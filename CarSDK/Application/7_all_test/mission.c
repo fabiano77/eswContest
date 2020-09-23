@@ -88,7 +88,7 @@ void flyoverFunc(struct thr_data *arg)
     data->imgData.bprintString = false;
 }
 
-void priorityFunc(struct thr_data *arg)
+bool priorityFunc(struct thr_data *arg)
 {
     struct thr_data *data = (struct thr_data *)arg;
     data->imgData.bcheckPriority = true;
@@ -110,10 +110,13 @@ void priorityFunc(struct thr_data *arg)
         Winker_Write(ALL_OFF);
         DesireSpeed_Write(BASIC_SPEED);
         data->imgData.bskip = false;
+        return true;
     }
+    else
+        return false;
 }
 
-void parkingFunc(struct thr_data *arg)
+bool parkingFunc(struct thr_data *arg)
 {
     struct thr_data *data = (struct thr_data *)arg;
 
@@ -377,6 +380,7 @@ void parkingFunc(struct thr_data *arg)
                             default:
                                 break;
                             }
+
                             usleep(5000);
                         }
                     }
@@ -551,7 +555,10 @@ void parkingFunc(struct thr_data *arg)
             }
             data->imgData.bmission = false;
             data->imgData.bprintString = false;
+            return true;
         }
+        else
+            return false;
     }
 }
 
@@ -684,7 +691,7 @@ bool roundaboutFunc(struct thr_data *arg)
         return false;
 }
 
-void tunnelFunc(struct thr_data *arg)
+bool tunnelFunc(struct thr_data *arg)
 {
     struct thr_data *data = (struct thr_data *)arg;
 
@@ -731,7 +738,10 @@ void tunnelFunc(struct thr_data *arg)
         data->imgData.bmission = false;
         data->imgData.bprintString = false;
         data->missionData.btunnel = false;
+        return true;
     }
+    else
+        return false;
 }
 
 bool overtakeFunc(struct thr_data *arg)
@@ -946,12 +956,16 @@ bool overtakeFunc(struct thr_data *arg)
             data->imgData.bmission = false;
             data->imgData.bprintString = false;
         }
+        else
+            return false;
     }
     else
+    {
         return false;
+    }
 }
 
-void signalLightFunc(struct thr_data *arg)
+bool signalLightFunc(struct thr_data *arg)
 {
     struct thr_data *data = (struct thr_data *)arg;
 
@@ -1019,7 +1033,10 @@ void signalLightFunc(struct thr_data *arg)
 
         data->imgData.bmission = false;
         data->imgData.bprintString = false;
+        return true;
     }
+    else
+        return false;
 }
 
 void finishFunc(struct thr_data *arg)

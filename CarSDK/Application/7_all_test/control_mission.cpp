@@ -213,14 +213,14 @@ extern "C"
 		{
 			//cout << "[]read_encoder" << read_encoder << endl;
 			read_encoder = Encoder_Read();
-			usleep(50000);
+			usleep(20000);
 			EncoderCounter_Write(init_encoder);
-			usleep(50000);
-			if (error_flag++ > 10)
+			usleep(20000);
+			if (error_flag++ > 20)
 				printf("DesireDistance(): encoder ERROR!\n");
 		}
 		SteeringServo_Write_uart(SettingSteering);
-		usleep(80000);
+		usleep(70000);
 		DesireSpeed_Write(SettingSpeed);
 		while (1)
 		{

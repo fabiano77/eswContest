@@ -301,7 +301,7 @@ extern "C" {
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
-		return priorityStop(srcRGB, dstRGB, 270, 0);
+		return priorityStop(srcRGB, dstRGB, 130, 0);
 	}
 
 	int calculDistance_FinishLine(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
@@ -792,7 +792,7 @@ void settingStatic(int w, int h)
 {
 	string filename("video.avi");
 	//outputVideo.open(filename, VideoWriter::fourcc('D', 'I', 'V', 'X'), 10, Size(640, 360), true);	//Windows
-	//outputVideo.open(filename, CV_FOURCC('D', 'I', 'V', 'X'), 10, Size(640, 360), true);				//Linux
+	outputVideo.open(filename, CV_FOURCC('D', 'I', 'V', 'X'), 10, Size(640, 360), true);				//Linux
 
 
 	color[0] = Scalar(255, 255, 0);

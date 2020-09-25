@@ -79,7 +79,7 @@ extern "C"
 
 	enum CameraVerticalState
 	{
-		CAMERA_UP,	//��ֹ� �ν��� ���� �ø�����
+		CAMERA_UP,	//��ֹ�? �ν��� ���� �ø�����
 		CAMERA_DOWN //���� ���� -->�� �κ� ���� �ʿ� MS
 	};
 
@@ -87,7 +87,7 @@ extern "C"
 	{
 		LEFT,
 		RIGHT,
-		STOP //�տ� ��ֹ��� �ִٸ� ��ž(overtaking�� on�� ����)
+		STOP //�տ� ��ֹ���? �ִٸ� ��ž(overtaking�� on�� ����)
 	};
 
 	enum SignalLightState
@@ -103,7 +103,7 @@ extern "C"
 	{
 		bool frontRight;
 		bool rearRight;
-		bool bparking;		 // ���� �� �Ÿ� ���� ����� ���� ����
+		bool bparking;		 // ���� �� �Ÿ� ���� �����? ���� ����
 		bool verticalFlag;	 // ���� ���� Ȱ��ȭ�� ��Ÿ���� �÷���
 		bool horizontalFlag; // ���� ���� Ȱ��ȭ�� ��Ÿ���� �÷���
 	};
@@ -119,8 +119,8 @@ extern "C"
 
 	struct Finish
 	{
-		bool checkFront; //���� ���� ����� �ľ�
-		int distEndLine; //��¼������� �Ÿ�
+		bool checkFront; //���� ���� �����? �ľ�
+		int distEndLine; //��¼�������? �Ÿ�
 	};
 
 	struct SignalLight
@@ -143,9 +143,9 @@ extern "C"
 		int frame_priority;
 		int finish_distance;
 
-		struct Parking parkingData;			// ������ �ʿ��� �÷��׸� ��� ����ü
-		struct Overtaking overtakingData;	// �߿��� �ʿ��� �÷��� ��� ����ü
-		struct SignalLight signalLightData; // ��ȣ� �ʿ��� ������ ��� ����ü
+		struct Parking parkingData;			// ������ �ʿ��� �÷��׸� ���? ����ü
+		struct Overtaking overtakingData;	// �߿��� �ʿ��� �÷��� ���? ����ü
+		struct SignalLight signalLightData; // ��ȣ� �ʿ��� ������ ���? ����ü
 		struct Finish finishData;
 		enum MissionState ms[9]; //
 	};
@@ -170,10 +170,10 @@ extern "C"
 		bool bcalibration;	// Ķ���극�̼�
 		bool bdebug;		// ����׸�� ON/OFF
 		bool btopview;		// ž�� ON/OFF
-		bool bmission;		// �̼����� ON/OFF (�����ν� ������� �ʰԵ�)
+		bool bmission;		// �̼����� ON/OFF (�����ν� �������? �ʰԵ�)
 		bool bauto;			// �ڵ� ���� ON/OFF
 		bool bspeedControl; // �ڵ� ������ �ӵ����� ON/OFF
-		bool bwhiteLine;	// �ڵ� ������ ��� �� Ž�� ON/OFF
+		bool bwhiteLine;	// �ڵ� ������ ���? �� Ž�� ON/OFF
 		bool bprintString;	// �������̿� ���ڿ� ǥ�� ON/OFF
 		bool bprintMission; // �������̿� �̼����� ǥ�� ON/OFF
 		bool bprintSensor;	// �������̿� ������ ǥ�� ON/OFF
@@ -184,8 +184,8 @@ extern "C"
 		bool bcheckSignalLight; // ��ȣ�� Ž�� ON/OFF
 		bool bcheckFinishLine;	// �ǴϽö��� Ž�� ON/OFF
 		char missionString[30]; // �������̿� ǥ���� ���ڿ�
-		int topMode;			// ž�� ��� (0, 1, 2)
-		int debugMode;			// ����� ���(0~ 7)
+		int topMode;			// ž�� ���? (0, 1, 2)
+		int debugMode;			// �����? ���?(0~ 7)
 	};
 
 	int DistanceSensor_cm(int channel);
@@ -203,13 +203,13 @@ extern "C"
 	int STOP_WhiteLine(int Lineflag);
 
 	void SteeringServo_Write_uart(signed short angle);
-	//uart통신을하는 다른 센서read()함수와 간섭을 일으키지 않도록 보완.
+	//uart?��?��?��?��?�� ?���? ?��?��read()?��?��??? 간섭?�� ?��?��?���? ?��?���? 보완.
 
 	void DesireSpeed_Write_uart(signed short speed);
-	//uart통신을하는 다른 센서read()함수와 간섭을 일으키지 않도록 보완.
+	//uart?��?��?��?��?�� ?���? ?��?��read()?��?��??? 간섭?�� ?��?��?���? ?��?���? 보완.
 
 	void DesiredDistance(int SettingSpeed, int SettingDistance, int SettingSteering);
-	// Postcondition : SettingSpeed�� �ӵ�(����� ����, ������ ����)�� SettingDistance�� step ��ŭ �����δ�.
+	// Postcondition : SettingSpeed�� �ӵ�(�����? ����, ������ ����)�� SettingDistance�� step ��ŭ �����δ�.
 
 	void onlyDistance(int SettingSpeed, int SettingDistance);
 	//ds
@@ -218,16 +218,16 @@ extern "C"
 	//
 
 	int Tunnel_isEnd(const int Distance1, const int Distance2, const int Distance3, const int Distance4);
-	// Return : ��, �� ������ ������� �������� ������ 1�� ��ȯ�Ѵ�.
+	// Return : ��, �� ������ �������? �������� ������ 1�� ��ȯ�Ѵ�.
 
 	int Tunnel_SteerVal(const int Distance1, const int Distance2);
 	// Return : �� �� ������ �Ÿ����� �̿��Ͽ� �˸��� ���Ⱒ�� ��ȯ�Ѵ�.
 
 	void frontLightOnOff(unsigned short lightFlag, int on);
-	// Postcondition : ���ڰ� 1�ϰ�� ������ on, 0�ϰ�� off
+	// Postcondition : ���ڰ� 1�ϰ��? ������ on, 0�ϰ��? off
 
 	void rearLightOnOff(unsigned short lightFlag, int on);
-	// Postcondition : ���ڰ� 1�ϰ�� �Ĺ̵� on, 0�ϰ�� off
+	// Postcondition : ���ڰ� 1�ϰ��? �Ĺ̵� on, 0�ϰ��? off
 
 	int auto_speedMapping(int steerVal, const int basicSpeed);
 	// Return :autoSteer �� ������ ���Ⱚ�� ���� �ӵ��� ��ȯ���ش�.

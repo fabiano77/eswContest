@@ -277,7 +277,7 @@ extern "C" {
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
-		return checkRedSignal(srcRGB, dstRGB, 1.7, 1);
+		return checkRedSignal(srcRGB, dstRGB, 2.7, 1);
 	}
 
 	int checkYellow(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
@@ -285,7 +285,7 @@ extern "C" {
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
-		return checkYellowSignal(srcRGB, dstRGB, 1.7, 1);
+		return checkYellowSignal(srcRGB, dstRGB, 2.7, 1);
 	}
 
 	int checkGreen(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
@@ -293,7 +293,7 @@ extern "C" {
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
-		return checkGreenSignal(srcRGB, dstRGB, 1.7, 1);
+		return checkGreenSignal(srcRGB, dstRGB, 2.7, 1);
 	}
 
 	bool isPriorityStop(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
@@ -873,7 +873,7 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 	cannyEdge(src_yel, src_can);
 
 	int lineType;	// 0 == 라인이 없다, 1 == 라인이 한개, 2 == 라인이 두개.
-	Vec8i l = hough_ransacLine(src_can, src, w, h, 15, false, lineType, 0.1, 30.0);
+	Vec8i l = hough_ransacLine(src_can, src, w, h, 15, true, lineType, 0.22, 30.0);
 	Vec4i firstLine(l[0], l[1], l[2], l[3]);
 	Vec4i secondLine(l[4], l[5], l[6], l[7]);
 
@@ -988,18 +988,19 @@ void lineFiltering(Mat& src, Mat& dst, int mode)
 	int h2(46);
 	Mat hsv;
 	Mat binMat;
+	cvtColor(src, hsv, COLOR_BGR2HSV);					//HSV색영역
+	
 	if (mode == 0 || mode == 1) //노란차선 인식 모드
 	{
 		Scalar lower_yellow(h1, s, v);
 		Scalar upper_yellow(h2, 255, 255);
 
-		cvtColor(src, hsv, COLOR_BGR2HSV);					//HSV색영역
 		inRange(hsv, lower_yellow, upper_yellow, binMat);	//2진 Mat객체 binMat생성
 	}
 
 	if (mode == 1 || mode == 2)//흰색차선 인식 모드
 	{
-		Scalar lower_white(75, 30, 200); // bgr white
+		Scalar lower_white(75, 20, 200); // bgr white
 		Scalar upper_white(255, 255, 255);
 		Mat whiteBinMat;
 

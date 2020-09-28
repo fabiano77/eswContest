@@ -682,7 +682,7 @@ extern "C" {
 		gettimeofday(&timestamp, NULL);
 		today = localtime(&timestamp.tv_sec);
 
-		string name(toString(today->tm_hour) + toString(today->tm_min) + toString(today->tm_sec) + ".jpg");
+		string name(toString(today->tm_hour) +"_" + toString(today->tm_min) +"_"+ toString(today->tm_sec) + ".jpg");
 
 		fileOutimage(srcRGB, name);
 	}
@@ -783,14 +783,22 @@ int S = 50;
 int V = 75;
 
 VideoWriter outputVideo;
-
+string file_name;
 static void on_trackbar(int, void*)
 {
 }
 
 void settingStatic(int w, int h)
 {
-	string filename("video.avi");
+
+	struct timeval timestamp;
+	struct tm* today;
+	gettimeofday(&timestamp, NULL);
+	today = localtime(&timestamp.tv_sec);
+
+	string filename(toString(today->tm_hour) +"_" + toString(today->tm_min) +"_"+ toString(today->tm_sec) + ".avi");
+	file_name = filename;
+	//string filename("video.avi");
 	//outputVideo.open(filename, VideoWriter::fourcc('D', 'I', 'V', 'X'), 10, Size(640, 360), true);	//Windows
 	outputVideo.open(filename, CV_FOURCC('D', 'I', 'V', 'X'), 10, Size(640, 360), true);				//Linux
 	cout << "\t outputVideo status : " ;
@@ -802,6 +810,7 @@ void settingStatic(int w, int h)
 	{
 		cout << "is open" << endl;
 	}
+	cout << "filename = " << filename << endl;
 	
 
 
@@ -1874,6 +1883,9 @@ void closeVideoWrite()
 {
 	outputVideo.~VideoWriter();
 	cout << "videoWrite() finish!" << endl;
+	cout << "filename = " << file_name << endl;
+	cout << "filename = " << file_name << endl;
+	cout << "filename = " << file_name << endl;
 }
 
 double calculDistance_toFinish(Mat& src, Mat& dst, const int distance_top, const int distance_bottom)

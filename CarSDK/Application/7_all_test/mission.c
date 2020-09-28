@@ -93,7 +93,7 @@ bool priorityFunc(struct thr_data *arg)
     struct thr_data *data = (struct thr_data *)arg;
     data->imgData.bcheckPriority = true;
 
-    if (data->missionData.frame_priority >= 2) //??????????????????? 2????????? ????.
+    if (data->missionData.frame_priority >= 4) //??????????????????? 2????????? ????.
     {
         data->imgData.bskip = true;
         data->imgData.bauto = false;
@@ -608,13 +608,13 @@ bool roundaboutFunc(struct thr_data *arg)
 
             case ROUND_GO_1:
                 //DesireDistance(speed, 600, 1500, &(data->controlData)); //??? ?????? �޾�???�鼭 ??????�Ÿ� ????? ?????? ��???.
-                onlyDistance(speed, 400);
+                onlyDistance(speed, 550);
                 sprintf(data->imgData.missionString, "ROUND_GO_1-2");
                 printf("ROUND_GO_1_2\n");
                 usleep(100000);
 
                 data->imgData.bmission = false;
-                onlyDistance(speed, 1250);
+                onlyDistance(speed, 1100);
 
                 sprintf(data->imgData.missionString, "ROUND_STOP");
                 printf("ROUND_STOP\n");

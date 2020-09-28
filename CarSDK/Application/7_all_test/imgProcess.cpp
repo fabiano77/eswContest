@@ -363,7 +363,7 @@ extern "C" {
 		}
 		else if (mode == 7)
 		{
-			priorityStop(srcRGB, dstRGB, 250, 1);
+			priorityStop(srcRGB, dstRGB, 130, 1);
 		}
 		else if (mode == 8)
 		{

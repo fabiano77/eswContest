@@ -793,6 +793,16 @@ void settingStatic(int w, int h)
 	string filename("video.avi");
 	//outputVideo.open(filename, VideoWriter::fourcc('D', 'I', 'V', 'X'), 10, Size(640, 360), true);	//Windows
 	outputVideo.open(filename, CV_FOURCC('D', 'I', 'V', 'X'), 10, Size(640, 360), true);				//Linux
+	cout << "\t outputVideo status : " ;
+	if(!outputVideo.isOpened())
+	{
+		cout << " outputVideo is failed!." << endl;
+	}
+	else
+	{
+		cout << "is open" << endl;
+	}
+	
 
 
 	color[0] = Scalar(255, 255, 0);

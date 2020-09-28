@@ -96,6 +96,7 @@ bool priorityFunc(struct thr_data *arg)
     if (data->missionData.frame_priority >= 2) //??????????????????? 2????????? ????.
     {
         data->imgData.bskip = true;
+        data->imgData.bauto = false;
         DesireSpeed_Write(0);
         Winker_Write(ALL_ON);
         while (data->imgData.bcheckPriority)
@@ -109,6 +110,7 @@ bool priorityFunc(struct thr_data *arg)
         usleep(1000000); //1?? ?????
         Winker_Write(ALL_OFF);
         DesireSpeed_Write(BASIC_SPEED);
+        data->imgData.bauto = true;
         data->imgData.bskip = false;
         return true;
     }
@@ -405,7 +407,7 @@ bool parkingFunc(struct thr_data *arg)
 
                                 while (1)
                                 {
-                                    if (DistanceSensor_cm(4) <= 10)
+                                    if (DistanceSensor_cm(4) <= 6)
                                     {
                                         DesireSpeed_Write(0);
                                         break;
@@ -485,7 +487,7 @@ bool parkingFunc(struct thr_data *arg)
                             case SECOND_FORWARD:
                                 sprintf(data->imgData.missionString, "SECOND_FORWARD");
 
-                                if (DistanceSensor_cm(4) <= 6)
+                                if (DistanceSensor_cm(4) <= 5)
                                 {
                                     step_h = ESCAPE;
                                     break;
@@ -494,7 +496,7 @@ bool parkingFunc(struct thr_data *arg)
 
                                 while (1)
                                 {
-                                    if (DistanceSensor_cm(4) <= 7)
+                                    if (DistanceSensor_cm(4) <= 5)
                                     {
                                         DesireSpeed_Write(0);
                                         usleep(5000);
@@ -623,7 +625,7 @@ bool roundaboutFunc(struct thr_data *arg)
             case ROUND_STOP:
                 if ((DistanceSensor_cm(4) <= 25) /*|| (DistanceSensor_cm(5) <= 6)*/)
                 {
-                    speed = 80;
+                    speed = BASIC_SPEED;
                     DesireSpeed_Write(speed);
                     sprintf(data->imgData.missionString, "ROUND_GO_2");
                     printf("ROUND_GO_2\n");
@@ -636,7 +638,7 @@ bool roundaboutFunc(struct thr_data *arg)
                 if ((DistanceSensor_cm(4) <= 8) /* || (DistanceSensor_cm(5) <= 6)*/)
                 {
                     printf("speed up \n");
-                    if (speed < 100)
+                    if (speed < 70)
                         speed += 5;
                 }
                 else if ((DistanceSensor_cm(1) <= 8) /* || (DistanceSensor_cm(6) <= 6)*/)

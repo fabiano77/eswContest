@@ -1037,6 +1037,12 @@ void *mission_thread(void *arg)
 			finish = DONE;
 		}
 
+		if (DistanceSensor_cm(1) <= 5 && DistanceSensor_cm(4) <= 5)
+		{
+			data->imgData.bvideoSave = true;
+			buzzer(1, 0, 300000);
+		}
+
 		if (data->missionData.changeMissionState)
 		{
 			start = data->missionData.ms[0];

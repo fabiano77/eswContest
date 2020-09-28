@@ -955,9 +955,9 @@ void *mission_thread(void *arg)
 			data->missionData.ms[0] = start;
 			startFunc(data);
 			start = DONE;
-			flyover = READY;
+			//flyover = READY;
 			data->missionData.ms[0] = start;
-			data->missionData.ms[1] = flyover;
+			//data->missionData.ms[1] = flyover;
 		}
 
 		if (flyover && flyover != DONE)
@@ -1004,6 +1004,7 @@ void *mission_thread(void *arg)
 
 		if (overtake && overtake != DONE)
 		{
+			data->imgData.bwhiteLine = true;
 			if (overtakeFunc(data))
 			{
 				overtake = DONE;
@@ -1074,7 +1075,7 @@ void *mission_thread(void *arg)
 			data->missionData.ms[8] = finish;
 		}
 
-		usleep(70000); //50ms -> 70ms
+		usleep(80000); //50ms -> 70ms
 	}
 }
 

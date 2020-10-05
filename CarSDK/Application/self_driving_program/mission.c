@@ -125,7 +125,7 @@ bool parkingFunc(struct thr_data *arg)
 
     if (1) //(data->controlData.steerVal <= 1600 && data->controlData.steerVal >= 1400) || parking == REMAIN)
     {
-        if (DistanceSensor_cm(2) <= 28) //ó�� ���� ��???????????? ���?
+        if (DistanceSensor_cm(2) <= 28) //ó�� ���� ��???????????? ���?
         {
             struct timeval st_p, et_p;
             gettimeofday(&st_p, NULL);
@@ -168,7 +168,7 @@ bool parkingFunc(struct thr_data *arg)
                     */
 
                     /*
-                    ?????? ????? ??????????? ��???????? ����?????? ???���?????? ��ġ
+                    ?????? ????? ??????????? ��???????? ����?????? ???���?????? ��ġ
                     */
                     if (data->missionData.frame_priority)
                     {
@@ -186,7 +186,7 @@ bool parkingFunc(struct thr_data *arg)
                             wrong_detection = 0;
                             break;
                         }
-                        // ���� ���� ����??? ????????? ���?, ???���� ���� �б� ����????? ??????????? ?????.
+                        // ���� ���� ����??? ????????? ���?, ???���� ���� �б� ����????? ??????????? ?????.
                     }
                     if (data->missionData.parkingData.frontRight == true)
                     {
@@ -357,7 +357,8 @@ bool parkingFunc(struct thr_data *arg)
                                 //usleep(1000000);
                                 step_v = SECOND_FORWARD_V;
                                 Winker_Write(ALL_ON);
-                                buzzer(1, 0, 300000);
+                                buzzer(2, 500000, 500000);
+                                
                                 Winker_Write(ALL_OFF);
                                 break;
 
@@ -390,7 +391,8 @@ bool parkingFunc(struct thr_data *arg)
                     }
                     else if (data->missionData.parkingData.verticalFlag == false && data->missionData.parkingData.horizontalFlag)
                     {
-                        DesireDistance(60, 230, 1500);
+                        //DesireDistance(60, 230, 1500);
+                        DesireDistance(60, 270, 1500);
                         // ���� ?? ?????? ????
                         while (data->missionData.parkingData.horizontalFlag)
                         {
@@ -476,7 +478,7 @@ bool parkingFunc(struct thr_data *arg)
                                     //usleep(1000000);
                                     step_h = SECOND_FORWARD;
                                     Winker_Write(ALL_ON);
-                                    buzzer(1, 0, 300000);
+                                    buzzer(2, 500000, 500000);
                                     Winker_Write(ALL_OFF);
                                 }
                                 break;
@@ -793,7 +795,7 @@ bool overtakeFunc(struct thr_data *arg)
                         CameraYServoControl_Write(data->controlData.cameraY);
                         data->missionData.overtakingData.updownCamera = CAMERA_UP;
                     }
-                    /* ???????? �¿� ?????? ?? ���??????? ����????? ???����?????? �ڵ�*/
+                    /* ???????? �¿� ?????? ?? ���??????? ����????? ???����?????? �ڵ�*/
                     while (data->missionData.overtakingData.headingDirection == STOP)
                     {
                         //data->missionData.loopTime = timeCheck(&time);
@@ -816,7 +818,7 @@ bool overtakeFunc(struct thr_data *arg)
                         data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
                     {
                         sprintf(data->imgData.missionString, "Right to go");
-                        /*���?*/
+                        /*���?*/
                         Winker_Write(RIGHT_ON);
                         //DesireDistance(50, thresDistance, 1100);
                         DesireDistance(50, thresDistance, 1050);
@@ -848,7 +850,7 @@ bool overtakeFunc(struct thr_data *arg)
                     {
 
                         sprintf(data->imgData.missionString, "Left to go");
-                        /*���?*/
+                        /*���?*/
                         Winker_Write(LEFT_ON);
                         //DesireDistance(50, thresDistance, 1900);
                         DesireDistance(50, thresDistance, 1950);
@@ -876,7 +878,7 @@ bool overtakeFunc(struct thr_data *arg)
                         }
                     }
                     else
-                    { /*STOP??? ??????????? ���? ����*/
+                    { /*STOP??? ??????????? ���? ����*/
                     }
 
                     break;
@@ -1020,7 +1022,7 @@ bool signalLightFunc(struct thr_data *arg)
         printf("signalLight\n");
 
         while (data->imgData.bcheckSignalLight)
-            usleep(200000); //??????ó��?????? ????????? ����??? ?????? ??? ��??? ��ٸ���?.
+            usleep(200000); //??????ó��?????? ????????? ����??? ?????? ??? ��??? ��ٸ���?.
 
         data->imgData.bprintTire = true;
         sprintf(data->imgData.missionString, "Distance control");
@@ -1094,7 +1096,7 @@ void finishFunc(struct thr_data *arg)
     // 	while (data->missionData.finishData.checkFront == true || data->missionData.finishData.distEndLine == -1000)
     // 	{
     // 		usleep(500000);
-    // 		/*checkFront ?? false?? ?????? ���� ???�ų� distEndline���� ���ǹ���?? ??????���? ����*/
+    // 		/*checkFront ?? false?? ?????? ���� ???�ų� distEndline���� ���ǹ���?? ??????���? ����*/
     // 		if (data->missionData.finishData.checkFront == false || data->missionData.finishData.distEndLine > 320)
     // 		{
     // 			sprintf(data->imgData.missionString, "End Check Front");

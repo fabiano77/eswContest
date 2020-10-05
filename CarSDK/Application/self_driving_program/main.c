@@ -922,12 +922,12 @@ void *mission_thread(void *arg)
 	// bool tunnelDone = false;
 	// bool parkingDone = false;
 	// bool priorityDone = false;
-	enum MissionState start = DONE;
+	enum MissionState start = READY;
 	enum MissionState flyover = DONE;
 	enum MissionState priority = DONE;
-	enum MissionState parking = DONE;
+	enum MissionState parking = NONE;
 	enum MissionState roundabout = DONE;
-	enum MissionState tunnel = NONE;
+	enum MissionState tunnel = READY;
 	enum MissionState overtake = NONE;
 	enum MissionState signalLight = NONE;
 	enum MissionState finish = NONE;
@@ -992,7 +992,11 @@ void *mission_thread(void *arg)
 		if (tunnel && tunnel != DONE)
 		{
 			if (tunnelFunc(data))
+			{
 				tunnel = DONE;
+				parking = READY;
+			}
+
 		}
 
 		if (roundabout && roundabout != DONE)
@@ -1073,6 +1077,16 @@ void *mission_thread(void *arg)
 			data->missionData.ms[6] = overtake;
 			data->missionData.ms[7] = signalLight;
 			data->missionData.ms[8] = finish;
+		}
+
+		if(data->imgData.bvideoSave == false && data->imgData.bvideoSave == true)
+		{
+		if(DistanceSensor_cm(1) < 15 && DistanceSensor_cm(4) < 15)
+		{
+			buzzer(1, 0, 1000000);
+			data->imgData.bvideoRecord = false;
+			data->imgData.bvideoSave = true;
+		}
 		}
 
 		usleep(80000); //50ms -> 70ms

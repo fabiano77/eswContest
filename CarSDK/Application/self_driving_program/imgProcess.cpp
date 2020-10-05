@@ -420,11 +420,8 @@ extern "C"
 		regionOfInterest(srcRGB, img_roi, roi_points);
 		lineFiltering(img_roi, img_white, color_convert);
 
-		/* Sharpen Edge for detecting */
-		int ksize = 1;
-		Laplacian(img_white, img_sharpen, CV_8U, ksize);
 		/*Canny Image*/
-		cannyEdge(img_sharpen, img_canny);
+		cannyEdge(img_white, img_canny);
 		/*Hough Ransac*/
 		Mat img_ransac;
 		int line_type;
@@ -518,7 +515,11 @@ extern "C"
 		Mat img_filtered; //, img_hsv;
 		//cvtColor(img_roi, img_hsv, COLOR_BGR2HSV);
 		/* Count by the number of Canny Edge point */
-		cannyEdge(img_roi, img_filtered);
+
+		/* Sharpen Edge for detecting */
+		int ksize = 1;
+		Laplacian(img_roi, img_sharpen, CV_8U, ksize);
+		cannyEdge(img_sharpen, img_filtered);
 		/*Count by HSV scale  Gray point*/
 		//inRange(img_hsv, lower_gray, upper_gray, img_filtered);
 		//left

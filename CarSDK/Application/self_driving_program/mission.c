@@ -125,7 +125,7 @@ bool parkingFunc(struct thr_data *arg)
 
     if (1) //(data->controlData.steerVal <= 1600 && data->controlData.steerVal >= 1400) || parking == REMAIN)
     {
-        if (DistanceSensor_cm(2) <= 28) //ó�� ���� ��???????????? ���
+        if (DistanceSensor_cm(2) <= 28) //ó�� ���� ��???????????? ���?
         {
             struct timeval st_p, et_p;
             gettimeofday(&st_p, NULL);
@@ -168,7 +168,7 @@ bool parkingFunc(struct thr_data *arg)
                     */
 
                     /*
-                    ?????? ????? ??????????? ��???????? ����?????? ???���????? ��ġ
+                    ?????? ????? ??????????? ��???????? ����?????? ???���?????? ��ġ
                     */
                     if (data->missionData.frame_priority)
                     {
@@ -186,7 +186,7 @@ bool parkingFunc(struct thr_data *arg)
                             wrong_detection = 0;
                             break;
                         }
-                        // ���� ���� ����??? ????????? ���, ???���� ���� �б� ����????? ??????????? ?????.
+                        // ���� ���� ����??? ????????? ���?, ???���� ���� �б� ����????? ??????????? ?????.
                     }
                     if (data->missionData.parkingData.frontRight == true)
                     {
@@ -370,7 +370,7 @@ bool parkingFunc(struct thr_data *arg)
                                     //DesireSpeed_Write_uart(0);
                                     //usleep(50000);
                                     DesireDistance(60, 200, 1500);
-                                    
+
                                     step_v = FINISH_V;
                                 }
                                 break;
@@ -727,7 +727,6 @@ bool tunnelFunc(struct thr_data *arg)
 
             usleep(10000);
         }
-        
 
         frontLightOnOff(data->controlData.lightFlag, false);
 
@@ -755,11 +754,11 @@ bool overtakeFunc(struct thr_data *arg)
 
     /* �б����� ���� ????? */
     int distance_1 = DistanceSensor_cm(1);
-    if(1)
+    if (1)
     // if (data->controlData.steerVal <= 1600 &&
     //     data->controlData.steerVal >= 1400)
     {
-       
+
         if (distance_1 <= 20) //????? ???????? ��??? //���� ????????? ?????????, �б����� ?????
         {
             printf("\t distance_1 = %d \n", distance_1);
@@ -778,7 +777,7 @@ bool overtakeFunc(struct thr_data *arg)
             /*���� ?????*/
             DesireSpeed_Write_uart(0);
 
-            DesireDistance(-50,350,1500);
+            DesireDistance(-50, 450, 1500);
 
             while (state)
             {
@@ -794,7 +793,7 @@ bool overtakeFunc(struct thr_data *arg)
                         CameraYServoControl_Write(data->controlData.cameraY);
                         data->missionData.overtakingData.updownCamera = CAMERA_UP;
                     }
-                    /* ???????? �¿� ?????? ?? ���?????? ����????? ???����?????? �ڵ�*/
+                    /* ???????? �¿� ?????? ?? ���??????? ����????? ???����?????? �ڵ�*/
                     while (data->missionData.overtakingData.headingDirection == STOP)
                     {
                         //data->missionData.loopTime = timeCheck(&time);
@@ -817,7 +816,7 @@ bool overtakeFunc(struct thr_data *arg)
                         data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
                     {
                         sprintf(data->imgData.missionString, "Right to go");
-                        /*���*/
+                        /*���?*/
                         Winker_Write(RIGHT_ON);
                         //DesireDistance(50, thresDistance, 1100);
                         DesireDistance(50, thresDistance, 1050);
@@ -849,7 +848,7 @@ bool overtakeFunc(struct thr_data *arg)
                     {
 
                         sprintf(data->imgData.missionString, "Left to go");
-                        /*���*/
+                        /*���?*/
                         Winker_Write(LEFT_ON);
                         //DesireDistance(50, thresDistance, 1900);
                         DesireDistance(50, thresDistance, 1950);
@@ -871,13 +870,13 @@ bool overtakeFunc(struct thr_data *arg)
                             /*???����??? ?????? ????? ???????? 20 ?????? ????????? SIDE_ON????? ����*/
                             state = SIDE_ON;
                             sprintf(data->imgData.missionString, "Detect Side");
-                            
+
                             DesireSpeed_Write_uart(BASIC_SPEED);
                             usleep(500000);
                         }
                     }
                     else
-                    { /*STOP??? ??????????? ��� ����*/
+                    { /*STOP??? ??????????? ���? ����*/
                     }
 
                     break;
@@ -944,7 +943,7 @@ bool overtakeFunc(struct thr_data *arg)
                     {
                         state = FRONT_DETECT;
                     }
-                break;
+                    break;
 
                 case SIDE_OFF:
                     /*?????? ����????? ��????????? �ڵ�*/
@@ -956,7 +955,7 @@ bool overtakeFunc(struct thr_data *arg)
                     {
                         /*��??? ��ȸ??? ���� ?????? ?? ?????*/
                         Winker_Write(LEFT_ON);
-                        DesireDistance(50, thresDistance + 350 ,2000);
+                        DesireDistance(50, thresDistance + 350, 2000);
                         Winker_Write(ALL_OFF);
                         DesireDistance(50, 600, 1000);
                     }
@@ -965,7 +964,7 @@ bool overtakeFunc(struct thr_data *arg)
                     {
                         /*��??? ????????? ���� ??????*/
                         Winker_Write(RIGHT_ON);
-                        DesireDistance(50, thresDistance + 350 ,1000);
+                        DesireDistance(50, thresDistance + 350, 1000);
                         Winker_Write(ALL_OFF);
                         DesireDistance(50, 600, 2000);
                     }
@@ -1007,7 +1006,7 @@ bool signalLightFunc(struct thr_data *arg)
     {
         // onlyDistance(BASIC_SPEED, (data->missionData.finish_distance / 26.0) * 500); //????????��??? ????? stop
         // data->missionData.finish_distance = -1;
-        
+
         data->imgData.bmission = true;
         data->imgData.bcheckSignalLight = true;
         data->imgData.bprintString = true;
@@ -1021,7 +1020,7 @@ bool signalLightFunc(struct thr_data *arg)
         printf("signalLight\n");
 
         while (data->imgData.bcheckSignalLight)
-            usleep(200000); //??????ó��?????? ????????? ����??? ?????? ??? ��??? ��ٸ���.
+            usleep(200000); //??????ó��?????? ????????? ����??? ?????? ??? ��??? ��ٸ���?.
 
         data->imgData.bprintTire = true;
         sprintf(data->imgData.missionString, "Distance control");
@@ -1095,7 +1094,7 @@ void finishFunc(struct thr_data *arg)
     // 	while (data->missionData.finishData.checkFront == true || data->missionData.finishData.distEndLine == -1000)
     // 	{
     // 		usleep(500000);
-    // 		/*checkFront ?? false?? ?????? ���� ???�ų� distEndline���� ���ǹ���?? ??????��� ����*/
+    // 		/*checkFront ?? false?? ?????? ���� ???�ų� distEndline���� ���ǹ���?? ??????���? ����*/
     // 		if (data->missionData.finishData.checkFront == false || data->missionData.finishData.distEndLine > 320)
     // 		{
     // 			sprintf(data->imgData.missionString, "End Check Front");

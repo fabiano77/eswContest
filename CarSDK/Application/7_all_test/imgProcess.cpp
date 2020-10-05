@@ -16,30 +16,30 @@ using namespace cv;
 
 void settingStatic(int w, int h);
 
-int calculSteer(Mat& src, int w, int h, bool whiteMode);
+int calculSteer(Mat &src, int w, int h, bool whiteMode);
 //PreCondition	: frame은 자동차의 topview2영상을 입력으로 받는다.
 //PostCondition	: 차선을 인식하여 인식된 결과를 src에 표시한다..
 //Return : 조향해야될 결과값을 반환한다(-500 ~ 500)
 
-void lineFiltering(Mat& src, Mat& dst, int mode);
+void lineFiltering(Mat &src, Mat &dst, int mode);
 
-void cannyEdge(Mat& src, Mat& dst);
+void cannyEdge(Mat &src, Mat &dst);
 
-Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType, const double lowThresAngle, const double highThresAngle);
+Vec8i hough_ransacLine(Mat &src, Mat &dst, int w, int h, int T, bool printMode, int &detectedLineType, const double lowThresAngle, const double highThresAngle);
 
-Vec4i ransac_algorithm(vector<Vec4i> lines, vector<Point2i> P, int w, int h, int T, double& inlierPercent, Rect weightingRect);
+Vec4i ransac_algorithm(vector<Vec4i> lines, vector<Point2i> P, int w, int h, int T, double &inlierPercent, Rect weightingRect);
 
 int slopeSign(Vec4i line);
 
 double slope(Vec4i line);
 
-double distance_between_line_and_point(Vec4i& line, Point2i point, int w, int h);
+double distance_between_line_and_point(Vec4i &line, Point2i point, int w, int h);
 
 int getPointX_at_Y(Vec4i line, const int Y);
 
 int getPointY_at_X(Vec4i line, const int X);
 
-int lineDeviation(Mat& dst, Vec4i line1, Vec4i line2);
+int lineDeviation(Mat &dst, Vec4i line1, Vec4i line2);
 
 string toString(int A);
 
@@ -53,52 +53,52 @@ Point centerPoint(Vec4i line);
 /// <param name="src"></param> //Input img
 /// <param name="dst"></param> //after masking image
 /// <param name="points"></param> //4points is needed
-void regionOfInterest(Mat& src, Mat& dst, Point* points);
+void regionOfInterest(Mat &src, Mat &dst, Point *points);
 
-int isDark(Mat& frame, const double percent, int debug);
+int isDark(Mat &frame, const double percent, int debug);
 
-int Tunnel_isStart(Mat& frame, const double percent);
+int Tunnel_isStart(Mat &frame, const double percent);
 
-bool priorityStop(Mat& src, Mat& dst, int length, bool debug);
+bool priorityStop(Mat &src, Mat &dst, int length, bool debug);
 
-int checkRedSignal(Mat& src, Mat& dst, double percent, bool debug);
+int checkRedSignal(Mat &src, Mat &dst, double percent, bool debug);
 
-int checkYellowSignal(Mat& src, Mat& dst, double percent, bool debug);
+int checkYellowSignal(Mat &src, Mat &dst, double percent, bool debug);
 
-int checkGreenSignal(Mat& src, Mat& dst, double percent, bool debug);
+int checkGreenSignal(Mat &src, Mat &dst, double percent, bool debug);
 
-int countPixel(Mat& src, Rect ROI);
+int countPixel(Mat &src, Rect ROI);
 
-void outputMission(Mat& dst, int ms0, int ms1, int ms2, int ms3, int ms4, int ms5, int ms6, int ms7, int ms8);
+void outputMission(Mat &dst, int ms0, int ms1, int ms2, int ms3, int ms4, int ms5, int ms6, int ms7, int ms8);
 
-void outputSensor(Mat& dst, int w, int h, int c1, int c2, int c3, int c4, int c5, int c6, int stopline);
+void outputSensor(Mat &dst, int w, int h, int c1, int c2, int c3, int c4, int c5, int c6, int stopline);
 
-void fileOutVideo(Mat& src);
+void fileOutVideo(Mat &src);
 
-void fileOutimage(Mat& src, string str);
+void fileOutimage(Mat &src, string str);
 
 void closeVideoWrite();
 
-double calculDistance_toFinish(Mat& src, Mat& dst, const int distance_top, const int distance_bottom);
+double calculDistance_toFinish(Mat &src, Mat &dst, const int distance_top, const int distance_bottom);
 
-void overlayImage(Mat& src, Mat& dst, const Mat& image, Point location);
+void overlayImage(Mat &src, Mat &dst, const Mat &image, Point location);
 
-void overlayTire(Mat& src, Mat& dst, double angle);
+void overlayTire(Mat &src, Mat &dst, double angle);
 //
 
-extern "C" {
+extern "C"
+{
 
 	void cSettingStatic(int w, int h)
 	{
 		settingStatic(w, h);
 	}
 
-	void calibration(float* map1, float* map2, int w, int h) {
+	void calibration(float *map1, float *map2, int w, int h)
+	{
 		Size videoSize = Size(w, h);
 		Mat Mat_map1(h, w, CV_32FC1, map1);
 		Mat Mat_map2(h, w, CV_32FC1, map2);
-
-
 
 		Mat disCoeffs;
 		Mat cameraMatrix = Mat(3, 3, CV_32FC1);
@@ -110,23 +110,25 @@ extern "C" {
 
 		Size board_sz = Size(numCornerHor, numCornerVer);
 
-		vector <vector <Point3f> > object_point;
-		vector <vector <Point2f> > image_point;
+		vector<vector<Point3f>> object_point;
+		vector<vector<Point2f>> image_point;
 
-		vector <Point2f> corners;
+		vector<Point2f> corners;
 		int successes = 0;
 
 		Mat image;
 		Mat gray_image;
 
-		vector <Point3f> obj;
-		for (int i = 0; i < numSquare; i++) {
+		vector<Point3f> obj;
+		for (int i = 0; i < numSquare; i++)
+		{
 			obj.push_back(Point3f(i / numCornerHor, i % numCornerHor, 0.0f));
 		}
 
 		ostringstream osstream;
 
-		while (successes < numBoards) {
+		while (successes < numBoards)
+		{
 			osstream.str("");
 			osstream << "./Calib_img/frame_" << 1280 << "_" << successes << ".png";
 
@@ -135,7 +137,8 @@ extern "C" {
 			cout << osstream.str() << ", size = " << image.size() << endl;
 			resize(image, image, Size(w, h), 0, 0, CV_INTER_LINEAR);
 
-			if (image.empty()) {
+			if (image.empty())
+			{
 				cout << "IMAGE IS EMPTY!" << endl;
 				return;
 			}
@@ -144,7 +147,8 @@ extern "C" {
 
 			bool found = findChessboardCorners(image, board_sz, corners, CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_FILTER_QUADS);
 
-			if (found) {
+			if (found)
+			{
 				drawChessboardCorners(image, board_sz, corners, found);
 			}
 
@@ -153,19 +157,16 @@ extern "C" {
 
 			cout << successes + 1 << "th snap stored!" << endl;
 
-
 			successes++;
 
 			osstream.clear();
 
 			if (successes >= numBoards)
 				break;
-
-
 		}
 
-		vector <Mat> rvecs;
-		vector <Mat> tvecs;
+		vector<Mat> rvecs;
+		vector<Mat> tvecs;
 
 		cameraMatrix.ptr<float>(0)[0] = 1;
 		cameraMatrix.ptr<float>(0)[0] = 1;
@@ -174,7 +175,7 @@ extern "C" {
 		initUndistortRectifyMap(cameraMatrix, disCoeffs, Mat(), cameraMatrix, videoSize, CV_32FC1, Mat_map1, Mat_map2);
 	}
 
-	void OpenCV_remap(unsigned char* inBuf, int w, int h, unsigned char* outBuf, float* map1, float* map2)
+	void OpenCV_remap(unsigned char *inBuf, int w, int h, unsigned char *outBuf, float *map1, float *map2)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
@@ -185,43 +186,43 @@ extern "C" {
 		remap(srcRGB, dstRGB, map1_Mat, map2_Mat, INTER_LINEAR);
 	}
 
-	void topview_transform(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int mode)
+	void topview_transform(unsigned char *inBuf, int w, int h, unsigned char *outBuf, int mode)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
 		if (mode == 1)
 		{
-			Point2f Hp[4] = {	//변환전 좌표
-				Point2f(160 * (w / 640.0), 180 * (h / 360.0)),
-				Point2f(480 * (w / 640.0), 180 * (h / 360.0)),
-				Point2f(620 * (w / 640.0), 270 * (h / 360.0)),
-				Point2f(20 * (w / 640.0), 270 * (h / 360.0)) };
+			Point2f Hp[4] = {//변환전 좌표
+							 Point2f(160 * (w / 640.0), 180 * (h / 360.0)),
+							 Point2f(480 * (w / 640.0), 180 * (h / 360.0)),
+							 Point2f(620 * (w / 640.0), 270 * (h / 360.0)),
+							 Point2f(20 * (w / 640.0), 270 * (h / 360.0))};
 
-			Point2f p[4] = {	//변환후 좌표
-				Point2f(100 * (w / 640.0), -100 * (h / 360.0)),
-				Point2f(540 * (w / 640.0), -100 * (h / 360.0)),
-				Point2f(550 * (w / 640.0), 270 * (h / 360.0)),
-				Point2f(90 * (w / 640.0), 270 * (h / 360.0)) };
+			Point2f p[4] = {//변환후 좌표
+							Point2f(100 * (w / 640.0), -100 * (h / 360.0)),
+							Point2f(540 * (w / 640.0), -100 * (h / 360.0)),
+							Point2f(550 * (w / 640.0), 270 * (h / 360.0)),
+							Point2f(90 * (w / 640.0), 270 * (h / 360.0))};
 			Mat Hmatrix = getPerspectiveTransform(Hp, p);
-			Size topviewSize(w, h);	//변환후 사이즈
+			Size topviewSize(w, h); //변환후 사이즈
 			warpPerspective(srcRGB, dstRGB, Hmatrix, topviewSize);
 		}
 		else if (mode == 2)
 		{
-			Point2f Hp[4] = {	//변환전 좌표
-				Point2f(80 * (w / 640.0), 200 * (h / 360.0)),
-				Point2f(560 * (w / 640.0), 200 * (h / 360.0)),
-				Point2f(640 * (w / 640.0), 360 * (h / 360.0)),
-				Point2f(0 * (w / 640.0), 360 * (h / 360.0)) };
+			Point2f Hp[4] = {//변환전 좌표
+							 Point2f(80 * (w / 640.0), 200 * (h / 360.0)),
+							 Point2f(560 * (w / 640.0), 200 * (h / 360.0)),
+							 Point2f(640 * (w / 640.0), 360 * (h / 360.0)),
+							 Point2f(0 * (w / 640.0), 360 * (h / 360.0))};
 
-			Point2f p[4] = {	//변환후 좌표
-				Point2f(30 * (w / 640.0), 100 * (h / 360.0)),
-				Point2f(610 * (w / 640.0), 100 * (h / 360.0)),
-				Point2f(640 * (w / 640.0), 360 * (h / 360.0)),
-				Point2f(0 * (w / 640.0), 360 * (h / 360.0)) };
+			Point2f p[4] = {//변환후 좌표
+							Point2f(30 * (w / 640.0), 100 * (h / 360.0)),
+							Point2f(610 * (w / 640.0), 100 * (h / 360.0)),
+							Point2f(640 * (w / 640.0), 360 * (h / 360.0)),
+							Point2f(0 * (w / 640.0), 360 * (h / 360.0))};
 			Mat Hmatrix = getPerspectiveTransform(Hp, p);
-			Size topviewSize(w, h);	//변환후 사이즈
+			Size topviewSize(w, h); //변환후 사이즈
 			warpPerspective(srcRGB, dstRGB, Hmatrix, topviewSize);
 		}
 		else if (mode == 3)
@@ -232,7 +233,7 @@ extern "C" {
 		}
 	}
 
-	void displayPrintStr(unsigned char* outBuf, int w, int h, char* name)
+	void displayPrintStr(unsigned char *outBuf, int w, int h, char *name)
 	{
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 		string str(name);
@@ -241,30 +242,30 @@ extern "C" {
 		putText(dstRGB, "[ " + str + " ]", printPosition, 0, 0.92, Scalar(0, 255, 40), 2);
 	}
 
-	void displayPrintMission(unsigned char* outBuf, int w, int h,
-		int ms0, int ms1, int ms2, int ms3, int ms4, int ms5, int ms6, int ms7, int ms8)
+	void displayPrintMission(unsigned char *outBuf, int w, int h,
+							 int ms0, int ms1, int ms2, int ms3, int ms4, int ms5, int ms6, int ms7, int ms8)
 	{
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
 		outputMission(dstRGB, ms0, ms1, ms2, ms3, ms4, ms5, ms6, ms7, ms8);
 	}
 
-	void displayPrintSensor(unsigned char* outBuf, int w, int h,
-		int c1, int c2, int c3, int c4, int c5, int c6, int stopline)
+	void displayPrintSensor(unsigned char *outBuf, int w, int h,
+							int c1, int c2, int c3, int c4, int c5, int c6, int stopline)
 	{
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
 		outputSensor(dstRGB, w, h, c1, c2, c3, c4, c5, c6, stopline);
 	}
 
-	void displayPrintStopLine(unsigned char* outBuf, int w, int h)
+	void displayPrintStopLine(unsigned char *outBuf, int w, int h)
 	{
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
 		putText(dstRGB, "(check stopLine)", Point(210, 320), 0, 0.85, Scalar(255, 255, 0), 2);
 	}
 
-	void overlayPrintAngle(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int angle)
+	void overlayPrintAngle(unsigned char *inBuf, int w, int h, unsigned char *outBuf, int angle)
 	{
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
@@ -272,7 +273,7 @@ extern "C" {
 		overlayTire(dstRGB, srcRGB, angle);
 	}
 
-	int checkRed(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
+	int checkRed(unsigned char *inBuf, int w, int h, unsigned char *outBuf)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
@@ -280,7 +281,7 @@ extern "C" {
 		return checkRedSignal(srcRGB, dstRGB, 1.7, 1);
 	}
 
-	int checkYellow(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
+	int checkYellow(unsigned char *inBuf, int w, int h, unsigned char *outBuf)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
@@ -288,7 +289,7 @@ extern "C" {
 		return checkYellowSignal(srcRGB, dstRGB, 1.7, 1);
 	}
 
-	int checkGreen(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
+	int checkGreen(unsigned char *inBuf, int w, int h, unsigned char *outBuf)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
@@ -296,7 +297,7 @@ extern "C" {
 		return checkGreenSignal(srcRGB, dstRGB, 1.7, 1);
 	}
 
-	bool isPriorityStop(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
+	bool isPriorityStop(unsigned char *inBuf, int w, int h, unsigned char *outBuf)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
@@ -304,7 +305,7 @@ extern "C" {
 		return priorityStop(srcRGB, dstRGB, 270, 0);
 	}
 
-	int calculDistance_FinishLine(unsigned char* inBuf, int w, int h, unsigned char* outBuf)
+	int calculDistance_FinishLine(unsigned char *inBuf, int w, int h, unsigned char *outBuf)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
@@ -312,7 +313,7 @@ extern "C" {
 		return calculDistance_toFinish(srcRGB, dstRGB, 50, 24);
 	}
 
-	void debugFiltering(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int mode)
+	void debugFiltering(unsigned char *inBuf, int w, int h, unsigned char *outBuf, int mode)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
@@ -383,7 +384,7 @@ extern "C" {
 		}
 	}
 
-	int autoSteering(unsigned char* inBuf, int w, int h, unsigned char* outBuf, int whiteMode)
+	int autoSteering(unsigned char *inBuf, int w, int h, unsigned char *outBuf, int whiteMode)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
@@ -394,7 +395,8 @@ extern "C" {
 		return steer;
 	}
 
-	bool checkObstacle(unsigned char* inBuf, int w, int h, unsigned char* outBuf) {
+	bool checkObstacle(unsigned char *inBuf, int w, int h, unsigned char *outBuf)
+	{
 		/*Capture from inBuf*/
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
@@ -414,7 +416,7 @@ extern "C" {
 		Mat img_sharpen, img_canny, img_white, img_roi;
 		/*Convert Color*/
 		int color_convert = 1;
-		Point roi_points[4] = { Point(0,100),Point(0,360),Point(640,360),Point(640,100) };
+		Point roi_points[4] = {Point(0, 100), Point(0, 360), Point(640, 360), Point(640, 100)};
 		regionOfInterest(srcRGB, img_roi, roi_points);
 		lineFiltering(img_roi, img_white, color_convert);
 
@@ -422,7 +424,7 @@ extern "C" {
 		int ksize = 1;
 		Laplacian(img_white, img_sharpen, CV_8U, ksize);
 		/*Canny Image*/
-		cannyEdge(img_white, img_canny);
+		cannyEdge(img_sharpen, img_canny);
 		/*Hough Ransac*/
 		Mat img_ransac;
 		int line_type;
@@ -440,7 +442,8 @@ extern "C" {
 		line(srcRGB, Point(0, height_up), Point(width, height_up), Scalar(255, 0, 0), 2);
 		int rightup_x, rightdown_x, leftup_x, leftdown_x;
 		double grad_right, grad_left;
-		if (line_type == 0) {//미탐지 시
+		if (line_type == 0)
+		{ //미탐지 시
 			grad_right = -1000;
 			grad_left = 1000;
 			rightup_x = width / 2 + 60;
@@ -448,9 +451,11 @@ extern "C" {
 			leftup_x = 0;
 			leftdown_x = 0;
 		}
-		else if (line_type == 1) {//라인이 1개일 때, left에만 값이 들어감
-			if (slope(line_left) > 0) {//right
-				grad_right = slope(line_left);//left에만 들어갔으므로 slope로 함
+		else if (line_type == 1)
+		{ //라인이 1개일 때, left에만 값이 들어감
+			if (slope(line_left) > 0)
+			{								   //right
+				grad_right = slope(line_left); //left에만 들어갔으므로 slope로 함
 				rightup_x = getPointX_at_Y(line_left, height_up);
 				rightdown_x = getPointX_at_Y(line_left, height_down);
 
@@ -461,7 +466,8 @@ extern "C" {
 				line_right = Vec4i(rightup_x, height_up, rightdown_x, height_down);
 				line_left = Vec4i(leftup_x, height_up, leftdown_x, height_down);
 			}
-			else {//>0:left
+			else
+			{ //>0:left
 				grad_left = slope(line_left);
 				leftup_x = getPointX_at_Y(line_left, height_up);
 				leftdown_x = getPointX_at_Y(line_left, height_down);
@@ -473,7 +479,8 @@ extern "C" {
 				line_left = Vec4i(leftup_x, height_up, leftdown_x, height_down);
 			}
 		}
-		else {
+		else
+		{
 			grad_right = slope(line_right);
 			rightup_x = getPointX_at_Y(line_right, height_up);
 			rightdown_x = getPointX_at_Y(line_right, height_down);
@@ -483,16 +490,20 @@ extern "C" {
 			leftdown_x = getPointX_at_Y(line_left, height_down);
 		}
 		/*check inadequate value and fix it*/
-		if (leftup_x > width / 2) {
+		if (leftup_x > width / 2)
+		{
 			leftup_x = width / 2;
 		}
-		if (leftdown_x < 0) {
+		if (leftdown_x < 0)
+		{
 			leftdown_x = 0;
 		}
-		if (rightup_x < width / 2) {
+		if (rightup_x < width / 2)
+		{
 			rightup_x = width / 2;
 		}
-		if (rightdown_x > width) {
+		if (rightdown_x > width)
+		{
 			rightdown_x = width;
 		}
 		/*Point that meets upper and lower bound*/
@@ -504,7 +515,7 @@ extern "C" {
 
 		/*Count Gray*/
 		/*check hsv*/
-		Mat img_filtered;//, img_hsv;
+		Mat img_filtered; //, img_hsv;
 		//cvtColor(img_roi, img_hsv, COLOR_BGR2HSV);
 		/* Count by the number of Canny Edge point */
 		cannyEdge(img_roi, img_filtered);
@@ -515,18 +526,20 @@ extern "C" {
 		int count_right = 0;
 		/* Count Left and Right Gray Scale */
 		//left
-		for (int y = point_leftup.y; y < point_leftdown.y; y++)//up.y<down.y
-		{ //y
-			int lower_x;//lower bound for calculate rectangular form
-			if (grad_left >= 1000) {//무의미한 값 제거
+		for (int y = point_leftup.y; y < point_leftdown.y; y++) //up.y<down.y
+		{														//y
+			int lower_x;										//lower bound for calculate rectangular form
+			if (grad_left >= 1000)
+			{ //무의미한 값 제거
 				lower_x = width / 2 - 60;
 			}
-			else {
-				lower_x = getPointX_at_Y(line_left, y);//왼쪽은 if문 불필요 (오른쪽 부분 참조)
+			else
+			{
+				lower_x = getPointX_at_Y(line_left, y); //왼쪽은 if문 불필요 (오른쪽 부분 참조)
 			}
 
 			for (int x = 0; x < lower_x; x++) // left Gray detection
-			{ //x
+			{								  //x
 				uchar color_value = img_filtered.at<uchar>(y, x);
 				//img_filtered를 사용해야 회색의 범위를 찾음
 				if (color_value > 128)
@@ -538,25 +551,30 @@ extern "C" {
 				{
 					srcRGB.at<Vec3b>(y, x) = Vec3b(0, 0, 255);
 				}
-
 			}
 		}
 		//right
-		for (int y = point_rightup.y; y < point_rightdown.y; y++)//up.y<down.y
-		{ //y
-			int upper_x;//upper bound for calculate rectangular form
-			if (grad_right <= -1000) { upper_x = width / 2 + 60; }//무의미한 값 제거
-			else {
+		for (int y = point_rightup.y; y < point_rightdown.y; y++) //up.y<down.y
+		{														  //y
+			int upper_x;										  //upper bound for calculate rectangular form
+			if (grad_right <= -1000)
+			{
+				upper_x = width / 2 + 60;
+			} //무의미한 값 제거
+			else
+			{
 				/*line_left에 만 값이 들어있을 때 line_type이 1일 때*/
-				if (slope(line_left) > 0) {
+				if (slope(line_left) > 0)
+				{
 					upper_x = getPointX_at_Y(line_left, y);
 				}
-				else {
+				else
+				{
 					upper_x = getPointX_at_Y(line_right, y);
 				}
 			}
 			for (int x = upper_x; x < width; x++) // left Gray detection
-			{ //x
+			{									  //x
 
 				uchar color_value = img_filtered.at<uchar>(y, x);
 				//img_filtered를 사용해야 회색의 범위를 찾음
@@ -574,9 +592,9 @@ extern "C" {
 		/**************************************/
 
 		/*Show image*/
-		Point location(width / 2, height * 6 / 8);// Location that is Detected Sign 
-		Point location2(width / 2, height / 8);// Location that is time of calculation
-		Point location_left(width / 4, height * 7 / 8); // Location that is point of edge detected(left)
+		Point location(width / 2, height * 6 / 8);			 // Location that is Detected Sign
+		Point location2(width / 2, height / 8);				 // Location that is time of calculation
+		Point location_left(width / 4, height * 7 / 8);		 // Location that is point of edge detected(left)
 		Point location_right(width * 3 / 4, height * 7 / 8); //Location that is point of edge detected(right)
 
 		int font = FONT_ITALIC; // italic font
@@ -598,17 +616,17 @@ extern "C" {
 			printf("Going Right");
 			return false;
 		}
-
 	}
 
-	int Tunnel(unsigned char* inBuf, int w, int h, const double percent)
+	int Tunnel(unsigned char *inBuf, int w, int h, const double percent)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 
-		return  Tunnel_isStart(srcRGB, percent);
+		return Tunnel_isStart(srcRGB, percent);
 	}
 
-	int checkFront(unsigned char* inBuf, int w, int h, unsigned char* outBuf) {
+	int checkFront(unsigned char *inBuf, int w, int h, unsigned char *outBuf)
+	{
 		//need alread top view transformed
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
@@ -618,7 +636,7 @@ extern "C" {
 		int font = FONT_ITALIC; // italic font
 		double fontScale = 1;
 		/* hyper params */
-		int thresDistance = 260;//이때부터 값 리턴
+		int thresDistance = 260; //이때부터 값 리턴
 		Scalar upper_yellow(120, 100, 255);
 		Scalar lower_yellow(50, 0, 120);
 		Mat img_hsv;
@@ -628,7 +646,7 @@ extern "C" {
 		line(dstRGB, Point(0, roi_upY), Point(640, roi_upY), Scalar(0, 0, 255), 2);
 		putText(dstRGB, "ROI Section", Point(15, 80), font, fontScale, Scalar(0, 0, 255), 2);
 		/* roi img and filtering */
-		Mat img_roi(img_hsv, Rect(0, 80, 640, 280));// roi 지정(선으로 변화 시킬것)
+		Mat img_roi(img_hsv, Rect(0, 80, 640, 280)); // roi 지정(선으로 변화 시킬것)
 		Mat img_filtered;
 		inRange(img_roi, upper_yellow, lower_yellow, img_filtered); //color filtering
 		/*canny img*/
@@ -638,8 +656,10 @@ extern "C" {
 		vector<Point> points_filtered;
 		/*line detect*/
 		HoughLinesP(img_canny, lines, 1, CV_PI / 180, 80, 10, 300);
-		for (unsigned int i = 0; i < lines.size(); i++) {
-			if (abs(slope(lines[i])) < 0.05 && lines[i][1] > 80 && lines[i][3] > 80) {
+		for (unsigned int i = 0; i < lines.size(); i++)
+		{
+			if (abs(slope(lines[i])) < 0.05 && lines[i][1] > 80 && lines[i][3] > 80)
+			{
 				points_filtered.push_back(Point(lines[i][0], lines[i][1]));
 				points_filtered.push_back(Point(lines[i][2], lines[i][3]));
 				line(dstRGB, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(255, 0, 0), 1);
@@ -647,7 +667,8 @@ extern "C" {
 		}
 		/*line fitting to one*/
 		Vec4f line_fit;
-		if (points_filtered.size() > 0) {
+		if (points_filtered.size() > 0)
+		{
 			fitLine(points_filtered, line_fit, 2, 0, 0.01, 0.01);
 			float dydx = line_fit[1] / line_fit[0];
 			/*find point y at x*/
@@ -655,29 +676,32 @@ extern "C" {
 			Point rightPoint(640, dydx * (640 - line_fit[2]) + line_fit[3]); //y=dydx*(x-a)+b
 
 			line(dstRGB, leftPoint, rightPoint, Scalar(0, 255, 0), 2);
-			if (leftPoint.y > thresDistance && rightPoint.y > thresDistance) {
+			if (leftPoint.y > thresDistance && rightPoint.y > thresDistance)
+			{
 				putText(dstRGB, "Detect", Point(width / 2, height / 4), font, fontScale, Scalar(255, 0, 0), 2);
 				/*return avg value of point*/
 				return (leftPoint.y + rightPoint.y) / 2;
 			}
-			else {
+			else
+			{
 				putText(dstRGB, "Non-Detect", Point(width / 2, height / 4), font, fontScale, Scalar(255, 0, 0), 2);
 				/*meaningless value is returned*/
 				return -1000;
 			}
 		}
-		else {
+		else
+		{
 			putText(dstRGB, "Non-Detect", Point(width / 2, height / 4), font, fontScale, Scalar(255, 0, 0), 2);
 			/*meaningless value is returned*/
 			return -1000;
 		}
 	}
 
-	void opencv_imwrite(unsigned char* inBuf)
+	void opencv_imwrite(unsigned char *inBuf)
 	{
 		Mat srcRGB(360, 640, CV_8UC3, inBuf);
 		struct timeval timestamp;
-		struct tm* today;
+		struct tm *today;
 
 		gettimeofday(&timestamp, NULL);
 		today = localtime(&timestamp.tv_sec);
@@ -687,7 +711,7 @@ extern "C" {
 		fileOutimage(srcRGB, name);
 	}
 
-	void opencv_videowrite(unsigned char* inBuf)
+	void opencv_videowrite(unsigned char *inBuf)
 	{
 		Mat srcRGB(360, 640, CV_8UC3, inBuf);
 
@@ -699,7 +723,8 @@ extern "C" {
 		closeVideoWrite();
 	}
 
-	bool checkWhiteLine(unsigned char* inBuf, int w, int h) {
+	bool checkWhiteLine(unsigned char *inBuf, int w, int h)
+	{
 		//original img;
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Rect roi(20, 220, 600, 140);
@@ -710,25 +735,27 @@ extern "C" {
 		Scalar lower_white(75, 20, 200);
 		Scalar upper_white(255, 255, 255);
 		cvtColor(roiRGB, img_hsv, COLOR_BGR2HSV);
-		
+
 		/*White Filtering*/
 		Mat img_filtered;
 		Mat img_canny;
 		inRange(img_hsv, lower_white, upper_white, img_filtered);
 		cannyEdge(img_filtered, img_canny);
-		
+
 		vector<Vec4i> lines;
 		HoughLinesP(img_canny, lines, 1, CV_PI / 180, 80, 50, 20);
-		
-		if (lines.size() > 0) {
+
+		if (lines.size() > 0)
+		{
 			return true;
 		}
-		else {
+		else
+		{
 			return false;
 		}
 	}
 
-	int stopLine_distance(unsigned char* inBuf, int w, int h, float* map1, float* map2)
+	int stopLine_distance(unsigned char *inBuf, int w, int h, float *map1, float *map2)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat copyRGB = srcRGB.clone();
@@ -740,14 +767,13 @@ extern "C" {
 		topview_transform(inBuf, w, h, inBuf, 1);
 
 		distance = calculDistance_FinishLine(inBuf, w, h, inBuf);
-		
+
 		copyRGB.copyTo(srcRGB);
 		//원본 영상 복구
-		
+
 		return distance;
 	}
-}	// extern "C"
-
+} // extern "C"
 
 Scalar color[7];
 Scalar white(255, 255, 255);
@@ -769,8 +795,8 @@ Rect Rect_signalDetect;
 Point signalPrintPosition(120, 250);
 int guideCnt = 5;
 bool first = 0;
-int HLP_threshold = 30;	//105
-int HLP_minLineLength = 90;//115
+int HLP_threshold = 30;		//105
+int HLP_minLineLength = 90; //115
 int HLP_maxLineGap = 125;	//260
 
 int flag_tunnel;
@@ -784,7 +810,7 @@ int V = 75;
 
 VideoWriter outputVideo;
 
-static void on_trackbar(int, void*)
+static void on_trackbar(int, void *)
 {
 }
 
@@ -793,7 +819,6 @@ void settingStatic(int w, int h)
 	string filename("video.avi");
 	//outputVideo.open(filename, VideoWriter::fourcc('D', 'I', 'V', 'X'), 10, Size(640, 360), true);	//Windows
 	//outputVideo.open(filename, CV_FOURCC('D', 'I', 'V', 'X'), 10, Size(640, 360), true);				//Linux
-
 
 	color[0] = Scalar(255, 255, 0);
 	color[1] = blue;
@@ -831,17 +856,19 @@ void settingStatic(int w, int h)
 	roiMat = Mat(Size(640, 360), CV_8UC3, Scalar(0));
 	rectangle(roiMat, Rect_signalDetect, Scalar(255, 255, 255), -1);
 
-	Tire = imread("./overlay_pictures/tire.png", IMREAD_UNCHANGED);			//in Linux
-	backimg = imread("./overlay_pictures/background.png", IMREAD_UNCHANGED);	//in Linux
+	Tire = imread("./overlay_pictures/tire.png", IMREAD_UNCHANGED);			 //in Linux
+	backimg = imread("./overlay_pictures/background.png", IMREAD_UNCHANGED); //in Linux
 	//Tire = imread("pictures/tire.png", IMREAD_UNCHANGED);				//in Windows
 	//backimg = imread("pictures/background.png", IMREAD_UNCHANGED);		//in Windows
-	if (Tire.type() == 0 || backimg.type() == 0) btire = false;
-	else btire = true;
+	if (Tire.type() == 0 || backimg.type() == 0)
+		btire = false;
+	else
+		btire = true;
 
 	cout << "settingStatic" << endl;
 }
 
-int calculSteer(Mat& src, int w, int h, bool whiteMode)
+int calculSteer(Mat &src, int w, int h, bool whiteMode)
 {
 	//if (!first++) settingStatic(w, h);
 	int retval(0);
@@ -853,7 +880,7 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 	lineFiltering(src, src_yel, whiteMode);
 	cannyEdge(src_yel, src_can);
 
-	int lineType;	// 0 == 라인이 없다, 1 == 라인이 한개, 2 == 라인이 두개.
+	int lineType; // 0 == 라인이 없다, 1 == 라인이 한개, 2 == 라인이 두개.
 	Vec8i l = hough_ransacLine(src_can, src, w, h, 15, false, lineType, 0.1, 30.0);
 	Vec4i firstLine(l[0], l[1], l[2], l[3]);
 	Vec4i secondLine(l[4], l[5], l[6], l[7]);
@@ -861,7 +888,7 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 	if (lineType == 0)
 	{
 		putText(src, "no lines", printPosition + Point(46, 0), 0, 0.8, Scalar(255, 255, 255), 2);
-		return 9999;	//의미없다는 결과를 알려주는 수(조향하지말라는 뜻)
+		return 9999; //의미없다는 결과를 알려주는 수(조향하지말라는 뜻)
 	}
 	else if (lineType == 1 && (getPointY_at_X(firstLine, w / 2) > 144 || abs(slope(firstLine)) < 0.95))
 	{
@@ -870,8 +897,8 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 		/************************************************************************************/
 		/*										곡선 구간									*/
 		/************************************************************************************/
-		int proximity(0);	//외곽 차선이 차체와 얼마나 근접하였는지 값 (0~500)
-		int bias = slopeSign(firstLine) * 90;	//좌, 우회전에 따른 가이드라인 바이어스.
+		int proximity(0);					  //외곽 차선이 차체와 얼마나 근접하였는지 값 (0~500)
+		int bias = slopeSign(firstLine) * 90; //좌, 우회전에 따른 가이드라인 바이어스.
 		int linePointY_atCenter = getPointY_at_X(firstLine, 320 + bias);
 		for (int i = 0; i < guideCnt; i++)
 		{
@@ -885,11 +912,12 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 			else
 				rectangle(src, Point(centerGuide[i][0] - 3 + bias, centerGuide[i][1]), Point(centerGuide[i][2] + 3 + bias, centerGuide[i][3]), color[i], -1);
 		}
-		if (linePointY_atCenter > centerGuide[0][1])	// 선형적으로 조향.
+		if (linePointY_atCenter > centerGuide[0][1]) // 선형적으로 조향.
 		{
 			proximity = 500 * (linePointY_atCenter - centerGuide[0][1]) / (h - centerGuide[0][1]);
-			proximity *= 1.2;  //곡선 조향 민감도 증가
-			if (proximity > 500) proximity = 500;
+			proximity *= 1.2; //곡선 조향 민감도 증가
+			if (proximity > 500)
+				proximity = 500;
 		}
 
 		if (proximity == 0)
@@ -911,7 +939,7 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 		line(src, Point(leftGuide[0], leftGuide[1]), Point(leftGuide[2], leftGuide[3]), mint, 4);
 		line(src, Point(rightGuide[0], rightGuide[1]), Point(rightGuide[2], rightGuide[3]), mint, 4);
 
-		int Deviation = 0;	//기준 직선에 얼마나 치우쳐있는지 값.
+		int Deviation = 0; //기준 직선에 얼마나 치우쳐있는지 값.
 		if (lineType == 2)
 		{
 			Deviation += lineDeviation(src, firstLine, leftGuide);
@@ -953,15 +981,18 @@ int calculSteer(Mat& src, int w, int h, bool whiteMode)
 	if (retval != 9999)
 	{
 		//유의미한 값이 도출됐을 경우.
-		if (abs(retval) > 1000) retval = 0;
-		else if (retval < -500) retval = -500;
-		else if (retval > 500) retval = 500;
+		if (abs(retval) > 1000)
+			retval = 0;
+		else if (retval < -500)
+			retval = -500;
+		else if (retval > 500)
+			retval = 500;
 	}
 
 	return retval;
 }
 
-void lineFiltering(Mat& src, Mat& dst, int mode)
+void lineFiltering(Mat &src, Mat &dst, int mode)
 {
 	//dst = Mat();
 	//debug추가하면서 고침. 08/21 12시33분.
@@ -974,11 +1005,11 @@ void lineFiltering(Mat& src, Mat& dst, int mode)
 		Scalar lower_yellow(h1, s, v);
 		Scalar upper_yellow(h2, 255, 255);
 
-		cvtColor(src, hsv, COLOR_BGR2HSV);					//HSV색영역
-		inRange(hsv, lower_yellow, upper_yellow, binMat);	//2진 Mat객체 binMat생성
+		cvtColor(src, hsv, COLOR_BGR2HSV);				  //HSV색영역
+		inRange(hsv, lower_yellow, upper_yellow, binMat); //2진 Mat객체 binMat생성
 	}
 
-	if (mode == 1 || mode == 2)//흰색차선 인식 모드
+	if (mode == 1 || mode == 2) //흰색차선 인식 모드
 	{
 		Scalar lower_white(75, 30, 200); // bgr white
 		Scalar upper_white(255, 255, 255);
@@ -986,10 +1017,12 @@ void lineFiltering(Mat& src, Mat& dst, int mode)
 
 		inRange(hsv, lower_white, upper_white, whiteBinMat);
 		//addWeighted(binMat, 1.0, whiteBinMat, 1.0, 0.0, binMat);	//추출한 노란색과 흰색 객체를 합친 binMat생성
-		if (mode == 1) {
+		if (mode == 1)
+		{
 			binMat = binMat + whiteBinMat;
 		}
-		else {
+		else
+		{
 			binMat = whiteBinMat;
 		}
 	}
@@ -998,15 +1031,15 @@ void lineFiltering(Mat& src, Mat& dst, int mode)
 	//bitwise_and(src, src, dst, binMat);	//binMat객체로 원본 frame 필터링.(노란색남음)
 }
 
-void cannyEdge(Mat& src, Mat& dst)
+void cannyEdge(Mat &src, Mat &dst)
 {
-	int threshold_1 = 118;		//215 //340
-	int threshold_2 = 242;		//330 //500
+	int threshold_1 = 118; //215 //340
+	int threshold_2 = 242; //330 //500
 
-	Canny(src, dst, threshold_1, threshold_2);	//노란색만 남은 frame의 윤곽을 1채널 Mat객체로 추출
+	Canny(src, dst, threshold_1, threshold_2); //노란색만 남은 frame의 윤곽을 1채널 Mat객체로 추출
 }
 
-Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, int& detectedLineType, const double lowThresAngle, const double highThresAngle)
+Vec8i hough_ransacLine(Mat &src, Mat &dst, int w, int h, int T, bool printMode, int &detectedLineType, const double lowThresAngle, const double highThresAngle)
 {
 	//Point printPoint(210 * (w / 640.0), 180 * (h / 360.0));
 	Point printPoint(210, 180);
@@ -1032,17 +1065,18 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 	//namedWindow("trackbar", WINDOW_NORMAL);
 	//moveWindow("trackbar", 320 * 5, 180 * 5);
 
-	vector<Vec4i> lines;		//검출될 직선이 저장될 객체
+	vector<Vec4i> lines; //검출될 직선이 저장될 객체
 	HoughLinesP(src, lines, 1, CV_PI / 180, HLP_threshold, HLP_minLineLength, HLP_maxLineGap);
 
 	int lowLinePosition(0);
 	for (unsigned int i = 0; i < lines.size(); i++)
 	{
 		//수직 예외직선 삭제 및 ROI설정을 위한 직선 위치판단
-		if (abs(slope(lines[i])) > highThresAngle				//수직 직선 예외처리
-			|| abs(slope(lines[i])) < lowThresAngle)			//수평 직선 예외처리
+		if (abs(slope(lines[i])) > highThresAngle	 //수직 직선 예외처리
+			|| abs(slope(lines[i])) < lowThresAngle) //수평 직선 예외처리
 		{
-			if (printMode) line(dst, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(), 2);
+			if (printMode)
+				line(dst, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(), 2);
 			lines.erase(lines.begin() + i);
 			i--;
 			continue;
@@ -1050,12 +1084,14 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 		if (lowLinePosition < 1)
 		{
 			//화면 하단 1/2에 라인이 있을 경우.
-			if (lines[i][1] > h * (1 / 2.0) && lines[i][3] > h * (1 / 2.0)) lowLinePosition = 1;
+			if (lines[i][1] > h * (1 / 2.0) && lines[i][3] > h * (1 / 2.0))
+				lowLinePosition = 1;
 		}
 		if (lowLinePosition < 2)
 		{
 			//화면 하단 1/3에 라인이 있을 경우.
-			if (lines[i][1] > h * (2 / 3.0) && lines[i][3] > h * (2 / 3.0)) lowLinePosition = 2;
+			if (lines[i][1] > h * (2 / 3.0) && lines[i][3] > h * (2 / 3.0))
+				lowLinePosition = 2;
 		}
 	}
 
@@ -1064,9 +1100,12 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 	{
 		if (i == 0)
 		{
-			if (lowLinePosition == 1) cuttingHeight = h * (1 / 3.);
-			else if (lowLinePosition == 2) cuttingHeight = h * (1 / 2.);
-			else cuttingHeight = h * (20 / 100.);
+			if (lowLinePosition == 1)
+				cuttingHeight = h * (1 / 3.);
+			else if (lowLinePosition == 2)
+				cuttingHeight = h * (1 / 2.);
+			else
+				cuttingHeight = h * (20 / 100.);
 
 			if (printMode)
 			{
@@ -1077,11 +1116,11 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 
 		if (centerPoint(lines[i]).y < cuttingHeight)
 		{
-			if (printMode) line(dst, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(), 2);
+			if (printMode)
+				line(dst, Point(lines[i][0], lines[i][1]), Point(lines[i][2], lines[i][3]), Scalar(), 2);
 			lines.erase(lines.begin() + i);
 			i--;
 		}
-
 	}
 
 	if (printMode)
@@ -1098,8 +1137,8 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 		return Vec8i();
 	}
 
-	Vec4i rightLine(0, -1, 0, 0);			//최우측 직선
-	Vec4i leftLine(640, -1, 640, 0);		//최좌측 직선
+	Vec4i rightLine(0, -1, 0, 0);	 //최우측 직선
+	Vec4i leftLine(640, -1, 640, 0); //최좌측 직선
 	for (unsigned int i = 0; i < lines.size(); i++)
 	{
 		if (leftLine[0] > lines[i][0])
@@ -1113,7 +1152,7 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 	}
 	//for문이 끝나고 나면 각종 최좌측, 최우측 직선 각각 저장.
 	//temp = dst;
-	if (slopeSign(leftLine) < 0 && slopeSign(rightLine) > 0)	//좌우 직선의 기울기부호가 다르다 == 직진구간.
+	if (slopeSign(leftLine) < 0 && slopeSign(rightLine) > 0) //좌우 직선의 기울기부호가 다르다 == 직진구간.
 	{
 		detectedLineType = 2;
 		double left_inlierPercent;
@@ -1138,13 +1177,13 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 		}
 		//dst = temp;
 		return Vec8i(firstLine[0], firstLine[1], firstLine[2], firstLine[3],
-			secondLine[0], secondLine[1], secondLine[2], secondLine[3]);
+					 secondLine[0], secondLine[1], secondLine[2], secondLine[3]);
 	}
 	else //if (slopeSign(leftLine) == slopeSign(rightLine))	//좌우 직선의 기울기부호가 같으면
 	{
 		detectedLineType = 1;
-		Point highest(-1, 640);		//최상단 점
-		Point lowest(-1, 0);		//최하단 점
+		Point highest(-1, 640); //최상단 점
+		Point lowest(-1, 0);	//최하단 점
 		for (unsigned int i = 0; i < lines.size(); i++)
 		{
 			if (highest.y > lines[i][1])
@@ -1194,12 +1233,12 @@ Vec8i hough_ransacLine(Mat& src, Mat& dst, int w, int h, int T, bool printMode, 
 		}
 		//dst = temp;
 		return Vec8i(firstLine[0], firstLine[1], firstLine[2], firstLine[3],
-			-1, -1, -1, -1);
+					 -1, -1, -1, -1);
 	}
 	return 0;
 }
 
-Vec4i ransac_algorithm(vector<Vec4i> lines, vector<Point2i> P, int w, int h, int T, double& inlierPercent, Rect weightingRect)
+Vec4i ransac_algorithm(vector<Vec4i> lines, vector<Point2i> P, int w, int h, int T, double &inlierPercent, Rect weightingRect)
 {
 	Vec4i resultLine;
 	int cntMax(-1);
@@ -1215,10 +1254,7 @@ Vec4i ransac_algorithm(vector<Vec4i> lines, vector<Point2i> P, int w, int h, int
 			//cnt++;
 			if (distance_between_line_and_point(checkLine, calculPoint, w, h) < T)
 			{
-				if (P[j].x > weightingRect.x
-					&& P[j].x < weightingRect.x + weightingRect.width
-					&& P[j].y > weightingRect.y
-					&& P[j].y < weightingRect.y + weightingRect.height)
+				if (P[j].x > weightingRect.x && P[j].x < weightingRect.x + weightingRect.width && P[j].y > weightingRect.y && P[j].y < weightingRect.y + weightingRect.height)
 				{
 					//가중치영역인 weightingRect에서 지지를 받는 경우.
 					if (P[j].y > weightingRect.y + (weightingRect.height / 2))
@@ -1252,7 +1288,7 @@ Vec4i ransac_algorithm(vector<Vec4i> lines, vector<Point2i> P, int w, int h, int
 
 int slopeSign(Vec4i line)
 {
-	if (line[1] == -1)	//직선이 없다는것.
+	if (line[1] == -1) //직선이 없다는것.
 		return 0;
 	else if (slope(line) > 0)
 		return 1;
@@ -1265,7 +1301,7 @@ double slope(Vec4i line)
 	return ((double)line[3] - line[1]) / ((double)line[2] - line[0]);
 }
 
-double distance_between_line_and_point(Vec4i& line, Point2i point, int w, int h)
+double distance_between_line_and_point(Vec4i &line, Point2i point, int w, int h)
 {
 	double m, b;
 	m = slope(line);
@@ -1302,10 +1338,10 @@ int getPointY_at_X(Vec4i line, const int X)
 	return (int)(m * X + b);
 }
 
-int lineDeviation(Mat& dst, Vec4i line1, Vec4i line2)
+int lineDeviation(Mat &dst, Vec4i line1, Vec4i line2)
 {
 	//y = 10에서 직선끼리의 거리 비교.
-	//return getPointX_at_Y(line1, 50) - getPointX_at_Y(line2, 50);    
+	//return getPointX_at_Y(line1, 50) - getPointX_at_Y(line2, 50);
 	//09.21 오후 3시, 로타리 끝부분의 과 조향 문제로 수정함
 	return getPointX_at_Y(line1, 100) - getPointX_at_Y(line2, 100);
 }
@@ -1335,14 +1371,14 @@ Point centerPoint(Vec4i line)
 	return Point((line[0] + line[2]) / 2.0, (line[1] + line[3]) / 2.0);
 }
 
-void regionOfInterest(Mat& src, Mat& dst, Point* points)
+void regionOfInterest(Mat &src, Mat &dst, Point *points)
 { // points의 포인터인 이유-> 여러개의 꼭짓점 경우
 
 	Mat maskImg = Mat::zeros(src.size(), CV_8UC3);
 
 	//Scalar ignore_mask_color = Scalar(255, 255, 255);
-	const Point* ppt[1] = { points }; //개의 꼭짓점 :n vertices
-	int npt[] = { 4 };
+	const Point *ppt[1] = {points}; //개의 꼭짓점 :n vertices
+	int npt[] = {4};
 
 	fillPoly(maskImg, ppt, npt, 1, Scalar(255, 255, 255), 8);
 	Mat maskedImg;
@@ -1350,7 +1386,8 @@ void regionOfInterest(Mat& src, Mat& dst, Point* points)
 	dst = maskedImg;
 }
 
-int isDark(Mat& frame, const double percent, int debug) {
+int isDark(Mat &frame, const double percent, int debug)
+{
 
 	Mat grayFrame;
 
@@ -1358,9 +1395,9 @@ int isDark(Mat& frame, const double percent, int debug) {
 
 	int pixelCnt(0);
 	int pixelValue(0);
-	for (int i = 0; i < grayFrame.cols; i += 1)		// i += 10 에서 바꿈 08.27 AM 01:58
+	for (int i = 0; i < grayFrame.cols; i += 1) // i += 10 에서 바꿈 08.27 AM 01:58
 	{
-		for (int j = 0; j < grayFrame.rows / 2; j += 1)	// j += 10 에서 바꿈 08.27 AM 01:58
+		for (int j = 0; j < grayFrame.rows / 2; j += 1) // j += 10 에서 바꿈 08.27 AM 01:58
 		{
 			pixelValue += grayFrame.at<uchar>(j, i);
 			pixelCnt++;
@@ -1397,14 +1434,18 @@ int isDark(Mat& frame, const double percent, int debug) {
 	}
 }
 
-int Tunnel_isStart(Mat& frame, const double percent) {
-	if (!first_tunnel++) flag_tunnel = -1;
+int Tunnel_isStart(Mat &frame, const double percent)
+{
+	if (!first_tunnel++)
+		flag_tunnel = -1;
 
-	if (isDark(frame, percent, 0)) {
+	if (isDark(frame, percent, 0))
+	{
 		if (flag_tunnel < MAXTHR_tunnel)
 			flag_tunnel++;
 	}
-	else {
+	else
+	{
 		if (flag_tunnel > 0)
 			flag_tunnel--;
 	}
@@ -1414,7 +1455,7 @@ int Tunnel_isStart(Mat& frame, const double percent) {
 	return 0;
 }
 
-bool priorityStop(Mat& src, Mat& dst, int length, bool debug)
+bool priorityStop(Mat &src, Mat &dst, int length, bool debug)
 {
 	Scalar lower_red1(0, 100, 150);
 	Scalar upper_red1(12, 255, 255);
@@ -1431,7 +1472,9 @@ bool priorityStop(Mat& src, Mat& dst, int length, bool debug)
 	inRange(src_hsv, lower_red2, upper_red2, src_red2);
 	src_red = src_red1 | src_red2;
 
-	int column_accumulation[640] = { 0, };
+	int column_accumulation[640] = {
+		0,
+	};
 	int column_max = -1;
 	int maxPosition = 0;
 	for (int x = 0; x < src.cols; x++)
@@ -1515,9 +1558,9 @@ bool priorityStop(Mat& src, Mat& dst, int length, bool debug)
 	return false;
 }
 
-int checkRedSignal(Mat& src, Mat& dst, double percent, bool debug)
+int checkRedSignal(Mat &src, Mat &dst, double percent, bool debug)
 {
-	Scalar lower_red1(0, 50, 120);		//50 120
+	Scalar lower_red1(0, 50, 120); //50 120
 	Scalar upper_red1(12, 255, 255);
 	Scalar lower_red2(168, 50, 120);
 	Scalar upper_red2(180, 255, 255);
@@ -1532,7 +1575,7 @@ int checkRedSignal(Mat& src, Mat& dst, double percent, bool debug)
 	src_red = src_red1 | src_red2;
 
 	int redPixel = countPixel(src_red, Rect_signalDetect);
-	double redRatio((double)redPixel / Rect_signalDetect.area());	//검출된 픽셀수를 전체 픽셀수로 나눈 비율
+	double redRatio((double)redPixel / Rect_signalDetect.area()); //검출된 픽셀수를 전체 픽셀수로 나눈 비율
 	redRatio *= 100.0;
 
 	if (debug)
@@ -1565,9 +1608,9 @@ int checkRedSignal(Mat& src, Mat& dst, double percent, bool debug)
 		return false;
 }
 
-int checkYellowSignal(Mat& src, Mat& dst, double percent, bool debug)
+int checkYellowSignal(Mat &src, Mat &dst, double percent, bool debug)
 {
-	Scalar lower_yellow(18, 50, 120);	//50 120
+	Scalar lower_yellow(18, 50, 120); //50 120
 	Scalar upper_yellow(42, 255, 255);
 
 	Mat src_hsv;
@@ -1577,7 +1620,7 @@ int checkYellowSignal(Mat& src, Mat& dst, double percent, bool debug)
 	inRange(src_hsv, lower_yellow, upper_yellow, src_yellow);
 
 	int yellowPixel = countPixel(src_yellow, Rect_signalDetect);
-	double yellowRatio((double)yellowPixel / Rect_signalDetect.area());	//검출된 픽셀수를 전체 픽셀수로 나눈 비율
+	double yellowRatio((double)yellowPixel / Rect_signalDetect.area()); //검출된 픽셀수를 전체 픽셀수로 나눈 비율
 	yellowRatio *= 100.0;
 
 	if (debug)
@@ -1610,7 +1653,7 @@ int checkYellowSignal(Mat& src, Mat& dst, double percent, bool debug)
 		return false;
 }
 
-int checkGreenSignal(Mat& src, Mat& dst, double percent, bool debug)
+int checkGreenSignal(Mat &src, Mat &dst, double percent, bool debug)
 {
 	Scalar lower_green(38, S, V); //50 75
 	Scalar upper_green(77, 255, 255);
@@ -1623,9 +1666,8 @@ int checkGreenSignal(Mat& src, Mat& dst, double percent, bool debug)
 	src_hsv = src_hsv & roiMat;
 	inRange(src_hsv, lower_green, upper_green, src_green);
 
-
 	int greenPixel = countPixel(src_green, Rect_signalDetect);
-	double greenRatio((double)greenPixel / Rect_signalDetect.area());	//검출된 픽셀수를 전체 픽셀수로 나눈 비율
+	double greenRatio((double)greenPixel / Rect_signalDetect.area()); //검출된 픽셀수를 전체 픽셀수로 나눈 비율
 	greenRatio *= 100.0;
 
 	putText(dst, "green Pixel : " + toString(greenRatio) + '%', signalPrintPosition, 0, 1, Scalar(0, 255, 0), 2);
@@ -1636,7 +1678,9 @@ int checkGreenSignal(Mat& src, Mat& dst, double percent, bool debug)
 	// moveWindow("trackbar", 320 * 5, 180 * 5);
 
 	/* 초록색 검출된 행렬을 같은 열끼리 모두 더한 후, 최대값이 나온 열을 찾는다 */
-	int column_accumulation[640] = { 0, };
+	int column_accumulation[640] = {
+		0,
+	};
 	int column_max = -1;
 	int maxPosition = 0;
 	for (int x = 0; x < src.cols; x++)
@@ -1687,7 +1731,6 @@ int checkGreenSignal(Mat& src, Mat& dst, double percent, bool debug)
 	left_area_ratio = ((double)left_area / (left_area + right_area)) * 100.0;
 	right_area_ratio = 100 - left_area_ratio;
 
-
 	if (debug)
 	{
 		for (int x = Rect_signalDetect.x; x < Rect_signalDetect.x + Rect_signalDetect.width; x++)
@@ -1712,7 +1755,7 @@ int checkGreenSignal(Mat& src, Mat& dst, double percent, bool debug)
 			else
 			{
 				line(src, Point(x, Rect_signalDetect.y + Rect_signalDetect.height),
-					Point(x, Rect_signalDetect.y + Rect_signalDetect.height - column_accumulation[x]), Scalar(0, 0, 255), 1);
+					 Point(x, Rect_signalDetect.y + Rect_signalDetect.height - column_accumulation[x]), Scalar(0, 0, 255), 1);
 			}
 		}
 		Point maxPoint(maxPosition, Rect_signalDetect.y + Rect_signalDetect.height);
@@ -1721,7 +1764,6 @@ int checkGreenSignal(Mat& src, Mat& dst, double percent, bool debug)
 		line(src, maxPoint + Point(0, -column_accumulation[maxPosition]), maxPoint + Point(-left_length, -column_accumulation[maxPosition]), orange, 2);
 
 		line(src, maxPoint + Point(0, -column_accumulation[maxPosition]), maxPoint + Point(right_length, -column_accumulation[maxPosition]), purple, 2);
-
 
 		putText(dst, "length ratio = " + toString(left_length_ratio) + " : " + toString(right_length_ratio), signalPrintPosition + Point(0, +30), 0, 0.64, Scalar(0, 255, 0), 2);
 		putText(dst, "area ratio = " + toString(left_area_ratio) + " : " + toString(right_area_ratio), signalPrintPosition + Point(0, +60), 0, 0.64, Scalar(0, 255, 0), 2);
@@ -1757,22 +1799,23 @@ int checkGreenSignal(Mat& src, Mat& dst, double percent, bool debug)
 		return 0;
 }
 
-int countPixel(Mat& src, Rect ROI)
+int countPixel(Mat &src, Rect ROI)
 {
 	int cnt(0);
 	for (int x = ROI.x; x < ROI.x + ROI.width; x++)
 	{
 		for (int y = ROI.y; y < ROI.y + ROI.height; y++)
 		{
-			if (src.at<uchar>(y, x)) cnt++;		// 붉은색이 검출된 픽셀 개수 계산
+			if (src.at<uchar>(y, x))
+				cnt++; // 붉은색이 검출된 픽셀 개수 계산
 		}
 	}
 	return cnt;
 }
 
-void outputMission(Mat& dst, int ms0, int ms1, int ms2, int ms3, int ms4, int ms5, int ms6, int ms7, int ms8)
+void outputMission(Mat &dst, int ms0, int ms1, int ms2, int ms3, int ms4, int ms5, int ms6, int ms7, int ms8)
 {
-	int ms[9] = { ms0, ms1, ms2, ms3, ms4, ms5, ms6, ms7, ms8 };
+	int ms[9] = {ms0, ms1, ms2, ms3, ms4, ms5, ms6, ms7, ms8};
 	//0 == NONE, 1 == READY, 2 == REMAIN, 3 == DONE
 	for (int i = 0; i < 9; i++)
 	{
@@ -1829,7 +1872,7 @@ void outputMission(Mat& dst, int ms0, int ms1, int ms2, int ms3, int ms4, int ms
 	}
 }
 
-void outputSensor(Mat& dst, int w, int h, int c1, int c2, int c3, int c4, int c5, int c6, int stopline)
+void outputSensor(Mat &dst, int w, int h, int c1, int c2, int c3, int c4, int c5, int c6, int stopline)
 {
 	putText(dst, toString(c1) + "_cm", Point((w / 2) - 30, 22), 0, 0.75, (c1 > 30) ? white : (c1 < 15) ? red : yellow, 2);
 	putText(dst, toString(c2) + "_cm", Point(w - 88, 100), 0, 0.75, (c2 > 30) ? white : (c2 < 15) ? red : yellow, 2);
@@ -1844,13 +1887,14 @@ void outputSensor(Mat& dst, int w, int h, int c1, int c2, int c3, int c4, int c5
 		putText(dst, "black Line", Point(w / 2 - 60, 320), 0, 0.85, Scalar(0, 255, 255), 2);
 }
 
-void fileOutimage(Mat& src, string str)
+void fileOutimage(Mat &src, string str)
 {
 	if (imwrite(str, src))
-		cout << "imwrite() success!,\tfilename = " << str << endl;;
+		cout << "imwrite() success!,\tfilename = " << str << endl;
+	;
 }
 
-void fileOutVideo(Mat& src)
+void fileOutVideo(Mat &src)
 {
 	if (!outputVideo.isOpened())
 	{
@@ -1866,7 +1910,7 @@ void closeVideoWrite()
 	cout << "videoWrite() finish!" << endl;
 }
 
-double calculDistance_toFinish(Mat& src, Mat& dst, const int distance_top, const int distance_bottom)
+double calculDistance_toFinish(Mat &src, Mat &dst, const int distance_top, const int distance_bottom)
 {
 	Mat src_yel;
 	Mat src_can;
@@ -1876,7 +1920,7 @@ double calculDistance_toFinish(Mat& src, Mat& dst, const int distance_top, const
 	lineFiltering(src, src_yel, 0);
 	cannyEdge(src_yel, src_can);
 
-	int lineType;	// 0 == 라인이 없다, 1 == 라인이 한개, 2 == 라인이 두개.
+	int lineType; // 0 == 라인이 없다, 1 == 라인이 한개, 2 == 라인이 두개.
 	Vec8i l = hough_ransacLine(src_can, src, 640, 360, 15, true, lineType, 0.0, 0.15);
 	Vec4i firstLine(l[0], l[1], l[2], l[3]);
 	Vec4i secondLine(l[4], l[5], l[6], l[7]);
@@ -1896,20 +1940,22 @@ double calculDistance_toFinish(Mat& src, Mat& dst, const int distance_top, const
 	return distance;
 }
 
-void overlayImage(Mat& src, Mat& dst, const Mat& image, Point location)
+void overlayImage(Mat &src, Mat &dst, const Mat &image, Point location)
 {
 	src.copyTo(dst);
 	//for (int y = std::max(location.y, 0); y < src.rows; ++y)
 	for (int y = location.y; y < src.rows; ++y)
 	{
 		int fY = y - location.y;
-		if (fY >= image.rows) break;
+		if (fY >= image.rows)
+			break;
 
 		//for (int x = std::max(location.x, 0); x < src.cols; ++x)
 		for (int x = location.x; x < src.cols; ++x)
 		{
 			int fX = x - location.x;
-			if (fX >= image.cols) break;
+			if (fX >= image.cols)
+				break;
 
 			double opacity = ((double)image.data[fY * image.step + fX * image.channels() + 3]) / 255.;
 
@@ -1924,7 +1970,7 @@ void overlayImage(Mat& src, Mat& dst, const Mat& image, Point location)
 	}
 }
 
-void overlayTire(Mat& src, Mat& dst, double angle)
+void overlayTire(Mat &src, Mat &dst, double angle)
 {
 	if (btire)
 	{

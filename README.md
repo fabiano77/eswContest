@@ -16,9 +16,28 @@
     sudo apt-get install gparted
 
 ```
-2. Download crosscompiler
+2. Download a Setup file 
+```shell scripts
+    git clone https://github.com/fabiano77/eswContest.git
+    cd eswContest
+```
+3. Download crosscompiler
 It is classified. (You can't get it in ordinary way)<br/>
 If you have the crosscompiler, `tar -xzvf CarSDK.tar.gz` and move the `crossCompiler` dir to `eswContest/CarSDK/`.
+
+4. Compile the file
+```shell scripts
+    cd CarSDK/Application/
+```
+- 'tracking red'
+`cd 1st_mission_code` </br>
+After changing directory, `make`.
+- 'main autonomous driving system'
+`cd self_driving_program`</br>
+After changing directory, `make`.
+
+5. Transfer to Embedded Car
+
 
 #### Setting Communication with Car and PC
 

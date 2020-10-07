@@ -29,22 +29,28 @@ If you have the crosscompiler, `tar -xzvf CarSDK.tar.gz` and move the `crossComp
 ```shell scripts
     cd CarSDK/Application/
 ```
-- 'tracking red'
-`cd 1st_mission_code` </br>
-After changing directory, `make`.
-- 'main autonomous driving system'
+- Tracking Red</br>
+`cd 1st_mission_code` 
+After changing directory, make the run file by `make`.
+- Main Autonomous Driving System </br>
 `cd self_driving_program`</br>
-After changing directory, `make`.
+After changing directory, make the run file by `make`.
 
 5. Transfer to Embedded Car
+Connect the Embedded Car with your PC by ethernet cable. (setup the ethernet environment part is needed#TODO)<br/>
 
-
-#### Setting Communication with Car and PC
-
+```shell scripts
+    scp self_driving_program root@10.10.70.4:/home/root/self_driving_program
+```
+Now, get the authority of a car by using ssh. You can test our code.
+```shell scripts
+    ssh root@10.10.70.4
+    ./self_driving_program
+```
 
 ### Contributors
-Daehee Kim (fabiano77)<br/>
-Minsoo Kang (3neutronstar)<br/>
-Sangmin Lee (smlee212)<br/>
-Seokjun Lee (ykykyk112)<br/>
+- Daehee Kim (fabiano77)<br/>
+- Minsoo Kang (3neutronstar)<br/>
+- Sangmin Lee (smlee212)<br/>
+- Seokjun Lee (ykykyk112)<br/>
 Soongil Univ.

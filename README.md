@@ -2,7 +2,7 @@
 
 ### Requirement(Installment)
 - Ubuntu 16.04, 18.04 (WSL2 is available)
-- Hyundai Autrun's Embedded Car
+- Hyundai Autron's Embedded Car
 
 ### How to Download Requirement
 

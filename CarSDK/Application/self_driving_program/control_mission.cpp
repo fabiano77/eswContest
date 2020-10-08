@@ -128,7 +128,7 @@ extern "C"
 		for (i = 0; i < 8; i++)
 		{
 			if (i == 0)
-				printf(" "); //ì²? ë²ˆì§¸ ë¹„íŠ¸ ë¬´ì‹œ
+				printf(" "); 
 			else
 			{
 				if ((i % 4) <= 1)
@@ -152,28 +152,6 @@ extern "C"
 		if (flag > Lineflag)
 		{
 			return 1;
-		}
-		return 0;
-	}
-
-	int STOP_WhiteLine(int Lineflag)
-	{
-		if (!first_Line++)
-			flag_line = 0;
-
-		if (StopLine(Lineflag))
-		{
-			flag_line++;
-			if (flag_line > 2)
-			{
-				flag_line = 0;
-				return 1;
-			}
-		}
-		else
-		{
-			if (flag_line > 0)
-				flag_line--;
 		}
 		return 0;
 	}
@@ -228,7 +206,6 @@ extern "C"
 		{
 			if (SettingSpeed > 0)
 			{
-				//? •ë©? ì¶©ëŒ ê°ì??
 				if (DistanceSensor_cm(1) <= 6)
 				{
 					DesireSpeed_Write(0);
@@ -238,7 +215,6 @@ extern "C"
 			}
 			else
 			{
-				//?›„ë©? ì¶©ëŒ ê°ì??
 				if (DistanceSensor_cm(4) <= 7)
 				{
 					DesireSpeed_Write(0);
@@ -257,7 +233,7 @@ extern "C"
 					break;
 				}
 			}
-			usleep(10000); // 50->20 ms ë³?ê²? 09/14
+			usleep(10000); 
 		}
 		//cout << "\tDesiredDistance() :encoder = " << on_encoder << endl;
 	}
@@ -274,7 +250,7 @@ extern "C"
 		{
 			if (SettingSpeed > 0)
 			{
-				//? •ë©? ì¶©ëŒ ê°ì??
+				
 				if (DistanceSensor_cm(1) <= 5)
 				{
 					cout << "onlyDistance() : front detection!" << endl;
@@ -284,7 +260,7 @@ extern "C"
 			}
 			else
 			{
-				//?›„ë©? ì¶©ëŒ ê°ì??
+				
 				if (DistanceSensor_cm(4) <= 5)
 				{
 					cout << "onlyDistance() : rear detection!" << endl;
@@ -341,7 +317,7 @@ extern "C"
 			if (flag_wait == 2)
 			{
 				flag_wait = -1;
-				flag_go = 25; // ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿? ï¿½ï¿½ï¿½ï¿½
+				flag_go = 25; 
 			}
 		}
 		return check_start;
@@ -349,10 +325,6 @@ extern "C"
 
 	int Tunnel_isEnd(const int Distance1, const int Distance2, const int Distance3, const int Distance4)
 	{
-		/* 2,6 - 3,5 (1,2 - 3,4)
-		1. ï¿½ï¿½(2, 6)
-		2. ï¿½ï¿½(3, 5)
-		*/
 		int i;
 		if (first_Tunnel == 1)
 		{
@@ -430,13 +402,13 @@ extern "C"
 	{
 		if (on == 1)
 		{
-			if (!(lightFlag & 0x01))		  //1ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ 1ï¿½ï¿½ ï¿½Æ´Ò°ï¿½ï¿?
-				lightFlag = lightFlag ^ 0x01; //XORï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 1ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø´ï¿?.
+			if (!(lightFlag & 0x01))		  
+				lightFlag = lightFlag ^ 0x01; 
 		}
 		else if (on == 0)
 		{
-			if (lightFlag & 0x01)			  //1ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ 1ï¿½Ï°ï¿½ï¿?
-				lightFlag = lightFlag ^ 0x01; //XORï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 0ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø´ï¿?.
+			if (lightFlag & 0x01)			  
+				lightFlag = lightFlag ^ 0x01; 
 		}
 		CarLight_Write(lightFlag);
 	}
@@ -445,13 +417,13 @@ extern "C"
 	{
 		if (on == 1)
 		{
-			if (!(lightFlag & 0x02))		  //2ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ 1ï¿½ï¿½ ï¿½Æ´Ò°ï¿½ï¿?
-				lightFlag = lightFlag ^ 0x02; //XORï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 1ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø´ï¿?.
+			if (!(lightFlag & 0x02))		  
+				lightFlag = lightFlag ^ 0x02; 
 		}
 		else if (on == 0)
 		{
-			if (lightFlag & 0x02)			  //2ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ 1ï¿½Ï°ï¿½ï¿?
-				lightFlag = lightFlag ^ 0x02; //XORï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 0ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø´ï¿?.
+			if (lightFlag & 0x02)			  
+				lightFlag = lightFlag ^ 0x02; 
 		}
 		CarLight_Write(lightFlag);
 	}
@@ -493,14 +465,14 @@ extern "C"
 		int i;
 		switch (key)
 		{
-		case 'a': //steering left		: servo ì¡°í–¥ê°? (2000(ì¢?) ~ 1500(ì¤?) ~ 1000(?š°)
+		case 'a': //steering left		: servo
 			cdata->steerVal += 50;
 			SteeringServo_Write_uart(cdata->steerVal);
 			printf("angle_steering = %d\n", cdata->steerVal);
 			printf("SteeringServoControl_Read() = %d\n", SteeringServoControl_Read()); //default = 1500, 0x5dc
 			break;
 
-		case 'd': //steering right	: servo ì¡°í–¥ê°? (2000(ì¢?) ~ 1500(ì¤?) ~ 1000(?š°)
+		case 'd': //steering right	: servo
 			cdata->steerVal -= 50;
 			SteeringServo_Write_uart(cdata->steerVal);
 			printf("angle_steering = %d\n", cdata->steerVal);
@@ -517,7 +489,7 @@ extern "C"
 			DesireSpeed_Write_uart(cdata->desireSpeedVal);
 			break;
 
-		case 'x': //go backward	speed ?Œ?ˆ˜ ?¸ê°??•˜ë©? ?›„ì§?.
+		case 'x': //go backward	speed
 
 			cdata->desireSpeedVal = -cdata->settingSpeedVal;
 			DesireSpeed_Write_uart(cdata->desireSpeedVal);
@@ -551,7 +523,7 @@ extern "C"
 			printf("CameraYServoControl_Read() = %d\n", CameraYServoControl_Read()); //default = 1500, 0x5dc
 			break;
 
-		case '1': //speed up		ìµœë?? ?Š¤?”¼?“œ 500
+		case '1': //speed up		
 			cdata->settingSpeedVal += 10;
 			printf("speed = %d\n", cdata->settingSpeedVal);
 			break;
@@ -576,12 +548,12 @@ extern "C"
 			break;
 
 		case 'z':										//front lamp on/off
-			cdata->lightFlag = cdata->lightFlag ^ 0x01; // 00000000 ^ 00000001 (XOR)ï¿½ï¿½ï¿½ï¿½ : 0ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ XORï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+			cdata->lightFlag = cdata->lightFlag ^ 0x01; 
 			CarLight_Write(cdata->lightFlag);
 			break;
 
 		case 'c':										//rear lamp on/off
-			cdata->lightFlag = cdata->lightFlag ^ 0x02; // 00000000 ^ 00000010 (XOR)ï¿½ï¿½ï¿½ï¿½ : 1ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ XORï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+			cdata->lightFlag = cdata->lightFlag ^ 0x02;
 			CarLight_Write(cdata->lightFlag);
 			break;
 
@@ -634,166 +606,3 @@ void RoundAbout_Init()
 	flag_stop = -1;
 	flag_end = -1;
 }
-
-/* 
-
-	int RoundAbout_isDelay(const int Distance1)
-	{
-		if (Distance1 < lower_RoundDistance)
-		{
-			if (flag_wait < 2)
-				flag_wait++;
-
-			if (flag_wait == 2)
-			{
-				flag_wait = -1;
-				flag_stop = 25; // ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ó¸ï¿½Å­ ï¿½ï¿½ï¿½ï¿½
-				return 1;
-			}
-			return 0;
-		}
-		else
-		{
-			if (flag_wait > 0)
-				flag_wait--;
-
-			if (flag_stop == 0)
-			{
-				flag_stop = -1;
-				return 0;
-			}
-			else if (flag_stop > 0)
-			{
-				if (Distance1 >= uper_RoundDistance)
-				{
-					flag_stop--;
-				}
-				return 1;
-			}
-			else
-			{
-				return 0;
-			}
-		}
-	}
-
-	int RoundAbout_isEnd(const int Distance1, const int Distance2)
-	{
-		if ((Distance1 > 40) && (Distance2 > 40))
-		{									   // ï¿½Å¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Æ¹ï¿½ï¿½Íµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
-			if (flag_end < THR_RoundAbout_END) // ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ğ±ï¿½ ï¿½ï¿½ï¿½î³²
-				flag_end++;
-		}
-		else
-		{
-			if (flag_end > 0)
-				flag_end--;
-		}
-
-		if (flag_end > THR_RoundAbout_END)
-		{
-			flag_end = -1;
-			return 1;
-		}
-		return 0;
-	}
-
-	int Tunnel_isTunnel(const int Distance1, const int Distance2, const int Distance3, const int Distance4) {
-		if (!first_Tunnel++) flag_Tunnel = 0;
-
-		if ((Distance1 < 30) && (Distance2 < 30)) {
-			if(flag_Tunnel < 2)
-				flag_Tunnel++;
-		}
-		else {
-			if (flag_Tunnel > 0)
-				flag_Tunnel--;
-		}
-
-		if ((Distance3 < 30) && (Distance4 < 30)) {
-			if ((flag_Tunnel >= 2) && (flag_Tunnel < 4))
-				flag_Tunnel++;
-		}
-		else {
-			if (flag_Tunnel >= 2)
-				flag_Tunnel--;
-		}
-
-		if (flag_Tunnel == 4) {
-			return 1;
-		}
-		return 0;
-	}
-
-int Tunnel_isStart(const int Distance2, const int Distance6, const int Distance3, const int Distance5)
-{
-	if (Distance2 <= 30 && Distance3 <= 30 && Distance5 <= 30 && Distance6 <= 30)
-		return 1;
-	else
-		return 0;
-}
-
-int Tunnel_SteerVal(const int Distance1, const int Distance2)
-	{
-		// ï¿½ï¿½ï¿½ï¿½ 19 , ï¿½ï¿½ï¿½ï¿½ 40
-		// ï¿½ß¾ï¿½ï¿½ï¿½ 10, 10ï¿½ï¿½ ï¿½ï¿½ï¿½Í¾ï¿½ï¿½ï¿½
-		absDist = abs(Distance1 - Distance2);
-		int i;
-		if (absDist < 2)
-		{
-			i = 0;
-			if (++flag_steer[0] == 2)
-			{
-				steerVal = 0;
-			}
-		}
-		else if (absDist < 4)
-		{
-			i = 1;
-			if (++flag_steer[1] == 2)
-			{
-				steerVal = 80;
-			}
-		}
-		else if (absDist < 6)
-		{
-			i = 2;
-			if (++flag_steer[2] == 2)
-			{
-				steerVal = 180;
-			}
-		}
-		else if (absDist < 8)
-		{
-			i = 3;
-			if (++flag_steer[3] == 2)
-			{
-				steerVal = 300;
-			}
-		}
-		else
-		{
-			i = 4;
-			if (++flag_steer[4] == 2)
-			{
-				steerVal = 420;
-			}
-		}
-
-		if (flag_steer[i] == 2)
-		{
-			flag_steer[i] = 0;
-			if (Distance1 < Distance2)
-				steerVal = -steerVal;
-		}
-		for (int j = 0; j < 5; j++)
-		{
-			if ((flag_steer[j] > 0) && (j != i))
-				flag_steer[j]--;
-		}
-		printf("steer : %d, [%d, %d]\n", steerVal, Distance2, Distance1);
-		return 1500 - steerVal;
-	}
-
-
-*/

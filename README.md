@@ -16,6 +16,7 @@
 > 
 > 미션 수행 - [mission.h(주석 포함)](https://github.com/fabiano77/eswContest/blob/master/CarSDK/Application/self_driving_program/mission.h), [mission.c](https://github.com/fabiano77/eswContest/blob/master/CarSDK/Application/self_driving_program/mission.c)
 
+## 동작 사진
 ![차량 사진](https://github.com/fabiano77/eswContest/blob/master/CarSDK/overlay_pictures/car.png?raw=true " ")
 
 ---

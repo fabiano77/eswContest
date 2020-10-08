@@ -1,4 +1,24 @@
 # eswContest
+#### 2020년 제 18회 임베디드 소프트웨어 경진대회 - 자율주행모형자동차 부문 출품작
+#### 시연 영상 URL : [https://youtu.be/-LHJQVNMprU](https://youtu.be/-LHJQVNMprU)
+####    팀 이름 : 알아서가SSU
+####    팀 구성 : 숭실대학교 김대희, 강민수, 이상민, 이석준
+<br/>
+
+# 주요 코드
+프로그램 폴더 - [eswContest/CarSDK/Application/self_driving_program](https://github.com/fabiano77/eswContest/blob/master/CarSDK/Application/self_driving_program)
+
+> 메인 - [main.c](https://github.com/fabiano77/eswContest/blob/master/CarSDK/Application/self_driving_program/main.c)
+> 
+> 영상 처리 - [imgProcess.h(주석 포함)](https://github.com/fabiano77/eswContest/blob/master/CarSDK/Application/self_driving_program/imgProcess.h), [imgProcess.cpp](https://github.com/fabiano77/eswContest/blob/master/CarSDK/Application/self_driving_program/imgProcess.cpp)
+> 
+> 차량 제어 - [control_mission.h(주석 포함)](https://github.com/fabiano77/eswContest/blob/master/CarSDK/Application/self_driving_program/control_mission.h), [control_mission.cpp](https://github.com/fabiano77/eswContest/blob/master/CarSDK/Application/self_driving_program/control_mission.cpp)
+> 
+> 미션 수행 - [mission.h(주석 포함)](https://github.com/fabiano77/eswContest/blob/master/CarSDK/Application/self_driving_program/mission.h), [mission.c](https://github.com/fabiano77/eswContest/blob/master/CarSDK/Application/self_driving_program/mission.c)
+
+
+---
+<br/>
 
 ### Requirement(Installment)
 - Ubuntu 16.04, 18.04 (WSL2 is available)
@@ -53,4 +73,5 @@ Now, get the authority of a car by using ssh. You can test our code.
 - Minsoo Kang (3neutronstar)<br/>
 - Sangmin Lee (smlee212)<br/>
 - Seokjun Lee (ykykyk112)<br/>
+<br/>
 Soongil Univ.

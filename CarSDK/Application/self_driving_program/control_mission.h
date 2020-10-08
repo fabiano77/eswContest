@@ -79,15 +79,15 @@ extern "C"
 
 	enum CameraVerticalState
 	{
-		CAMERA_UP,	
-		CAMERA_DOWN 
+		CAMERA_UP,		//장애물 인식을 위해 올린상태
+		CAMERA_DOWN 	//원래 상태 -->이 부분 조정 필요 MS
 	};
 
 	enum DirectionState
 	{
 		LEFT,
 		RIGHT,
-		STOP
+		STOP	//앞에 장애물이 있다면 스탑(overtaking이 on일 때만)
 	};
 
 	enum SignalLightState
@@ -103,24 +103,24 @@ extern "C"
 	{
 		bool frontRight;
 		bool rearRight;
-		bool bparking;	 
-		bool verticalFlag;	
-		bool horizontalFlag; 
+		bool bparking;	 		// 주차 중 거리 정보 출력을 위한 변수
+		bool verticalFlag;		// 수직 주차 활성화를 나타내는 플래그
+		bool horizontalFlag; 	// 수평 주차 활성화를 나타내는 플래그
 	};
 
 	struct Overtaking
 	{
-		bool sideSensorFlag;				   
-		enum DirectionState headingDirection; 
-		enum CameraVerticalState updownCamera; 
+		bool sideSensorFlag;					// 차량의 사이드 탐지 활성화 플래그			   
+		enum DirectionState headingDirection; 	//차량의 이동방향 결정
+		enum CameraVerticalState updownCamera; 	//카메라를 위로 올릴지 말지 결정하는 부분
 		char leftFlag;
 		char rightFlag;
 	};
 
 	struct Finish
 	{
-		bool checkFront; 
-		int distEndLine; 
+		bool checkFront; //앞의 수직 노란선 파악
+		int distEndLine; //결승선까지의 거리
 	};
 
 	struct SignalLight
@@ -134,58 +134,58 @@ extern "C"
 	/******************** thread struct ********************/
 	struct MissionData
 	{
-		uint32_t loopTime; 
+		uint32_t loopTime; 						// mission 스레드 루프 시간
 		bool broundabout;
 		bool btunnel;
-		bool overtakingFlag; 
+		bool overtakingFlag; 					// 추월차로 플래그 ->MS 이후 overtaking struct 추가할 것
 		bool changeMissionState;
 		bool checkWhiteLineFlag;
 		int frame_priority;
 		int finish_distance;
 
-		struct Parking parkingData;			
-		struct Overtaking overtakingData;	
-		struct SignalLight signalLightData; 
+		struct Parking parkingData;				// 주차에 필요한 플래그를 담는 구조체
+		struct Overtaking overtakingData;		// 추월에 필요한 플래그 담는 구조체
+		struct SignalLight signalLightData; 	// 신호등에 필요한 변수를 담는 구조체
 		struct Finish finishData;
 		enum MissionState ms[9]; 
 	};
 
 	struct ControlData
 	{
-		int steerVal;
-		int cameraY;
-		int desireSpeedVal;
-		int beforeSpeedVal;
-		int settingSpeedVal;
-		unsigned short lightFlag;
+		int steerVal;			// 차량의 현재 앞바퀴 조향각
+		int cameraY;			// 차량의 현재 카메라각도
+		int desireSpeedVal;		// 차량의 현재 속도
+		int beforeSpeedVal;		// 차량의 이전 속도
+		int settingSpeedVal;	
+		unsigned short lightFlag;// 차량의 현재 전조등상태
 	};
 
 	struct ImgProcessData
 	{
-		uint32_t loopTime; 
-		bool dump_request; 
-		bool bskip;
-		bool bvideoRecord;	
-		bool bvideoSave;	
-		bool bcalibration;	
-		bool bdebug;		
-		bool btopview;		
-		bool bmission;		
-		bool bauto;			
-		bool bspeedControl; 
-		bool bwhiteLine;	
-		bool bprintString;	
-		bool bprintMission; 
-		bool bprintSensor;	
-		bool bprintTire;	
-		bool bdark;			
-		bool bcheckFrontWhite;
-		bool bcheckPriority;	
-		bool bcheckSignalLight; 
-		bool bcheckFinishLine;	
-		char missionString[30]; 
-		int topMode;			
-		int debugMode;			
+		uint32_t loopTime; 			// img 스레드 루프 시간
+		bool dump_request; 			// 덤프요청
+		bool bskip;					
+		bool bvideoRecord;			// 동영상 녹화 시작
+		bool bvideoSave;			// 동영상 파일 저장
+		bool bcalibration;			// 캘리브레이션 ON/OFF
+		bool bdebug;				// 디버그모드 ON/OFF
+		bool btopview;				// 탑뷰 ON/OFF
+		bool bmission;				// 미션진입 ON/OFF (차선인식 사용하지 않게됨)
+		bool bauto;					// 자동 조향 ON/OFF
+		bool bspeedControl; 		// 자동 조향의 속도개입 ON/OFF
+		bool bwhiteLine;			// 자동 조향의 흰색 선 탐지 ON/OFF
+		bool bprintString;			// 오버레이에 문자열 표시 ON/OFF
+		bool bprintMission; 		// 오버레이에 미션정보 표시
+		bool bprintSensor;			// 오버레이에 센서값 표시 ON/OFF
+		bool bprintTire;			// 오버레이에 바퀴각도 표시
+		bool bdark;					// 터널 탐지 ON/OFF
+		bool bcheckFrontWhite;		
+		bool bcheckPriority;		// 우선정지 표지판 탐지 ON/OFF
+		bool bcheckSignalLight; 	// 신호등 탐지 ON/OFF
+		bool bcheckFinishLine;		// 피니시라인 탐지 ON/OFF
+		char missionString[30]; 	// 오버레이에 표시할 문자열
+		int topMode;				// 탑뷰 모드 (0, 1, 2)
+		int debugMode;				// 디버그 모드(0~ 9)
 	};
 
 	// DistanceSensor_cm

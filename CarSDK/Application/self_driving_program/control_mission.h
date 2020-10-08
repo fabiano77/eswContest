@@ -300,15 +300,15 @@ extern "C"
 	// manualControl
 	// key를 입력받아서 원하는 동작을 하게 하는 함수이다.
 	// PreCondition 	: none
-	// PostCondition	: 
+	// PostCondition	: 입력 key에 따라 해당 동작이 실행된다.
 	// Return 		: none
 	void manualControl(struct ControlData *cdata, char key);
 
 	// timeCheck
 	// 원하는 구간 사이에 걸리는 시간을 구하는 함수이다.
-	// PreCondition 	: 
-	// PostCondition	: 
-	// Return 		: 
+	// PreCondition 	: none
+	// PostCondition	: none
+	// Return 		: 현재까지 측정한 시간을 반환한다.
 	uint32_t timeCheck(struct timeval *tempTime);
 
 #ifdef __cplusplus

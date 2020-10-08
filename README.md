@@ -5,7 +5,7 @@
 ####    팀 구성 : 숭실대학교 김대희, 강민수, 이상민, 이석준
 <br/>
 
-# 주요 코드
+## 주요 코드
 프로그램 폴더 - [eswContest/CarSDK/Application/self_driving_program](https://github.com/fabiano77/eswContest/blob/master/CarSDK/Application/self_driving_program)
 
 > 메인 - [main.c](https://github.com/fabiano77/eswContest/blob/master/CarSDK/Application/self_driving_program/main.c)

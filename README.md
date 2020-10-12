@@ -1,6 +1,6 @@
-# eswContest
+# 2020eswContes_car_2020
 #### 2020년 제 18회 임베디드 소프트웨어 경진대회 - 자율주행모형자동차 부문 출품작
-#### 시연 영상 URL : [https://youtu.be/-LHJQVNMprU](https://youtu.be/-LHJQVNMprU)
+#### 시연 영상 URL : [https://youtu.be/N7R0gRULq3o](https://youtu.be/N7R0gRULq3o)
 ####    팀 이름 : 알아서가SSU
 ####    팀 구성 : 숭실대학교 김대희, 강민수, 이상민, 이석준
 <br/>

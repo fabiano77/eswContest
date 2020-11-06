@@ -11,3 +11,15 @@
 /.vs
 .vscode/settings.json
 .vscode/c_cpp_properties.json
+CarSDK/Application/self_driving_program/car_lib.lo
+CarSDK/Application/self_driving_program/control_mission.lo
+CarSDK/Application/self_driving_program/display-kms.lo
+CarSDK/Application/self_driving_program/drawing.lo
+CarSDK/Application/self_driving_program/exam_cv.lo
+CarSDK/Application/self_driving_program/imgProcess.lo
+CarSDK/Application/self_driving_program/input_cmd.lo
+CarSDK/Application/self_driving_program/mission.lo
+CarSDK/Application/self_driving_program/self_driving_program
+CarSDK/Application/self_driving_program/util.lo
+CarSDK/Application/self_driving_program/v4l2.lo
+CarSDK/Application/self_driving_program/vpe-common.lo

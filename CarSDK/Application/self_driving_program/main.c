@@ -93,24 +93,18 @@ static void free_input_buffers(struct buffer **buffer, uint32_t n, bool bmultipl
 	free(buffer);
 }
 
-static void draw_operatingtime(struct display *disp, uint32_t time, uint32_t itime, uint32_t mtime)
+static void draw_operatingtime(struct display *disp, uint32_t time, uint32_t itime)
 {
 	FrameBuffer tmpFrame;
 	unsigned char *pbuf[4];
-	char strmtime[128];
 	char strtime[128];
 	char stritime[128];
-	char strfps[128];
 
-	memset(strmtime, 0, sizeof(strmtime));
 	memset(strtime, 0, sizeof(strtime));
 	memset(stritime, 0, sizeof(stritime));
-	memset(strfps, 0, sizeof(strfps));
 
-	sprintf(strmtime, "m thrd : %03d(ms)", mtime);
 	sprintf(strtime, "optime : %03d(ms)", time);
 	sprintf(stritime, "i thrd : %03d(ms)", itime);
-	sprintf(strfps, "%4d(fps)", (itime == 0) ? 1000 : 1000 / itime);
 
 	if (get_framebuf(disp->overlay_p_bo, pbuf) == 0)
 	{
@@ -118,10 +112,8 @@ static void draw_operatingtime(struct display *disp, uint32_t time, uint32_t iti
 		tmpFrame.format = draw_get_pixel_foramt(disp->overlay_p_bo->fourcc); //FORMAT_RGB888; //alloc_overlay_plane() -- FOURCC('R','G','2','4');
 		tmpFrame.stride = disp->overlay_p_bo->pitches[0];					 //tmpFrame.width*3;
 
-		drawString(&tmpFrame, strmtime, TIME_TEXT_X, TIME_TEXT_Y - 40, 0, TIME_TEXT_COLOR);
 		drawString(&tmpFrame, strtime, TIME_TEXT_X, TIME_TEXT_Y - 20, 0, TIME_TEXT_COLOR);
 		drawString(&tmpFrame, stritime, TIME_TEXT_X, TIME_TEXT_Y, 0, TIME_TEXT_COLOR);
-		drawString(&tmpFrame, strfps, FPS_TEXT_X, FPS_TEXT_Y, 0, FPS_TEXT_COLOR);
 	}
 }
 
@@ -133,6 +125,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 	unsigned char srcbuf[VPE_OUTPUT_W * VPE_OUTPUT_H * 3];
 	uint32_t optime;
 	struct timeval st, et;
+	struct timeval time;
 	unsigned char *cam_pbuf[4];
 	bool delay_flag = false;
 	bool checking_stopline = false;
@@ -140,18 +133,20 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 	if (get_framebuf(cambuf, cam_pbuf) == 0)
 	{
 		memcpy(srcbuf, cam_pbuf[0], VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
-		gettimeofday(&st, NULL);
 
+		gettimeofday(&st, NULL);
+		timeCheck(&time);
 		/********************************************************/
 		/*			우리가 만든 알고리즘 함수를 넣는 부분		*/
 		/********************************************************/
-
+		//printf("\nstart1 \t\t: %d\n", timeCheck(&time));
 		/* 라인 필터링이나 canny 결과 확인 */
 		if (t_data->imgData.bdebug)
 		{
 			if (t_data->imgData.debugMode == 9)
 				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
 			debugFiltering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.debugMode);
+			//printf("debug \t\t: %d\n", timeCheck(&time));
 		}
 
 		/* 미션 진행중에 처리하는 영상처리 */
@@ -305,6 +300,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		/* 기본 상태에서 처리되는 영상처리 */
 		else
 		{
+
 			if (t_data->imgData.bcheckPriority)
 			{
 				if (isPriorityStop(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf))
@@ -358,6 +354,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
 			}
 
+			printf("before auto \t: %d\n", timeCheck(&time));
 			if (t_data->imgData.bauto)
 			{
 				int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.bwhiteLine);
@@ -381,6 +378,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 			{
 				t_data->controlData.beforeSpeedVal = 0;
 			}
+			printf("after  auto \t: %d\n", timeCheck(&time));
 
 			/*checkWhiteLineFlag�?? True?�� 경우, RoundAbout */
 		}
@@ -390,45 +388,44 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		/********************************************************/
 
 		/* 영상처리후 오버레이로 정보 등등 출력.*/
-		if (checking_stopline)
-		{
-			checking_stopline = false;
-			displayPrintStopLine(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H);
-		}
+		// if (checking_stopline)
+		// {
+		// 	checking_stopline = false;
+		// 	displayPrintStopLine(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H);
+		// }
 		if (t_data->imgData.bprintString)
 		{
 			displayPrintStr(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, t_data->imgData.missionString);
 		}
-		if (t_data->imgData.bprintMission)
-		{
-			displayPrintMission(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H,
-								(int)t_data->missionData.ms[0], (int)t_data->missionData.ms[1], (int)t_data->missionData.ms[2],
-								(int)t_data->missionData.ms[3], (int)t_data->missionData.ms[4], (int)t_data->missionData.ms[5],
-								(int)t_data->missionData.ms[6], (int)t_data->missionData.ms[7], (int)t_data->missionData.ms[8]);
-		}
-		if (t_data->imgData.bprintSensor)
-		{
-			displayPrintSensor(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H,
-							   DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3),
-							   DistanceSensor_cm(4), DistanceSensor_cm(5), DistanceSensor_cm(6), StopLine(4));
-		}
-		if (t_data->imgData.bprintTire)
-		{
-			overlayPrintAngle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->controlData.steerVal);
-		}
-
+		// if (t_data->imgData.bprintMission)
+		// {
+		// 	displayPrintMission(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H,
+		// 						(int)t_data->missionData.ms[0], (int)t_data->missionData.ms[1], (int)t_data->missionData.ms[2],
+		// 						(int)t_data->missionData.ms[3], (int)t_data->missionData.ms[4], (int)t_data->missionData.ms[5],
+		// 						(int)t_data->missionData.ms[6], (int)t_data->missionData.ms[7], (int)t_data->missionData.ms[8]);
+		// }
+		// if (t_data->imgData.bprintSensor)
+		// {
+		// 	displayPrintSensor(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H,
+		// 					   DistanceSensor_cm(1), DistanceSensor_cm(2), DistanceSensor_cm(3),
+		// 					   DistanceSensor_cm(4), DistanceSensor_cm(5), DistanceSensor_cm(6), StopLine(4));
+		// }
+		// if (t_data->imgData.bprintTire)
+		// {
+		// 	overlayPrintAngle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->controlData.steerVal);
+		// }
+		// printf("overlay \t: %d\n", timeCheck(&time));
 		/*		현재 영상 .jpg파일로 저장		*/
-		if (t_data->imgData.dump_request)
-		{
-			opencv_imwrite(srcbuf);
-			t_data->imgData.dump_request = false;
-		}
-
+		// if (t_data->imgData.dump_request)
+		// {
+		// 	opencv_imwrite(srcbuf);
+		// 	t_data->imgData.dump_request = false;
+		// }
 		/*		현재 영상 .avi파일로 녹화		*/
-		if (t_data->imgData.bvideoRecord)
-		{
-			memcpy(t_data->img_data_buf, srcbuf, VPE_OUTPUT_IMG_SIZE);
-		}
+		// if (t_data->imgData.bvideoRecord)
+		// {
+		// 	memcpy(t_data->img_data_buf, srcbuf, VPE_OUTPUT_IMG_SIZE);
+		// }
 
 		/* 신호등 검출화면을 유지하기 위한 delay */
 		if (delay_flag)
@@ -440,7 +437,8 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
 		gettimeofday(&et, NULL);
 		optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
-		draw_operatingtime(disp, optime, t_data->imgData.loopTime, t_data->missionData.loopTime);
+		printf("img_process() \t: %d\n", optime);
+		draw_operatingtime(disp, optime, t_data->imgData.loopTime);
 	}
 }
 
@@ -485,8 +483,10 @@ void *image_process_thread(void *arg)
 	vpe->field = V4L2_FIELD_ANY;
 	data->imgData.loopTime = 0;
 
+
 	while (1)
 	{
+
 		gettimeofday(&st, NULL);
 		index = v4l2_dqbuf(v4l2, &vpe->field);
 		vpe_input_qbuf(vpe, index);
@@ -499,11 +499,9 @@ void *image_process_thread(void *arg)
 		}
 		index = vpe_output_dqbuf(vpe);
 		capt = vpe->disp_bufs[index];
-
 		/********************************************************/
 		/* 영상처리 시작										*/
 		/********************************************************/
-
 		img_process(vpe->disp, capt, data, map1, map2);
 
 		/********************************************************/
@@ -521,6 +519,7 @@ void *image_process_thread(void *arg)
 		v4l2_qbuf(v4l2, vpe->input_buf_dmafd[index], index);
 		gettimeofday(&et, NULL);
 		data->imgData.loopTime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
+		printf("img_thread() \t: %d\n\n", data->imgData.loopTime);
 	}
 
 	MSG("Ok!");
@@ -853,59 +852,55 @@ void *input_thread(void *arg)
 	return NULL;
 }
 
-void *video_record_thread(void *arg)
-{
-	struct thr_data *data = (struct thr_data *)arg;
-	struct timeval st, et;
-	bool videoEnd = false;
-	int fps = 10;
-	int delay_ms = 1000 / fps;
-	int current_frame = 0;
-	int recordTime_ms;
-
-	while (!data->imgData.bvideoRecord)
-	{
-		usleep(500000);
-	}
-	printf("\tvideo_record_thred() : ON\n");
-
-	// st체크를 이곳에서 하고, et체크를 두 번째 while에 하여 매 프레임마다 delay_ms만큼 누산시키어
-	// 프레임이 찍히는 시점과 영상에서의 해당 시점을 근사하도록 한다. (0.1초 절대값 캡처 대신 영상의 전체길이의 비율로)
-	gettimeofday(&st, NULL);
-
-	while (1)
-	{
-		current_frame++;
-
-		if (videoEnd)
-		{
-			usleep(10000000);
-		}
-		else if (data->imgData.bvideoSave)
-		{
-			opencv_videoclose();
-			videoEnd = true;
-		}
-		else if (data->imgData.bvideoRecord)
-		{
-			opencv_videowrite(data->img_data_buf);
-		}
-
-		while (1) //영상 녹화 싱크를 맞춰주기 위한 delay
-		{
-			gettimeofday(&et, NULL);
-			recordTime_ms = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
-			if (recordTime_ms > (delay_ms * current_frame))
-			{
-				break;
-			}
-			else
-			{
-				usleep(5000); // 5ms delay
-			}
-		}
-	}
-}
+// void *video_record_thread(void *arg)
+// {
+// 	struct thr_data *data = (struct thr_data *)arg;
+// 	struct timeval st, et;
+// 	bool videoEnd = false;
+// 	int fps = 10;
+// 	int delay_ms = 1000 / fps;
+// 	int current_frame = 0;
+// 	int recordTime_ms;
+// 	while (!data->imgData.bvideoRecord)
+// 	{
+// 		usleep(500000);
+// 	}
+// 	printf("\tvideo_record_thred() : ON\n");
+// 	// st체크를 이곳에서 하고, et체크를 두 번째 while에 하여 매 프레임마다 delay_ms만큼 누산시키어
+// 	// 프레임이 찍히는 시점과 영상에서의 해당 시점을 근사하도록 한다. (0.1초 절대값 캡처 대신 영상의 전체길이의 비율로)
+// 	gettimeofday(&st, NULL);
+// 	while (1)
+// 	{
+// 		current_frame++;
+// 		printf("video in\n");
+// 		if (videoEnd)
+// 		{
+// 			usleep(10000000);
+// 		}
+// 		else if (data->imgData.bvideoSave)
+// 		{
+// 			opencv_videoclose();
+// 			videoEnd = true;
+// 		}
+// 		else if (data->imgData.bvideoRecord)
+// 		{
+// 			opencv_videowrite(data->img_data_buf);
+// 		}
+// 		while (1) //영상 녹화 싱크를 맞춰주기 위한 delay
+// 		{
+// 			gettimeofday(&et, NULL);
+// 			recordTime_ms = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
+// 			if (recordTime_ms > (delay_ms * current_frame))
+// 			{
+// 				break;
+// 			}
+// 			else
+// 			{
+// 				usleep(5000); // 5ms delay
+// 			}
+// 		}
+// 	}
+// }
 
 /************************************************/
 /*	Thread - mission_thread						*/
@@ -913,8 +908,6 @@ void *video_record_thread(void *arg)
 void *mission_thread(void *arg)
 {
 	struct thr_data *data = (struct thr_data *)arg;
-	struct timeval time;
-	time.tv_sec = 0;
 	enum MissionState start = READY;
 	enum MissionState flyover = DONE;
 	enum MissionState priority = DONE;
@@ -924,9 +917,6 @@ void *mission_thread(void *arg)
 	enum MissionState overtake = NONE;
 	enum MissionState signalLight = NONE;
 	enum MissionState finish = NONE;
-
-	//int i = 0;
-	int temp = 0;
 	data->missionData.ms[0] = start;
 	data->missionData.ms[1] = flyover;
 	data->missionData.ms[2] = priority;
@@ -936,13 +926,10 @@ void *mission_thread(void *arg)
 	data->missionData.ms[6] = overtake;
 	data->missionData.ms[7] = signalLight;
 	data->missionData.ms[8] = finish;
-
 	//각 미션이 수행되고나면 detect를 하지 않도록 변수설정.
 
 	while (1)
 	{
-		data->missionData.loopTime = timeCheck(&time);
-
 		if (start && start != DONE)
 		{
 			data->missionData.ms[0] = start;
@@ -1027,24 +1014,6 @@ void *mission_thread(void *arg)
 			finish = DONE;
 		}
 
-		if(data->imgData.bvideoSave == false && data->imgData.bvideoRecord == true)
-		{
-			if(temp == 5)
-			{
-				if (DistanceSensor_cm(1) <= 5 && DistanceSensor_cm(4) <= 5)
-				{
-					data->imgData.bvideoSave = true;
-					buzzer(3, 100000, 300000);
-				}
-				temp = 0;
-			}
-			else
-			{
-				temp++;
-			}
-			
-		}
-
 		if (data->missionData.changeMissionState)
 		{
 			start = data->missionData.ms[0];
@@ -1070,16 +1039,6 @@ void *mission_thread(void *arg)
 			data->missionData.ms[6] = overtake;
 			data->missionData.ms[7] = signalLight;
 			data->missionData.ms[8] = finish;
-		}
-
-		if(data->imgData.bvideoSave == false && data->imgData.bvideoSave == true)
-		{
-		if(DistanceSensor_cm(1) < 15 && DistanceSensor_cm(4) < 15)
-		{
-			buzzer(1, 0, 1000000);
-			data->imgData.bvideoRecord = false;
-			data->imgData.bvideoSave = true;
-		}
 		}
 
 		usleep(80000); //50ms -> 70ms
@@ -1111,7 +1070,7 @@ void signal_handler(int sig)
 		vpe_close(pexam_data->vpe);
 		v4l2_close(pexam_data->v4l2);
 
-		printf("-- 6_camera_opencv_disp example End --\n");
+		printf("-- alSSU team program End --\n");
 	}
 }
 
@@ -1127,7 +1086,6 @@ int main(int argc, char **argv)
 	int disp_argc = 3;
 	char *disp_argv[] = {"dummy", "-s", "4:480x272", "\0"}; // 추후 �??�?? ?���?? ?��?�� ?�� 처리..
 	int ret = 0;
-	memset(tdata.img_data_buf, 0, sizeof(tdata.img_data_buf));
 
 	printf("------ main start ------\n");
 
@@ -1166,6 +1124,7 @@ int main(int argc, char **argv)
 	tdata.imgData.bprintTire = true;
 	sprintf(tdata.imgData.missionString, "(null)");
 
+
 	/******************** Control Data ********************/
 	tdata.controlData.settingSpeedVal = 40;
 	tdata.controlData.desireSpeedVal = 0;
@@ -1198,6 +1157,7 @@ int main(int argc, char **argv)
 	tdata.missionData.signalLightData.finalDirection = 0;
 	tdata.missionData.finishData.checkFront = false;
 	tdata.missionData.checkWhiteLineFlag = false;
+
 	int i = 0;
 	for (i = 0; i < 8; i++)
 	{
@@ -1287,12 +1247,12 @@ int main(int argc, char **argv)
 	}
 	pthread_detach(tdata.threads[2]);
 
-	ret = pthread_create(&tdata.threads[3], NULL, video_record_thread, &tdata);
-	if (ret)
-	{
-		MSG("Failed creating video_record_thread");
-	}
-	pthread_detach(tdata.threads[3]);
+	// ret = pthread_create(&tdata.threads[3], NULL, video_record_thread, &tdata);
+	// if (ret)
+	// {
+	// 	MSG("Failed creating video_record_thread");
+	// }
+	// pthread_detach(tdata.threads[3]);
 
 	/* register signal handler for <CTRL>+C in order to clean up */
 	if (signal(SIGINT, signal_handler) == SIG_ERR)

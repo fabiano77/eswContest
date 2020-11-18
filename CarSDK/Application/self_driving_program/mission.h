@@ -15,16 +15,16 @@ struct thr_data
     struct v4l2 *v4l2;
     struct vpe *vpe;
     struct buffer **input_bufs;
+    //double anti_overflow[1];
     struct ControlData controlData;
-    struct MissionData missionData;
     struct ImgProcessData imgData;
-    unsigned char img_data_buf[VPE_OUTPUT_IMG_SIZE];
+    struct MissionData missionData;
 
     int msgq_id;
 
     bool bfull_screen;
     bool bstream_start;
-    pthread_t threads[4];
+    pthread_t threads[3];
 };
 
 // startFunc

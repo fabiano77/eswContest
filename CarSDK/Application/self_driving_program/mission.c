@@ -25,12 +25,15 @@ struct thr_data *ptr_data;
 void startFunc(struct thr_data *arg)
 {
     struct thr_data *data = (struct thr_data *)arg;
+    usleep(100000);
     DesireSpeed_Write_uart(0);
+    usleep(100000);
     data->imgData.bmission = true;
     data->imgData.bprintString = true;
-    sprintf(data->imgData.missionString, "start - Wait");
 
     enum StartState state = WAIT_S;
+    sprintf(data->imgData.missionString, "start - Wait");
+
 
     while (state)
     {

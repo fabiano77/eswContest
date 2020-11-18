@@ -1,4 +1,5 @@
 ﻿#include "imgProcess.h"
+#include <stdint.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <time.h>
@@ -8,6 +9,7 @@
 #include <string>
 #include <sstream>
 #include <opencv2/opencv.hpp>
+
 
 #define PI 3.1415926
 
@@ -78,8 +80,8 @@ void fileOutVideo(Mat &src);
 void fileOutimage(Mat &src, string str);
 
 void closeVideoWrite();
-
 double calculDistance_toFinish(Mat &src, Mat &dst, const int distance_top, const int distance_bottom);
+
 
 void overlayImage(Mat &src, Mat &dst, const Mat &image, Point location);
 
@@ -811,33 +813,33 @@ int V = 75;
 
 VideoWriter outputVideo;
 string file_name;
-static void on_trackbar(int, void *)
-{
-}
+// static void on_trackbar(int, void *)
+// {
+// }
 
 void settingStatic(int w, int h)
 {
 
-	struct timeval timestamp;
-	struct tm *today;
-	gettimeofday(&timestamp, NULL);
-	today = localtime(&timestamp.tv_sec);
+	// struct timeval timestamp;
+	// struct tm *today;
+	// gettimeofday(&timestamp, NULL);
+	// today = localtime(&timestamp.tv_sec);
 
-	string filename(toString(today->tm_hour) + "_" + toString(today->tm_min) + "_" + toString(today->tm_sec) + ".avi");
-	file_name = filename;
-	//string filename("video.avi");
-	//outputVideo.open(filename, VideoWriter::fourcc('D', 'I', 'V', 'X'), 10, Size(640, 360), true);	//Windows
-	outputVideo.open(filename, CV_FOURCC('D', 'I', 'V', 'X'), 10, Size(640, 360), true); //Linux
-	cout << "\t outputVideo status : ";
-	if (!outputVideo.isOpened())
-	{
-		cout << " outputVideo is failed!." << endl;
-	}
-	else
-	{
-		cout << "is open" << endl;
-	}
-	cout << "filename = " << filename << endl;
+	// string filename(toString(today->tm_hour) + "_" + toString(today->tm_min) + "_" + toString(today->tm_sec) + ".avi");
+	// file_name = filename;
+	// string filename("video.avi");
+	// outputVideo.open(filename, VideoWriter::fourcc('D', 'I', 'V', 'X'), 10, Size(640, 360), true);	//Windows
+	// outputVideo.open(filename, CV_FOURCC('D', 'I', 'V', 'X'), 10, Size(640, 360), true); //Linux
+	// cout << "\t outputVideo status : ";
+	// if (!outputVideo.isOpened())
+	// {
+	// 	cout << " outputVideo is failed!." << endl;
+	// }
+	// else
+	// {
+	// 	cout << "is open" << endl;
+	// }
+	// cout << "filename = " << filename << endl;
 
 	color[0] = Scalar(255, 255, 0);
 	color[1] = blue;
@@ -877,8 +879,8 @@ void settingStatic(int w, int h)
 
 	Tire = imread("./overlay_pictures/tire.png", IMREAD_UNCHANGED);			 //in Linux
 	backimg = imread("./overlay_pictures/background.png", IMREAD_UNCHANGED); //in Linux
-	//Tire = imread("pictures/tire.png", IMREAD_UNCHANGED);				//in Windows
-	//backimg = imread("pictures/background.png", IMREAD_UNCHANGED);		//in Windows
+	// Tire = imread("pictures/tire.png", IMREAD_UNCHANGED);				//in Windows
+	// backimg = imread("pictures/background.png", IMREAD_UNCHANGED);		//in Windows
 	if (Tire.type() == 0 || backimg.type() == 0)
 		btire = false;
 	else
@@ -900,7 +902,7 @@ int calculSteer(Mat &src, int w, int h, bool whiteMode)
 	cannyEdge(src_yel, src_can);
 
 	int lineType; // 0 == 라인이 없다, 1 == 라인이 한개, 2 == 라인이 두개.
-	Vec8i l = hough_ransacLine(src_can, src, w, h, 15, true, lineType, 0.22, 30.0);
+	Vec8i l = hough_ransacLine(src_can, src, w, h, 15, false, lineType, 0.22, 30.0);
 	Vec4i firstLine(l[0], l[1], l[2], l[3]);
 	Vec4i secondLine(l[4], l[5], l[6], l[7]);
 
@@ -993,7 +995,7 @@ int calculSteer(Mat &src, int w, int h, bool whiteMode)
 	if (lineType == 2)
 		line(src, Point(secondLine[0], secondLine[1]), Point(secondLine[2], secondLine[3]), pink, 5);
 
-	//putText(src, "angle" + ((retval == 9999) ? "?" : toString(retval / 10., 1)), printPosition, 0, 0.8, Scalar(255, 255, 255), 2);
+	putText(src, "angle" + ((retval == 9999) ? "?" : toString(retval / 10., 1)), printPosition, 0, 0.8, Scalar(255, 255, 255), 2);
 	//putText(src, "Steering = " + ((retval == 9999) ? "?" : toString(retval)), printPosition, 0, 0.8, Scalar(255, 255, 255), 2);
 	//putText(src, (abs(retval) < 20) ? "[ ^ ]" : (retval < 0) ? "[<<<]" : "[>>>]", printPosition + Point(55, 30), 0, 0.8, Scalar(255, 255, 255), 2);
 
@@ -1066,6 +1068,7 @@ Vec8i hough_ransacLine(Mat &src, Mat &dst, int w, int h, int T, bool printMode, 
 	vector<Point2i> P;
 	Vec4i firstLine;
 	Vec4i secondLine;
+
 
 	for (int x = 0; x < w; x++)
 	{
@@ -1143,6 +1146,7 @@ Vec8i hough_ransacLine(Mat &src, Mat &dst, int w, int h, int T, bool printMode, 
 		}
 	}
 
+
 	if (printMode)
 	{
 		for (unsigned int j = 0; j < lines.size(); j++)
@@ -1170,6 +1174,7 @@ Vec8i hough_ransacLine(Mat &src, Mat &dst, int w, int h, int T, bool printMode, 
 			rightLine = lines[i];
 		}
 	}
+
 	//for문이 끝나고 나면 각종 최좌측, 최우측 직선 각각 저장.
 	//temp = dst;
 	if (slopeSign(leftLine) < 0 && slopeSign(rightLine) > 0) //좌우 직선의 기울기부호가 다르다 == 직진구간.
@@ -1196,6 +1201,7 @@ Vec8i hough_ransacLine(Mat &src, Mat &dst, int w, int h, int T, bool printMode, 
 			putText(dst, "slope = " + toString(slope(secondLine)), printPoint + Point(+160, 30), 0, 0.6, Scalar(255, 255, 255), 2);
 		}
 		//dst = temp;
+
 		return Vec8i(firstLine[0], firstLine[1], firstLine[2], firstLine[3],
 					 secondLine[0], secondLine[1], secondLine[2], secondLine[3]);
 	}
@@ -1252,9 +1258,11 @@ Vec8i hough_ransacLine(Mat &src, Mat &dst, int w, int h, int T, bool printMode, 
 			putText(dst, "rect  = " + toString((double)lineRatio.height / lineRatio.width), printPoint + Point(0, 60), 0, 0.7, Scalar(255, 255, 255), 2);
 		}
 		//dst = temp;
+
 		return Vec8i(firstLine[0], firstLine[1], firstLine[2], firstLine[3],
 					 -1, -1, -1, -1);
 	}
+
 	return 0;
 }
 

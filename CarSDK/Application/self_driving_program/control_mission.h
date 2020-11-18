@@ -119,8 +119,8 @@ extern "C"
 
 	struct Finish
 	{
-		bool checkFront; //앞의 수직 노란선 파악
 		int distEndLine; //결승선까지의 거리
+		bool checkFront; //앞의 수직 노란선 파악
 	};
 
 	struct SignalLight
@@ -134,20 +134,20 @@ extern "C"
 	/******************** thread struct ********************/
 	struct MissionData
 	{
-		uint32_t loopTime; 						// mission 스레드 루프 시간
-		bool broundabout;
-		bool btunnel;
-		bool overtakingFlag; 					// 추월차로 플래그 ->MS 이후 overtaking struct 추가할 것
-		bool changeMissionState;
-		bool checkWhiteLineFlag;
-		int frame_priority;
-		int finish_distance;
-
 		struct Parking parkingData;				// 주차에 필요한 플래그를 담는 구조체
 		struct Overtaking overtakingData;		// 추월에 필요한 플래그 담는 구조체
 		struct SignalLight signalLightData; 	// 신호등에 필요한 변수를 담는 구조체
 		struct Finish finishData;
 		enum MissionState ms[9]; 
+		uint32_t loopTime; 						// mission 스레드 루프 시간
+
+		int frame_priority;
+		int finish_distance;
+		bool broundabout;
+		bool btunnel;
+		bool overtakingFlag; 					// 추월차로 플래그 ->MS 이후 overtaking struct 추가할 것
+		bool changeMissionState;
+		bool checkWhiteLineFlag;
 	};
 
 	struct ControlData
@@ -162,6 +162,9 @@ extern "C"
 
 	struct ImgProcessData
 	{
+		char missionString[50]; 	// 오버레이에 표시할 문자열
+		int debugMode;				// 디버그 모드(0~ 9)
+		int topMode;				// 탑뷰 모드 (0, 1, 2)
 		uint32_t loopTime; 			// img 스레드 루프 시간
 		bool dump_request; 			// 덤프요청
 		bool bskip;					
@@ -183,9 +186,6 @@ extern "C"
 		bool bcheckPriority;		// 우선정지 표지판 탐지 ON/OFF
 		bool bcheckSignalLight; 	// 신호등 탐지 ON/OFF
 		bool bcheckFinishLine;		// 피니시라인 탐지 ON/OFF
-		char missionString[30]; 	// 오버레이에 표시할 문자열
-		int topMode;				// 탑뷰 모드 (0, 1, 2)
-		int debugMode;				// 디버그 모드(0~ 9)
 	};
 
 	// DistanceSensor_cm

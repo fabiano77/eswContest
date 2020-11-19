@@ -605,6 +605,7 @@ extern "C"
 		putText(srcRGB, toString((double)count_right), location_right, font, fontScale, Scalar(255, 0, 0), 2);
 		/*Choose Left or Right*/
 		//선이 없는 경우 배제하는 것도 필요
+		printf("%d \t%d\n",count_left, count_right);
 		if (count_left < count_right)
 		{
 			putText(srcRGB, "Left to go", location, font, fontScale, Scalar(0, 0, 255), 2);
@@ -1031,8 +1032,8 @@ void lineFiltering(Mat &src, Mat &dst, int mode)
 
 	if (mode == 1 || mode == 2) //흰색차선 인식 모드
 	{
-		Scalar lower_white(75, 20, 200); // bgr white
-		Scalar upper_white(255, 255, 255);
+		Scalar lower_white(75, 0, 200); // hsv white
+		Scalar upper_white(255, 50, 255);
 		Mat whiteBinMat;
 
 		inRange(hsv, lower_white, upper_white, whiteBinMat);

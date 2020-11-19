@@ -175,8 +175,8 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					t_data->missionData.overtakingData.rightFlag++;
 				}
 
-				/*3회 판단 이후 확인*/
-				if ((t_data->missionData.overtakingData.rightFlag + t_data->missionData.overtakingData.leftFlag) >= 3)
+				/*5회 판단 이후 확인*/
+				if ((t_data->missionData.overtakingData.rightFlag + t_data->missionData.overtakingData.leftFlag) >= 5)
 				{
 					/*오른쪽 flag가 큰경우*/
 					if (t_data->missionData.overtakingData.rightFlag > t_data->missionData.overtakingData.leftFlag)
@@ -987,14 +987,13 @@ void *mission_thread(void *arg)
 
 		if (overtake && overtake != DONE)
 		{
-			data->imgData.bwhiteLine = true;
-
 			int distance_1 = DistanceSensor_cm(1);
 			data->imgData.bwhiteLine = true;
 			if (distance_1 <= 30)
 			{
 				data->imgData.bmission = true;
 				data->imgData.btopview = false; //topview off
+				
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "overtake");
 				printf("overtake \n");
@@ -1004,8 +1003,9 @@ void *mission_thread(void *arg)
 				data->imgData.bwhiteLine = true;
 				bool obstacle = false;
 				int thresDistance = 450;
+				usleep(10000);
 				DesireSpeed_Write_uart(0);
-				usleep(5000);
+				usleep(300000);
 				int distance_2;
 				int distance_3;
 				int distance_5;
@@ -1020,6 +1020,7 @@ void *mission_thread(void *arg)
 						{
 							data->controlData.cameraY = 1610;
 							CameraYServoControl_Write(data->controlData.cameraY);
+							usleep(300000);
 							data->missionData.overtakingData.updownCamera = CAMERA_UP;
 						}
 						while (data->missionData.overtakingData.headingDirection == STOP)

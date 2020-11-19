@@ -240,6 +240,13 @@ extern "C"
 	// Return 		: none
 	void DesiredDistance(int SettingSpeed, int SettingDistance, int SettingSteering);
 
+	// sleepDistance
+	// 일정 거리(encoderVal)를 주행하는동안 유지하고있는 함수이다.
+	// PreCondition 	: none
+	// PostCondition	: SettingDistance 만큼의 거리를 주행후 함수를 종료한다(주행은 유지).
+	// Return 		: none
+	void sleepDistance(int SettingDistance);
+	
 	// onlyDistance
 	// 원하는 속도(speed)를 가지고 일정 거리(encoderVal)를 주행하는 함수이다.
 	// PreCondition 	: none
@@ -310,6 +317,12 @@ extern "C"
 	// PostCondition	: none
 	// Return 		: 현재까지 측정한 시간을 반환한다.
 	uint32_t timeCheck(struct timeval *tempTime);
+
+	// laneChange
+	// PreCondition		: none
+	// PostCondition	: 0이면 좌회전, 1이면 우회전 동작을 하는 함수.
+	// Return 			: none
+	void laneChange(int direction, int speed);
 
 #ifdef __cplusplus
 }

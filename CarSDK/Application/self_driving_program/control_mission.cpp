@@ -238,6 +238,42 @@ extern "C"
 		//cout << "\tDesiredDistance() :encoder = " << on_encoder << endl;
 	}
 
+	void sleepDistance(int SettingDistance)
+	{
+		int init_encoder = 0;
+		int on_encoder = 0;
+		usleep(10000);
+		EncoderCounter_Write(init_encoder);
+		usleep(10000);
+		int read_encoder = Encoder_Read();
+		int error_flag = 0;
+		while (read_encoder != 0)
+		{
+			//cout << "[]read_encoder" << read_encoder << endl;
+			read_encoder = Encoder_Read();
+			usleep(20000);
+			EncoderCounter_Write(init_encoder);
+			usleep(20000);
+			if (error_flag++ > 10)
+				printf("sleepDistance(): encoder ERROR!\n");
+		}
+
+		while (1)
+		{
+			on_encoder = abs(Encoder_Read());
+			if (on_encoder != CHECKSUMERROR) // 65278
+			{
+				//printf("encoder : %-4d\n", on_encoder);
+				if (on_encoder >= SettingDistance)
+				{
+					break;
+				}
+			}
+			usleep(10000); 
+		}
+		//cout << "\tDesiredDistance() :encoder = " << on_encoder << endl;
+	}
+
 	void onlyDistance(int SettingSpeed, int SettingDistance)
 	{
 		int init_encoder = 0;
@@ -596,6 +632,36 @@ extern "C"
 		return retVal;
 	}
 
+	void laneChange(int direction, int speed)
+	{
+		while (sensor_using_flag)
+		{
+			usleep(500); //0.5ms
+		}
+		sensor_using_flag = true;
+		DesireSpeed_Write(speed);
+		
+		if(direction)	// 1 == 우 회전.
+		{
+			SteeringServoControl_Write(1100);
+			sleepDistance(1000);
+			SteeringServoControl_Write(1900);
+			sleepDistance(1000);
+		}
+		else
+		{
+			SteeringServoControl_Write(1900);
+			sleepDistance(1000);
+			SteeringServoControl_Write(1100);
+			sleepDistance(1000);
+		}
+		SteeringServoControl_Write(1500);
+		sleepDistance(200);
+
+		buzzer(1, 0, 200000); // 함수의 끝을 알리기 위해 임시적임.
+
+		sensor_using_flag = false;
+	}
 } //extern "C"
 
 void RoundAbout_Init()

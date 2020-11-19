@@ -200,9 +200,9 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				case DETECT_RED:
 					if (checkRed(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf))
 					{
+						sprintf(t_data->imgData.missionString, "check YELLOW");
 						buzzer(1, 0, BUZZER_PULSE);
 						delay_flag = true;
-						sprintf(t_data->imgData.missionString, "check YELLOW");
 						t_data->missionData.signalLightData.state = DETECT_YELLOW;
 					}
 					break;
@@ -210,9 +210,9 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				case DETECT_YELLOW:
 					if (checkYellow(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf))
 					{
+						sprintf(t_data->imgData.missionString, "check GREEN");
 						buzzer(1, 0, BUZZER_PULSE);
 						delay_flag = true;
-						sprintf(t_data->imgData.missionString, "check GREEN");
 						t_data->missionData.signalLightData.state = DETECT_GREEN;
 						t_data->missionData.signalLightData.Accumulation_greenVal = 0;
 						t_data->missionData.signalLightData.ignore_frame = 3;
@@ -230,16 +230,16 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 						t_data->missionData.signalLightData.Accumulation_greenVal += checkGreen(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
 						if (t_data->missionData.signalLightData.Accumulation_greenVal >= 3)
 						{
-							delay_flag = true;
 							buzzer(2, BUZZER_PULSE, BUZZER_PULSE);
+							delay_flag = true;
 							t_data->missionData.signalLightData.state = DETECTION_FINISH;
 							t_data->missionData.signalLightData.finalDirection = 1;
 							t_data->imgData.bcheckSignalLight = false;
 						}
 						else if (t_data->missionData.signalLightData.Accumulation_greenVal <= -3)
 						{
-							delay_flag = true;
 							buzzer(1, 0, BUZZER_PULSE * 2);
+							delay_flag = true;
 							t_data->missionData.signalLightData.state = DETECTION_FINISH;
 							t_data->missionData.signalLightData.finalDirection = -1;
 							t_data->imgData.bcheckSignalLight = false;
@@ -452,15 +452,16 @@ void *image_process_thread(void *arg)
 	struct vpe *vpe = data->vpe;
 	struct buffer *capt;
 	struct timeval st, et;
-	bool isFirst = true;
-	int index;
-	int i;
 	float map1[VPE_OUTPUT_W * VPE_OUTPUT_H] = {
 		0,
 	};
 	float map2[VPE_OUTPUT_W * VPE_OUTPUT_H] = {
 		0,
 	};
+	int index;
+	int i;
+	bool isFirst = true;
+
 	memset(map1, 0, VPE_OUTPUT_W * VPE_OUTPUT_H);
 	memset(map2, 0, VPE_OUTPUT_W * VPE_OUTPUT_H);
 	calibration(map1, map2, VPE_OUTPUT_W, VPE_OUTPUT_H);
@@ -483,10 +484,8 @@ void *image_process_thread(void *arg)
 	vpe->field = V4L2_FIELD_ANY;
 	data->imgData.loopTime = 0;
 
-
 	while (1)
 	{
-
 		gettimeofday(&st, NULL);
 		index = v4l2_dqbuf(v4l2, &vpe->field);
 		vpe_input_qbuf(vpe, index);
@@ -981,7 +980,6 @@ void *mission_thread(void *arg)
 
 		if (roundabout && roundabout != DONE)
 		{
-			//data->imgData.bcheckFrontWhite = true;	// ?���?? ?���???�� ?��?��?���?? ?���?? ON	
 			if (roundaboutFunc(data))
 				roundabout = DONE;
 		}
@@ -1084,8 +1082,8 @@ int main(int argc, char **argv)
 	struct thr_data tdata;
 	ptr_data = &tdata;
 	int disp_argc = 3;
-	char *disp_argv[] = {"dummy", "-s", "4:480x272", "\0"}; // 추후 �??�?? ?���?? ?��?�� ?�� 처리..
 	int ret = 0;
+	char *disp_argv[] = {"dummy", "-s", "4:480x272", "\0"}; // 추후 �??�?? ?���?? ?��?�� ?�� 처리..
 
 	printf("------ main start ------\n");
 
@@ -1129,13 +1127,13 @@ int main(int argc, char **argv)
 	tdata.controlData.settingSpeedVal = 40;
 	tdata.controlData.desireSpeedVal = 0;
 	tdata.controlData.beforeSpeedVal = 0;
-	CarLight_Write(0x00);
 	tdata.controlData.lightFlag = 0x00;
+	tdata.controlData.steerVal = 1500;
+	tdata.controlData.cameraY = 1660;
+	CarLight_Write(0x00);
 	CameraXServoControl_Write(1500);
 	SteeringServoControl_Write(1500);
-	tdata.controlData.steerVal = 1500;
 	CameraYServoControl_Write(1660);
-	tdata.controlData.cameraY = 1660;
 	Winker_Write(ALL_OFF);
 
 	/******************** Mission Data ********************/

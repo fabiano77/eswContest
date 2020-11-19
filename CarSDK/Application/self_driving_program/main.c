@@ -1033,7 +1033,6 @@ void *mission_thread(void *arg)
 							CameraYServoControl_Write(data->controlData.cameraY);
 							data->missionData.overtakingData.updownCamera = CAMERA_UP;
 						}
-
 						while (data->missionData.overtakingData.headingDirection == STOP)
 						{
 							usleep(50000);
@@ -1068,6 +1067,7 @@ void *mission_thread(void *arg)
 							{
 								state = SIDE_ON;
 								sprintf(data->imgData.missionString, "Detect Side");
+								data->imgData.bmission = false;
 								DesireSpeed_Write_uart(BASIC_SPEED);
 								usleep(500000);
 							}
@@ -1092,6 +1092,7 @@ void *mission_thread(void *arg)
 							{
 								state = SIDE_ON;
 								sprintf(data->imgData.missionString, "Detect Side");
+								data->imgData.bmission = false;
 								DesireSpeed_Write_uart(BASIC_SPEED);
 								usleep(500000);
 							}
@@ -1103,7 +1104,7 @@ void *mission_thread(void *arg)
 						break;
 
 					case SIDE_ON:
-						data->imgData.bmission = false;
+
 						// right
 						switch (data->missionData.overtakingData.headingDirection)
 						{
@@ -1115,17 +1116,14 @@ void *mission_thread(void *arg)
 							{
 								obstacle = true;
 							}
-							else if (obstacle == true)
-							{
-								if (distance_5 > 30 && distance_6 > 30) // side-off condition
-								{
-									data->imgData.bmission = true; // Auto Steering off
-									usleep(100000);
-									DesireSpeed_Write_uart(0);
-									obstacle = false;
-									state = SIDE_OFF;
-									sprintf(data->imgData.missionString, "Side OFF");
-								}
+							else if (obstacle == true && distance_5 > 30 && distance_6 > 30)
+							{								   //side-off condition
+								data->imgData.bmission = true; // Auto Steering off
+								usleep(100000);
+								DesireSpeed_Write_uart(0);
+								obstacle = false;
+								state = SIDE_OFF;
+								sprintf(data->imgData.missionString, "Side OFF");
 							}
 							usleep(50000);
 							break;

@@ -606,24 +606,28 @@ extern "C"
 	void laneChange(int direction, int speed, int length)
 	{
 		DesireSpeed_Write_uart(speed);
-		if (direction) // 1 == 우 회전.
+		if(direction)	// 1 == 우 회전.
 		{
 			SteeringServo_Write_uart(1050);
-			sleepDistance(850);
+			sleepDistance(810);
+			SteeringServo_Write_uart(1500);
+			sleepDistance(50+length);
 			SteeringServo_Write_uart(1950);
-			sleepDistance(750);
+			sleepDistance(800);
 		}
 		else
 		{
 			SteeringServo_Write_uart(1950);
-			sleepDistance(850);
+			sleepDistance(840);
+			SteeringServo_Write_uart(1500);
+			sleepDistance(80+length);
 			SteeringServo_Write_uart(1050);
-			sleepDistance(750);
+			sleepDistance(800);
 		}
 		SteeringServo_Write_uart(1500);
 		sleepDistance(50);
 
-		buzzer(1, 0, 200000); // 함수의 끝을 알리기 위해 임시적임.
+		buzzer(1, 0, 500000); // 함수의 끝을 알리기 위해 임시적임.
 
 		sensor_using_flag = false;
 	}

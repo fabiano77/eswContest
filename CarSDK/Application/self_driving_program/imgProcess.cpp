@@ -110,8 +110,8 @@ extern "C"
 
 		Size board_sz = Size(numCornerHor, numCornerVer);
 
-		vector<vector<Point3f>> object_point;
-		vector<vector<Point2f>> image_point;
+		vector<vector<Point3f> > object_point;
+		vector<vector<Point2f> > image_point;
 
 		vector<Point2f> corners;
 		int successes = 0;
@@ -312,16 +312,14 @@ extern "C"
 
 		return calculDistance_toFinish(srcRGB, dstRGB, 50, 24);
 	}
-
+	
 	void debugFiltering(unsigned char *inBuf, int w, int h, unsigned char *outBuf, int mode)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
-		int retval;
-		Mat src8C;
-		switch (mode)
+		if (mode == 1)
 		{
-		case 1:
+			Mat src8C;
 			lineFiltering(srcRGB, src8C, 1);
 			for (int x = 0; x < w; x++)
 			{
@@ -331,9 +329,10 @@ extern "C"
 					dstRGB.at<Vec3b>(y, x) = Vec3b(pixelVal, pixelVal, pixelVal);
 				}
 			}
-			break;
-
-		case 2:
+		}
+		else if (mode == 2)
+		{
+			Mat src8C;
 			Mat srcEdge;
 			lineFiltering(srcRGB, src8C, 1);
 			cannyEdge(src8C, srcEdge);
@@ -345,50 +344,46 @@ extern "C"
 					dstRGB.at<Vec3b>(y, x) = Vec3b(pixelVal, pixelVal, pixelVal);
 				}
 			}
-			break;
-
-		case 3:
-			retval = checkObstacle(inBuf, w, h, outBuf);
+		}
+		else if (mode == 3)
+		{
+			int retval = checkObstacle(inBuf, w, h, outBuf);
 			printf("return val = %d\n", retval);
-			break;
-
-		case 4:
+		}
+		else if (mode == 4)
+		{
 			checkRedSignal(srcRGB, dstRGB, 1.7, 1);
-			break;
-
-		case 5:
+		}
+		else if (mode == 5)
+		{
 			checkYellowSignal(srcRGB, dstRGB, 1.7, 1);
-			break;
-
-		case 6:
+		}
+		else if (mode == 6)
+		{
 			checkGreenSignal(srcRGB, dstRGB, 1.7, 1);
-			break;
-
-		case 7:
+		}
+		else if (mode == 7)
+		{
 			priorityStop(srcRGB, dstRGB, 130, 1);
-			break;
-
-		case 8:
-			retval = checkFront(inBuf, w, h, outBuf);
+		}
+		else if (mode == 8)
+		{
+			int retval = checkFront(inBuf, w, h, outBuf);
 			printf("return val = %d\n", retval);
-			break;
-
-		case 9:
+		}
+		else if (mode == 9)
+		{
 			topview_transform(inBuf, w, h, inBuf, 1);
-			retval = calculDistance_toFinish(srcRGB, dstRGB, 46, 22);
+			int retval = calculDistance_toFinish(srcRGB, dstRGB, 46, 22);
 			printf("return val = %d\n", retval);
-			break;
-
-		case 10:
+		}
+		else if (mode == 10)
+		{
 			isDark(srcRGB, 55, 1);
 			dstRGB = srcRGB;
-			break;
-
-		default:
-			printf("wrong input mode\n");
 		}
 	}
-
+	
 	int autoSteering(unsigned char *inBuf, int w, int h, unsigned char *outBuf, int whiteMode)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);

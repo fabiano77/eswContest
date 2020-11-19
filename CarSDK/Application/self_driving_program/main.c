@@ -1002,7 +1002,6 @@ void *mission_thread(void *arg)
 			data->imgData.bwhiteLine = true;
 			if (distance_1 <= 30)
 			{
-				printf("\t distance_1 = %d \n", distance_1);
 				data->imgData.bmission = true;
 				data->imgData.btopview = false; //topview off
 				data->imgData.bprintString = true;
@@ -1052,7 +1051,7 @@ void *mission_thread(void *arg)
 							 dahee's function
 							*/
 							Winker_Write(ALL_OFF);
-							usleep(500000);
+							usleep(400000);
 							if (DistanceSensor_cm(1) < 20)
 							{
 								sprintf(data->imgData.missionString, "Detect Error");
@@ -1077,7 +1076,7 @@ void *mission_thread(void *arg)
 							 dahee's function
 							*/
 							Winker_Write(ALL_OFF);
-							usleep(500000);
+							usleep(400000);
 							if (DistanceSensor_cm(1) < 20)
 							{
 								sprintf(data->imgData.missionString, "Detect Error");

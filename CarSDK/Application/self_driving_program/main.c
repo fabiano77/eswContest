@@ -48,6 +48,8 @@
 
 #define BASIC_SPEED 55		// 프로그램 기본 주행 속도,
 #define BUZZER_PULSE 100000 // 기본 부저 길이
+#define GO_LEFT 0
+#define GO_RIGHT 1
 
 // thr_data의 정의와 각종 structure들은 control_mission.h 으로 옮김 9/8(대희)
 extern struct thr_data *ptr_data;

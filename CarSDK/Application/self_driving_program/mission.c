@@ -358,7 +358,7 @@ bool parkingFunc(struct thr_data *arg)
                                 step_v = SECOND_FORWARD_V;
                                 Winker_Write(ALL_ON);
                                 buzzer(2, 500000, 500000);
-                                
+
                                 Winker_Write(ALL_OFF);
                                 break;
 

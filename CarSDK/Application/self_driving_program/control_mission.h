@@ -321,8 +321,9 @@ extern "C"
 	// laneChange
 	// PreCondition		: none
 	// PostCondition	: 0이면 좌회전, 1이면 우회전 동작을 하는 함수.
+	// 
 	// Return 			: none
-	void laneChange(int direction, int speed);
+	void laneChange(int direction, int speed, int length);
 
 #ifdef __cplusplus
 }

@@ -110,8 +110,8 @@ extern "C"
 
 		Size board_sz = Size(numCornerHor, numCornerVer);
 
-		vector<vector<Point3f> > object_point;
-		vector<vector<Point2f> > image_point;
+		vector<vector<Point3f>> object_point;
+		vector<vector<Point2f>> image_point;
 
 		vector<Point2f> corners;
 		int successes = 0;
@@ -312,7 +312,7 @@ extern "C"
 
 		return calculDistance_toFinish(srcRGB, dstRGB, 50, 24);
 	}
-	
+
 	void debugFiltering(unsigned char *inBuf, int w, int h, unsigned char *outBuf, int mode)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
@@ -383,7 +383,7 @@ extern "C"
 			dstRGB = srcRGB;
 		}
 	}
-	
+
 	int autoSteering(unsigned char *inBuf, int w, int h, unsigned char *outBuf, int whiteMode)
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
@@ -537,6 +537,10 @@ extern "C"
 			else
 			{
 				lower_x = getPointX_at_Y(line_left, y); //왼쪽은 if문 불필요 (오른쪽 부분 참조)
+				if (lower_x > w / 2)
+				{
+					lower_x = width / 2 - 60;
+				}
 			}
 
 			for (int x = 0; x < lower_x; x++) // left Gray detection
@@ -573,6 +577,10 @@ extern "C"
 				{
 					upper_x = getPointX_at_Y(line_right, y);
 				}
+			}
+			if (upper_x < w / 2)
+			{
+				upper_x = width / 2 + 60;
 			}
 			for (int x = upper_x; x < width; x++) // left Gray detection
 			{									  //x

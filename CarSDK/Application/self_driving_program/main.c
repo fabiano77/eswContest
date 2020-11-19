@@ -937,11 +937,6 @@ void *mission_thread(void *arg)
 	data->missionData.ms[7] = signalLight;
 	data->missionData.ms[8] = finish;
 
-<<<<<<< HEAD
-	//�? 미션?�� ?��?��?��고나�? detect�? ?���? ?��?���? �??��?��?��.
-
-=======
->>>>>>> 794c3577e16a77efa89523ba820bb6573c9c12ed
 	while (1)
 	{
 		data->missionData.loopTime = timeCheck(&time);

@@ -193,45 +193,49 @@ extern "C"
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
-		if (mode == 1)
-		{
-			Point2f Hp[4] = {//변환전 좌표
+		swtich(mode) {
+			case 1:
+				Point2f Hp[4] = {//변환전 좌표
 							 Point2f(160 * (w / 640.0), 180 * (h / 360.0)),
 							 Point2f(480 * (w / 640.0), 180 * (h / 360.0)),
 							 Point2f(620 * (w / 640.0), 270 * (h / 360.0)),
-							 Point2f(20 * (w / 640.0), 270 * (h / 360.0))};
+							 Point2f(20 * (w / 640.0), 270 * (h / 360.0)) };
 
-			Point2f p[4] = {//변환후 좌표
-							Point2f(100 * (w / 640.0), -100 * (h / 360.0)),
-							Point2f(540 * (w / 640.0), -100 * (h / 360.0)),
-							Point2f(550 * (w / 640.0), 270 * (h / 360.0)),
-							Point2f(90 * (w / 640.0), 270 * (h / 360.0))};
-			Mat Hmatrix = getPerspectiveTransform(Hp, p);
-			Size topviewSize(w, h); //변환후 사이즈
-			warpPerspective(srcRGB, dstRGB, Hmatrix, topviewSize);
-		}
-		else if (mode == 2)
-		{
-			Point2f Hp[4] = {//변환전 좌표
+				Point2f p[4] = {//변환후 좌표
+								Point2f(100 * (w / 640.0), -100 * (h / 360.0)),
+								Point2f(540 * (w / 640.0), -100 * (h / 360.0)),
+								Point2f(550 * (w / 640.0), 270 * (h / 360.0)),
+								Point2f(90 * (w / 640.0), 270 * (h / 360.0)) };
+				Mat Hmatrix = getPerspectiveTransform(Hp, p);
+				Size topviewSize(w, h); //변환후 사이즈
+				warpPerspective(srcRGB, dstRGB, Hmatrix, topviewSize);
+				break;
+
+			case 2:
+				Point2f Hp[4] = {//변환전 좌표
 							 Point2f(80 * (w / 640.0), 200 * (h / 360.0)),
 							 Point2f(560 * (w / 640.0), 200 * (h / 360.0)),
 							 Point2f(640 * (w / 640.0), 360 * (h / 360.0)),
-							 Point2f(0 * (w / 640.0), 360 * (h / 360.0))};
+							 Point2f(0 * (w / 640.0), 360 * (h / 360.0)) };
 
-			Point2f p[4] = {//변환후 좌표
-							Point2f(30 * (w / 640.0), 100 * (h / 360.0)),
-							Point2f(610 * (w / 640.0), 100 * (h / 360.0)),
-							Point2f(640 * (w / 640.0), 360 * (h / 360.0)),
-							Point2f(0 * (w / 640.0), 360 * (h / 360.0))};
-			Mat Hmatrix = getPerspectiveTransform(Hp, p);
-			Size topviewSize(w, h); //변환후 사이즈
-			warpPerspective(srcRGB, dstRGB, Hmatrix, topviewSize);
-		}
-		else if (mode == 3)
-		{
-			Mat temp;
-			temp = srcRGB.rowRange(h * (15 / 36.0), h).clone();
-			resize(temp, dstRGB, Size(w, h));
+				Point2f p[4] = {//변환후 좌표
+								Point2f(30 * (w / 640.0), 100 * (h / 360.0)),
+								Point2f(610 * (w / 640.0), 100 * (h / 360.0)),
+								Point2f(640 * (w / 640.0), 360 * (h / 360.0)),
+								Point2f(0 * (w / 640.0), 360 * (h / 360.0)) };
+				Mat Hmatrix = getPerspectiveTransform(Hp, p);
+				Size topviewSize(w, h); //변환후 사이즈
+				warpPerspective(srcRGB, dstRGB, Hmatrix, topviewSize);
+				break;
+
+			case 3:
+				Mat temp;
+				temp = srcRGB.rowRange(h * (15 / 36.0), h).clone();
+				resize(temp, dstRGB, Size(w, h));
+				break;
+
+			default:
+				printf("error in top view transform\n");
 		}
 	}
 
@@ -319,70 +323,75 @@ extern "C"
 	{
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
-		if (mode == 1)
+		swtich(case)
 		{
-			Mat src8C;
-			lineFiltering(srcRGB, src8C, 1);
-			for (int x = 0; x < w; x++)
-			{
-				for (int y = 0; y < h; y++)
+			case 1: 
+				Mat src8C;
+				lineFiltering(srcRGB, src8C, 1);
+				for (int x = 0; x < w; x++)
 				{
-					uchar pixelVal = src8C.at<uchar>(y, x);
-					dstRGB.at<Vec3b>(y, x) = Vec3b(pixelVal, pixelVal, pixelVal);
+					for (int y = 0; y < h; y++)
+					{
+						uchar pixelVal = src8C.at<uchar>(y, x);
+						dstRGB.at<Vec3b>(y, x) = Vec3b(pixelVal, pixelVal, pixelVal);
+					}
 				}
-			}
-		}
-		else if (mode == 2)
-		{
-			Mat src8C;
-			Mat srcEdge;
-			lineFiltering(srcRGB, src8C, 1);
-			cannyEdge(src8C, srcEdge);
-			for (int x = 0; x < w; x++)
-			{
-				for (int y = 0; y < h; y++)
+				break;
+
+			case 2:
+				Mat src8C;
+				Mat srcEdge;
+				lineFiltering(srcRGB, src8C, 1);
+				cannyEdge(src8C, srcEdge);
+				for (int x = 0; x < w; x++)
 				{
-					uchar pixelVal = srcEdge.at<uchar>(y, x);
-					dstRGB.at<Vec3b>(y, x) = Vec3b(pixelVal, pixelVal, pixelVal);
+					for (int y = 0; y < h; y++)
+					{
+						uchar pixelVal = srcEdge.at<uchar>(y, x);
+						dstRGB.at<Vec3b>(y, x) = Vec3b(pixelVal, pixelVal, pixelVal);
+					}
 				}
-			}
-		}
-		else if (mode == 3)
-		{
-			int retval = checkObstacle(inBuf, w, h, outBuf);
-			printf("return val = %d\n", retval);
-		}
-		else if (mode == 4)
-		{
-			checkRedSignal(srcRGB, dstRGB, 1.7, 1);
-		}
-		else if (mode == 5)
-		{
-			checkYellowSignal(srcRGB, dstRGB, 1.7, 1);
-		}
-		else if (mode == 6)
-		{
-			checkGreenSignal(srcRGB, dstRGB, 1.7, 1);
-		}
-		else if (mode == 7)
-		{
-			priorityStop(srcRGB, dstRGB, 130, 1);
-		}
-		else if (mode == 8)
-		{
-			int retval = checkFront(inBuf, w, h, outBuf);
-			printf("return val = %d\n", retval);
-		}
-		else if (mode == 9)
-		{
-			topview_transform(inBuf, w, h, inBuf, 1);
-			int retval = calculDistance_toFinish(srcRGB, dstRGB, 46, 22);
-			printf("return val = %d\n", retval);
-		}
-		else if (mode == 10)
-		{
-			isDark(srcRGB, 55, 1);
-			dstRGB = srcRGB;
+				break;
+
+			case 3:
+				int retval = checkObstacle(inBuf, w, h, outBuf);
+				printf("return val = %d\n", retval);
+				break;
+
+			case 4:
+				checkRedSignal(srcRGB, dstRGB, 1.7, 1);
+				break;
+
+			case 5:
+				checkYellowSignal(srcRGB, dstRGB, 1.7, 1);
+				break;
+
+			case 6:
+				checkGreenSignal(srcRGB, dstRGB, 1.7, 1);
+				break;
+
+			case 7:
+				priorityStop(srcRGB, dstRGB, 130, 1);
+				break;
+
+			case 8:
+				int retval = checkFront(inBuf, w, h, outBuf);
+				printf("return val = %d\n", retval);
+				break;
+
+			case 9:
+				topview_transform(inBuf, w, h, inBuf, 1);
+				int retval = calculDistance_toFinish(srcRGB, dstRGB, 46, 22);
+				printf("return val = %d\n", retval);
+				break;
+
+			case 10:
+				isDark(srcRGB, 55, 1);
+				dstRGB = srcRGB;
+				break;
+
+			default:
+				printf("wrong input mode\n");
 		}
 	}
 

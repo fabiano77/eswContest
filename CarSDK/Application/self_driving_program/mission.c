@@ -34,7 +34,6 @@ void startFunc(struct thr_data *arg)
     enum StartState state = WAIT_S;
     sprintf(data->imgData.missionString, "start - Wait");
 
-
     while (state)
     {
         switch (state)
@@ -126,7 +125,7 @@ bool parkingFunc(struct thr_data *arg)
     struct thr_data *data = (struct thr_data *)arg;
 
     if (1) //(data->controlData.steerVal <= 1600 && data->controlData.steerVal >= 1400) || parking == REMAIN)
-    {      // 바퀴가 전진방향을 유지하고 있는 경우에만 주차 분기로 진입하도록 하는 장치 (결선 주행용)
+    {      // 바�?��?? ?��진방?��?�� ?���??���? ?��?�� 경우?���? 주차 분기�? 진입?��?���? ?��?�� ?���? (결선 주행?��)
         if (DistanceSensor_cm(2) <= 28)
         {
             struct timeval st_p, et_p;
@@ -178,7 +177,7 @@ bool parkingFunc(struct thr_data *arg)
                     if (data->missionData.parkingData.frontRight == true)
                     {
                         printf("Result Width : %-3d\n", parking_width);
-                        parking_width <= 850 ? data->missionData.parkingData.verticalFlag = true : data->missionData.parkingData.horizontalFlag = true;
+                        parking_width <= 850 ? (data->missionData.parkingData.verticalFlag = true) : (data->missionData.parkingData.horizontalFlag = true);
                         state = SECOND_WALL;
                     }
                     break;
@@ -302,7 +301,7 @@ bool parkingFunc(struct thr_data *arg)
                                 step_v = SECOND_FORWARD_V;
                                 Winker_Write(ALL_ON);
                                 buzzer(2, 500000, 500000);
-                                
+
                                 Winker_Write(ALL_OFF);
                                 break;
 
@@ -488,7 +487,7 @@ bool roundaboutFunc(struct thr_data *arg)
 {
     struct thr_data *data = (struct thr_data *)arg;
 
-    if (StopLine(4)) //|| data->missionData.finish_distance != -1)	
+    if (StopLine(4)) //|| data->missionData.finish_distance != -1)
     {
         DesireSpeed_Write_uart(0);
         sprintf(data->imgData.missionString, "round about");
@@ -497,9 +496,9 @@ bool roundaboutFunc(struct thr_data *arg)
         data->imgData.bwhiteLine = true;
         data->imgData.bprintString = true;
         data->imgData.bspeedControl = false;
-       
+
         int speed = BASIC_SPEED;
-        int flag_END = 0;        
+        int flag_END = 0;
 
         enum RoundaboutState state = WAIT_R;
         while (state != DONE_R)
@@ -565,7 +564,7 @@ bool roundaboutFunc(struct thr_data *arg)
                     break;
                 }
                 DesireSpeed_Write_uart(speed);
-                
+
                 //end
                 //if (abs(data->controlData.steerVal - 1500) < 60)
                 if (data->controlData.steerVal - 1500 < 30)
@@ -635,9 +634,9 @@ bool tunnelFunc(struct thr_data *arg)
 
             c2 = DistanceSensor_cm(2);
             c6 = DistanceSensor_cm(6);
-            isEnd = Tunnel_isEnd(c2, c6, 50, 50);            
-        } while (!isEnd)
-        
+            isEnd = Tunnel_isEnd(c2, c6, 50, 50);
+        } while (!isEnd);
+
         sprintf(data->imgData.missionString, "tunnel out");
         frontLightOnOff(data->controlData.lightFlag, false);
 
@@ -657,248 +656,238 @@ bool overtakeFunc(struct thr_data *arg)
 
     struct thr_data *data = (struct thr_data *)arg;
 
-    /* �б����� ���� ????? */
     int distance_1 = DistanceSensor_cm(1);
-    if (1)
-    // if (data->controlData.steerVal <= 1600 &&
-    //     data->controlData.steerVal >= 1400)
+    if (distance_1 <= 20) //????? ???????? ��??? //���� ????????? ?????????, �б����� ?????
     {
+        printf("\t distance_1 = %d \n", distance_1);
+        data->imgData.bmission = true;  //??????ó�� X
+        data->imgData.btopview = false; //topview off
+        //data->imgData.bwhiteLine = true; // ?????? ���� O
+        data->imgData.bprintString = true;
+        sprintf(data->imgData.missionString, "overtake");
+        printf("overtake \n");
+        enum OvertakeState state = FRONT_DETECT;
+        data->missionData.overtakingData.headingDirection = STOP;
+        data->missionData.overtakingFlag = true;
+        data->imgData.bwhiteLine = true;
+        bool obstacle = false;
+        int thresDistance = 450;
+        /*���� ?????*/
+        DesireSpeed_Write_uart(0);
 
-        if (distance_1 <= 20) //????? ???????? ��??? //���� ????????? ?????????, �б����� ?????
+        DesireDistance(-50, 450, 1500);
+
+        while (state)
         {
-            printf("\t distance_1 = %d \n", distance_1);
-            data->imgData.bmission = true;  //??????ó�� X
-            data->imgData.btopview = false; //topview off
-            //data->imgData.bwhiteLine = true; // ?????? ���� O
-            data->imgData.bprintString = true;
-            sprintf(data->imgData.missionString, "overtake");
-            printf("overtake \n");
-            enum OvertakeState state = FRONT_DETECT;
-            data->missionData.overtakingData.headingDirection = STOP;
-            data->missionData.overtakingFlag = true;
-            data->imgData.bwhiteLine = true;
-            bool obstacle = false;
-            int thresDistance = 450;
-            /*���� ?????*/
-            DesireSpeed_Write_uart(0);
-
-            DesireDistance(-50, 450, 1500);
-
-            while (state)
+            //data->missionData.loopTime = timeCheck(&time);
+            switch (state)
             {
-                //data->missionData.loopTime = timeCheck(&time);
-                switch (state)
+            case FRONT_DETECT:
+                /* ???????? �¿�????????? ?????? ī��??? �������� */
+                sprintf(data->imgData.missionString, "Front Detect");
+                if (data->missionData.overtakingData.headingDirection == STOP)
                 {
-                case FRONT_DETECT:
-                    /* ???????? �¿�????????? ?????? ī��??? �������� */
-                    sprintf(data->imgData.missionString, "Front Detect");
-                    if (data->missionData.overtakingData.headingDirection == STOP)
-                    {
-                        data->controlData.cameraY = 1610;
-                        CameraYServoControl_Write(data->controlData.cameraY);
-                        data->missionData.overtakingData.updownCamera = CAMERA_UP;
-                    }
-                    /* ???????? �¿� ?????? ?? ���??????? ����????? ???����?????? �ڵ�*/
-                    while (data->missionData.overtakingData.headingDirection == STOP)
-                    {
-                        //data->missionData.loopTime = timeCheck(&time);
-                        usleep(50000);
-                    }
-                    /*?????? ����?? Camera ?????? ???ġ�� ?????*/
-                    if (data->missionData.overtakingData.headingDirection != STOP)
-                    {
-                        data->controlData.cameraY = 1660;
-                        CameraYServoControl_Write(data->controlData.cameraY);
-                        data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
-                        data->imgData.btopview = true; //top view on
-                    }
-                    else
-                    {
-                        break;
-                    }
-                    /*?????? ?????? ?????? ���� ?????*/
-                    if (data->missionData.overtakingData.headingDirection == RIGHT &&
-                        data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
-                    {
-                        sprintf(data->imgData.missionString, "Right to go");
-                        /*���?*/
-                        Winker_Write(RIGHT_ON);
-                        //DesireDistance(50, thresDistance, 1100);
-                        DesireDistance(50, thresDistance, 1050);
-                        DesireDistance(50, 150, 1250);
-
-                        Winker_Write(ALL_OFF);
-                        /* ?????? ????? ?????? ��???*/
-                        usleep(500000);
-                        /*thresDistance?????? ????? ????? �Ÿ� ?????????*/
-                        if (DistanceSensor_cm(1) < 20)
-                        {
-                            sprintf(data->imgData.missionString, "Detect Error");
-                            /*?????, ????? ?? ���� ??????*/
-                            DesireDistance(-50, thresDistance, 1100);
-                            /*????? ?? ���� ?????? ����*/
-                            data->missionData.overtakingData.headingDirection = LEFT;
-                        }
-                        else
-                        { /*????? ��Ž??*/
-                            state = SIDE_ON;
-                            sprintf(data->imgData.missionString, "Detect Side");
-                            /*???����??? ?????? ????? ???????? 20 ?????? ????????? SIDE_ON????? ����*/
-                            DesireSpeed_Write_uart(BASIC_SPEED);
-                            usleep(500000);
-                        }
-                    }
-                    else if (data->missionData.overtakingData.headingDirection == LEFT &&
-                             data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
-                    {
-
-                        sprintf(data->imgData.missionString, "Left to go");
-                        /*���?*/
-                        Winker_Write(LEFT_ON);
-                        //DesireDistance(50, thresDistance, 1900);
-                        DesireDistance(50, thresDistance, 1950);
-                        DesireDistance(50, 150, 1750);
-                        Winker_Write(ALL_OFF);
-                        /* ?????? ????? ?????? ��???*/
-                        usleep(500000);
-                        /*thresDistance?????? ????? ????? �Ÿ� ?????????*/
-                        if (DistanceSensor_cm(1) < 20)
-                        {
-                            /*?????, ????? ?? ���� ??????*/
-                            sprintf(data->imgData.missionString, "Detect Error");
-                            DesireDistance(-50, thresDistance, 1900);
-                            /*????? ??? ���� ?????? ����*/
-                            data->missionData.overtakingData.headingDirection = RIGHT;
-                        }
-                        else
-                        {
-                            /*???����??? ?????? ????? ???????? 20 ?????? ????????? SIDE_ON????? ����*/
-                            state = SIDE_ON;
-                            sprintf(data->imgData.missionString, "Detect Side");
-
-                            DesireSpeed_Write_uart(BASIC_SPEED);
-                            usleep(500000);
-                        }
-                    }
-                    else
-                    { /*STOP??? ??????????? ���? ����*/
-                    }
-
-                    break;
-
-                case SIDE_ON:
-                    /*Auto Steering ??????*/
-                    data->imgData.bmission = false;
-                    /* ?????? ??????���� ?????????????????? ?????? side ??????(2,3 or 4,5)?? ��????????? �ڵ�*/
-                    //right
-                    if (data->missionData.overtakingData.headingDirection == RIGHT)
-                    {
-                        /*???????? ????? ??????*/
-                        int distance_5 = DistanceSensor_cm(5);
-                        int distance_6 = DistanceSensor_cm(6);
-
-                        if (distance_5 <= 30 || distance_6 <= 30)
-                        {
-                            obstacle = true;
-                        }
-                        else if (obstacle == true)
-                        {
-                            /*???????? ?????*/
-                            if (distance_5 > 30 && distance_6 > 30)
-                            {
-                                data->imgData.bmission = true; //Auto Steering off
-                                usleep(100000);
-                                DesireSpeed_Write_uart(0);
-                                //usleep(50000);
-                                obstacle = false;
-                                state = SIDE_OFF;
-                                sprintf(data->imgData.missionString, "Side OFF");
-                            }
-                        }
-                        usleep(50000);
-                    }
-                    //left
-                    else if (data->missionData.overtakingData.headingDirection == LEFT)
-                    {
-                        /*???????? ????? ??????*/
-                        int distance_3 = DistanceSensor_cm(3);
-                        int distance_2 = DistanceSensor_cm(2);
-                        if (distance_3 <= 30 || distance_2 <= 30)
-                        {
-                            obstacle = true;
-                        }
-                        else if (obstacle == true)
-                        {
-                            /*???????? ?????*/
-                            if (distance_3 > 30 && distance_2 > 30)
-                            {
-                                data->imgData.bmission = true; //Auto Steering off
-                                usleep(100000);
-                                DesireSpeed_Write_uart(0);
-                                //usleep(50000);
-                                obstacle = false;
-                                state = SIDE_OFF;
-                                sprintf(data->imgData.missionString, "Side OFF");
-                            }
-                        }
-                        usleep(50000);
-                    }
-                    //error and go back step
-                    else
-                    {
-                        state = FRONT_DETECT;
-                    }
-                    break;
-
-                case SIDE_OFF:
-                    /*?????? ����????? ��????????? �ڵ�*/
-                    usleep(10000);
-                    data->imgData.bmission = true; //Auto Steering off
-                    usleep(10000);
-                    //right
-                    if (data->missionData.overtakingData.headingDirection == RIGHT)
-                    {
-                        /*��??? ��ȸ??? ���� ?????? ?? ?????*/
-                        Winker_Write(LEFT_ON);
-                        DesireDistance(50, thresDistance + 350, 2000);
-                        Winker_Write(ALL_OFF);
-                        DesireDistance(50, 600, 1000);
-                    }
-                    //left
-                    else if (data->missionData.overtakingData.headingDirection == LEFT)
-                    {
-                        /*��??? ????????? ���� ??????*/
-                        Winker_Write(RIGHT_ON);
-                        DesireDistance(50, thresDistance + 350, 1000);
-                        Winker_Write(ALL_OFF);
-                        DesireDistance(50, 600, 2000);
-                    }
-                    /*???����?? ?????*/
-                    data->imgData.bmission = false;
-                    //sprintf(data->imgData.missionString, "End Overtaking");
-                    data->imgData.bprintString = false;
-                    DesireSpeed_Write_uart(BASIC_SPEED);
-                    state = DONE_O;
-                    data->missionData.overtakingFlag = false;
-                    return true;
-                    break;
-
-                default:
+                    data->controlData.cameraY = 1610;
+                    CameraYServoControl_Write(data->controlData.cameraY);
+                    data->missionData.overtakingData.updownCamera = CAMERA_UP;
+                }
+                /* ???????? �¿� ?????? ?? ���???????? ����????? ???����?????? �ڵ�*/
+                while (data->missionData.overtakingData.headingDirection == STOP)
+                {
+                    //data->missionData.loopTime = timeCheck(&time);
+                    usleep(50000);
+                }
+                /*?????? ����?? Camera ?????? ???ġ�� ?????*/
+                if (data->missionData.overtakingData.headingDirection != STOP)
+                {
+                    data->controlData.cameraY = 1660;
+                    CameraYServoControl_Write(data->controlData.cameraY);
+                    data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
+                    data->imgData.btopview = true; //top view on
+                }
+                else
+                {
                     break;
                 }
-                //usleep(1500000);
-                usleep(50000); // 1,500 ms -> 50ms ?? ????, 09/01 AM 00:50 -KDH
+                /*?????? ?????? ?????? ���� ?????*/
+                if (data->missionData.overtakingData.headingDirection == RIGHT &&
+                    data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
+                {
+                    sprintf(data->imgData.missionString, "Right to go");
+                    /*���??*/
+                    Winker_Write(RIGHT_ON);
+                    //DesireDistance(50, thresDistance, 1100);
+                    DesireDistance(50, thresDistance, 1050);
+                    DesireDistance(50, 150, 1250);
+
+                    Winker_Write(ALL_OFF);
+                    /* ?????? ????? ?????? ��???*/
+                    usleep(500000);
+                    /*thresDistance?????? ????? ????? �Ÿ� ?????????*/
+                    if (DistanceSensor_cm(1) < 20)
+                    {
+                        sprintf(data->imgData.missionString, "Detect Error");
+                        /*?????, ????? ?? ���� ??????*/
+                        DesireDistance(-50, thresDistance, 1100);
+                        /*????? ?? ���� ?????? ����*/
+                        data->missionData.overtakingData.headingDirection = LEFT;
+                    }
+                    else
+                    { /*????? ��Ž??*/
+                        state = SIDE_ON;
+                        sprintf(data->imgData.missionString, "Detect Side");
+                        /*???����??? ?????? ????? ???????? 20 ?????? ????????? SIDE_ON????? ����*/
+                        DesireSpeed_Write_uart(BASIC_SPEED);
+                        usleep(500000);
+                    }
+                }
+                else if (data->missionData.overtakingData.headingDirection == LEFT &&
+                         data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
+                {
+
+                    sprintf(data->imgData.missionString, "Left to go");
+                    /*���??*/
+                    Winker_Write(LEFT_ON);
+                    //DesireDistance(50, thresDistance, 1900);
+                    DesireDistance(50, thresDistance, 1950);
+                    DesireDistance(50, 150, 1750);
+                    Winker_Write(ALL_OFF);
+                    /* ?????? ????? ?????? ��???*/
+                    usleep(500000);
+                    /*thresDistance?????? ????? ????? �Ÿ� ?????????*/
+                    if (DistanceSensor_cm(1) < 20)
+                    {
+                        /*?????, ????? ?? ���� ??????*/
+                        sprintf(data->imgData.missionString, "Detect Error");
+                        DesireDistance(-50, thresDistance, 1900);
+                        /*????? ??? ���� ?????? ����*/
+                        data->missionData.overtakingData.headingDirection = RIGHT;
+                    }
+                    else
+                    {
+                        /*???����??? ?????? ????? ???????? 20 ?????? ????????? SIDE_ON????? ����*/
+                        state = SIDE_ON;
+                        sprintf(data->imgData.missionString, "Detect Side");
+
+                        DesireSpeed_Write_uart(BASIC_SPEED);
+                        usleep(500000);
+                    }
+                }
+                else
+                { /*STOP??? ??????????? ���?? ����*/
+                }
+
+                break;
+
+            case SIDE_ON:
+                /*Auto Steering ??????*/
+                data->imgData.bmission = false;
+                /* ?????? ??????���� ?????????????????? ?????? side ??????(2,3 or 4,5)?? ��????????? �ڵ�*/
+                //right
+                if (data->missionData.overtakingData.headingDirection == RIGHT)
+                {
+                    /*???????? ????? ??????*/
+                    int distance_5 = DistanceSensor_cm(5);
+                    int distance_6 = DistanceSensor_cm(6);
+
+                    if (distance_5 <= 30 || distance_6 <= 30)
+                    {
+                        obstacle = true;
+                    }
+                    else if (obstacle == true)
+                    {
+                        /*???????? ?????*/
+                        if (distance_5 > 30 && distance_6 > 30)
+                        {
+                            data->imgData.bmission = true; //Auto Steering off
+                            usleep(100000);
+                            DesireSpeed_Write_uart(0);
+                            //usleep(50000);
+                            obstacle = false;
+                            state = SIDE_OFF;
+                            sprintf(data->imgData.missionString, "Side OFF");
+                        }
+                    }
+                    usleep(50000);
+                }
+                //left
+                else if (data->missionData.overtakingData.headingDirection == LEFT)
+                {
+                    /*???????? ????? ??????*/
+                    int distance_3 = DistanceSensor_cm(3);
+                    int distance_2 = DistanceSensor_cm(2);
+                    if (distance_3 <= 30 || distance_2 <= 30)
+                    {
+                        obstacle = true;
+                    }
+                    else if (obstacle == true)
+                    {
+                        /*???????? ?????*/
+                        if (distance_3 > 30 && distance_2 > 30)
+                        {
+                            data->imgData.bmission = true; //Auto Steering off
+                            usleep(100000);
+                            DesireSpeed_Write_uart(0);
+                            //usleep(50000);
+                            obstacle = false;
+                            state = SIDE_OFF;
+                            sprintf(data->imgData.missionString, "Side OFF");
+                        }
+                    }
+                    usleep(50000);
+                }
+                //error and go back step
+                else
+                {
+                    state = FRONT_DETECT;
+                }
+                break;
+
+            case SIDE_OFF:
+                /*?????? ����????? ��????????? �ڵ�*/
+                usleep(10000);
+                data->imgData.bmission = true; //Auto Steering off
+                usleep(10000);
+                //right
+                if (data->missionData.overtakingData.headingDirection == RIGHT)
+                {
+                    /*��??? ��ȸ??? ���� ?????? ?? ?????*/
+                    Winker_Write(LEFT_ON);
+                    DesireDistance(50, thresDistance + 350, 2000);
+                    Winker_Write(ALL_OFF);
+                    DesireDistance(50, 600, 1000);
+                }
+                //left
+                else if (data->missionData.overtakingData.headingDirection == LEFT)
+                {
+                    /*��??? ????????? ���� ??????*/
+                    Winker_Write(RIGHT_ON);
+                    DesireDistance(50, thresDistance + 350, 1000);
+                    Winker_Write(ALL_OFF);
+                    DesireDistance(50, 600, 2000);
+                }
+                /*???����?? ?????*/
+                data->imgData.bmission = false;
+                //sprintf(data->imgData.missionString, "End Overtaking");
+                data->imgData.bprintString = false;
+                DesireSpeed_Write_uart(BASIC_SPEED);
+                state = DONE_O;
+                data->missionData.overtakingFlag = false;
+                return true;
+                break;
+
+            default:
+                break;
             }
-            data->imgData.bmission = false;
-            data->imgData.bprintString = false;
+            //usleep(1500000);
+            usleep(50000); // 1,500 ms -> 50ms ?? ????, 09/01 AM 00:50 -KDH
         }
-        else
-            return false;
+        data->imgData.bmission = false;
+        data->imgData.bprintString = false;
     }
     else
-    {
         return false;
-    }
+    return false;
 }
 
 bool signalLightFunc(struct thr_data *arg)
@@ -924,7 +913,7 @@ bool signalLightFunc(struct thr_data *arg)
         printf("signalLight\n");
 
         while (data->imgData.bcheckSignalLight)
-            usleep(200000); //??????ó��?????? ????????? ����??? ?????? ??? ��??? ��ٸ���?.
+            usleep(200000); //??????ó��?????? ????????? ����??? ?????? ??? ��??? ��ٸ���??.
 
         data->imgData.bprintTire = true;
         sprintf(data->imgData.missionString, "Distance control");
@@ -935,7 +924,7 @@ bool signalLightFunc(struct thr_data *arg)
         while (1) // ????????? ��������??? �Ÿ�?? 23,24cm ?? ����?? ?????? ?????
         {
             front_distance = DistanceSensor_cm(1);
-         
+
             if (front_distance < 23)
             {
                 once_back = true;
@@ -982,7 +971,7 @@ void finishFunc(struct thr_data *arg)
 {
     struct thr_data *data = (struct thr_data *)arg;
 
-    if (1) 
+    if (1)
     {
         sprintf(data->imgData.missionString, "Finish line check");
         DesireSpeed_Write_uart(0);

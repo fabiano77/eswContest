@@ -654,10 +654,11 @@ extern "C"
 		Mat img_canny;
 		Canny(img_filtered, img_canny, 0, 150);
 		vector<Vec4f> lines;
+		int lines_size = lines.size();
 		vector<Point> points_filtered;
 		/*line detect*/
 		HoughLinesP(img_canny, lines, 1, CV_PI / 180, 80, 10, 300);
-		for (unsigned int i = 0; i < lines.size(); i++)
+		for (unsigned int i = 0; i < lines_size; i++)
 		{
 			if (abs(slope(lines[i])) < 0.05 && lines[i][1] > 80 && lines[i][3] > 80)
 			{

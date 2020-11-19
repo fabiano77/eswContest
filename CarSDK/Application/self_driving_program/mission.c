@@ -575,24 +575,19 @@ bool roundaboutFunc(struct thr_data *arg)
 {
     struct thr_data *data = (struct thr_data *)arg;
 
-    //data->imgData.bcheckFrontWhite = true;	// ????? ???????? ??????????? ????? ON
-
-    if (StopLine(4)) //|| data->missionData.finish_distance != -1)	//??????????? ??????????? �Ÿ�?? ����?????
+    if (StopLine(4)) //|| data->missionData.finish_distance != -1)	
     {
-        //onlyDistance(BASIC_SPEED, (data->missionData.finish_distance / 26.0) * 500);	//????????��??? ????? stop
-        //data->missionData.finish_distance = -1;
-
-        /* ����??? roundabout�б� ���� */
-        data->imgData.bwhiteLine = true;
-        data->imgData.bprintString = true;
+        DesireSpeed_Write_uart(0);
         sprintf(data->imgData.missionString, "round about");
         printf("roundabout IN\n");
-        int speed = BASIC_SPEED;
-        int flag_END = 0;
 
-        DesireSpeed_Write_uart(0);
+        data->imgData.bwhiteLine = true;
+        data->imgData.bprintString = true;
         data->imgData.bspeedControl = false;
-        //SteeringServo_Write(1500);
+       
+        int speed = BASIC_SPEED;
+        int flag_END = 0;        
+
         enum RoundaboutState state = WAIT_R;
         while (state != DONE_R)
         {
@@ -606,25 +601,24 @@ bool roundaboutFunc(struct thr_data *arg)
                 data->imgData.bmission = true;
                 if (RoundAbout_isStart(DistanceSensor_cm(1)))
                 {
-                    sprintf(data->imgData.missionString, "ROUND_GO_1-1");
                     printf("ROUND_GO_1-1\n");
+                    sprintf(data->imgData.missionString, "ROUND_GO_1-1");
 
                     state = ROUND_GO_1;
                 }
                 break;
 
             case ROUND_GO_1:
-                //DesireDistance(speed, 600, 1500, &(data->controlData)); //??? ?????? �޾�???�鼭 ??????�Ÿ� ????? ?????? ��???.
                 onlyDistance(speed, 550);
-                sprintf(data->imgData.missionString, "ROUND_GO_1-2");
                 printf("ROUND_GO_1_2\n");
+                sprintf(data->imgData.missionString, "ROUND_GO_1-2");
                 usleep(100000);
 
                 data->imgData.bmission = false;
                 onlyDistance(speed, 1100);
 
-                sprintf(data->imgData.missionString, "ROUND_STOP");
                 printf("ROUND_STOP\n");
+                sprintf(data->imgData.missionString, "ROUND_STOP");
 
                 state = ROUND_STOP;
                 break;
@@ -658,8 +652,10 @@ bool roundaboutFunc(struct thr_data *arg)
                     break;
                 }
                 DesireSpeed_Write_uart(speed);
+                
+                //end
                 //if (abs(data->controlData.steerVal - 1500) < 60)
-                if (data->controlData.steerVal - 1500 < 30) // steerVal 1500 ??????????? ????????????? ���� ����??? ?????? ???
+                if (data->controlData.steerVal - 1500 < 30)
                 {
                     if (flag_END < 3)
                         flag_END++;
@@ -713,33 +709,24 @@ bool tunnelFunc(struct thr_data *arg)
 
         frontLightOnOff(data->controlData.lightFlag, true);
         sprintf(data->imgData.missionString, "mission thread : tunnel detect");
-
-        while (true)
+        int c2 = DistanceSensor_cm(2);
+        int c6 = DistanceSensor_cm(6);
+        int isEnd = Tunnel_isEnd(c2, c6, 50, 50);
+        do
         {
             //data->missionData.loopTime = timeCheck(&time);
-            int c2 = DistanceSensor_cm(2);
-            int c6 = DistanceSensor_cm(6);
-            if (Tunnel_isEnd(c2, c6, 50, 50))
-            {
-                sprintf(data->imgData.missionString, "tunnel out");
-                break;
-            }
-
             data->controlData.steerVal = Tunnel_SteerVal(c2, c6);
             sprintf(data->imgData.missionString, "steer = %d, %d : %d", data->controlData.steerVal, c2, c6);
-
             SteeringServo_Write(data->controlData.steerVal);
-
             usleep(10000);
-        }
 
+            c2 = DistanceSensor_cm(2);
+            c6 = DistanceSensor_cm(6);
+            isEnd = Tunnel_isEnd(c2, c6, 50, 50);            
+        } while (!isEnd)
+        
+        sprintf(data->imgData.missionString, "tunnel out");
         frontLightOnOff(data->controlData.lightFlag, false);
-
-        //buzzer(1, 0, 500000);
-        //usleep(100000);
-
-        //DesireDistance(-40, 400, 1500);
-        //usleep(100000);
 
         printf("Tunnel OUT\n");
 
@@ -1020,8 +1007,7 @@ bool signalLightFunc(struct thr_data *arg)
         sprintf(data->imgData.missionString, "check RED");
         DesireSpeed_Write_uart(0);
         SteeringServo_Write(1500);
-        usleep(50000);
-        usleep(10000);
+        usleep(60000);
         printf("signalLight\n");
 
         while (data->imgData.bcheckSignalLight)
@@ -1032,9 +1018,11 @@ bool signalLightFunc(struct thr_data *arg)
         DesireSpeed_Write_uart(BASIC_SPEED);
 
         bool once_back = false;
+        int front_distance = DistanceSensor_cm(1);
         while (1) // ????????? ��������??? �Ÿ�?? 23,24cm ?? ����?? ?????? ?????
         {
-            int front_distance = DistanceSensor_cm(1);
+            front_distance = DistanceSensor_cm(1);
+         
             if (front_distance < 23)
             {
                 once_back = true;
@@ -1050,23 +1038,23 @@ bool signalLightFunc(struct thr_data *arg)
             usleep(50000);
         }
 
-        if (data->missionData.signalLightData.finalDirection == 1)
+        switch (data->missionData.signalLightData.finalDirection)
         {
+        case 1:
             sprintf(data->imgData.missionString, "Turn right");
             printf("\tTurn right\n");
             DesireDistance(40, 1170, 1000);
-        }
-        else if (data->missionData.signalLightData.finalDirection == -1)
-        {
+            break;
+        case -1:
             sprintf(data->imgData.missionString, "Turn left");
             printf("\tTurn left\n");
             DesireDistance(40, 1170, 2000);
-        }
-        else
-        {
+            break;
+        default:
             sprintf(data->imgData.missionString, "ERROR");
             printf("\tERROR\n");
             DesireDistance(40, 1150, 1000);
+            break;
         }
 
         data->imgData.bmission = false;
@@ -1081,50 +1069,12 @@ void finishFunc(struct thr_data *arg)
 {
     struct thr_data *data = (struct thr_data *)arg;
 
-    // if(0)
-    // {
-    // data->missionData.finishData.checkFront = false; /*��Ȱ??????*/
-    // if (1)											 /*????????? ???? ����??? ?????????????? ?????????? ??????*/
-    // {												 //Encoder ???????????? ?????? ����????? ����????? ??????
-    // 	//???????? ????????
-    // 	/*????? ?????? ??????*/
-    // 	data->missionData.finishData.distEndLine = -1000;
-    // 	data->imgData.bmission = true;
-    // 	data->imgData.bprintString = true;
-    // 	/*box filtering*/
-    // 	data->missionData.finishData.checkFront = true;/*????? ???????????? ????? ?????????*/
-    // 	/*encoding??? ????????? ?????*/
-    // 	//data->missionData.finishData.encodingStart = false;
-    // 	/*check front signal waiting*/
-    // 	while (data->missionData.finishData.checkFront == true || data->missionData.finishData.distEndLine == -1000)
-    // 	{
-    // 		usleep(500000);
-    // 		/*checkFront ?? false?? ?????? ���� ???�ų� distEndline���� ���ǹ���?? ??????���? ����*/
-    // 		if (data->missionData.finishData.checkFront == false || data->missionData.finishData.distEndLine > 320)
-    // 		{
-    // 			sprintf(data->imgData.missionString, "End Check Front");
-    // 			break; /*?????? ???????? ����*/
-    // 		}
-    // 		sprintf(data->imgData.missionString, "Check Front");
-    // 	}
-    // 	/*????????? ??????????? ???????? ����(double check)*/
-    // 	data->missionData.finishData.checkFront = false;
-    // 	DesireSpeed_Write_uart(0);
-    // 	/*?????? ??? ����*/
-    // 	Winker_Write(ALL_ON);
-    // 	usleep(1000000);
-    // 	Winker_Write(ALL_OFF);
-    // 	/*�ؿ� ????????? ???????????? ????????????? ?????? ??? ???????? ?????*/
-    // 	///��?????????/////
-    // }
-
-    if (1) //����?? ����
+    if (1) 
     {
-
+        sprintf(data->imgData.missionString, "Finish line check");
         DesireSpeed_Write_uart(0);
         SteeringServo_Write(1500);
         data->imgData.bmission = true;
-        sprintf(data->imgData.missionString, "Finish line check");
         data->imgData.bprintString = true;
         data->imgData.bcheckFinishLine = true;
 
@@ -1139,7 +1089,7 @@ void finishFunc(struct thr_data *arg)
         int rest_distance = data->missionData.finish_distance;
         rest_distance -= 6;
         sprintf(data->imgData.missionString, "Finish Driving");
-        DesireDistance(40, 500 * (rest_distance / 26.0), 1500); // encoder = 500 -> 26cm?? ����
+        DesireDistance(40, 500 * (rest_distance / 26.0), 1500); // encoder = 500 -> 26cm??
 
         printf("finish end\n");
         sprintf(data->imgData.missionString, "All mission complete !");

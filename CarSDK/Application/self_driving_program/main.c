@@ -24,7 +24,7 @@
 #define CAPTURE_IMG_SIZE (CAPTURE_IMG_W * CAPTURE_IMG_H * 2) // YUYU : 16bpp
 #define CAPTURE_IMG_FORMAT "uyvy"
 
-//?��?��?���?? 바꾸?���?? ?���??분만 �??경하�?? ?��
+//?��?��?���??? 바꾸?���??? ?���???분만 �???경하�??? ?��
 #ifndef VPEIMG
 #define VPEIMG
 #define VPE_OUTPUT_W 640
@@ -47,9 +47,11 @@
 #define FPS_TEXT_COLOR 0xffffffff //while
 
 #define BASIC_SPEED 55		// ?��로그?�� 기본 주행 ?��?��,
-#define BUZZER_PULSE 100000 // 기본 �????? 길이
+#define BUZZER_PULSE 100000 // 기본 �?????? 길이
 
-// thr_data?�� ?��?��??? 각종 structure?��??? control_mission.h ?���?? ?���?? 9/8(????��)
+#define GO_RIGHT 1
+#define GO_LEFT 0
+// thr_data?�� ?��?��??? 각종 structure?��??? control_mission.h ?���??? ?���??? 9/8(????��)
 extern struct thr_data *ptr_data;
 /******************** function ********************/
 static int allocate_input_buffers(struct thr_data *data)
@@ -143,7 +145,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		gettimeofday(&st, NULL);
 
 		/********************************************************/
-		/*			?��리�?? 만든 ?��고리�?? ?��?���?? ?��?�� �??�??		*/
+		/*			?��리�?? 만든 ?��고리�??? ?��?���??? ?��?�� �???�???		*/
 		/********************************************************/
 
 		/* ?��?�� ?��?��링이?�� canny 결과 ?��?�� */
@@ -165,10 +167,10 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
 			{
 				usleep(100000);
-				/*check�???? ?��?�� camera up*/
+				/*check�????? ?��?�� camera up*/
 				bool check_direction;
 				check_direction = checkObstacle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
-				/*?��른쪽?���?? ?��쪽인�?? �?? �?? ?��?��*/
+				/*?��른쪽?���??? ?��쪽인�??? �??? �??? ?��?��*/
 				if (check_direction == true)
 				{ //true=>left
 					t_data->missionData.overtakingData.leftFlag++;
@@ -181,12 +183,12 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				/*3?�� ?��?�� ?��?�� ?��?��*/
 				if ((t_data->missionData.overtakingData.rightFlag + t_data->missionData.overtakingData.leftFlag) >= 3)
 				{
-					/*?��른쪽 flag�?? ?��경우*/
+					/*?��른쪽 flag�??? ?��경우*/
 					if (t_data->missionData.overtakingData.rightFlag > t_data->missionData.overtakingData.leftFlag)
 					{
 						t_data->missionData.overtakingData.headingDirection = RIGHT;
 					}
-					/*?���?? flag�?? ?��경우*/
+					/*?���??? flag�??? ?��경우*/
 					else
 					{
 						t_data->missionData.overtakingData.headingDirection = LEFT;
@@ -194,7 +196,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					/*?��?�� ?��진입 막기 ?��?�� Camera Down*/
 					t_data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
 				}
-				//srcbuf�?? ?��?��?��?�� capture?�� ?��?��?�� �???��
+				//srcbuf�??? ?��?��?��?�� capture?�� ?��?��?�� �????��
 			}
 
 			/* ?��?��?�� ?��?�� */
@@ -290,13 +292,13 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					}
 					if (t_data->controlData.desireSpeedVal != t_data->controlData.beforeSpeedVal)
 					{
-						//?��?�� ?��?��??? ?��?��졌을 ?���?? ?��?���?? ?���??.
+						//?��?�� ?��?��??? ?��?��졌을 ?���??? ?��?���??? ?���???.
 						DesireSpeed_Write_uart(t_data->controlData.desireSpeedVal);
 						t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
 					}
 				}
 				else if (t_data->missionData.finishData.distEndLine < 320)
-				{ /*거리�?? 40(360-40)?��?���?? ?���???�� 경우 ?��?��처리 종료*/
+				{ /*거리�??? 40(360-40)?��?���??? ?���????�� 경우 ?��?��처리 종료*/
 					t_data->missionData.finishData.checkFront = false;
 				}
 			}
@@ -371,7 +373,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					t_data->controlData.desireSpeedVal = auto_speedMapping(steerVal, BASIC_SPEED);
 					if (t_data->controlData.desireSpeedVal != t_data->controlData.beforeSpeedVal)
 					{
-						//?��?�� ?��?��??? ?��?��졌을 ?���?? ?��?���?? ?���??.
+						//?��?�� ?��?��??? ?��?��졌을 ?���??? ?��?���??? ?���???.
 						DesireSpeed_Write_uart(t_data->controlData.desireSpeedVal);
 						t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
 					}
@@ -382,14 +384,14 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				t_data->controlData.beforeSpeedVal = 0;
 			}
 
-			/*checkWhiteLineFlag�???? True?�� 경우, RoundAbout */
+			/*checkWhiteLineFlag�????? True?�� 경우, RoundAbout */
 		}
 
 		/********************************************************/
 		/*			?��?��처리 종료								*/
 		/********************************************************/
 
-		/* ?��?��처리?�� ?��버레?���?? ?���?? ?��?�� 출력.*/
+		/* ?��?��처리?�� ?��버레?���??? ?���??? ?��?�� 출력.*/
 		if (checking_stopline)
 		{
 			checking_stopline = false;
@@ -417,20 +419,20 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 			overlayPrintAngle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->controlData.steerVal);
 		}
 
-		/*		?��?�� ?��?�� .jpg?��?���?? ????��		*/
+		/*		?��?�� ?��?�� .jpg?��?���??? ????��		*/
 		if (t_data->imgData.dump_request)
 		{
 			opencv_imwrite(srcbuf);
 			t_data->imgData.dump_request = false;
 		}
 
-		/*		?��?�� ?��?�� .avi?��?���?? ?��?��		*/
+		/*		?��?�� ?��?�� .avi?��?���??? ?��?��		*/
 		if (t_data->imgData.bvideoRecord)
 		{
 			memcpy(t_data->img_data_buf, srcbuf, VPE_OUTPUT_IMG_SIZE);
 		}
 
-		/* ?��?��?�� �??출화면을 ?���???���?? ?��?�� delay */
+		/* ?��?��?�� �???출화면을 ?���????���??? ?��?�� delay */
 		if (delay_flag)
 		{
 			usleep(1700000); // 1700ms == 1.7s
@@ -869,8 +871,8 @@ void *video_record_thread(void *arg)
 	}
 	printf("\tvideo_record_thred() : ON\n");
 
-	// st체크�?? ?��곳에?�� ?���??, et체크�?? ?�� 번째 while?�� ?��?�� �?? ?��?��?��마다 delay_ms만큼 ?��?��?��?��?��
-	// ?��?��?��?�� 찍히?�� ?��?���?? ?��?��?��?��?�� ?��?�� ?��?��?�� 근사?��?���?? ?��?��. (0.1�?? ?��???�?? 캡처 ????�� ?��?��?�� ?��체길?��?�� 비율�??)
+	// st체크�??? ?��곳에?�� ?���???, et체크�??? ?�� 번째 while?�� ?��?�� �??? ?��?��?��마다 delay_ms만큼 ?��?��?��?��?��
+	// ?��?��?��?�� 찍히?�� ?��?���??? ?��?��?��?��?�� ?��?�� ?��?��?�� 근사?��?���??? ?��?��. (0.1�??? ?��???�??? 캡처 ????�� ?��?��?�� ?��체길?��?�� 비율�???)
 	gettimeofday(&st, NULL);
 
 	while (1)
@@ -891,7 +893,7 @@ void *video_record_thread(void *arg)
 			opencv_videowrite(data->img_data_buf);
 		}
 
-		while (1) //?��?�� ?��?�� ?��?���?? 맞춰주기 ?��?�� delay
+		while (1) //?��?�� ?��?�� ?��?���??? 맞춰주기 ?��?�� delay
 		{
 			gettimeofday(&et, NULL);
 			recordTime_ms = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
@@ -991,7 +993,7 @@ void *mission_thread(void *arg)
 
 		if (roundabout && roundabout != DONE)
 		{
-			//data->imgData.bcheckFrontWhite = true;	// ?���???? ?���?????�� ?��?��?���???? ?���???? ON
+			//data->imgData.bcheckFrontWhite = true;	// ?���????? ?���??????�� ?��?��?���????? ?���????? ON
 			if (roundaboutFunc(data))
 				roundabout = DONE;
 		}
@@ -1014,6 +1016,11 @@ void *mission_thread(void *arg)
 				bool obstacle = false;
 				int thresDistance = 450;
 				DesireSpeed_Write_uart(0);
+				usleep(5000);
+				int distance_2;
+				int distance_3;
+				int distance_5;
+				int distance_6;
 				while (state)
 				{
 					switch (state)
@@ -1026,7 +1033,6 @@ void *mission_thread(void *arg)
 							CameraYServoControl_Write(data->controlData.cameraY);
 							data->missionData.overtakingData.updownCamera = CAMERA_UP;
 						}
-
 						while (data->missionData.overtakingData.headingDirection == STOP)
 						{
 							usleep(50000);
@@ -1047,21 +1053,21 @@ void *mission_thread(void *arg)
 						{
 							sprintf(data->imgData.missionString, "Right to go");
 							Winker_Write(RIGHT_ON);
-							/* dahee's function */
-							laneChange(1, 50);
+							laneChange(GO_RIGHT, BASIC_SPEED);
 
 							Winker_Write(ALL_OFF);
 							usleep(400000);
 							if (DistanceSensor_cm(1) < 20)
 							{
 								sprintf(data->imgData.missionString, "Detect Error");
-								DesireDistance(-50, thresDistance, 1100);
+								DesireDistance(-BASIC_SPEED, thresDistance, 1100);
 								data->missionData.overtakingData.headingDirection = LEFT;
 							}
 							else
 							{
 								state = SIDE_ON;
 								sprintf(data->imgData.missionString, "Detect Side");
+								data->imgData.bmission = false;
 								DesireSpeed_Write_uart(BASIC_SPEED);
 								usleep(500000);
 							}
@@ -1072,21 +1078,21 @@ void *mission_thread(void *arg)
 
 							sprintf(data->imgData.missionString, "Left to go");
 							Winker_Write(LEFT_ON);
-							/* dahee's function */
-							laneChange(0, 50);
+							laneChange(GO_LEFT, BASIC_SPEED);
 
 							Winker_Write(ALL_OFF);
 							usleep(400000);
 							if (DistanceSensor_cm(1) < 20)
 							{
 								sprintf(data->imgData.missionString, "Detect Error");
-								DesireDistance(-50, thresDistance, 1900);
+								DesireDistance(-BASIC_SPEED, thresDistance, 1900);
 								data->missionData.overtakingData.headingDirection = RIGHT;
 							}
 							else
 							{
 								state = SIDE_ON;
 								sprintf(data->imgData.missionString, "Detect Side");
+								data->imgData.bmission = false;
 								DesireSpeed_Write_uart(BASIC_SPEED);
 								usleep(500000);
 							}
@@ -1098,83 +1104,73 @@ void *mission_thread(void *arg)
 						break;
 
 					case SIDE_ON:
-						data->imgData.bmission = false;
+
 						// right
-						if (data->missionData.overtakingData.headingDirection == RIGHT)
+						switch (data->missionData.overtakingData.headingDirection)
 						{
-							int distance_5 = DistanceSensor_cm(5);
-							int distance_6 = DistanceSensor_cm(6);
+						case RIGHT:
+							distance_5 = DistanceSensor_cm(5);
+							distance_6 = DistanceSensor_cm(6);
 
 							if (distance_5 <= 30 || distance_6 <= 30)
 							{
 								obstacle = true;
 							}
-							else if (obstacle == true)
-							{
-								if (distance_5 > 30 && distance_6 > 30) // side-off condition
-								{
-									data->imgData.bmission = true; // Auto Steering off
-									usleep(100000);
-									DesireSpeed_Write_uart(0);
-									obstacle = false;
-									state = SIDE_OFF;
-									sprintf(data->imgData.missionString, "Side OFF");
-								}
+							else if (obstacle == true && distance_5 > 30 && distance_6 > 30)
+							{								   //side-off condition
+								data->imgData.bmission = true; // Auto Steering off
+								usleep(100000);
+								DesireSpeed_Write_uart(0);
+								obstacle = false;
+								state = SIDE_OFF;
+								sprintf(data->imgData.missionString, "Side OFF");
 							}
 							usleep(50000);
-						}
-						//left
-						else if (data->missionData.overtakingData.headingDirection == LEFT)
-						{
-							int distance_3 = DistanceSensor_cm(3);
-							int distance_2 = DistanceSensor_cm(2);
+							break;
+						case LEFT:
+							distance_3 = DistanceSensor_cm(3);
+							distance_2 = DistanceSensor_cm(2);
 							if (distance_3 <= 30 || distance_2 <= 30)
 							{
 								obstacle = true;
 							}
-							else if (obstacle == true)
+							else if (obstacle == true && distance_3 > 30 && distance_2 > 30)
 							{
-								if (distance_3 > 30 && distance_2 > 30)
-								{
-									data->imgData.bmission = true; //Auto Steering off
-									usleep(100000);
-									DesireSpeed_Write_uart(0);
-									//usleep(50000);
-									obstacle = false;
-									state = SIDE_OFF;
-									sprintf(data->imgData.missionString, "Side OFF");
-								}
+								data->imgData.bmission = true; //Auto Steering off
+								usleep(100000);
+								DesireSpeed_Write_uart(0);
+								//usleep(50000);
+								obstacle = false;
+								state = SIDE_OFF;
+								sprintf(data->imgData.missionString, "Side OFF");
 							}
 							usleep(50000);
+							break;
+						default:
+							state = FRONT_DETECT;
+							break;
 						}
 						//error and go back step
-						else
-						{
-							state = FRONT_DETECT;
-						}
 						break;
 
 					case SIDE_OFF:
 						usleep(10000);
 						data->imgData.bmission = true; //Auto Steering off
 						usleep(10000);
-						//right
-						if (data->missionData.overtakingData.headingDirection == RIGHT) // return left
+						switch (data->missionData.overtakingData.headingDirection)
 						{
+						case RIGHT: //return left
 							Winker_Write(LEFT_ON);
-							/* dahee's function */
-							laneChange(0, 50);
-
+							laneChange(GO_LEFT, BASIC_SPEED);
 							Winker_Write(ALL_OFF);
-						}
-						//left
-						else if (data->missionData.overtakingData.headingDirection == LEFT) //return right
-						{
+							break;
+						case LEFT: //return right
 							Winker_Write(RIGHT_ON);
-							/* dahee's function */
-							laneChange(1, 50);
-							
+							laneChange(GO_RIGHT, BASIC_SPEED);
 							Winker_Write(ALL_OFF);
+							break;
+						default:
+							break;
 						}
 						data->imgData.bmission = false;
 						data->imgData.bprintString = false;
@@ -1310,7 +1306,7 @@ int main(int argc, char **argv)
 	struct thr_data tdata;
 	ptr_data = &tdata;
 	int disp_argc = 3;
-	char *disp_argv[] = {"dummy", "-s", "4:480x272", "\0"}; // 추후 �????�???? ?���???? ?��?�� ?�� 처리..
+	char *disp_argv[] = {"dummy", "-s", "4:480x272", "\0"}; // 추후 �?????�????? ?���????? ?��?�� ?�� 처리..
 	int ret = 0;
 	memset(tdata.img_data_buf, 0, sizeof(tdata.img_data_buf));
 
@@ -1417,7 +1413,7 @@ int main(int argc, char **argv)
 	set_global_alpha(vpe->disp, vpe->disp->overlay_p.id);
 	set_pre_multiplied_alpha(vpe->disp, vpe->disp->overlay_p.id);
 	alloc_overlay_plane(vpe->disp, OVERLAY_DISP_FORCC, 0, 0, OVERLAY_DISP_W, OVERLAY_DISP_H);
-	// z-order, alpha, multiplied-alpha ?��?�� (overlay�???? ?��?�� plane �???? ?��?��)
+	// z-order, alpha, multiplied-alpha ?��?�� (overlay�????? ?��?�� plane �????? ?��?��)
 
 	//vpe->deint = 0;
 	vpe->translen = 1;

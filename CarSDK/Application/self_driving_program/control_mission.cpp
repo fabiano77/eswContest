@@ -128,7 +128,7 @@ extern "C"
 		for (i = 0; i < 8; i++)
 		{
 			if (i == 0)
-				printf(" "); 
+				printf(" ");
 			else
 			{
 				if ((i % 4) <= 1)
@@ -233,7 +233,7 @@ extern "C"
 					break;
 				}
 			}
-			usleep(10000); 
+			usleep(10000);
 		}
 		//cout << "\tDesiredDistance() :encoder = " << on_encoder << endl;
 	}
@@ -270,7 +270,7 @@ extern "C"
 					break;
 				}
 			}
-			usleep(10000); 
+			usleep(10000);
 		}
 		//cout << "\tDesiredDistance() :encoder = " << on_encoder << endl;
 	}
@@ -287,7 +287,7 @@ extern "C"
 		{
 			if (SettingSpeed > 0)
 			{
-				
+
 				if (DistanceSensor_cm(1) <= 5)
 				{
 					cout << "onlyDistance() : front detection!" << endl;
@@ -297,7 +297,7 @@ extern "C"
 			}
 			else
 			{
-				
+
 				if (DistanceSensor_cm(4) <= 5)
 				{
 					cout << "onlyDistance() : rear detection!" << endl;
@@ -354,7 +354,7 @@ extern "C"
 			if (flag_wait == 2)
 			{
 				flag_wait = -1;
-				flag_go = 25; 
+				flag_go = 25;
 			}
 		}
 		return check_start;
@@ -439,13 +439,13 @@ extern "C"
 	{
 		if (on == 1)
 		{
-			if (!(lightFlag & 0x01))		  
-				lightFlag = lightFlag ^ 0x01; 
+			if (!(lightFlag & 0x01))
+				lightFlag = lightFlag ^ 0x01;
 		}
 		else if (on == 0)
 		{
-			if (lightFlag & 0x01)			  
-				lightFlag = lightFlag ^ 0x01; 
+			if (lightFlag & 0x01)
+				lightFlag = lightFlag ^ 0x01;
 		}
 		CarLight_Write(lightFlag);
 	}
@@ -454,13 +454,13 @@ extern "C"
 	{
 		if (on == 1)
 		{
-			if (!(lightFlag & 0x02))		  
-				lightFlag = lightFlag ^ 0x02; 
+			if (!(lightFlag & 0x02))
+				lightFlag = lightFlag ^ 0x02;
 		}
 		else if (on == 0)
 		{
-			if (lightFlag & 0x02)			  
-				lightFlag = lightFlag ^ 0x02; 
+			if (lightFlag & 0x02)
+				lightFlag = lightFlag ^ 0x02;
 		}
 		CarLight_Write(lightFlag);
 	}
@@ -560,7 +560,7 @@ extern "C"
 			printf("CameraYServoControl_Read() = %d\n", CameraYServoControl_Read()); //default = 1500, 0x5dc
 			break;
 
-		case '1': //speed up		
+		case '1': //speed up
 			cdata->settingSpeedVal += 10;
 			printf("speed = %d\n", cdata->settingSpeedVal);
 			break;
@@ -584,12 +584,12 @@ extern "C"
 			Winker_Write(ALL_OFF);
 			break;
 
-		case 'z':										//front lamp on/off
-			cdata->lightFlag = cdata->lightFlag ^ 0x01; 
+		case 'z': //front lamp on/off
+			cdata->lightFlag = cdata->lightFlag ^ 0x01;
 			CarLight_Write(cdata->lightFlag);
 			break;
 
-		case 'c':										//rear lamp on/off
+		case 'c': //rear lamp on/off
 			cdata->lightFlag = cdata->lightFlag ^ 0x02;
 			CarLight_Write(cdata->lightFlag);
 			break;

@@ -88,9 +88,6 @@ extern "C"
 				position = i + 3;
 				break;
 			}
-			else
-			{
-			}
 		}
 		if (position == 0)
 		{
@@ -115,7 +112,6 @@ extern "C"
 	{ // black 1, white 0
 		char sensor;
 		char byte = 0x80;
-
 		while (sensor_using_flag)
 		{
 			usleep(5000); //5ms
@@ -124,26 +120,22 @@ extern "C"
 		sensor = LineSensor_Read();
 		sensor_using_flag = false;
 		int flag = 0;
-		int i;
-		for (i = 0; i < 8; i++)
+		int i = 1;
+		printf(" ");
+		for (i; i < 8; i++)
 		{
-			if (i == 0)
-				printf(" "); 
+			if ((i % 4) <= 1)
+				printf(" ");
+			if ((sensor & byte))
+			{
+				//printf("1");	// black
+				printf("_");
+			}
 			else
 			{
-				if ((i % 4) <= 1)
-					printf(" ");
-				if ((sensor & byte))
-				{
-					//printf("1");	// black
-					printf("_");
-				}
-				else
-				{
-					//printf("0");	// white
-					printf("w");
-					flag++;
-				}
+				//printf("0");	// white
+				printf("w");
+				flag++;
 			}
 			sensor = sensor << 1;
 		}
@@ -185,10 +177,10 @@ extern "C"
 		usleep(5000);
 		int init_encoder = 0;
 		int on_encoder = 0;
+		int error_flag = 0;
+		int read_encoder = Encoder_Read();
 		EncoderCounter_Write(init_encoder);
 		usleep(10000);
-		int read_encoder = Encoder_Read();
-		int error_flag = 0;
 		while (read_encoder != 0)
 		{
 			//cout << "[]read_encoder" << read_encoder << endl;
@@ -204,34 +196,24 @@ extern "C"
 		DesireSpeed_Write(SettingSpeed);
 		while (1)
 		{
-			if (SettingSpeed > 0)
-			{
-				if (DistanceSensor_cm(1) <= 6)
-				{
-					DesireSpeed_Write(0);
-					cout << "\tDesiredDistance() : front detection!" << endl;
-					break;
-				}
+			if (SettingSpeed > 0 && DistanceSensor_cm(1) <= 6)
+			{			
+				DesireSpeed_Write(0);
+				cout << "\tDesiredDistance() : front detection!" << endl;
+				break;
 			}
-			else
+			else if(SettingSpeed <= 0 && DistanceSensor_cm(4) <= 7)
 			{
-				if (DistanceSensor_cm(4) <= 7)
-				{
-					DesireSpeed_Write(0);
-					cout << "\tDesiredDistance() : rear detection!" << endl;
-					break;
-				}
+				DesireSpeed_Write(0);
+				cout << "\tDesiredDistance() : rear detection!" << endl;
+				break;
 			}
 
 			on_encoder = abs(Encoder_Read());
-			if (on_encoder != CHECKSUMERROR) // 65278
+			if (on_encoder != CHECKSUMERROR && on_encoder >= SettingDistance) // 65278
 			{
-				//printf("encoder : %-4d\n", on_encoder);
-				if (on_encoder >= SettingDistance)
-				{
-					DesireSpeed_Write(0);
-					break;
-				}
+				DesireSpeed_Write(0);
+				break;
 			}
 			usleep(10000); 
 		}
@@ -248,36 +230,24 @@ extern "C"
 			CarLight_Write(0x02);
 		while (1)
 		{
-			if (SettingSpeed > 0)
-			{
-				
-				if (DistanceSensor_cm(1) <= 5)
-				{
-					cout << "onlyDistance() : front detection!" << endl;
-					DesireSpeed_Write(0);
-					break;
-				}
+			if (SettingSpeed > 0 && DistanceSensor_cm(1) <= 5)
+			{	
+				cout << "onlyDistance() : front detection!" << endl;
+				DesireSpeed_Write(0);
+				break;
 			}
-			else
+			else if(SettingSpeed <= 0 && DistanceSensor_cm(4) <= 5)
 			{
-				
-				if (DistanceSensor_cm(4) <= 5)
-				{
-					cout << "onlyDistance() : rear detection!" << endl;
-					DesireSpeed_Write(0);
-					break;
-				}
+				cout << "onlyDistance() : rear detection!" << endl;
+				DesireSpeed_Write(0);
+				break;
 			}
 
 			on_encoder = abs(Encoder_Read());
-			if (on_encoder != CHECKSUMERROR) // 65278
+			if (on_encoder != CHECKSUMERROR && on_encoder >= SettingDistance) // 65278
 			{
-				//printf("encoder : %-4d\n", on_encoder);
-				if (on_encoder >= SettingDistance)
-				{
-					DesireSpeed_Write(0);
-					break;
-				}
+				DesireSpeed_Write(0);
+				break;
 			}
 			usleep(20000); // 10ms
 		}
@@ -394,7 +364,7 @@ extern "C"
 		if (Distance1 < Distance2)
 			steerVal = -steerVal;
 
-		printf("steer : %d, [%d, %d]\n", steerVal, Distance2, Distance1);
+		// printf("steer : %d, [%d, %d]\n", steerVal, Distance2, Distance1);
 		return 1500 - steerVal;
 	}
 

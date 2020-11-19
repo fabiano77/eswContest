@@ -1000,8 +1000,6 @@ void *mission_thread(void *arg)
 
 		if (overtake && overtake != DONE)
 		{
-
-			struct thr_data *data = (struct thr_data *)arg;
 			int distance_1 = DistanceSensor_cm(1);
 			if (1)
 			{

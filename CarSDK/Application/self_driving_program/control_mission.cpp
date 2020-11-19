@@ -197,12 +197,12 @@ extern "C"
 		while (1)
 		{
 			if (SettingSpeed > 0 && DistanceSensor_cm(1) <= 6)
-			{			
+			{
 				DesireSpeed_Write(0);
 				cout << "\tDesiredDistance() : front detection!" << endl;
 				break;
 			}
-			else if(SettingSpeed <= 0 && DistanceSensor_cm(4) <= 7)
+			else if (SettingSpeed <= 0 && DistanceSensor_cm(4) <= 7)
 			{
 				DesireSpeed_Write(0);
 				cout << "\tDesiredDistance() : rear detection!" << endl;
@@ -215,12 +215,11 @@ extern "C"
 				DesireSpeed_Write(0);
 				break;
 			}
-			usleep(10000); 
+			usleep(10000);
 		}
 		//cout << "\tDesiredDistance() :encoder = " << on_encoder << endl;
 	}
 
-	
 	void sleepDistance(int SettingDistance)
 	{
 		int init_encoder = 0;
@@ -239,7 +238,7 @@ extern "C"
 			EncoderCounter_Write(init_encoder);
 			usleep(20000);
 			if (error_flag++ > 10)
-				printf("sleepDistance(): encoder ERROR! : %d\n",read_encoder);
+				printf("sleepDistance(): encoder ERROR! : %d\n", read_encoder);
 		}
 
 		while (1)
@@ -269,12 +268,12 @@ extern "C"
 		while (1)
 		{
 			if (SettingSpeed > 0 && DistanceSensor_cm(1) <= 5)
-			{	
+			{
 				cout << "onlyDistance() : front detection!" << endl;
 				DesireSpeed_Write(0);
 				break;
 			}
-			else if(SettingSpeed <= 0 && DistanceSensor_cm(4) <= 5)
+			else if (SettingSpeed <= 0 && DistanceSensor_cm(4) <= 5)
 			{
 				cout << "onlyDistance() : rear detection!" << endl;
 				DesireSpeed_Write(0);
@@ -325,7 +324,7 @@ extern "C"
 			if (flag_wait == 2)
 			{
 				flag_wait = -1;
-				flag_go = 25; 
+				flag_go = 25;
 			}
 		}
 		return check_start;
@@ -410,13 +409,13 @@ extern "C"
 	{
 		if (on == 1)
 		{
-			if (!(lightFlag & 0x01))		  
-				lightFlag = lightFlag ^ 0x01; 
+			if (!(lightFlag & 0x01))
+				lightFlag = lightFlag ^ 0x01;
 		}
 		else if (on == 0)
 		{
-			if (lightFlag & 0x01)			  
-				lightFlag = lightFlag ^ 0x01; 
+			if (lightFlag & 0x01)
+				lightFlag = lightFlag ^ 0x01;
 		}
 		CarLight_Write(lightFlag);
 	}
@@ -425,13 +424,13 @@ extern "C"
 	{
 		if (on == 1)
 		{
-			if (!(lightFlag & 0x02))		  
-				lightFlag = lightFlag ^ 0x02; 
+			if (!(lightFlag & 0x02))
+				lightFlag = lightFlag ^ 0x02;
 		}
 		else if (on == 0)
 		{
-			if (lightFlag & 0x02)			  
-				lightFlag = lightFlag ^ 0x02; 
+			if (lightFlag & 0x02)
+				lightFlag = lightFlag ^ 0x02;
 		}
 		CarLight_Write(lightFlag);
 	}
@@ -531,7 +530,7 @@ extern "C"
 			printf("CameraYServoControl_Read() = %d\n", CameraYServoControl_Read()); //default = 1500, 0x5dc
 			break;
 
-		case '1': //speed up		
+		case '1': //speed up
 			cdata->settingSpeedVal += 10;
 			printf("speed = %d\n", cdata->settingSpeedVal);
 			break;
@@ -555,12 +554,12 @@ extern "C"
 			Winker_Write(ALL_OFF);
 			break;
 
-		case 'z':										//front lamp on/off
-			cdata->lightFlag = cdata->lightFlag ^ 0x01; 
+		case 'z': //front lamp on/off
+			cdata->lightFlag = cdata->lightFlag ^ 0x01;
 			CarLight_Write(cdata->lightFlag);
 			break;
 
-		case 'c':										//rear lamp on/off
+		case 'c': //rear lamp on/off
 			cdata->lightFlag = cdata->lightFlag ^ 0x02;
 			CarLight_Write(cdata->lightFlag);
 			break;
@@ -604,10 +603,10 @@ extern "C"
 		return retVal;
 	}
 
-        void laneChange(int direction, int speed)
+	void laneChange(int direction, int speed, int length)
 	{
 		DesireSpeed_Write_uart(speed);
-		if(direction)	// 1 == 우 회전.
+		if (direction) // 1 == 우 회전.
 		{
 			SteeringServo_Write_uart(1050);
 			sleepDistance(850);

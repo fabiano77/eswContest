@@ -269,7 +269,7 @@ extern "C"
 					break;
 				}
 			}
-			usleep(10000); 
+			usleep(10000);
 		}
 		//cout << "\tDesiredDistance() :encoder = " << on_encoder << endl;
 	}
@@ -640,8 +640,8 @@ extern "C"
 		}
 		sensor_using_flag = true;
 		DesireSpeed_Write(speed);
-		
-		if(direction)	// 1 == 우 회전.
+
+		if (direction) // 1 ==go right.
 		{
 			SteeringServoControl_Write(1100);
 			sleepDistance(850);

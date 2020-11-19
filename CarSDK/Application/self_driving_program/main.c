@@ -49,6 +49,8 @@
 #define BASIC_SPEED 55		// ?��로그?�� 기본 주행 ?��?��,
 #define BUZZER_PULSE 100000 // 기본 �?????? 길이
 
+#define GO_RIGHT 1
+#define GO_LEFT 0
 // thr_data?�� ?��?��??? 각종 structure?��??? control_mission.h ?���??? ?���??? 9/8(????��)
 extern struct thr_data *ptr_data;
 /******************** function ********************/
@@ -1052,8 +1054,7 @@ void *mission_thread(void *arg)
 						{
 							sprintf(data->imgData.missionString, "Right to go");
 							Winker_Write(RIGHT_ON);
-							/* dahee's function */
-							laneChange(1, BASIC_SPEED);
+							laneChange(GO_RIGHT, BASIC_SPEED);
 
 							Winker_Write(ALL_OFF);
 							usleep(400000);
@@ -1077,8 +1078,7 @@ void *mission_thread(void *arg)
 
 							sprintf(data->imgData.missionString, "Left to go");
 							Winker_Write(LEFT_ON);
-							/* dahee's function */
-							laneChange(0, BASIC_SPEED);
+							laneChange(GO_LEFT, BASIC_SPEED);
 
 							Winker_Write(ALL_OFF);
 							usleep(400000);
@@ -1105,8 +1105,9 @@ void *mission_thread(void *arg)
 					case SIDE_ON:
 						data->imgData.bmission = false;
 						// right
-						if (data->missionData.overtakingData.headingDirection == RIGHT)
+						switch (data->missionData.overtakingData.headingDirection)
 						{
+						case RIGHT:
 							distance_5 = DistanceSensor_cm(5);
 							distance_6 = DistanceSensor_cm(6);
 
@@ -1127,10 +1128,8 @@ void *mission_thread(void *arg)
 								}
 							}
 							usleep(50000);
-						}
-						//left
-						else if (data->missionData.overtakingData.headingDirection == LEFT)
-						{
+							break;
+						case LEFT:
 							distance_3 = DistanceSensor_cm(3);
 							distance_2 = DistanceSensor_cm(2);
 							if (distance_3 <= 30 || distance_2 <= 30)
@@ -1151,12 +1150,12 @@ void *mission_thread(void *arg)
 								}
 							}
 							usleep(50000);
+							break;
+						default:
+							state = FRONT_DETECT;
+							break;
 						}
 						//error and go back step
-						else
-						{
-							state = FRONT_DETECT;
-						}
 						break;
 
 					case SIDE_OFF:
@@ -1167,8 +1166,7 @@ void *mission_thread(void *arg)
 						if (data->missionData.overtakingData.headingDirection == RIGHT) // return left
 						{
 							Winker_Write(LEFT_ON);
-							/* dahee's function */
-							laneChange(0, BASIC_SPEED);
+							laneChange(GO_LEFT, BASIC_SPEED);
 
 							Winker_Write(ALL_OFF);
 						}
@@ -1176,8 +1174,7 @@ void *mission_thread(void *arg)
 						else if (data->missionData.overtakingData.headingDirection == LEFT) //return right
 						{
 							Winker_Write(RIGHT_ON);
-							/* dahee's function */
-							laneChange(1, BASIC_SPEED);
+							laneChange(GO_RIGHT, BASIC_SPEED);
 
 							Winker_Write(ALL_OFF);
 						}

@@ -242,12 +242,13 @@ extern "C"
 	{
 		int init_encoder = 0;
 		int on_encoder = 0;
-		usleep(10000);
+		int read_encoder;
+		int error_flag = 0;
 		EncoderCounter_Write(init_encoder);
 		usleep(10000);
-		int read_encoder = Encoder_Read();
-		int error_flag = 0;
-		while (read_encoder != 0)
+		read_encoder = Encoder_Read();
+		usleep(10000);
+		while (read_encoder > 60)
 		{
 			//cout << "[]read_encoder" << read_encoder << endl;
 			read_encoder = Encoder_Read();
@@ -255,7 +256,7 @@ extern "C"
 			EncoderCounter_Write(init_encoder);
 			usleep(20000);
 			if (error_flag++ > 10)
-				printf("sleepDistance(): encoder ERROR!\n");
+				printf("sleepDistance(): encoder ERROR! : %d\n",read_encoder);
 		}
 
 		while (1)
@@ -634,29 +635,23 @@ extern "C"
 
 	void laneChange(int direction, int speed)
 	{
-		while (sensor_using_flag)
-		{
-			usleep(500); //0.5ms
-		}
-		sensor_using_flag = true;
-		DesireSpeed_Write(speed);
-		
+		DesireSpeed_Write_uart(speed);
 		if(direction)	// 1 == 우 회전.
 		{
-			SteeringServoControl_Write(1100);
+			SteeringServo_Write_uart(1050);
 			sleepDistance(850);
-			SteeringServoControl_Write(1900);
+			SteeringServo_Write_uart(1950);
 			sleepDistance(750);
 		}
 		else
 		{
-			SteeringServoControl_Write(1900);
+			SteeringServo_Write_uart(1950);
 			sleepDistance(850);
-			SteeringServoControl_Write(1100);
+			SteeringServo_Write_uart(1050);
 			sleepDistance(750);
 		}
-		SteeringServoControl_Write(1500);
-		sleepDistance(200);
+		SteeringServo_Write_uart(1500);
+		sleepDistance(50);
 
 		buzzer(1, 0, 200000); // 함수의 끝을 알리기 위해 임시적임.
 

@@ -1155,16 +1155,17 @@ Vec8i hough_ransacLine(Mat &src, Mat &dst, int w, int h, int T, bool printMode, 
 		}
 	}
 
+	unsigned int lines_size = lines.size(); // static lines.size()
 
 	if (printMode)
 	{
-		for (unsigned int j = 0; j < lines.size(); j++)
+		for (unsigned int j = 0; j < lines_size; j++)
 		{
 			line(dst, Point(lines[j][0], lines[j][1]), Point(lines[j][2], lines[j][3]), Scalar(255, 255, 255), 2);
 		}
 	}
 
-	if (lines.size() < 1)
+	if (lines_size < 1)
 	{
 		detectedLineType = 0;
 		return Vec8i();
@@ -1172,7 +1173,7 @@ Vec8i hough_ransacLine(Mat &src, Mat &dst, int w, int h, int T, bool printMode, 
 
 	Vec4i rightLine(0, -1, 0, 0);	 //최우측 직선
 	Vec4i leftLine(640, -1, 640, 0); //최좌측 직선
-	for (unsigned int i = 0; i < lines.size(); i++)
+	for (unsigned int i = 0; i < lines_size; i++)
 	{
 		if (leftLine[0] > lines[i][0])
 		{
@@ -1193,7 +1194,7 @@ Vec8i hough_ransacLine(Mat &src, Mat &dst, int w, int h, int T, bool printMode, 
 		double right_inlierPercent;
 		vector<Vec4i> leftLines;
 		vector<Vec4i> rightLines;
-		for (unsigned int i = 0; i < lines.size(); i++)
+		for (unsigned int i = 0; i < lines_size; i++)
 		{
 			if (slope(lines[i]) < 0)
 				leftLines.push_back(lines[i]);
@@ -1219,7 +1220,7 @@ Vec8i hough_ransacLine(Mat &src, Mat &dst, int w, int h, int T, bool printMode, 
 		detectedLineType = 1;
 		Point highest(-1, 640); //최상단 점
 		Point lowest(-1, 0);	//최하단 점
-		for (unsigned int i = 0; i < lines.size(); i++)
+		for (unsigned int i = 0; i < lines_size; i++)
 		{
 			if (highest.y > lines[i][1])
 			{
@@ -1279,13 +1280,15 @@ Vec4i ransac_algorithm(vector<Vec4i> lines, vector<Point2i> P, int w, int h, int
 {
 	Vec4i resultLine;
 	int cntMax(-1);
-	for (unsigned int i = 0; i < lines.size(); i++)
+	unsigned int lines_size = lines.size();
+	unsigned int P_size = P.size();
+	for (unsigned int i = 0; i < lines_size; i++)
 	{
 		int cntInlier = 0;
 		//int cnt = 0;
 
 		Vec4i checkLine = lines[i];
-		for (unsigned int j = 0; j < P.size(); j++)
+		for (unsigned int j = 0; j < P_size; j++)
 		{
 			Point2i calculPoint = P[j];
 			//cnt++;
@@ -1432,9 +1435,11 @@ int isDark(Mat &frame, const double percent, int debug)
 
 	int pixelCnt(0);
 	int pixelValue(0);
-	for (int i = 0; i < grayFrame.cols; i += 1) // i += 10 에서 바꿈 08.27 AM 01:58
+	int grayFrame_cols = grayFrame.cols;
+	int grayFrame_rows = grayFrame.rows;
+	for (int i = 0; i < grayFrame_cols; i += 1) // i += 10 에서 바꿈 08.27 AM 01:58
 	{
-		for (int j = 0; j < grayFrame.rows / 2; j += 1) // j += 10 에서 바꿈 08.27 AM 01:58
+		for (int j = 0; j < grayFrame_rows / 2; j += 1) // j += 10 에서 바꿈 08.27 AM 01:58
 		{
 			pixelValue += grayFrame.at<uchar>(j, i);
 			pixelCnt++;
@@ -1514,9 +1519,11 @@ bool priorityStop(Mat &src, Mat &dst, int length, bool debug)
 	};
 	int column_max = -1;
 	int maxPosition = 0;
-	for (int x = 0; x < src.cols; x++)
+	int src_cols = src.cols;
+	int src_rows = src.rows;
+	for (int x = 0; x < src_cols; x++)
 	{
-		for (int y = 0; y < src.rows; y++)
+		for (int y = 0; y < src_rows; y++)
 		{
 			if (src_red.at<uchar>(y, x))
 				column_accumulation[x]++;
@@ -1541,7 +1548,7 @@ bool priorityStop(Mat &src, Mat &dst, int length, bool debug)
 			else
 				break;
 		}
-		for (int x = maxPosition + 1; x < src.cols; x++)
+		for (int x = maxPosition + 1; x < src_cols; x++)
 		{
 			if (column_accumulation[x])
 			{
@@ -1565,9 +1572,9 @@ bool priorityStop(Mat &src, Mat &dst, int length, bool debug)
 	//
 	if (debug)
 	{
-		for (int x = 0; x < src.cols; x++)
+		for (int x = 0; x < src_cols; x++)
 		{
-			for (int y = 0; y < src.rows; y++)
+			for (int y = 0; y < src_rows; y++)
 			{
 				uchar pixelVal = src_red.at<uchar>(y, x);
 				dst.at<Vec3b>(y, x) = Vec3b(pixelVal, pixelVal, pixelVal);
@@ -1720,9 +1727,11 @@ int checkGreenSignal(Mat &src, Mat &dst, double percent, bool debug)
 	};
 	int column_max = -1;
 	int maxPosition = 0;
-	for (int x = 0; x < src.cols; x++)
+	int src_cols = src.cols;
+	int src_rows = src.rows;
+	for (int x = 0; x < src_cols; x++)
 	{
-		for (int y = 0; y < src.rows; y++)
+		for (int y = 0; y < src_rows; y++)
 		{
 			if (src_green.at<uchar>(y, x))
 				column_accumulation[x]++;
@@ -1753,7 +1762,7 @@ int checkGreenSignal(Mat &src, Mat &dst, double percent, bool debug)
 		else
 			break;
 	}
-	for (int x = maxPosition + 1; x < src.cols; x++)
+	for (int x = maxPosition + 1; x < src_cols; x++)
 	{
 		if (column_accumulation[x])
 		{
@@ -1785,7 +1794,7 @@ int checkGreenSignal(Mat &src, Mat &dst, double percent, bool debug)
 			}
 		}
 
-		for (int x = 0; x < src.cols; x++)
+		for (int x = 0; x < src_cols; x++)
 		{
 			if (column_accumulation[x] == 0)
 				continue;
@@ -1839,9 +1848,13 @@ int checkGreenSignal(Mat &src, Mat &dst, double percent, bool debug)
 int countPixel(Mat &src, Rect ROI)
 {
 	int cnt(0);
-	for (int x = ROI.x; x < ROI.x + ROI.width; x++)
+	int ROI_x = ROI.x;
+	int ROI_y = ROI.y;
+	int ROI_xCond = ROI.x + ROI.width;
+	int ROI_yCond = ROI.y + ROI.height;
+	for (int x = ROI_x; x < ROI_condition; x++)
 	{
-		for (int y = ROI.y; y < ROI.y + ROI.height; y++)
+		for (int y = ROI_y; y < ROI_yCond; y++)
 		{
 			if (src.at<uchar>(y, x))
 				cnt++; // 붉은색이 검출된 픽셀 개수 계산

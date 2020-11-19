@@ -439,7 +439,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		memcpy(cam_pbuf[0], srcbuf, VPE_OUTPUT_W * VPE_OUTPUT_H * 3);
 		gettimeofday(&et, NULL);
 		optime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
-		printf("img_process() \t: %d\n", optime);
+		//printf("img_process() \t: %d\n", optime);
 		draw_operatingtime(disp, optime, t_data->imgData.loopTime);
 	}
 }
@@ -520,7 +520,7 @@ void *image_process_thread(void *arg)
 		v4l2_qbuf(v4l2, vpe->input_buf_dmafd[index], index);
 		gettimeofday(&et, NULL);
 		data->imgData.loopTime = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
-		printf("img_thread() \t: %d\n\n", data->imgData.loopTime);
+		//printf("img_thread() \t: %d\n\n", data->imgData.loopTime);
 	}
 
 	MSG("Ok!");
@@ -910,11 +910,11 @@ void *mission_thread(void *arg)
 {
 	struct thr_data *data = (struct thr_data *)arg;
 	enum MissionState start = READY;
-	enum MissionState flyover = DONE;
-	enum MissionState priority = DONE;
+	enum MissionState flyover = NONE;
+	enum MissionState priority = NONE;
 	enum MissionState parking = NONE;
-	enum MissionState roundabout = DONE;
-	enum MissionState tunnel = READY;
+	enum MissionState roundabout = NONE;
+	enum MissionState tunnel = NONE;
 	enum MissionState overtake = NONE;
 	enum MissionState signalLight = NONE;
 	enum MissionState finish = NONE;

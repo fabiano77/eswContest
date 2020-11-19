@@ -152,7 +152,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		/* 미션 진행중에 처리하는 영상처리 */
 		else if (t_data->imgData.bmission)
 		{
-			
+
 			t_data->controlData.beforeSpeedVal = 0;
 
 			/* 추월차로시에 사용 */
@@ -953,14 +953,14 @@ void *mission_thread(void *arg)
 
 		if (parking && parking != DONE)
 		{
-			if(parkingFunc(data))
+			if (parkingFunc(data))
 			{
 				if (parking == READY)
 				{
 					parking = REMAIN;
 					printf("First Parking is Done!\n");
 				}
-				else if(parking == REMAIN)
+				else if (parking == REMAIN)
 				{
 					parking = DONE;
 					printf("Second Parking is Done!\n");
@@ -975,7 +975,6 @@ void *mission_thread(void *arg)
 				tunnel = DONE;
 				parking = READY;
 			}
-
 		}
 
 		if (roundabout && roundabout != DONE)
@@ -987,8 +986,193 @@ void *mission_thread(void *arg)
 		if (overtake && overtake != DONE)
 		{
 			data->imgData.bwhiteLine = true;
-			if (overtakeFunc(data))
+
+			int distance_1 = DistanceSensor_cm(1);
+			data->imgData.bwhiteLine = true;
+			if (distance_1 <= 30)
 			{
+				data->imgData.bmission = true;
+				data->imgData.btopview = false; //topview off
+				data->imgData.bprintString = true;
+				sprintf(data->imgData.missionString, "overtake");
+				printf("overtake \n");
+				enum OvertakeState state = FRONT_DETECT;
+				data->missionData.overtakingData.headingDirection = STOP;
+				data->missionData.overtakingFlag = true;
+				data->imgData.bwhiteLine = true;
+				bool obstacle = false;
+				int thresDistance = 450;
+				DesireSpeed_Write_uart(0);
+				usleep(5000);
+				int distance_2;
+				int distance_3;
+				int distance_5;
+				int distance_6;
+				while (state)
+				{
+					switch (state)
+					{
+					case FRONT_DETECT:
+						sprintf(data->imgData.missionString, "Front Detect");
+						if (data->missionData.overtakingData.headingDirection == STOP)
+						{
+							data->controlData.cameraY = 1610;
+							CameraYServoControl_Write(data->controlData.cameraY);
+							data->missionData.overtakingData.updownCamera = CAMERA_UP;
+						}
+						while (data->missionData.overtakingData.headingDirection == STOP)
+						{
+							usleep(50000);
+						}
+						if (data->missionData.overtakingData.headingDirection != STOP)
+						{
+							data->controlData.cameraY = 1660;
+							CameraYServoControl_Write(data->controlData.cameraY);
+							data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
+							data->imgData.btopview = true; //top view on
+						}
+						else
+						{
+							break;
+						}
+						if (data->missionData.overtakingData.headingDirection == RIGHT &&
+							data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
+						{
+							sprintf(data->imgData.missionString, "Right to go");
+							Winker_Write(RIGHT_ON);
+							laneChange(GO_RIGHT, BASIC_SPEED, 0);
+
+							Winker_Write(ALL_OFF);
+							usleep(400000);
+							if (DistanceSensor_cm(1) < 20)
+							{
+								sprintf(data->imgData.missionString, "Detect Error");
+								DesireDistance(-BASIC_SPEED, thresDistance, 1100);
+								data->missionData.overtakingData.headingDirection = LEFT;
+							}
+							else
+							{
+								state = SIDE_ON;
+								sprintf(data->imgData.missionString, "Detect Side");
+								data->imgData.bmission = false;
+								DesireSpeed_Write_uart(BASIC_SPEED);
+								usleep(500000);
+							}
+						}
+						else if (data->missionData.overtakingData.headingDirection == LEFT &&
+								 data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
+						{
+
+							sprintf(data->imgData.missionString, "Left to go");
+							Winker_Write(LEFT_ON);
+							laneChange(GO_LEFT, BASIC_SPEED, 0);
+
+							Winker_Write(ALL_OFF);
+							usleep(400000);
+							if (DistanceSensor_cm(1) < 20)
+							{
+								sprintf(data->imgData.missionString, "Detect Error");
+								DesireDistance(-BASIC_SPEED, thresDistance, 1900);
+								data->missionData.overtakingData.headingDirection = RIGHT;
+							}
+							else
+							{
+								state = SIDE_ON;
+								sprintf(data->imgData.missionString, "Detect Side");
+								data->imgData.bmission = false;
+								DesireSpeed_Write_uart(BASIC_SPEED);
+								usleep(500000);
+							}
+						}
+						else
+						{
+						}
+
+						break;
+
+					case SIDE_ON:
+
+						// right
+						switch (data->missionData.overtakingData.headingDirection)
+						{
+						case RIGHT:
+							distance_5 = DistanceSensor_cm(5);
+							distance_6 = DistanceSensor_cm(6);
+
+							if (distance_5 <= 30 || distance_6 <= 30)
+							{
+								obstacle = true;
+							}
+							else if (obstacle == true && distance_5 > 30 && distance_6 > 30)
+							{								   //side-off condition
+								data->imgData.bmission = true; // Auto Steering off
+								usleep(100000);
+								DesireSpeed_Write_uart(0);
+								obstacle = false;
+								state = SIDE_OFF;
+								sprintf(data->imgData.missionString, "Side OFF");
+							}
+							usleep(50000);
+							break;
+						case LEFT:
+							distance_3 = DistanceSensor_cm(3);
+							distance_2 = DistanceSensor_cm(2);
+							if (distance_3 <= 30 || distance_2 <= 30)
+							{
+								obstacle = true;
+							}
+							else if (obstacle == true && distance_3 > 30 && distance_2 > 30)
+							{
+								data->imgData.bmission = true; //Auto Steering off
+								usleep(100000);
+								DesireSpeed_Write_uart(0);
+								//usleep(50000);
+								obstacle = false;
+								state = SIDE_OFF;
+								sprintf(data->imgData.missionString, "Side OFF");
+							}
+							usleep(50000);
+							break;
+						default:
+							state = FRONT_DETECT;
+							break;
+						}
+						//error and go back step
+						break;
+
+					case SIDE_OFF:
+						usleep(10000);
+						data->imgData.bmission = true; //Auto Steering off
+						usleep(10000);
+						switch (data->missionData.overtakingData.headingDirection)
+						{
+						case RIGHT: //return left
+							Winker_Write(LEFT_ON);
+							laneChange(GO_LEFT, BASIC_SPEED, 50);
+							Winker_Write(ALL_OFF);
+							break;
+						case LEFT: //return right
+							Winker_Write(RIGHT_ON);
+							laneChange(GO_RIGHT, BASIC_SPEED, 50);
+							Winker_Write(ALL_OFF);
+							break;
+						default:
+							break;
+						}
+						data->imgData.bmission = false;
+						data->imgData.bprintString = false;
+						DesireSpeed_Write_uart(BASIC_SPEED);
+						state = DONE_O;
+						data->missionData.overtakingFlag = false;
+						break;
+
+					default:
+						break;
+					}
+					usleep(50000);
+				}
+				data->imgData.bmission = false;
+				data->imgData.bprintString = false;
 				overtake = DONE;
 				signalLight = READY;
 			}
@@ -1122,7 +1306,6 @@ int main(int argc, char **argv)
 	tdata.imgData.bprintTire = true;
 	sprintf(tdata.imgData.missionString, "(null)");
 
-
 	/******************** Control Data ********************/
 	tdata.controlData.settingSpeedVal = 40;
 	tdata.controlData.desireSpeedVal = 0;
@@ -1198,7 +1381,6 @@ int main(int argc, char **argv)
 	MSG("Input(Camera) = %d x %d (%.4s)\nOutput(LCD) = %d x %d (%.4s)",
 		vpe->src.width, vpe->src.height, (char *)&vpe->src.fourcc,
 		vpe->dst.width, vpe->dst.height, (char *)&vpe->dst.fourcc);
-	
 
 	if (vpe->src.height < 0 || vpe->src.width < 0 || vpe->src.fourcc < 0 ||
 		vpe->dst.height < 0 || vpe->dst.width < 0 || vpe->dst.fourcc < 0)

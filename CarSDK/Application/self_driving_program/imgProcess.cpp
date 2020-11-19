@@ -425,7 +425,7 @@ extern "C"
 		/*Hough Ransac*/
 		Mat img_ransac;
 		int line_type;
-		Vec8i ransac_points = hough_ransacLine(img_canny, srcRGB, 640, 360, 17, 1, line_type, 0.5, 30);
+		Vec8i ransac_points = hough_ransacLine(img_canny, srcRGB, 640, 360, 17, 1, line_type, 0.5, 2);
 
 		cout << "line type = " << line_type << endl;
 		/*Line Splitting*/ //point로 바꿔야됨
@@ -613,7 +613,7 @@ extern "C"
 		putText(srcRGB, toString((double)count_right), location_right, font, fontScale, Scalar(255, 0, 0), 2);
 		/*Choose Left or Right*/
 		//선이 없는 경우 배제하는 것도 필요
-		printf("%d \t%d\n",count_left, count_right);
+		printf("%d \t%d\n", count_left, count_right);
 		if (count_left < count_right)
 		{
 			putText(srcRGB, "Left to go", location, font, fontScale, Scalar(0, 0, 255), 2);

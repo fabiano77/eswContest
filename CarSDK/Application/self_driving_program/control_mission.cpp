@@ -644,16 +644,16 @@ extern "C"
 		if(direction)	// 1 == 우 회전.
 		{
 			SteeringServoControl_Write(1100);
-			sleepDistance(1000);
+			sleepDistance(850);
 			SteeringServoControl_Write(1900);
-			sleepDistance(1000);
+			sleepDistance(750);
 		}
 		else
 		{
 			SteeringServoControl_Write(1900);
-			sleepDistance(1000);
+			sleepDistance(850);
 			SteeringServoControl_Write(1100);
-			sleepDistance(1000);
+			sleepDistance(750);
 		}
 		SteeringServoControl_Write(1500);
 		sleepDistance(200);

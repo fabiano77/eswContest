@@ -1136,18 +1136,15 @@ void *mission_thread(void *arg)
 							{
 								obstacle = true;
 							}
-							else if (obstacle == true)
+							else if (obstacle == true && distance_3 > 30 && distance_2 > 30)
 							{
-								if (distance_3 > 30 && distance_2 > 30)
-								{
-									data->imgData.bmission = true; //Auto Steering off
-									usleep(100000);
-									DesireSpeed_Write_uart(0);
-									//usleep(50000);
-									obstacle = false;
-									state = SIDE_OFF;
-									sprintf(data->imgData.missionString, "Side OFF");
-								}
+								data->imgData.bmission = true; //Auto Steering off
+								usleep(100000);
+								DesireSpeed_Write_uart(0);
+								//usleep(50000);
+								obstacle = false;
+								state = SIDE_OFF;
+								sprintf(data->imgData.missionString, "Side OFF");
 							}
 							usleep(50000);
 							break;
@@ -1162,21 +1159,20 @@ void *mission_thread(void *arg)
 						usleep(10000);
 						data->imgData.bmission = true; //Auto Steering off
 						usleep(10000);
-						//right
-						if (data->missionData.overtakingData.headingDirection == RIGHT) // return left
+						switch (data->missionData.overtakingData.headingDirection)
 						{
+						case RIGHT: //return left
 							Winker_Write(LEFT_ON);
 							laneChange(GO_LEFT, BASIC_SPEED);
-
 							Winker_Write(ALL_OFF);
-						}
-						//left
-						else if (data->missionData.overtakingData.headingDirection == LEFT) //return right
-						{
+							break;
+						case LEFT: //return right
 							Winker_Write(RIGHT_ON);
 							laneChange(GO_RIGHT, BASIC_SPEED);
-
 							Winker_Write(ALL_OFF);
+							break;
+						default:
+							break;
 						}
 						data->imgData.bmission = false;
 						data->imgData.bprintString = false;

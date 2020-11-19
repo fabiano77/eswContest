@@ -125,7 +125,7 @@ bool parkingFunc(struct thr_data *arg)
     struct thr_data *data = (struct thr_data *)arg;
 
     if (1) //(data->controlData.steerVal <= 1600 && data->controlData.steerVal >= 1400) || parking == REMAIN)
-    {      // ë°”í?´ê?? ? „ì§„ë°©?–¥?„ ?œ ì§??•˜ê³? ?ˆ?Š” ê²½ìš°?—ë§? ì£¼ì°¨ ë¶„ê¸°ë¡? ì§„ì…?•˜?„ë¡? ?•˜?Š” ?¥ì¹? (ê²°ì„  ì£¼í–‰?š©)
+    {      // ë°”ï¿½?ï¿½ï¿½?? ?ï¿½ï¿½ì§„ë°©?ï¿½ï¿½?ï¿½ï¿½ ?ï¿½ï¿½ï¿½??ï¿½ï¿½ï¿½? ?ï¿½ï¿½?ï¿½ï¿½ ê²½ìš°?ï¿½ï¿½ï¿½? ì£¼ì°¨ ë¶„ê¸°ï¿½? ì§„ì…?ï¿½ï¿½?ï¿½ï¿½ï¿½? ?ï¿½ï¿½?ï¿½ï¿½ ?ï¿½ï¿½ï¿½? (ê²°ì„  ì£¼í–‰?ï¿½ï¿½)
         if (DistanceSensor_cm(2) <= 28)
         {
             struct timeval st_p, et_p;
@@ -566,13 +566,13 @@ bool roundaboutFunc(struct thr_data *arg)
                 DesireSpeed_Write_uart(speed);
 
                 //end
-                //if (abs(data->controlData.steerVal - 1500) < 60)
-                if (data->controlData.steerVal - 1500 < 30)
+                //if (data->controlData.steerVal - 1500 < 30)
+                if (abs(data->controlData.steerVal - 1500) < 80)
                 {
-                    if (flag_END < 3)
+                    if (flag_END < 15)
                         flag_END++;
 
-                    if (flag_END == 3)
+                    if (flag_END == 15)
                     {
                         sprintf(data->imgData.missionString, "DONE_R");
                         printf("DONE_R");
@@ -611,44 +611,46 @@ bool roundaboutFunc(struct thr_data *arg)
 bool tunnelFunc(struct thr_data *arg)
 {
     struct thr_data *data = (struct thr_data *)arg;
-
-    data->imgData.bdark = true;
-    if (data->missionData.btunnel && DistanceSensor_cm(2) < 20 && DistanceSensor_cm(6) < 20)
+    
+    if (data->missionData.broundabout == false) 
     {
-        data->imgData.bprintString = true;
-        data->imgData.bmission = true;
-        data->imgData.bdark = false;
-
-        frontLightOnOff(data->controlData.lightFlag, true);
-        sprintf(data->imgData.missionString, "mission thread : tunnel detect");
-        int c2 = DistanceSensor_cm(2);
-        int c6 = DistanceSensor_cm(6);
-        int isEnd = Tunnel_isEnd(c2, c6, 50, 50);
-        do
+        if (DistanceSensor_cm(2) < 20 && DistanceSensor_cm(6) < 20)
         {
-            //data->missionData.loopTime = timeCheck(&time);
-            data->controlData.steerVal = Tunnel_SteerVal(c2, c6);
-            sprintf(data->imgData.missionString, "steer = %d, %d : %d", data->controlData.steerVal, c2, c6);
-            SteeringServo_Write(data->controlData.steerVal);
-            usleep(10000);
+            data->imgData.bprintString = true;
+            data->imgData.bmission = true;
+            //data->imgData.bdark = false;
 
-            c2 = DistanceSensor_cm(2);
-            c6 = DistanceSensor_cm(6);
-            isEnd = Tunnel_isEnd(c2, c6, 50, 50);
-        } while (!isEnd);
+            frontLightOnOff(data->controlData.lightFlag, true);
+            sprintf(data->imgData.missionString, "mission thread : tunnel detect");
+            int c2 = DistanceSensor_cm(2);
+            int c6 = DistanceSensor_cm(6);
+            int isEnd = Tunnel_isEnd(c2, c6, 50, 50);
+            do
+            {
+                //data->missionData.loopTime = timeCheck(&time);
+                data->controlData.steerVal = Tunnel_SteerVal(c2, c6);
+                sprintf(data->imgData.missionString, "steer = %d, %d : %d", data->controlData.steerVal, c2, c6);
+                SteeringServo_Write(data->controlData.steerVal);
+                usleep(10000);
 
-        sprintf(data->imgData.missionString, "tunnel out");
-        frontLightOnOff(data->controlData.lightFlag, false);
+                c2 = DistanceSensor_cm(2);
+                c6 = DistanceSensor_cm(6);
+                isEnd = Tunnel_isEnd(c2, c6, 50, 50);
+            } while (!isEnd);
 
-        printf("Tunnel OUT\n");
+            sprintf(data->imgData.missionString, "tunnel out");
+            frontLightOnOff(data->controlData.lightFlag, false);
 
-        data->imgData.bmission = false;
-        data->imgData.bprintString = false;
-        data->missionData.btunnel = false;
-        return true;
+            printf("Tunnel OUT\n");
+
+            data->imgData.bmission = false;
+            data->imgData.bprintString = false;
+            data->missionData.btunnel = false;
+            return true;
+        }
+        else
+            return false;
     }
-    else
-        return false;
 }
 
 bool overtakeFunc(struct thr_data *arg)
@@ -691,7 +693,7 @@ bool overtakeFunc(struct thr_data *arg)
                     CameraYServoControl_Write(data->controlData.cameraY);
                     data->missionData.overtakingData.updownCamera = CAMERA_UP;
                 }
-                /* ???????? ï¿½Â¿ï¿½ ?????? ?? ï¿½ï¿½ï¿???????? ï¿½ï¿½ï¿½ï¿½????? ???ï¿½ï¿½ï¿½ï¿½?????? ï¿½Úµï¿½*/
+                /* ???????? ï¿½Â¿ï¿½ ?????? ?? ï¿½ï¿½ï¿½???????? ï¿½ï¿½ï¿½ï¿½????? ???ï¿½ï¿½ï¿½ï¿½?????? ï¿½Úµï¿½*/
                 while (data->missionData.overtakingData.headingDirection == STOP)
                 {
                     //data->missionData.loopTime = timeCheck(&time);
@@ -714,7 +716,7 @@ bool overtakeFunc(struct thr_data *arg)
                     data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
                 {
                     sprintf(data->imgData.missionString, "Right to go");
-                    /*ï¿½ï¿½ï¿??*/
+                    /*ï¿½ï¿½ï¿½??*/
                     Winker_Write(RIGHT_ON);
                     //DesireDistance(50, thresDistance, 1100);
                     DesireDistance(50, thresDistance, 1050);
@@ -746,7 +748,7 @@ bool overtakeFunc(struct thr_data *arg)
                 {
 
                     sprintf(data->imgData.missionString, "Left to go");
-                    /*ï¿½ï¿½ï¿??*/
+                    /*ï¿½ï¿½ï¿½??*/
                     Winker_Write(LEFT_ON);
                     //DesireDistance(50, thresDistance, 1900);
                     DesireDistance(50, thresDistance, 1950);
@@ -774,7 +776,7 @@ bool overtakeFunc(struct thr_data *arg)
                     }
                 }
                 else
-                { /*STOP??? ??????????? ï¿½ï¿½ï¿?? ï¿½ï¿½ï¿½ï¿½*/
+                { /*STOP??? ??????????? ï¿½ï¿½ï¿½?? ï¿½ï¿½ï¿½ï¿½*/
                 }
 
                 break;
@@ -913,7 +915,7 @@ bool signalLightFunc(struct thr_data *arg)
         printf("signalLight\n");
 
         while (data->imgData.bcheckSignalLight)
-            usleep(200000); //??????Ã³ï¿½ï¿½?????? ????????? ï¿½ï¿½ï¿½ï¿½??? ?????? ??? ï¿½ï¿½??? ï¿½ï¿½Ù¸ï¿½ï¿½ï¿??.
+            usleep(200000); //??????Ã³ï¿½ï¿½?????? ????????? ï¿½ï¿½ï¿½ï¿½??? ?????? ??? ï¿½ï¿½??? ï¿½ï¿½Ù¸ï¿½ï¿½ï¿½??.
 
         data->imgData.bprintTire = true;
         sprintf(data->imgData.missionString, "Distance control");

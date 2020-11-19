@@ -1014,6 +1014,11 @@ void *mission_thread(void *arg)
 				bool obstacle = false;
 				int thresDistance = 450;
 				DesireSpeed_Write_uart(0);
+				usleep(5000);
+				int distance_2;
+				int distance_3;
+				int distance_5;
+				int distance_6;
 				while (state)
 				{
 					switch (state)
@@ -1050,6 +1055,10 @@ void *mission_thread(void *arg)
 							/*
 							 dahee's function
 							*/
+							SteeringServo_Write_uart(1900);
+							onlyDistance(50, thresDistance + 400);
+							SteeringServo_Write_uart(1100);
+							onlyDistance(50, thresDistance + 300);
 							Winker_Write(ALL_OFF);
 							usleep(400000);
 							if (DistanceSensor_cm(1) < 20)
@@ -1075,6 +1084,11 @@ void *mission_thread(void *arg)
 							/*
 							 dahee's function
 							*/
+							SteeringServo_Write_uart(1100);
+							onlyDistance(50, thresDistance + 400);
+							SteeringServo_Write_uart(1900);
+							onlyDistance(50, thresDistance + 300);
+
 							Winker_Write(ALL_OFF);
 							usleep(400000);
 							if (DistanceSensor_cm(1) < 20)
@@ -1102,8 +1116,8 @@ void *mission_thread(void *arg)
 						// right
 						if (data->missionData.overtakingData.headingDirection == RIGHT)
 						{
-							int distance_5 = DistanceSensor_cm(5);
-							int distance_6 = DistanceSensor_cm(6);
+							distance_5 = DistanceSensor_cm(5);
+							distance_6 = DistanceSensor_cm(6);
 
 							if (distance_5 <= 30 || distance_6 <= 30)
 							{
@@ -1118,7 +1132,9 @@ void *mission_thread(void *arg)
 									DesireSpeed_Write_uart(0);
 									obstacle = false;
 									state = SIDE_OFF;
-									sprintf(data->imgData.missionString, "Side OFF");
+									sprintf(data->imgData.m
+												issionString,
+											"Side OFF");
 								}
 							}
 							usleep(50000);
@@ -1126,8 +1142,8 @@ void *mission_thread(void *arg)
 						//left
 						else if (data->missionData.overtakingData.headingDirection == LEFT)
 						{
-							int distance_3 = DistanceSensor_cm(3);
-							int distance_2 = DistanceSensor_cm(2);
+							distance_3 = DistanceSensor_cm(3);
+							distance_2 = DistanceSensor_cm(2);
 							if (distance_3 <= 30 || distance_2 <= 30)
 							{
 								obstacle = true;
@@ -1165,6 +1181,10 @@ void *mission_thread(void *arg)
 							/*
 							 dahee's function
 							*/
+							SteeringServo_Write_uart(1100);
+							onlyDistance(50, thresDistance + 400);
+							SteeringServo_Write_uart(1900);
+							onlyDistance(50, thresDistance + 300);
 							Winker_Write(ALL_OFF);
 						}
 						//left
@@ -1174,6 +1194,10 @@ void *mission_thread(void *arg)
 							/*
 							 dahee's function
 							*/
+							SteeringServo_Write_uart(1900);
+							onlyDistance(50, thresDistance + 400);
+							SteeringServo_Write_uart(1100);
+							onlyDistance(50, thresDistance + 300);
 							Winker_Write(ALL_OFF);
 						}
 						data->imgData.bmission = false;

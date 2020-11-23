@@ -995,7 +995,7 @@ void *mission_thread(void *arg)
 	enum MissionState flyover = NONE;
 	enum MissionState priority = READY;
 	enum MissionState parking = READY;
-	enum MissionState roundabout = READY;
+	enum MissionState roundabout = NONE;
 	enum MissionState tunnel = READY;
 	enum MissionState overtake = NONE;
 	enum MissionState signalLight = NONE;
@@ -1036,6 +1036,7 @@ void *mission_thread(void *arg)
 			{
 				priority = DONE;
 				parking = READY;
+				roundabout = READY;
 			}
 			// parking 켜기
 		}

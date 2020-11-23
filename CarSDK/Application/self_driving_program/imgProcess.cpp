@@ -2176,6 +2176,6 @@ void filteringTestFunction(Mat &src, Mat &dst, int h_, int s_, int v_, int canny
 	int threshold_1 = canny1_; //215 //340
 	int threshold_2 = canny2_; //330 //500
 
-	Canny(src, dst, threshold_1, threshold_2); //노란색만 남은 frame의 윤곽을 1채널 Mat객체로 추출
+	Canny(dst, dst, threshold_1, threshold_2); //노란색만 남은 frame의 윤곽을 1채널 Mat객체로 추출
 
 }

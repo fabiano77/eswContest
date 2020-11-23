@@ -1037,7 +1037,7 @@ void repeatParking(struct thr_data *arg)
             {
                 if (abs(data->controlData.steerVal - 1500) < 100)
                 {
-                    DesireDistance(-BASIC_SPEED, 2000, 0);
+                    DesireDistance(-BASIC_SPEED, 2000, 1500);
                     buzzer(1, 0, 300000);
                     usleep(100000);
                     DesireSpeed_Write_uart(BASIC_SPEED);

@@ -347,7 +347,7 @@ extern "C"
 		}
 		else if (mode == 3)
 		{
-			int retval = checkObstacle(inBuf, w, h, outBuf);
+			int retval = checkObstacle(inBuf, w, h, outBuf, 1);
 			printf("return val = %d\n", retval);
 		}
 		else if (mode == 4)
@@ -395,7 +395,7 @@ extern "C"
 		return steer;
 	}
 
-	bool checkObstacle(unsigned char *inBuf, int w, int h, unsigned char *outBuf)
+	bool checkObstacle(unsigned char *inBuf, int w, int h, unsigned char *outBuf, bool debugMode)
 	{
 		/*Capture from inBuf*/
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
@@ -415,10 +415,9 @@ extern "C"
 		/****Add format***********************************/
 		Mat img_sharpen, img_canny, img_white, img_roi;
 		/*Convert Color*/
-		int color_convert = 1;
 		Point roi_points[4] = {Point(0, 100), Point(0, 360), Point(640, 360), Point(640, 100)};
 		regionOfInterest(srcRGB, img_roi, roi_points);
-		lineFiltering(img_roi, img_white, color_convert);
+		lineFiltering(img_roi, img_white, 1);
 
 		/*Canny Image*/
 		cannyEdge(img_white, img_canny);
@@ -439,17 +438,18 @@ extern "C"
 		line(srcRGB, Point(0, height_up), Point(width, height_up), Scalar(255, 0, 0), 2);
 		int rightup_x, rightdown_x, leftup_x, leftdown_x;
 		double grad_right, grad_left;
-		if (line_type == 0)
-		{ //미탐지 시
+		switch (line_type)
+		{
+		case 0: // 미탐지 시
 			grad_right = -1000;
 			grad_left = 1000;
 			rightup_x = width / 2 + 60;
 			rightdown_x = width / 2 + 60;
 			leftup_x = 0;
 			leftdown_x = 0;
-		}
-		else if (line_type == 1)
-		{ //라인이 1개일 때, left에만 값이 들어감
+			break;
+
+		case 1: // 라인이 1개일 때, left에만 값이 들어감
 			if (slope(line_left) > 0)
 			{								   //right
 				grad_right = slope(line_left); //left에만 들어갔으므로 slope로 함
@@ -475,9 +475,9 @@ extern "C"
 				line_right = Vec4i(rightup_x, height_up, rightdown_x, height_down);
 				line_left = Vec4i(leftup_x, height_up, leftdown_x, height_down);
 			}
-		}
-		else
-		{
+			break;
+
+		case 2: // 모두 탐지시
 			grad_right = slope(line_right);
 			rightup_x = getPointX_at_Y(line_right, height_up);
 			rightdown_x = getPointX_at_Y(line_right, height_down);
@@ -485,7 +485,19 @@ extern "C"
 			grad_left = slope(line_left);
 			leftup_x = getPointX_at_Y(line_left, height_up);
 			leftdown_x = getPointX_at_Y(line_left, height_down);
+			break;
+
+		default:
+			grad_right = slope(line_right);
+			rightup_x = getPointX_at_Y(line_right, height_up);
+			rightdown_x = getPointX_at_Y(line_right, height_down);
+
+			grad_left = slope(line_left);
+			leftup_x = getPointX_at_Y(line_left, height_up);
+			leftdown_x = getPointX_at_Y(line_left, height_down);
+			break;
 		}
+
 		/*check inadequate value and fix it*/
 		if (leftup_x > width / 2)
 		{
@@ -525,76 +537,146 @@ extern "C"
 		//left
 		int count_left = 0;
 		int count_right = 0;
+		int x, y;
 		/* Count Left and Right Gray Scale */
-		//left
-		for (int y = point_leftup.y; y < point_leftdown.y; y++) //up.y<down.y
-		{														//y
-			int lower_x;										//lower bound for calculate rectangular form
-			if (grad_left >= 1000)
-			{ //무의미한 값 제거
-				lower_x = width / 2 - 60;
-			}
-			else
-			{
-				lower_x = getPointX_at_Y(line_left, y); //왼쪽은 if문 불필요 (오른쪽 부분 참조)
-				if (lower_x > w / 2)
-				{
+		if (debugMode)
+		{ //debug mode
+			//left
+			for (y = point_leftup.y; y < point_leftdown.y; y++) //up.y<down.y
+			{													//y
+				int lower_x;									//lower bound for calculate rectangular form
+				if (grad_left >= 1000)
+				{ //무의미한 값 제거
 					lower_x = width / 2 - 60;
-				}
-			}
-
-			for (int x = 0; x < lower_x; x++) // left Gray detection
-			{								  //x
-				uchar color_value = img_filtered.at<uchar>(y, x);
-				//img_filtered를 사용해야 회색의 범위를 찾음
-				if (color_value > 128)
-				{
-					count_left++;
-					srcRGB.at<Vec3b>(y, x) = Vec3b(0, 255, 0);
 				}
 				else
 				{
-					srcRGB.at<Vec3b>(y, x) = Vec3b(0, 0, 255);
+					lower_x = getPointX_at_Y(line_left, y); //왼쪽은 if문 불필요 (오른쪽 부분 참조)
+					if (lower_x > w / 2)
+					{
+						lower_x = width / 2 - 60;
+					}
+				}
+
+				for (x = 0; x < lower_x; x++) // left Gray detection
+				{							  //x
+					uchar color_value = img_filtered.at<uchar>(y, x);
+					//img_filtered를 사용해야 회색의 범위를 찾음
+					if (color_value > 128)
+					{
+						count_left++;
+						srcRGB.at<Vec3b>(y, x) = Vec3b(0, 255, 0);
+					}
+					else
+					{
+						srcRGB.at<Vec3b>(y, x) = Vec3b(0, 0, 255);
+					}
+				}
+			}
+			//right
+			for (y = point_rightup.y; y < point_rightdown.y; y++) //up.y<down.y
+			{													  //y
+				int upper_x;									  //upper bound for calculate rectangular form
+				if (grad_right <= -1000)
+				{
+					upper_x = width / 2 + 60;
+				} //무의미한 값 제거
+				else
+				{
+					/*line_left에 만 값이 들어있을 때 line_type이 1일 때*/
+					if (slope(line_left) > 0)
+					{
+						upper_x = getPointX_at_Y(line_left, y);
+					}
+					else
+					{
+						upper_x = getPointX_at_Y(line_right, y);
+					}
+				}
+				if (upper_x < w / 2)
+				{
+					upper_x = width / 2 + 60;
+				}
+				for (x = upper_x; x < width; x++) // left Gray detection
+				{								  //x
+
+					uchar color_value = img_filtered.at<uchar>(y, x);
+					//img_filtered를 사용해야 회색의 범위를 찾음
+					if (color_value > 128)
+					{
+						count_right++;
+						srcRGB.at<Vec3b>(y, x) = Vec3b(0, 255, 0);
+					}
+					else
+					{
+						srcRGB.at<Vec3b>(y, x) = Vec3b(0, 0, 255);
+					}
 				}
 			}
 		}
-		//right
-		for (int y = point_rightup.y; y < point_rightdown.y; y++) //up.y<down.y
-		{														  //y
-			int upper_x;										  //upper bound for calculate rectangular form
-			if (grad_right <= -1000)
-			{
-				upper_x = width / 2 + 60;
-			} //무의미한 값 제거
-			else
-			{
-				/*line_left에 만 값이 들어있을 때 line_type이 1일 때*/
-				if (slope(line_left) > 0)
-				{
-					upper_x = getPointX_at_Y(line_left, y);
-				}
-				else
-				{
-					upper_x = getPointX_at_Y(line_right, y);
-				}
-			}
-			if (upper_x < w / 2)
-			{
-				upper_x = width / 2 + 60;
-			}
-			for (int x = upper_x; x < width; x++) // left Gray detection
-			{									  //x
+		else
+		{ // no debug mode
 
-				uchar color_value = img_filtered.at<uchar>(y, x);
-				//img_filtered를 사용해야 회색의 범위를 찾음
-				if (color_value > 128)
-				{
-					count_right++;
-					srcRGB.at<Vec3b>(y, x) = Vec3b(0, 255, 0);
+			//left
+			for (y = point_leftup.y; y < point_leftdown.y; y++) //up.y<down.y
+			{													//y
+				int lower_x;									//lower bound for calculate rectangular form
+				if (grad_left >= 1000)
+				{ //무의미한 값 제거
+					lower_x = width / 2 - 60;
 				}
 				else
 				{
-					srcRGB.at<Vec3b>(y, x) = Vec3b(0, 0, 255);
+					lower_x = getPointX_at_Y(line_left, y); //왼쪽은 if문 불필요 (오른쪽 부분 참조)
+					if (lower_x > w / 2)
+					{
+						lower_x = width / 2 - 60;
+					}
+				}
+
+				for (x = 0; x < lower_x; x++) // left Gray detection
+				{							  //x
+					uchar color_value = img_filtered.at<uchar>(y, x);
+					//img_filtered를 사용해야 회색의 범위를 찾음
+					if (color_value > 128)
+					{
+						count_left++;
+					}
+				}
+			}
+			//right
+			for (y = point_rightup.y; y < point_rightdown.y; y++) //up.y<down.y
+			{													  //y
+				int upper_x;									  //upper bound for calculate rectangular form
+				if (grad_right <= -1000)
+				{
+					upper_x = width / 2 + 60;
+				} //무의미한 값 제거
+				else
+				{
+					/*line_left에 만 값이 들어있을 때 line_type이 1일 때*/
+					if (slope(line_left) > 0)
+					{
+						upper_x = getPointX_at_Y(line_left, y);
+					}
+					else
+					{
+						upper_x = getPointX_at_Y(line_right, y);
+					}
+				}
+				if (upper_x < w / 2)
+				{
+					upper_x = width / 2 + 60;
+				}
+				for (x = upper_x; x < width; x++) // left Gray detection
+				{								  //x
+
+					uchar color_value = img_filtered.at<uchar>(y, x);
+					//img_filtered를 사용해야 회색의 범위를 찾음
+					if (color_value > 128)
+					{
+						count_right++;
+					}
 				}
 			}
 		}
@@ -606,24 +688,24 @@ extern "C"
 		Point location_left(width / 4, height * 7 / 8);		 // Location that is point of edge detected(left)
 		Point location_right(width * 3 / 4, height * 7 / 8); //Location that is point of edge detected(right)
 
-		int font = FONT_ITALIC; // italic font
+		// italic font
 		double fontScale = 0.8;
 
-		putText(srcRGB, toString((double)count_left), location_left, font, fontScale, Scalar(255, 0, 0), 2);
-		putText(srcRGB, toString((double)count_right), location_right, font, fontScale, Scalar(255, 0, 0), 2);
+		putText(srcRGB, toString((double)count_left), location_left, FONT_ITALIC, fontScale, Scalar(255, 0, 0), 2);
+		putText(srcRGB, toString((double)count_right), location_right, FONT_ITALIC, fontScale, Scalar(255, 0, 0), 2);
 		/*Choose Left or Right*/
 		//선이 없는 경우 배제하는 것도 필요
 		printf("%d \t%d\n", count_left, count_right);
 		if (count_left < count_right)
 		{
-			putText(srcRGB, "Left to go", location, font, fontScale, Scalar(0, 0, 255), 2);
-			printf("Going left");
+			putText(srcRGB, "Left to go", location, FONT_ITALIC, fontScale, Scalar(0, 0, 255), 2);
+			cout << "Going left" << endl;
 			return true;
 		}
 		else
 		{
-			putText(srcRGB, "Right to go", location, font, fontScale, Scalar(0, 0, 255), 2);
-			printf("Going Right");
+			putText(srcRGB, "Right to go", location, FONT_ITALIC, fontScale, Scalar(0, 0, 255), 2);
+			cout << "Going Right" << endl;
 			return false;
 		}
 	}

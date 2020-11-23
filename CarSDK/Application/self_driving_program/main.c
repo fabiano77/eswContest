@@ -681,6 +681,7 @@ void *input_thread(void *arg)
 							printf("\tfilteringTest() : canny2\t: ");
 							scanf("%d", &canny2);
 						}
+						cmd_ready = false;
 					}
 					else
 					{

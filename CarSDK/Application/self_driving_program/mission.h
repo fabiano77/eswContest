@@ -112,3 +112,10 @@ void DesireDistance(int SettingSpeed, int SettingDistance, int SettingSteering);
 // PostCondition	: driving angle is changed that you want to handle.
 // Return 			: none
 void SteeringServo_Write(signed short angle);
+
+// SteeringServo_Write
+// parkingFunc반복하는 함수
+// PreCondition 	: debug
+// PostCondition	: driving angle is changed that you want to handle.
+// Return 			: none
+void repeatParking(struct thr_data *arg);

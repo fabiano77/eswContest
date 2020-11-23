@@ -1035,15 +1035,18 @@ void *mission_thread(void *arg)
 			if (priorityFunc(data))
 			{
 				priority = DONE;
-				parking = READY;
-				roundabout = READY;
 			}
 			// parking 켜기
 		}
 
 		if (parking && parking != DONE)
-
 		{
+			// parking repeating test
+			if (1)
+			{
+				repeatParking(data);
+			}
+			// parking reapeating test end
 			if (parkingFunc(data))
 			{
 				if (parking == READY)
@@ -1055,7 +1058,6 @@ void *mission_thread(void *arg)
 				{
 					parking = DONE;
 					printf("Second Parking is Done!\n");
-					roundabout = READY;
 				}
 			}
 		}
@@ -1065,7 +1067,6 @@ void *mission_thread(void *arg)
 			if (roundaboutFunc(data))
 			{
 				roundabout = DONE;
-				tunnel = READY;
 			}
 		}
 
@@ -1074,7 +1075,6 @@ void *mission_thread(void *arg)
 			if (tunnelFunc(data))
 			{
 				tunnel = DONE;
-				overtake = READY;
 			}
 		}
 
@@ -1083,7 +1083,6 @@ void *mission_thread(void *arg)
 			if (roundaboutFunc(data))
 			{
 				roundabout = DONE;
-				tunnel = READY;
 			}
 		}
 

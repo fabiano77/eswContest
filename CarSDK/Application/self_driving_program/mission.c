@@ -487,7 +487,7 @@ bool roundaboutFunc(struct thr_data *arg)
 {
     struct thr_data *data = (struct thr_data *)arg;
 
-    if (StopLine(4)) //|| data->missionData.finish_distance != -1)
+    if (StopLine(5)) //|| data->missionData.finish_distance != -1)
     {
         DesireSpeed_Write_uart(0);
         sprintf(data->imgData.missionString, "round about");
@@ -551,7 +551,7 @@ bool roundaboutFunc(struct thr_data *arg)
                 if ((DistanceSensor_cm(4) <= 8) /* || (DistanceSensor_cm(5) <= 6)*/)
                 {
                     printf("speed up \n");
-                    if (speed < 70)
+                    if (speed < 75)
                         speed += 5;
                 }
                 else if ((DistanceSensor_cm(1) <= 8) /* || (DistanceSensor_cm(6) <= 6)*/)

@@ -145,10 +145,21 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		/* 라인 필터링이나 canny 결과 확인 */
 		if (t_data->imgData.bdebug)
 		{
-			if (t_data->imgData.debugMode == 9)
-				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
-			debugFiltering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.debugMode);
-			//printf("debug \t\t: %d\n", timeCheck(&time));
+			if(t_data->imgData.bfilteringTest)
+			{
+				filteringTest(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, 	t_data->imgData.filtering_param.h,
+																			t_data->imgData.filtering_param.s,
+																			t_data->imgData.filtering_param.v,
+																			t_data->imgData.filtering_param.canny1,
+																			t_data->imgData.filtering_param.canny2);
+			}
+			else
+			{
+				if (t_data->imgData.debugMode == 9)
+					OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
+				debugFiltering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.debugMode);
+				//printf("debug \t\t: %d\n", timeCheck(&time));
+			}
 		}
 
 		/* 미션 진행중에 처리하는 영상처리 */
@@ -572,8 +583,7 @@ void *input_thread(void *arg)
 	MSG("\t tire   : tire    display output on/off");
 	MSG("\t ms	   : mission on/off");
 	MSG("\t dump   : save image file");
-	MSG("\t video  : video record start");
-	MSG("\t save   : save video file");
+	MSG("\t filter : filtering test");
 	MSG("\n");
 
 	int buzzerPulseWidth_us = 100000;
@@ -630,6 +640,80 @@ void *input_thread(void *arg)
 					data->imgData.bdebug = !data->imgData.bdebug;
 					CameraYServoControl_Write(1660);
 					printf("\t debug OFF\n");
+				}
+			}
+			else if (0 == strncmp(cmd_input, "filter", 6))
+			{
+				buzzer(1, 0, buzzerPulseWidth_us);
+				data->imgData.bdebug = !data->imgData.bdebug;
+				data->imgData.bfilteringTest = !data->imgData.bfilteringTest;
+				
+				printf("\t filtering Test ON\n");
+
+				printf("h_min, s_max, v_min = %d, %d, %d\ncanny = %d, %d\n",data->imgData.filtering_param.h,
+																		data->imgData.filtering_param.s,
+																		data->imgData.filtering_param.v,
+																		data->imgData.filtering_param.canny1,
+																		data->imgData.filtering_param.canny2);
+
+				printf("\tfilteringTest() : func(line, canny)\t: ");
+				char func[10]; 
+				scanf("%s", func);
+
+				while (1)
+				{
+					int number;
+					int canny1, canny2;
+					if (cmd_ready == true)
+					{
+						if(0 == strncmp(func, "line", 4))
+						{
+							printf("\tfilteringTest() : line(h,s,v)\t: ");
+							cmd_ready = StandbyInput(cmd_input); //define in cmd.cpp
+							printf("\tfilteringTest() : %s(number)\t: ", cmd_input);
+							scanf("%d", &number);
+						}
+						else if(0 == strncmp(func, "canny", 5))
+						{
+							printf("\tfilteringTest() : canny1\t: ");
+							scanf("%d", &canny1);
+							printf("\tfilteringTest() : canny2\t: ");
+							scanf("%d", &canny2);
+						}
+						
+					}
+					else
+					{
+						buzzer(1, 0, buzzerPulseWidth_us);
+						if(0 == strncmp(func, "line", 4))
+						{
+							if(0 == strncmp(cmd_input, "h", 1))
+							{
+								data->imgData.filtering_param.h = number;
+							}
+							else if(0 == strncmp(cmd_input, "s", 1))
+							{
+								data->imgData.filtering_param.s = number;
+							}
+							else if(0 == strncmp(cmd_input, "v", 1))
+							{
+								data->imgData.filtering_param.v = number;
+							}	
+						}
+						else if(0 == strncmp(func, "canny", 5))
+						{
+							data->imgData.filtering_param.canny1 = canny1;
+							data->imgData.filtering_param.canny2 = canny2;
+						}
+						
+						printf("h_min, s_max, v_min = %d, %d, %d\ncanny = %d, %d\n",data->imgData.filtering_param.h,
+																		data->imgData.filtering_param.s,
+																		data->imgData.filtering_param.v,
+																		data->imgData.filtering_param.canny1,
+																		data->imgData.filtering_param.canny2);
+
+						cmd_ready = true;
+					}
 				}
 			}
 			else if (0 == strncmp(cmd_input, "auto", 4))
@@ -782,7 +866,6 @@ void *input_thread(void *arg)
 				else
 					printf("\t print sensor OFF\n");
 			}
-
 			else if (0 == strncmp(cmd_input, "tire", 4))
 			{
 				buzzer(1, 0, buzzerPulseWidth_us);
@@ -1291,6 +1374,7 @@ int main(int argc, char **argv)
 	tdata.imgData.bvideoSave = false;
 	tdata.imgData.bcalibration = false;
 	tdata.imgData.bdebug = false;
+	tdata.imgData.bfilteringTest = false;
 	tdata.imgData.debugMode = 1;
 	tdata.imgData.btopview = true;
 	tdata.imgData.topMode = 3;
@@ -1307,6 +1391,11 @@ int main(int argc, char **argv)
 	tdata.imgData.bprintSensor = false;
 	tdata.imgData.bprintMission = true;
 	tdata.imgData.bprintTire = true;
+	tdata.imgData.filtering_param.h = 75;
+	tdata.imgData.filtering_param.s = 50;
+	tdata.imgData.filtering_param.v = 200;
+	tdata.imgData.filtering_param.canny1 = 118; 
+	tdata.imgData.filtering_param.canny2 = 242;
 	sprintf(tdata.imgData.missionString, "(null)");
 
 	/******************** Control Data ********************/

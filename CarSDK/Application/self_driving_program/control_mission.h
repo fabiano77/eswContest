@@ -336,7 +336,7 @@ extern "C"
 	// PostCondition	: 0이면 좌회전, 1이면 우회전 동작을 하는 함수.
 	//
 	// Return 			: none
-	void laneChange(int direction, int speed, int length);
+	void laneChange(bool direction, int speed, int length);
 #ifdef __cplusplus
 }
 

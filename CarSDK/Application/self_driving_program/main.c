@@ -145,13 +145,13 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		/* 라인 필터링이나 canny 결과 확인 */
 		if (t_data->imgData.bdebug)
 		{
-			if(t_data->imgData.bfilteringTest)
+			if (t_data->imgData.bfilteringTest)
 			{
-				filteringTest(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, 	t_data->imgData.filtering_param.h,
-																			t_data->imgData.filtering_param.s,
-																			t_data->imgData.filtering_param.v,
-																			t_data->imgData.filtering_param.canny1,
-																			t_data->imgData.filtering_param.canny2);
+				filteringTest(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.filtering_param.h,
+							  t_data->imgData.filtering_param.s,
+							  t_data->imgData.filtering_param.v,
+							  t_data->imgData.filtering_param.canny1,
+							  t_data->imgData.filtering_param.canny2);
 			}
 			else
 			{
@@ -650,11 +650,11 @@ void *input_thread(void *arg)
 				
 				printf("\t filtering Test ON\n");
 
-				printf("h_min, s_max, v_min = %d, %d, %d\ncanny = %d, %d\n",data->imgData.filtering_param.h,
-																		data->imgData.filtering_param.s,
-																		data->imgData.filtering_param.v,
-																		data->imgData.filtering_param.canny1,
-																		data->imgData.filtering_param.canny2);
+				printf("h_min, s_max, v_min = %d, %d, %d\ncanny = %d, %d\n", data->imgData.filtering_param.h,
+					   data->imgData.filtering_param.s,
+					   data->imgData.filtering_param.v,
+					   data->imgData.filtering_param.canny1,
+					   data->imgData.filtering_param.canny2);
 
 				printf("\tfilteringTest() : func(line, canny)\t= ");
 				char func[10]; 
@@ -667,41 +667,40 @@ void *input_thread(void *arg)
 					int canny1, canny2;
 					if (cmd_ready == true)
 					{
-						if(0 == strncmp(func, "line", 4))
+						if (0 == strncmp(func, "line", 4))
 						{
 							printf("\tfilteringTest() : line(h,s,v)\t: ");
 							scanf("%s", hsvMode); //define in cmd.cpp
 							printf("\tfilteringTest() : %s(number)\t: ", cmd_input);
 							scanf("%d", &number);
 						}
-						else if(0 == strncmp(func, "canny", 5))
+						else if (0 == strncmp(func, "canny", 5))
 						{
 							printf("\tfilteringTest() : canny1\t: ");
 							scanf("%d", &canny1);
 							printf("\tfilteringTest() : canny2\t: ");
 							scanf("%d", &canny2);
 						}
-						
 					}
 					else
 					{
 						buzzer(1, 0, buzzerPulseWidth_us);
-						if(0 == strncmp(func, "line", 4))
+						if (0 == strncmp(func, "line", 4))
 						{
-							if(0 == strncmp(cmd_input, "h", 1))
+							if (0 == strncmp(cmd_input, "h", 1))
 							{
 								data->imgData.filtering_param.h = number;
 							}
-							else if(0 == strncmp(cmd_input, "s", 1))
+							else if (0 == strncmp(cmd_input, "s", 1))
 							{
 								data->imgData.filtering_param.s = number;
 							}
-							else if(0 == strncmp(cmd_input, "v", 1))
+							else if (0 == strncmp(cmd_input, "v", 1))
 							{
 								data->imgData.filtering_param.v = number;
-							}	
+							}
 						}
-						else if(0 == strncmp(func, "canny", 5))
+						else if (0 == strncmp(func, "canny", 5))
 						{
 							data->imgData.filtering_param.canny1 = canny1;
 							data->imgData.filtering_param.canny2 = canny2;
@@ -715,7 +714,7 @@ void *input_thread(void *arg)
 
 						cmd_ready = true;
 					}
-				}
+				}`
 			}
 			else if (0 == strncmp(cmd_input, "auto", 4))
 			{
@@ -1029,12 +1028,17 @@ void *mission_thread(void *arg)
 		{
 			flyoverFunc(data);
 			flyover = DONE;
+			// priority 'Ready'
 		}
 
 		if (priority && priority != DONE)
 		{
 			if (priorityFunc(data))
+			{
 				priority = DONE;
+				parking = READY;
+			}
+			// parking 켜기
 		}
 
 		if (parking && parking != DONE)
@@ -1051,6 +1055,7 @@ void *mission_thread(void *arg)
 				{
 					parking = DONE;
 					printf("Second Parking is Done!\n");
+					roundabout = READY;
 				}
 			}
 		}
@@ -1058,7 +1063,10 @@ void *mission_thread(void *arg)
 		if (roundabout && roundabout != DONE && priority == DONE)
 		{
 			if (roundaboutFunc(data))
+			{
 				roundabout = DONE;
+				tunnel = READY;
+			}
 		}
 
 		if (tunnel && tunnel != DONE)
@@ -1066,7 +1074,16 @@ void *mission_thread(void *arg)
 			if (tunnelFunc(data))
 			{
 				tunnel = DONE;
-				parking = READY;
+				overtake = READY;
+			}
+		}
+
+		if (roundabout && roundabout != DONE)
+		{
+			if (roundaboutFunc(data))
+			{
+				roundabout = DONE;
+				tunnel = READY;
 			}
 		}
 
@@ -1396,7 +1413,7 @@ int main(int argc, char **argv)
 	tdata.imgData.filtering_param.h = 75;
 	tdata.imgData.filtering_param.s = 50;
 	tdata.imgData.filtering_param.v = 200;
-	tdata.imgData.filtering_param.canny1 = 118; 
+	tdata.imgData.filtering_param.canny1 = 118;
 	tdata.imgData.filtering_param.canny2 = 242;
 	sprintf(tdata.imgData.missionString, "(null)");
 

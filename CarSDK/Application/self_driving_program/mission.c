@@ -402,7 +402,7 @@ bool parkingFunc(struct thr_data *arg)
                                     SteeringServo_Write(1500);
                                     step_h = SECOND_FORWARD;
                                     Winker_Write(ALL_ON);
-                                    buzzer(1, 300000);
+                                    buzzer(1, 300000, 300000);
                                     Winker_Write(ALL_OFF);
                                 }
                                 break;
@@ -651,6 +651,8 @@ bool tunnelFunc(struct thr_data *arg)
         else
             return false;
     }
+
+    else return false;
 }
 
 bool overtakeFunc(struct thr_data *arg)

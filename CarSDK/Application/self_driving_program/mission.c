@@ -205,7 +205,7 @@ bool parkingFunc(struct thr_data *arg)
                                 sprintf(data->imgData.missionString, "FIRST_BACKWARD_V");
                                 SteeringServo_Write(1050);
                                 usleep(80000);
-                                DesireSpeed_Write_uart(-75);
+                                DesireSpeed_Write_uart(-70);
                                 while (1)
                                 {
                                     if (DistanceSensor_cm(3) <= 13 && DistanceSensor_cm(5) <= 13)
@@ -222,7 +222,7 @@ bool parkingFunc(struct thr_data *arg)
                                 sprintf(data->imgData.missionString, "SECOND_BACKWARD_V");
                                 SteeringServo_Write(1500);
                                 usleep(70000);
-                                DesireSpeed_Write_uart(-45);
+                                DesireSpeed_Write_uart(-60);
                                 if (DistanceSensor_cm(2) <= 11)
                                 {
                                     DesireSpeed_Write_uart(0);
@@ -253,17 +253,17 @@ bool parkingFunc(struct thr_data *arg)
 
                             case UNDER_STEER_V:
                                 sprintf(data->imgData.missionString, "UNDER_STEER");
-                                DesireDistance(60, 100, 1300);
-                                DesireDistance(60, 100, 1500);
-                                DesireDistance(60, 200, 1750);
+                                DesireDistance(65, 100, 1300);
+                                DesireDistance(65, 100, 1500);
+                                DesireDistance(65, 200, 1750);
                                 step_v = SECOND_BACKWARD_V;
                                 break;
 
                             case OVER_STEER_V:
                                 sprintf(data->imgData.missionString, "OVER_STEER");
-                                DesireDistance(60, 100, 1700);
-                                DesireDistance(60, 100, 1500);
-                                DesireDistance(60, 200, 1250);
+                                DesireDistance(65, 100, 1700);
+                                DesireDistance(65, 100, 1500);
+                                DesireDistance(65, 200, 1250);
                                 step_v = SECOND_BACKWARD_V;
                                 break;
 
@@ -277,8 +277,8 @@ bool parkingFunc(struct thr_data *arg)
                                     step_v = FIRST_FORWARD_V;
                                     break;
                                 }
-                                DesireDistance(60, 100, 1500 - (right_difference * 80));
-                                DesireDistance(-40, 400, 1500);
+                                DesireDistance(65, 100, 1500 - (right_difference * 80));
+                                DesireDistance(-60, 400, 1500);
                                 break;
 
                             case LEFT_FRONT_V:
@@ -291,26 +291,26 @@ bool parkingFunc(struct thr_data *arg)
                                     step_v = FIRST_FORWARD_V;
                                     break;
                                 }
-                                DesireDistance(60, 100, 1500 + (left_difference * 80));
-                                DesireDistance(-40, 400, 1500);
+                                DesireDistance(65, 100, 1500 + (left_difference * 80));
+                                DesireDistance(-60, 400, 1500);
                                 break;
 
                             case FIRST_FORWARD_V:
                                 sprintf(data->imgData.missionString, "FIRST_FORWARD_V");
-                                DesireDistance(-40, 400, 1500);
+                                DesireDistance(-60, 400, 1500);
                                 step_v = SECOND_FORWARD_V;
                                 Winker_Write(ALL_ON);
-                                buzzer(2, 500000, 500000);
+                                buzzer(2, 300000, 300000);
 
                                 Winker_Write(ALL_OFF);
                                 break;
 
                             case SECOND_FORWARD_V:
                                 sprintf(data->imgData.missionString, "SECOND_FORWARD_V");
-                                DesireSpeed_Write_uart(60);
+                                DesireSpeed_Write_uart(70);
                                 if (DistanceSensor_cm(2) >= 20 && DistanceSensor_cm(6) >= 20)
                                 {
-                                    DesireDistance(60, 200, 1500);
+                                    DesireDistance(70, 200, 1500);
 
                                     step_v = FINISH_V;
                                 }
@@ -318,7 +318,7 @@ bool parkingFunc(struct thr_data *arg)
 
                             case FINISH_V:
                                 sprintf(data->imgData.missionString, "FINISH_V");
-                                DesireDistance(60, 1000, 1050);
+                                DesireDistance(70, 1000, 1050);
                                 data->missionData.parkingData.verticalFlag = 0;
                                 break;
 
@@ -339,11 +339,11 @@ bool parkingFunc(struct thr_data *arg)
                             {
                             case FIRST_BACKWARD:
                                 sprintf(data->imgData.missionString, "FIRST_BACKWARD");
-                                DesireDistance(-75, 800, 1050);
-                                DesireDistance(-75, 420, 1500);
+                                DesireDistance(-60, 800, 1050);
+                                DesireDistance(-60, 420, 1500);
                                 SteeringServo_Write(2000);
                                 usleep(50000);
-                                DesireSpeed_Write_uart(-60);
+                                DesireSpeed_Write_uart(-50);
 
                                 while (1)
                                 {
@@ -356,7 +356,7 @@ bool parkingFunc(struct thr_data *arg)
                                 }
                                 SteeringServo_Write(1250);
                                 usleep(80000);
-                                DesireSpeed_Write_uart(40);
+                                DesireSpeed_Write_uart(50);
                                 while (1)
                                 {
                                     if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 3) || DistanceSensor_cm(1) <= 4)
@@ -376,25 +376,25 @@ bool parkingFunc(struct thr_data *arg)
                                 difference = DistanceSensor_cm(2) - DistanceSensor_cm(3);
                                 if (difference < -2)
                                 {
-                                    DesireDistance(-30, 400, 1300);
+                                    DesireDistance(-50, 400, 1300);
                                     if (abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2)
                                     {
                                         DesireSpeed_Write_uart(0);
                                         usleep(20000);
                                         break;
                                     }
-                                    DesireDistance(40, 400, 1700);
+                                    DesireDistance(50, 400, 1700);
                                 }
                                 else if (difference > 2)
                                 {
-                                    DesireDistance(-30, 400, 1700);
+                                    DesireDistance(-50, 400, 1700);
                                     if (abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 2)
                                     {
                                         DesireSpeed_Write_uart(0);
                                         usleep(20000);
                                         break;
                                     }
-                                    DesireDistance(40, 400, 1300);
+                                    DesireDistance(50, 400, 1300);
                                 }
                                 if (abs(difference) <= 2)
                                 {
@@ -402,7 +402,7 @@ bool parkingFunc(struct thr_data *arg)
                                     SteeringServo_Write(1500);
                                     step_h = SECOND_FORWARD;
                                     Winker_Write(ALL_ON);
-                                    buzzer(1, 300000, 30000);
+                                    buzzer(2, 300000, 300000);
                                     Winker_Write(ALL_OFF);
                                 }
                                 break;
@@ -432,25 +432,25 @@ bool parkingFunc(struct thr_data *arg)
 
                             case ESCAPE:
                                 sprintf(data->imgData.missionString, "ESCAPE");
-                                DesiredDistance(55, 250, 2000);
+                                DesiredDistance(60, 250, 2000);
                                 step_h = ESCAPE_2;
                                 break;
 
                             case ESCAPE_2:
                                 sprintf(data->imgData.missionString, "ESCAPE_2");
-                                DesiredDistance(-55, 220, 1500);
+                                DesiredDistance(-60, 220, 1500);
                                 step_h = ESCAPE_3;
                                 break;
 
                             case ESCAPE_3:
                                 sprintf(data->imgData.missionString, "ESCAPE_3");
-                                DesireDistance(55, 600, 1950);
+                                DesireDistance(60, 600, 1950);
                                 step_h = FINISH;
                                 break;
 
                             case FINISH:
                                 sprintf(data->imgData.missionString, "FINISH");
-                                DesireDistance(55, 600, 1150);
+                                DesireDistance(60, 600, 1150);
                                 data->missionData.parkingData.horizontalFlag = 0;
                                 break;
 
@@ -460,7 +460,7 @@ bool parkingFunc(struct thr_data *arg)
                             usleep(5000);
                         }
                     }
-                    DesireSpeed_Write_uart(55);
+                    DesireSpeed_Write_uart(60);
                     state = DONE_P;
 
                     gettimeofday(&et_p, NULL);

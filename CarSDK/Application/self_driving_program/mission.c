@@ -1023,3 +1023,30 @@ void SteeringServo_Write(signed short angle)
     ptr_data->controlData.steerVal = angle;
     SteeringServo_Write_uart(angle);
 }
+
+void repeatParking(struct thr_data *arg)
+{
+    char score = 0;
+    struct thr_data *data = (struct thr_data *)arg;
+    while (1)
+    {
+        if (parkingFunc(data))
+        {
+            printf("repeatParking() : 1\n");
+            while (1)
+            {
+                if (abs(data->controlData.steerVal - 1500) < 100)
+                {
+                    DesireDistance(-BASIC_SPEED, 2000, 0);
+                    buzzer(1, 0, 300000);
+                    usleep(100000);
+                    DesireSpeed_Write_uart(BASIC_SPEED);
+                    break;
+                }
+            }
+            score++;
+            printf("success: %c \n ", score);
+        }
+        usleep(100000);
+    }
+}

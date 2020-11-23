@@ -164,7 +164,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				usleep(100000);
 				/*check�?? ?��?�� camera up*/
 				bool check_direction;
-				check_direction = checkObstacle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
+				check_direction = checkObstacle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.bdebug);
 				/*오른쪽인지 왼쪽인지 매 번 확인*/
 				if (check_direction == true)
 				{ //true=>left
@@ -993,7 +993,7 @@ void *mission_thread(void *arg)
 			{
 				data->imgData.bmission = true;
 				data->imgData.btopview = false; //topview off
-				
+
 				data->imgData.bprintString = true;
 				sprintf(data->imgData.missionString, "overtake");
 				printf("overtake \n");

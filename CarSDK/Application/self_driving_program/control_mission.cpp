@@ -625,9 +625,9 @@ extern "C"
 			sleepDistance(800);
 		}
 		SteeringServo_Write_uart(1500);
-		sleepDistance(50);
+		sleepDistance(30);
 
-		buzzer(1, 0, 500000); // 함수의 끝을 알리기 위해 임시적임.
+		// buzzer(1, 0, 500000); // 함수의 끝을 알리기 위해 임시적임.
 
 		sensor_using_flag = false;
 	}

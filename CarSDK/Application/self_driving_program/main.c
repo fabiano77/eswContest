@@ -671,7 +671,7 @@ void *input_thread(void *arg)
 						{
 							printf("\tfilteringTest() : line(h,s,v)\t: ");
 							scanf("%s", hsvMode); //define in cmd.cpp
-							printf("\tfilteringTest() : %s(number)\t: ", cmd_input);
+							printf("\tfilteringTest() : %s(number)\t: ", hsvMode);
 							scanf("%d", &number);
 						}
 						else if (0 == strncmp(func, "canny", 5))
@@ -688,15 +688,15 @@ void *input_thread(void *arg)
 						buzzer(1, 0, buzzerPulseWidth_us);
 						if (0 == strncmp(func, "line", 4))
 						{
-							if (0 == strncmp(cmd_input, "h", 1))
+							if (0 == strncmp(hsvMode, "h", 1))
 							{
 								data->imgData.filtering_param.h = number;
 							}
-							else if (0 == strncmp(cmd_input, "s", 1))
+							else if (0 == strncmp(hsvMode, "s", 1))
 							{
 								data->imgData.filtering_param.s = number;
 							}
-							else if (0 == strncmp(cmd_input, "v", 1))
+							else if (0 == strncmp(hsvMode, "v", 1))
 							{
 								data->imgData.filtering_param.v = number;
 							}

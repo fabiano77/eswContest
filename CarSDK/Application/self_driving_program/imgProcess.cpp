@@ -390,7 +390,16 @@ extern "C"
 		Mat srcRGB(h, w, CV_8UC3, inBuf);
 		Mat dstRGB(h, w, CV_8UC3, outBuf);
 
-		filteringTestFunction(srcRGB, dstRGB, h_, s_, v_, c1_, c2_);
+		Mat src8C;
+		filteringTestFunction(srcRGB, src8C, h_, s_, v_, c1_, c2_);
+		for (int x = 0; x < w; x++)
+		{
+			for (int y = 0; y < h; y++)
+			{
+				uchar pixelVal = src8C.at<uchar>(y, x);
+				dstRGB.at<Vec3b>(y, x) = Vec3b(pixelVal, pixelVal, pixelVal);
+			}
+		}
 	}
 
 	int autoSteering(unsigned char *inBuf, int w, int h, unsigned char *outBuf, int whiteMode)

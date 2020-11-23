@@ -945,12 +945,17 @@ void *mission_thread(void *arg)
 		{
 			flyoverFunc(data);
 			flyover = DONE;
+			// priority 'Ready'
 		}
 
 		if (priority && priority != DONE)
 		{
 			if (priorityFunc(data))
+			{
 				priority = DONE;
+				parking = READY;
+			}
+			// parking 켜기
 		}
 
 		if (parking && parking != DONE)
@@ -966,6 +971,7 @@ void *mission_thread(void *arg)
 				{
 					parking = DONE;
 					printf("Second Parking is Done!\n");
+					roundabout = READY;
 				}
 			}
 		}
@@ -975,14 +981,17 @@ void *mission_thread(void *arg)
 			if (tunnelFunc(data))
 			{
 				tunnel = DONE;
-				parking = READY;
+				overtake = READY;
 			}
 		}
 
 		if (roundabout && roundabout != DONE)
 		{
 			if (roundaboutFunc(data))
+			{
 				roundabout = DONE;
+				tunnel = READY;
+			}
 		}
 
 		if (overtake && overtake != DONE)

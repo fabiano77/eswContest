@@ -603,15 +603,15 @@ extern "C"
 		return retVal;
 	}
 
-	void laneChange(int direction, int speed, int length)
+	void laneChange(bool direction, int speed, int length)
 	{
 		DesireSpeed_Write_uart(speed);
-		if(direction)	// 1 == 우 회전.
+		if (direction) // 1 == 우 회전.
 		{
 			SteeringServo_Write_uart(1050);
 			sleepDistance(810);
 			SteeringServo_Write_uart(1500);
-			sleepDistance(50+length);
+			sleepDistance(50 + length);
 			SteeringServo_Write_uart(1950);
 			sleepDistance(800);
 		}
@@ -620,7 +620,7 @@ extern "C"
 			SteeringServo_Write_uart(1950);
 			sleepDistance(840);
 			SteeringServo_Write_uart(1500);
-			sleepDistance(80+length);
+			sleepDistance(80 + length);
 			SteeringServo_Write_uart(1050);
 			sleepDistance(800);
 		}

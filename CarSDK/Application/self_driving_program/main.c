@@ -714,7 +714,7 @@ void *input_thread(void *arg)
 
 						cmd_ready = true;
 					}
-				}`
+				}
 			}
 			else if (0 == strncmp(cmd_input, "auto", 4))
 			{

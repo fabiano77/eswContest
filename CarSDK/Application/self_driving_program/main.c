@@ -645,9 +645,9 @@ void *input_thread(void *arg)
 			else if (0 == strncmp(cmd_input, "filter", 6))
 			{
 				buzzer(1, 0, buzzerPulseWidth_us);
-				data->imgData.bdebug = !data->imgData.bdebug;
-				data->imgData.bfilteringTest = !data->imgData.bfilteringTest;
-
+				data->imgData.bdebug = true;
+				data->imgData.bfilteringTest = true;
+				
 				printf("\t filtering Test ON\n");
 
 				printf("h_min, s_max, v_min = %d, %d, %d\ncanny = %d, %d\n", data->imgData.filtering_param.h,
@@ -656,21 +656,22 @@ void *input_thread(void *arg)
 					   data->imgData.filtering_param.canny1,
 					   data->imgData.filtering_param.canny2);
 
-				printf("\tfilteringTest() : func(line, canny)\t: ");
-				char func[10];
+				printf("\tfilteringTest() : func(line, canny)\t= ");
+				char func[10]; 
 				scanf("%s", func);
 
 				while (1)
 				{
 					int number;
+					char hsvMode[10];
 					int canny1, canny2;
 					if (cmd_ready == true)
 					{
 						if (0 == strncmp(func, "line", 4))
 						{
 							printf("\tfilteringTest() : line(h,s,v)\t: ");
-							cmd_ready = StandbyInput(cmd_input); //define in cmd.cpp
-							printf("\tfilteringTest() : %s(number)\t: ", cmd_input);
+							scanf("%s", hsvMode); //define in cmd.cpp
+							printf("\tfilteringTest() : %s(number)\t: ", hsvMode);
 							scanf("%d", &number);
 						}
 						else if (0 == strncmp(func, "canny", 5))
@@ -680,21 +681,22 @@ void *input_thread(void *arg)
 							printf("\tfilteringTest() : canny2\t: ");
 							scanf("%d", &canny2);
 						}
+						cmd_ready = false;
 					}
 					else
 					{
 						buzzer(1, 0, buzzerPulseWidth_us);
 						if (0 == strncmp(func, "line", 4))
 						{
-							if (0 == strncmp(cmd_input, "h", 1))
+							if (0 == strncmp(hsvMode, "h", 1))
 							{
 								data->imgData.filtering_param.h = number;
 							}
-							else if (0 == strncmp(cmd_input, "s", 1))
+							else if (0 == strncmp(hsvMode, "s", 1))
 							{
 								data->imgData.filtering_param.s = number;
 							}
-							else if (0 == strncmp(cmd_input, "v", 1))
+							else if (0 == strncmp(hsvMode, "v", 1))
 							{
 								data->imgData.filtering_param.v = number;
 							}
@@ -704,12 +706,12 @@ void *input_thread(void *arg)
 							data->imgData.filtering_param.canny1 = canny1;
 							data->imgData.filtering_param.canny2 = canny2;
 						}
-
-						printf("h_min, s_max, v_min = %d, %d, %d\ncanny = %d, %d\n", data->imgData.filtering_param.h,
-							   data->imgData.filtering_param.s,
-							   data->imgData.filtering_param.v,
-							   data->imgData.filtering_param.canny1,
-							   data->imgData.filtering_param.canny2);
+						
+						printf("\nh_min, s_max, v_min = %d, %d, %d\n\tcanny = %d, %d\n\n",data->imgData.filtering_param.h,
+																		data->imgData.filtering_param.s,
+																		data->imgData.filtering_param.v,
+																		data->imgData.filtering_param.canny1,
+																		data->imgData.filtering_param.canny2);
 
 						cmd_ready = true;
 					}

@@ -46,7 +46,7 @@
 #define FPS_TEXT_Y 260			  //240
 #define FPS_TEXT_COLOR 0xffffffff //while
 
-#define BASIC_SPEED 55		// 프로그램 기본 주행 속도,
+//#define BASIC_SPEED 65		// 프로그램 기본 주행 속도 => mission.h로 옮김
 #define BUZZER_PULSE 100000 // 기본 부저 길이
 #define GO_LEFT 0
 #define GO_RIGHT 1
@@ -911,10 +911,10 @@ void *mission_thread(void *arg)
 	struct thr_data *data = (struct thr_data *)arg;
 	enum MissionState start = READY;
 	enum MissionState flyover = NONE;
-	enum MissionState priority = NONE;
-	enum MissionState parking = NONE;
-	enum MissionState roundabout = NONE;
-	enum MissionState tunnel = NONE;
+	enum MissionState priority = READY;
+	enum MissionState parking = READY;
+	enum MissionState roundabout = READY;
+	enum MissionState tunnel = READY;
 	enum MissionState overtake = NONE;
 	enum MissionState signalLight = NONE;
 	enum MissionState finish = NONE;
@@ -936,9 +936,9 @@ void *mission_thread(void *arg)
 			data->missionData.ms[0] = start;
 			startFunc(data);
 			start = DONE;
-			//flyover = READY;
+			flyover = READY;
 			data->missionData.ms[0] = start;
-			//data->missionData.ms[1] = flyover;
+			data->missionData.ms[1] = flyover;
 		}
 
 		if (flyover && flyover != DONE)
@@ -954,6 +954,7 @@ void *mission_thread(void *arg)
 		}
 
 		if (parking && parking != DONE)
+
 		{
 			if (parkingFunc(data))
 			{
@@ -970,6 +971,12 @@ void *mission_thread(void *arg)
 			}
 		}
 
+		if (roundabout && roundabout != DONE && priority == DONE)
+		{
+			if (roundaboutFunc(data))
+				roundabout = DONE;
+		}
+
 		if (tunnel && tunnel != DONE)
 		{
 			if (tunnelFunc(data))
@@ -977,12 +984,6 @@ void *mission_thread(void *arg)
 				tunnel = DONE;
 				parking = READY;
 			}
-		}
-
-		if (roundabout && roundabout != DONE)
-		{
-			if (roundaboutFunc(data))
-				roundabout = DONE;
 		}
 
 		if (overtake && overtake != DONE)

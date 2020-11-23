@@ -110,8 +110,8 @@ extern "C"
 
 		Size board_sz = Size(numCornerHor, numCornerVer);
 
-		vector<vector<Point3f>> object_point;
-		vector<vector<Point2f>> image_point;
+		vector<vector<Point3f> > object_point;
+		vector<vector<Point2f> > image_point;
 
 		vector<Point2f> corners;
 		int successes = 0;

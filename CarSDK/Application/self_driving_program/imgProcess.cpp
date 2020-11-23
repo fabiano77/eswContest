@@ -347,7 +347,7 @@ extern "C"
 		}
 		else if (mode == 3)
 		{
-			int retval = checkObstacle(inBuf, w, h, outBuf);
+			int retval = checkObstacle(inBuf, w, h, outBuf, 1);
 			printf("return val = %d\n", retval);
 		}
 		else if (mode == 4)

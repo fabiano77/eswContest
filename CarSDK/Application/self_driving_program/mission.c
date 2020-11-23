@@ -196,7 +196,7 @@ bool parkingFunc(struct thr_data *arg)
                     sprintf(data->imgData.missionString, "Parking Start");
                     if (data->missionData.parkingData.verticalFlag && data->missionData.parkingData.horizontalFlag == false)
                     {
-                        DesireDistance(75, 230, 1500);
+                        DesireDistance(75, 200, 1500);
                         while (data->missionData.parkingData.verticalFlag)
                         {
                             switch (step_v)
@@ -1026,23 +1026,32 @@ void SteeringServo_Write(signed short angle)
 
 void repeatParking(struct thr_data *arg)
 {
+    printf("repeatParking() in\n");
     char score = 0;
     struct thr_data *data = (struct thr_data *)arg;
     while (1)
     {
+        printf("repeatParking() loop\n");
         if (parkingFunc(data))
         {
-            printf("repeatParking() : 1\n");
+            data->controlData.steerVal = 0;
             while (1)
             {
-                if (abs(data->controlData.steerVal - 1500) < 100)
+            printf("repeatParking() : steerVal : %d\n", data->controlData.steerVal);
+                if (abs(data->controlData.steerVal - 1500) < 30)
                 {
+                    printf("repeatParking() : steerVal : %d, backback\n", data->controlData.steerVal);
+                    data->imgData.bauto = false;
+                    data->imgData.bspeedControl = false;
                     DesireDistance(-BASIC_SPEED, 2000, 1500);
                     buzzer(1, 0, 300000);
                     usleep(100000);
                     DesireSpeed_Write_uart(BASIC_SPEED);
+                    data->imgData.bauto = true;
+                    data->imgData.bspeedControl = true;
                     break;
                 }
+                usleep(70000);
             }
             score++;
             printf("success: %c \n ", score);

@@ -367,7 +367,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
 			}
 
-			printf("before auto \t: %d\n", timeCheck(&time));
+			//printf("before auto \t: %d\n", timeCheck(&time));
 			if (t_data->imgData.bauto)
 			{
 				int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.bwhiteLine);
@@ -391,7 +391,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 			{
 				t_data->controlData.beforeSpeedVal = 0;
 			}
-			printf("after  auto \t: %d\n", timeCheck(&time));
+			//printf("after  auto \t: %d\n", timeCheck(&time));
 
 			/*checkWhiteLineFlag�?? True?�� 경우, RoundAbout */
 		}
@@ -1044,10 +1044,9 @@ void *mission_thread(void *arg)
 		if (parking && parking != DONE)
 		{
 			// parking repeating test
-			if (1)
-			{
-				repeatParking(data);
-			}
+			
+			repeatParking(data);
+			
 			// parking reapeating test end
 			if (parkingFunc(data))
 			{

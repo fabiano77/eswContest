@@ -85,6 +85,7 @@ void overlayImage(Mat &src, Mat &dst, const Mat &image, Point location);
 
 void overlayTire(Mat &src, Mat &dst, double angle);
 //
+void filteringTestFunction(Mat &src, Mat &dst, int h_, int s_, int v_, int canny1_, int canny2);
 
 extern "C"
 {
@@ -382,6 +383,14 @@ extern "C"
 			isDark(srcRGB, 55, 1);
 			dstRGB = srcRGB;
 		}
+	}
+
+	void filteringTest(unsigned char *inBuf, int w, int h, unsigned char *outBuf, int h_, int s_, int v_, int c1_, int c2_)
+	{
+		Mat srcRGB(h, w, CV_8UC3, inBuf);
+		Mat dstRGB(h, w, CV_8UC3, outBuf);
+
+		filteringTestFunction(srcRGB, dstRGB, h_, s_, v_, c1_, c2_);
 	}
 
 	int autoSteering(unsigned char *inBuf, int w, int h, unsigned char *outBuf, int whiteMode)
@@ -2123,4 +2132,50 @@ void overlayTire(Mat &src, Mat &dst, double angle)
 	{
 		cout << "no image file(tire, background)" << endl;
 	}
+}
+
+void filteringTestFunction(Mat &src, Mat &dst, int h_, int s_, int v_, int canny1_, int canny2_)
+{
+	int mode = 1;
+	//debug추가하면서 고침. 08/21 12시33분.
+	int h1(14), s(60), v(100); // 예선영상 14, 0, 240
+	int h2(46);
+	Mat hsv;
+	Mat binMat;
+	cvtColor(src, hsv, COLOR_BGR2HSV); //HSV색영역
+
+	if (mode == 0 || mode == 1) //노란차선 인식 모드
+	{
+		Scalar lower_yellow(h1, s, v);
+		Scalar upper_yellow(h2, 255, 255);
+
+		inRange(hsv, lower_yellow, upper_yellow, binMat); //2진 Mat객체 binMat생성
+	}
+
+	if (mode == 1 || mode == 2) //흰색차선 인식 모드
+	{
+		Scalar lower_white(h_, 0, v_); // hsv white
+		Scalar upper_white(255, s_, 255);
+		Mat whiteBinMat;
+
+		inRange(hsv, lower_white, upper_white, whiteBinMat);
+		//addWeighted(binMat, 1.0, whiteBinMat, 1.0, 0.0, binMat);	//추출한 노란색과 흰색 객체를 합친 binMat생성
+		if (mode == 1)
+		{
+			binMat = binMat + whiteBinMat;
+		}
+		else
+		{
+			binMat = whiteBinMat;
+		}
+	}
+
+	dst = binMat;
+
+
+	int threshold_1 = canny1_; //215 //340
+	int threshold_2 = canny2_; //330 //500
+
+	Canny(src, dst, threshold_1, threshold_2); //노란색만 남은 frame의 윤곽을 1채널 Mat객체로 추출
+
 }

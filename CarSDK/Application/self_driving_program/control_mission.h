@@ -160,18 +160,29 @@ extern "C"
 		unsigned short lightFlag; // 차량의 현재 전조등상태
 	};
 
+	struct filtering_Param
+	{
+		int h;
+		int s;
+		int v;
+		int canny1;
+		int canny2;
+	};
+
 	struct ImgProcessData
 	{
 		char missionString[50]; // 오버레이에 표시할 문자열
 		int debugMode;			// 디버그 모드(0~ 9)
 		int topMode;			// 탑뷰 모드 (0, 1, 2)
 		uint32_t loopTime;		// img 스레드 루프 시간
+		struct filtering_Param filtering_param;
 		bool dump_request;		// 덤프요청
 		bool bskip;
 		bool bvideoRecord;	// 동영상 녹화 시작
 		bool bvideoSave;	// 동영상 파일 저장
 		bool bcalibration;	// 캘리브레이션 ON/OFF
 		bool bdebug;		// 디버그모드 ON/OFF
+		bool bfilteringTest;// 필터링 테스트모드 ON/OFF
 		bool btopview;		// 탑뷰 ON/OFF
 		bool bmission;		// 미션진입 ON/OFF (차선인식 사용하지 않게됨)
 		bool bauto;			// 자동 조향 ON/OFF
@@ -187,6 +198,8 @@ extern "C"
 		bool bcheckSignalLight; // 신호등 탐지 ON/OFF
 		bool bcheckFinishLine;	// 피니시라인 탐지 ON/OFF
 	};
+
+	
 
 	// DistanceSensor_cm
 	// 적외선 센서에서 물체와의 거리를 측정해주는 함수

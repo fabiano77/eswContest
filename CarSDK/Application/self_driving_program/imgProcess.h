@@ -176,6 +176,8 @@ extern "C"
 	// Return 			: 전방 흰색 정지선과의 거리를 측정하여 반환한다(cm)
 	int stopLine_distance(unsigned char *inBuf, int w, int h, float *map1, float *map2);
 
+	void filteringTest(unsigned char *inBuf, int w, int h, unsigned char *outBuf, int h_, int s_, int v_, int c1_, int c2_);
+
 #ifdef __cplusplus
 }
 #endif

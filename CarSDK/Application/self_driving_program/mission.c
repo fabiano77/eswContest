@@ -339,8 +339,8 @@ bool parkingFunc(struct thr_data *arg)
                             {
                             case FIRST_BACKWARD:
                                 sprintf(data->imgData.missionString, "FIRST_BACKWARD");
-                                DesireDistance(-60, 800, 1050);
-                                DesireDistance(-60, 420, 1500);
+                                DesireDistance(-65, 800, 1050);
+                                DesireDistance(-65, 420, 1500);
                                 SteeringServo_Write(2000);
                                 usleep(50000);
                                 DesireSpeed_Write_uart(-50);
@@ -356,7 +356,7 @@ bool parkingFunc(struct thr_data *arg)
                                 }
                                 SteeringServo_Write(1250);
                                 usleep(80000);
-                                DesireSpeed_Write_uart(50);
+                                DesireSpeed_Write_uart(60);
                                 while (1)
                                 {
                                     if ((abs(DistanceSensor_cm(2) - DistanceSensor_cm(3)) <= 3) || DistanceSensor_cm(1) <= 4)
@@ -383,7 +383,7 @@ bool parkingFunc(struct thr_data *arg)
                                         usleep(20000);
                                         break;
                                     }
-                                    DesireDistance(50, 400, 1700);
+                                    DesireDistance(60, 400, 1700);
                                 }
                                 else if (difference > 2)
                                 {
@@ -394,7 +394,7 @@ bool parkingFunc(struct thr_data *arg)
                                         usleep(20000);
                                         break;
                                     }
-                                    DesireDistance(50, 400, 1300);
+                                    DesireDistance(60, 400, 1300);
                                 }
                                 if (abs(difference) <= 2)
                                 {
@@ -432,7 +432,7 @@ bool parkingFunc(struct thr_data *arg)
 
                             case ESCAPE:
                                 sprintf(data->imgData.missionString, "ESCAPE");
-                                DesiredDistance(60, 250, 2000);
+                                DesiredDistance(70, 250, 2000);
                                 step_h = ESCAPE_2;
                                 break;
 
@@ -444,13 +444,13 @@ bool parkingFunc(struct thr_data *arg)
 
                             case ESCAPE_3:
                                 sprintf(data->imgData.missionString, "ESCAPE_3");
-                                DesireDistance(60, 600, 1950);
+                                DesireDistance(70, 600, 1950);
                                 step_h = FINISH;
                                 break;
 
                             case FINISH:
                                 sprintf(data->imgData.missionString, "FINISH");
-                                DesireDistance(60, 600, 1150);
+                                DesireDistance(70, 600, 1150);
                                 data->missionData.parkingData.horizontalFlag = 0;
                                 break;
 
@@ -460,7 +460,7 @@ bool parkingFunc(struct thr_data *arg)
                             usleep(5000);
                         }
                     }
-                    DesireSpeed_Write_uart(60);
+                    DesireSpeed_Write_uart(65);
                     state = DONE_P;
 
                     gettimeofday(&et_p, NULL);

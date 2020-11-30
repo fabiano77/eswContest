@@ -997,8 +997,8 @@ void *mission_thread(void *arg)
 	enum MissionState flyover = NONE;
 	enum MissionState priority = DONE;
 	enum MissionState parking = NONE;
-	enum MissionState roundabout = READY;
-	enum MissionState tunnel = READY;
+	enum MissionState roundabout = NONE;
+	enum MissionState tunnel = NONE;
 	enum MissionState overtake = NONE;
 	enum MissionState signalLight = NONE;
 	enum MissionState finish = NONE;
@@ -1071,7 +1071,7 @@ void *mission_thread(void *arg)
 			}
 		}
 
-		if (tunnel && tunnel != DONE)
+		if (tunnel && tunnel != DONE && roundabout == DONE)
 		{
 			if (tunnelFunc(data))
 			{

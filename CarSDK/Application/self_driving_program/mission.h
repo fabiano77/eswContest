@@ -7,7 +7,7 @@
 #define VPE_OUTPUT_IMG_SIZE (VPE_OUTPUT_W * VPE_OUTPUT_H * 3) //image size*depth
 #endif
 
-#define BASIC_SPEED 65      // driving default speed
+#define BASIC_SPEED 75      // driving default speed
 #define BUZZER_PULSE 100000 // buzzer pulse period
 struct thr_data
 {

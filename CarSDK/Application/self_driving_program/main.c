@@ -24,7 +24,7 @@
 #define CAPTURE_IMG_SIZE (CAPTURE_IMG_W * CAPTURE_IMG_H * 2) // YUYU : 16bpp
 #define CAPTURE_IMG_FORMAT "uyvy"
 
-//해상도를 바꾸려면 이부분만 변경하면 됨
+//?��?��?���? 바꾸?���? ?���?분만 �?경하�? ?��
 #ifndef VPEIMG
 #define VPEIMG
 #define VPE_OUTPUT_W 640
@@ -46,12 +46,12 @@
 #define FPS_TEXT_Y 260			  //240
 #define FPS_TEXT_COLOR 0xffffffff //while
 
-//#define BASIC_SPEED 65		// 프로그램 기본 주행 속도 => mission.h로 옮김
-#define BUZZER_PULSE 100000 // 기본 부저 길이
+//#define BASIC_SPEED 65		// ?��로그?�� 기본 주행 ?��?�� => mission.h�? ?���?
+#define BUZZER_PULSE 100000 // 기본 �???? 길이
 #define GO_LEFT 0
 #define GO_RIGHT 1
 
-// thr_data의 정의와 각종 structure들은 control_mission.h 으로 옮김 9/8(대희)
+// thr_data?�� ?��?��??? 각종 structure?��??? control_mission.h ?���? ?���? 9/8(????��)
 extern struct thr_data *ptr_data;
 /******************** function ********************/
 static int allocate_input_buffers(struct thr_data *data)
@@ -139,10 +139,10 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		gettimeofday(&st, NULL);
 		timeCheck(&time);
 		/********************************************************/
-		/*			우리가 만든 알고리즘 함수를 넣는 부분		*/
+		/*			?��리�?? 만든 ?��고리�? ?��?���? ?��?�� �?�?		*/
 		/********************************************************/
 		//printf("\nstart1 \t\t: %d\n", timeCheck(&time));
-		/* 라인 필터링이나 canny 결과 확인 */
+		/* ?��?�� ?��?��링이?�� canny 결과 ?��?�� */
 		if (t_data->imgData.bdebug)
 		{
 			if (t_data->imgData.bfilteringTest)
@@ -162,21 +162,21 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 			}
 		}
 
-		/* 미션 진행중에 처리하는 영상처리 */
+		/* 미션 진행중에 처리?��?�� ?��?��처리 */
 		else if (t_data->imgData.bmission)
 		{
 
 			t_data->controlData.beforeSpeedVal = 0;
 
-			/* 추월차로시에 사용 */
+			/* 추월차로?��?�� ?��?�� */
 			if (t_data->missionData.overtakingFlag &&
 				t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
 			{
 				usleep(100000);
-				/*check�?? ?��?�� camera up*/
+				/*check�??? ?��?�� camera up*/
 				bool check_direction;
 				check_direction = checkObstacle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.bdebug);
-				/*오른쪽인지 왼쪽인지 매 번 확인*/
+				/*?��른쪽?���? ?��쪽인�? �? �? ?��?��*/
 				if (check_direction == true)
 				{ //true=>left
 					t_data->missionData.overtakingData.leftFlag++;
@@ -186,26 +186,26 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					t_data->missionData.overtakingData.rightFlag++;
 				}
 
-				/*5회 판단 이후 확인*/
+				/*5?�� ?��?�� ?��?�� ?��?��*/
 				if ((t_data->missionData.overtakingData.rightFlag + t_data->missionData.overtakingData.leftFlag) >= 5)
 				{
-					/*오른쪽 flag가 큰경우*/
+					/*?��른쪽 flag�? ?��경우*/
 					if (t_data->missionData.overtakingData.rightFlag > t_data->missionData.overtakingData.leftFlag)
 					{
 						t_data->missionData.overtakingData.headingDirection = RIGHT;
 					}
-					/*왼쪽 flag가 큰경우*/
+					/*?���? flag�? ?��경우*/
 					else
 					{
 						t_data->missionData.overtakingData.headingDirection = LEFT;
 					}
-					/*상황 재진입 막기 위한 Camera Down*/
+					/*?��?�� ?��진입 막기 ?��?�� Camera Down*/
 					t_data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
 				}
-				//srcbuf를 활용하여 capture한 영상을 변환
+				//srcbuf�? ?��?��?��?�� capture?�� ?��?��?�� �??��
 			}
 
-			/* 신호등 확인 */
+			/* ?��?��?�� ?��?�� */
 			if (t_data->imgData.bcheckSignalLight)
 			{
 				switch (t_data->missionData.signalLightData.state)
@@ -265,7 +265,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				}
 			}
 
-			/* 피니시 라인과의 거리 측정 */
+			/* ?��?��?�� ?��?��과의 거리 측정 */
 			if (t_data->imgData.bcheckFinishLine)
 			{
 				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
@@ -279,13 +279,13 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				}
 			}
 
-			/*끝날 때 사용*/
+			/*?��?�� ?�� ?��?��*/
 			if (t_data->missionData.finishData.checkFront == true)
 			{
-				t_data->imgData.topMode = 1; //앞이 더 잘보이는 mode 1사용
+				t_data->imgData.topMode = 1; //?��?�� ?�� ?��보이?�� mode 1?��?��
 				topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
 				t_data->missionData.finishData.distEndLine = checkFront(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
-				/*무의미한 값인 경우 알고리즘에 맞게 steering 진행*/
+				/*무의미한 값인 경우 ?��고리즘에 맞게 steering 진행*/
 				if (t_data->missionData.finishData.distEndLine == -1000)
 				{
 					int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.bwhiteLine);
@@ -298,19 +298,19 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					}
 					if (t_data->controlData.desireSpeedVal != t_data->controlData.beforeSpeedVal)
 					{
-						//이전 속도와 달라졌을 때만 속도값 인가.
+						//?��?�� ?��?��??? ?��?��졌을 ?���? ?��?���? ?���?.
 						DesireSpeed_Write_uart(t_data->controlData.desireSpeedVal);
 						t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
 					}
 				}
 				else if (t_data->missionData.finishData.distEndLine < 320)
-				{ /*거리가 40(360-40)이하로 탐지된 경우 영상처리 종료*/
+				{ /*거리�? 40(360-40)?��?���? ?���??�� 경우 ?��?��처리 종료*/
 					t_data->missionData.finishData.checkFront = false;
 				}
 			}
 		}
 
-		/* 기본 상태에서 처리되는 영상처리 */
+		/* 기본 ?��?��?��?�� 처리?��?�� ?��?��처리 */
 		else
 		{
 
@@ -381,7 +381,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					t_data->controlData.desireSpeedVal = auto_speedMapping(steerVal, BASIC_SPEED);
 					if (t_data->controlData.desireSpeedVal != t_data->controlData.beforeSpeedVal)
 					{
-						//이전 속도와 달라졌을 때만 속도값 인가.
+						//?��?�� ?��?��??? ?��?��졌을 ?���? ?��?���? ?���?.
 						DesireSpeed_Write_uart(t_data->controlData.desireSpeedVal);
 						t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
 					}
@@ -393,14 +393,14 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 			}
 			//printf("after  auto \t: %d\n", timeCheck(&time));
 
-			/*checkWhiteLineFlag�?? True?�� 경우, RoundAbout */
+			/*checkWhiteLineFlag�??? True?�� 경우, RoundAbout */
 		}
 
 		/********************************************************/
-		/*			영상처리 종료								*/
+		/*			?��?��처리 종료								*/
 		/********************************************************/
 
-		/* 영상처리후 오버레이로 정보 등등 출력.*/
+		/* ?��?��처리?�� ?��버레?���? ?���? ?��?�� 출력.*/
 		// if (checking_stopline)
 		// {
 		// 	checking_stopline = false;
@@ -428,19 +428,19 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		// 	overlayPrintAngle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->controlData.steerVal);
 		// }
 		// printf("overlay \t: %d\n", timeCheck(&time));
-		/*		현재 영상 .jpg파일로 저장		*/
+		/*		?��?�� ?��?�� .jpg?��?���? ????��		*/
 		// if (t_data->imgData.dump_request)
 		// {
 		// 	opencv_imwrite(srcbuf);
 		// 	t_data->imgData.dump_request = false;
 		// }
-		/*		현재 영상 .avi파일로 녹화		*/
+		/*		?��?�� ?��?�� .avi?��?���? ?��?��		*/
 		// if (t_data->imgData.bvideoRecord)
 		// {
 		// 	memcpy(t_data->img_data_buf, srcbuf, VPE_OUTPUT_IMG_SIZE);
 		// }
 
-		/* 신호등 검출화면을 유지하기 위한 delay */
+		/* ?��?��?�� �?출화면을 ?���??���? ?��?�� delay */
 		if (delay_flag)
 		{
 			usleep(1700000); // 1700ms == 1.7s
@@ -512,12 +512,12 @@ void *image_process_thread(void *arg)
 		index = vpe_output_dqbuf(vpe);
 		capt = vpe->disp_bufs[index];
 		/********************************************************/
-		/* 영상처리 시작										*/
+		/* ?��?��처리 ?��?��										*/
 		/********************************************************/
 		img_process(vpe->disp, capt, data, map1, map2);
 
 		/********************************************************/
-		/* 영상처리 종료										*/
+		/* ?��?��처리 종료										*/
 		/********************************************************/
 
 		if (disp_post_vid_buffer(vpe->disp, capt, 0, 0, vpe->dst.width, vpe->dst.height))
@@ -647,7 +647,7 @@ void *input_thread(void *arg)
 				buzzer(1, 0, buzzerPulseWidth_us);
 				data->imgData.bdebug = true;
 				data->imgData.bfilteringTest = true;
-				
+
 				printf("\t filtering Test ON\n");
 
 				printf("h_min, s_max, v_min = %d, %d, %d\ncanny = %d, %d\n", data->imgData.filtering_param.h,
@@ -657,7 +657,7 @@ void *input_thread(void *arg)
 					   data->imgData.filtering_param.canny2);
 
 				printf("\tfilteringTest() : func(line, canny)\t= ");
-				char func[10]; 
+				char func[10];
 				scanf("%s", func);
 
 				while (1)
@@ -706,12 +706,12 @@ void *input_thread(void *arg)
 							data->imgData.filtering_param.canny1 = canny1;
 							data->imgData.filtering_param.canny2 = canny2;
 						}
-						
-						printf("\nh_min, s_max, v_min = %d, %d, %d\n\tcanny = %d, %d\n\n",data->imgData.filtering_param.h,
-																		data->imgData.filtering_param.s,
-																		data->imgData.filtering_param.v,
-																		data->imgData.filtering_param.canny1,
-																		data->imgData.filtering_param.canny2);
+
+						printf("\nh_min, s_max, v_min = %d, %d, %d\n\tcanny = %d, %d\n\n", data->imgData.filtering_param.h,
+							   data->imgData.filtering_param.s,
+							   data->imgData.filtering_param.v,
+							   data->imgData.filtering_param.canny1,
+							   data->imgData.filtering_param.canny2);
 
 						cmd_ready = true;
 					}
@@ -951,8 +951,8 @@ void *input_thread(void *arg)
 // 		usleep(500000);
 // 	}
 // 	printf("\tvideo_record_thred() : ON\n");
-// 	// st체크를 이곳에서 하고, et체크를 두 번째 while에 하여 매 프레임마다 delay_ms만큼 누산시키어
-// 	// 프레임이 찍히는 시점과 영상에서의 해당 시점을 근사하도록 한다. (0.1초 절대값 캡처 대신 영상의 전체길이의 비율로)
+// 	// st체크�? ?��곳에?�� ?���?, et체크�? ?�� 번째 while?�� ?��?�� �? ?��?��?��마다 delay_ms만큼 ?��?��?��?��?��
+// 	// ?��?��?��?�� 찍히?�� ?��?���? ?��?��?��?��?�� ?��?�� ?��?��?�� 근사?��?���? ?��?��. (0.1�? ?��???�? 캡처 ????�� ?��?��?�� ?��체길?��?�� 비율�?)
 // 	gettimeofday(&st, NULL);
 // 	while (1)
 // 	{
@@ -971,7 +971,7 @@ void *input_thread(void *arg)
 // 		{
 // 			opencv_videowrite(data->img_data_buf);
 // 		}
-// 		while (1) //영상 녹화 싱크를 맞춰주기 위한 delay
+// 		while (1) //?��?�� ?��?�� ?��?���? 맞춰주기 ?��?�� delay
 // 		{
 // 			gettimeofday(&et, NULL);
 // 			recordTime_ms = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
@@ -1011,7 +1011,7 @@ void *mission_thread(void *arg)
 	data->missionData.ms[6] = overtake;
 	data->missionData.ms[7] = signalLight;
 	data->missionData.ms[8] = finish;
-	//각 미션이 수행되고나면 detect를 하지 않도록 변수설정.
+	//�? 미션?�� ?��?��?��고나�? detect�? ?���? ?��?���? �??��?��?��.
 
 	while (1)
 	{
@@ -1044,9 +1044,9 @@ void *mission_thread(void *arg)
 		if (parking && parking != DONE)
 		{
 			// parking repeating test
-			
+
 			repeatParking(data);
-			
+
 			// parking reapeating test end
 			if (parkingFunc(data))
 			{
@@ -1270,6 +1270,7 @@ void *mission_thread(void *arg)
 				}
 				data->imgData.bmission = false;
 				data->imgData.bprintString = false;
+
 				overtake = DONE;
 				signalLight = READY;
 			}
@@ -1364,7 +1365,7 @@ int main(int argc, char **argv)
 	ptr_data = &tdata;
 	int disp_argc = 3;
 	int ret = 0;
-	char *disp_argv[] = {"dummy", "-s", "4:480x272", "\0"}; // 추후 �??�?? ?���?? ?��?�� ?�� 처리..
+	char *disp_argv[] = {"dummy", "-s", "4:480x272", "\0"}; // 추후 �???�??? ?���??? ?��?�� ?�� 처리..
 
 	printf("------ main start ------\n");
 
@@ -1476,7 +1477,7 @@ int main(int argc, char **argv)
 	set_global_alpha(vpe->disp, vpe->disp->overlay_p.id);
 	set_pre_multiplied_alpha(vpe->disp, vpe->disp->overlay_p.id);
 	alloc_overlay_plane(vpe->disp, OVERLAY_DISP_FORCC, 0, 0, OVERLAY_DISP_W, OVERLAY_DISP_H);
-	// z-order, alpha, multiplied-alpha ?��?�� (overlay�?? ?��?�� plane �?? ?��?��)
+	// z-order, alpha, multiplied-alpha ?��?�� (overlay�??? ?��?�� plane �??? ?��?��)
 
 	//vpe->deint = 0;
 	vpe->translen = 1;

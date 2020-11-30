@@ -125,7 +125,7 @@ bool parkingFunc(struct thr_data *arg)
     struct thr_data *data = (struct thr_data *)arg;
 
     if (1) //(data->controlData.steerVal <= 1600 && data->controlData.steerVal >= 1400) || parking == REMAIN)
-    {      // 바�?��?? ?��진방?��?�� ?���??���? ?��?�� 경우?���? 주차 분기�? 진입?��?���? ?��?�� ?���? (결선 주행?��)
+    {      // 바�?��?? ?��진방?��?�� ?���???���?? ?��?�� 경우?���?? 주차 분기�?? 진입?��?���?? ?��?�� ?���?? (결선 주행?��)
         if (DistanceSensor_cm(2) <= 28)
         {
             struct timeval st_p, et_p;
@@ -611,8 +611,8 @@ bool roundaboutFunc(struct thr_data *arg)
 bool tunnelFunc(struct thr_data *arg)
 {
     struct thr_data *data = (struct thr_data *)arg;
-    
-    if (data->missionData.broundabout == false) 
+
+    if (data->missionData.broundabout == false)
     {
         if (DistanceSensor_cm(2) < 20 && DistanceSensor_cm(6) < 20)
         {
@@ -652,7 +652,8 @@ bool tunnelFunc(struct thr_data *arg)
             return false;
     }
 
-    else return false;
+    else
+        return false;
 }
 
 bool overtakeFunc(struct thr_data *arg)
@@ -695,7 +696,7 @@ bool overtakeFunc(struct thr_data *arg)
                     CameraYServoControl_Write(data->controlData.cameraY);
                     data->missionData.overtakingData.updownCamera = CAMERA_UP;
                 }
-                /* ???????? �¿� ?????? ?? ���???????? ����????? ???����?????? �ڵ�*/
+                /* ???????? �¿� ?????? ?? ���????????? ����????? ???����?????? �ڵ�*/
                 while (data->missionData.overtakingData.headingDirection == STOP)
                 {
                     //data->missionData.loopTime = timeCheck(&time);
@@ -718,7 +719,7 @@ bool overtakeFunc(struct thr_data *arg)
                     data->missionData.overtakingData.updownCamera == CAMERA_DOWN)
                 {
                     sprintf(data->imgData.missionString, "Right to go");
-                    /*���??*/
+                    /*���???*/
                     Winker_Write(RIGHT_ON);
                     //DesireDistance(50, thresDistance, 1100);
                     DesireDistance(50, thresDistance, 1050);
@@ -750,7 +751,7 @@ bool overtakeFunc(struct thr_data *arg)
                 {
 
                     sprintf(data->imgData.missionString, "Left to go");
-                    /*���??*/
+                    /*���???*/
                     Winker_Write(LEFT_ON);
                     //DesireDistance(50, thresDistance, 1900);
                     DesireDistance(50, thresDistance, 1950);
@@ -778,7 +779,7 @@ bool overtakeFunc(struct thr_data *arg)
                     }
                 }
                 else
-                { /*STOP??? ??????????? ���?? ����*/
+                { /*STOP??? ??????????? ���??? ����*/
                 }
 
                 break;
@@ -898,14 +899,21 @@ bool signalLightFunc(struct thr_data *arg)
 {
     struct thr_data *data = (struct thr_data *)arg;
 
-    //data->imgData.bcheckFrontWhite = true; // ????? ???????? ??????????? ????? ON
+    //intro
+    usleep(500000);
+    while (abs(data->controlData.steerVal - 1500) < 30)
+    {
+        usleep(30000);
+    }
+    data->imgData.bmission = true;
+    SteeringServoControl_Write(1500);
 
     if (StopLine(4)) // data->missionData.finish_distance != -1) //??????????? ??????????? �Ÿ�?? ����?????
     {
         // onlyDistance(BASIC_SPEED, (data->missionData.finish_distance / 26.0) * 500); //????????��??? ????? stop
         // data->missionData.finish_distance = -1;
 
-        data->imgData.bmission = true;
+        // data->imgData.bmission = true;
         data->imgData.bcheckSignalLight = true;
         data->imgData.bprintString = true;
         data->imgData.bprintTire = false;
@@ -917,7 +925,7 @@ bool signalLightFunc(struct thr_data *arg)
         printf("signalLight\n");
 
         while (data->imgData.bcheckSignalLight)
-            usleep(200000); //??????ó��?????? ????????? ����??? ?????? ??? ��??? ��ٸ���??.
+            usleep(200000); //??????ó��?????? ????????? ����??? ?????? ??? ��??? ��ٸ���???.
 
         data->imgData.bprintTire = true;
         sprintf(data->imgData.missionString, "Distance control");
@@ -1037,7 +1045,7 @@ void repeatParking(struct thr_data *arg)
             data->controlData.steerVal = 0;
             while (1)
             {
-            printf("repeatParking() : steerVal : %d\n", data->controlData.steerVal);
+                printf("repeatParking() : steerVal : %d\n", data->controlData.steerVal);
                 if (abs(data->controlData.steerVal - 1500) < 30)
                 {
                     printf("repeatParking() : steerVal : %d, backback\n", data->controlData.steerVal);

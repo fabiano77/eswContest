@@ -24,7 +24,7 @@
 #define CAPTURE_IMG_SIZE (CAPTURE_IMG_W * CAPTURE_IMG_H * 2) // YUYU : 16bpp
 #define CAPTURE_IMG_FORMAT "uyvy"
 
-//í•´ìƒë„ë¥¼ ë°”ê¾¸ë ¤ë©´ ì´ë¶€ë¶„ë§Œ ë³€ê²½í•˜ë©´ ë¨
+//?•´?ƒ?„ë¥? ë°”ê¾¸? ¤ë©? ?´ë¶?ë¶„ë§Œ ë³?ê²½í•˜ë©? ?¨
 #ifndef VPEIMG
 #define VPEIMG
 #define VPE_OUTPUT_W 640
@@ -46,12 +46,12 @@
 #define FPS_TEXT_Y 260			  //240
 #define FPS_TEXT_COLOR 0xffffffff //while
 
-//#define BASIC_SPEED 65		// í”„ë¡œê·¸ëž¨ ê¸°ë³¸ ì£¼í–‰ ì†ë„ => mission.hë¡œ ì˜®ê¹€
-#define BUZZER_PULSE 100000 // ê¸°ë³¸ ë¶€ì € ê¸¸ì´
+//#define BASIC_SPEED 65		// ?”„ë¡œê·¸?ž¨ ê¸°ë³¸ ì£¼í–‰ ?†?„ => mission.hë¡? ?˜®ê¹?
+#define BUZZER_PULSE 100000 // ê¸°ë³¸ ë¶???? ê¸¸ì´
 #define GO_LEFT 0
 #define GO_RIGHT 1
 
-// thr_dataì˜ ì •ì˜ì™€ ê°ì¢… structureë“¤ì€ control_mission.h ìœ¼ë¡œ ì˜®ê¹€ 9/8(ëŒ€í¬)
+// thr_data?˜ ? •?˜??? ê°ì¢… structure?“¤??? control_mission.h ?œ¼ë¡? ?˜®ê¹? 9/8(????¬)
 extern struct thr_data *ptr_data;
 /******************** function ********************/
 static int allocate_input_buffers(struct thr_data *data)
@@ -139,10 +139,10 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		gettimeofday(&st, NULL);
 		timeCheck(&time);
 		/********************************************************/
-		/*			ìš°ë¦¬ê°€ ë§Œë“  ì•Œê³ ë¦¬ì¦˜ í•¨ìˆ˜ë¥¼ ë„£ëŠ” ë¶€ë¶„		*/
+		/*			?š°ë¦¬ê?? ë§Œë“  ?•Œê³ ë¦¬ì¦? ?•¨?ˆ˜ë¥? ?„£?Š” ë¶?ë¶?		*/
 		/********************************************************/
 		//printf("\nstart1 \t\t: %d\n", timeCheck(&time));
-		/* ë¼ì¸ í•„í„°ë§ì´ë‚˜ canny ê²°ê³¼ í™•ì¸ */
+		/* ?¼?¸ ?•„?„°ë§ì´?‚˜ canny ê²°ê³¼ ?™•?¸ */
 		if (t_data->imgData.bdebug)
 		{
 			if (t_data->imgData.bfilteringTest)
@@ -162,21 +162,21 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 			}
 		}
 
-		/* ë¯¸ì…˜ ì§„í–‰ì¤‘ì— ì²˜ë¦¬í•˜ëŠ” ì˜ìƒì²˜ë¦¬ */
+		/* ë¯¸ì…˜ ì§„í–‰ì¤‘ì— ì²˜ë¦¬?•˜?Š” ?˜?ƒì²˜ë¦¬ */
 		else if (t_data->imgData.bmission)
 		{
 
 			t_data->controlData.beforeSpeedVal = 0;
 
-			/* ì¶”ì›”ì°¨ë¡œì‹œì— ì‚¬ìš© */
+			/* ì¶”ì›”ì°¨ë¡œ?‹œ?— ?‚¬?š© */
 			if (t_data->missionData.overtakingFlag &&
 				t_data->missionData.overtakingData.updownCamera == CAMERA_UP)
 			{
 				usleep(100000);
-				/*checkï¿½?? ?ï¿½ï¿½?ï¿½ï¿½ camera up*/
+				/*checkï¿??? ?ï¿½ï¿½?ï¿½ï¿½ camera up*/
 				bool check_direction;
 				check_direction = checkObstacle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.bdebug);
-				/*ì˜¤ë¥¸ìª½ì¸ì§€ ì™¼ìª½ì¸ì§€ ë§¤ ë²ˆ í™•ì¸*/
+				/*?˜¤ë¥¸ìª½?¸ì§? ?™¼ìª½ì¸ì§? ë§? ë²? ?™•?¸*/
 				if (check_direction == true)
 				{ //true=>left
 					t_data->missionData.overtakingData.leftFlag++;
@@ -186,26 +186,26 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					t_data->missionData.overtakingData.rightFlag++;
 				}
 
-				/*5íšŒ íŒë‹¨ ì´í›„ í™•ì¸*/
+				/*5?šŒ ?Œ?‹¨ ?´?›„ ?™•?¸*/
 				if ((t_data->missionData.overtakingData.rightFlag + t_data->missionData.overtakingData.leftFlag) >= 5)
 				{
-					/*ì˜¤ë¥¸ìª½ flagê°€ í°ê²½ìš°*/
+					/*?˜¤ë¥¸ìª½ flagê°? ?°ê²½ìš°*/
 					if (t_data->missionData.overtakingData.rightFlag > t_data->missionData.overtakingData.leftFlag)
 					{
 						t_data->missionData.overtakingData.headingDirection = RIGHT;
 					}
-					/*ì™¼ìª½ flagê°€ í°ê²½ìš°*/
+					/*?™¼ìª? flagê°? ?°ê²½ìš°*/
 					else
 					{
 						t_data->missionData.overtakingData.headingDirection = LEFT;
 					}
-					/*ìƒí™© ìž¬ì§„ìž… ë§‰ê¸° ìœ„í•œ Camera Down*/
+					/*?ƒ?™© ?ž¬ì§„ìž… ë§‰ê¸° ?œ„?•œ Camera Down*/
 					t_data->missionData.overtakingData.updownCamera = CAMERA_DOWN;
 				}
-				//srcbufë¥¼ í™œìš©í•˜ì—¬ captureí•œ ì˜ìƒì„ ë³€í™˜
+				//srcbufë¥? ?™œ?š©?•˜?—¬ capture?•œ ?˜?ƒ?„ ë³??™˜
 			}
 
-			/* ì‹ í˜¸ë“± í™•ì¸ */
+			/* ?‹ ?˜¸?“± ?™•?¸ */
 			if (t_data->imgData.bcheckSignalLight)
 			{
 				switch (t_data->missionData.signalLightData.state)
@@ -265,7 +265,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				}
 			}
 
-			/* í”¼ë‹ˆì‹œ ë¼ì¸ê³¼ì˜ ê±°ë¦¬ ì¸¡ì • */
+			/* ?”¼?‹ˆ?‹œ ?¼?¸ê³¼ì˜ ê±°ë¦¬ ì¸¡ì • */
 			if (t_data->imgData.bcheckFinishLine)
 			{
 				OpenCV_remap(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, map1, map2);
@@ -279,13 +279,13 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 				}
 			}
 
-			/*ëë‚  ë•Œ ì‚¬ìš©*/
+			/*??‚  ?•Œ ?‚¬?š©*/
 			if (t_data->missionData.finishData.checkFront == true)
 			{
-				t_data->imgData.topMode = 1; //ì•žì´ ë” ìž˜ë³´ì´ëŠ” mode 1ì‚¬ìš©
+				t_data->imgData.topMode = 1; //?•ž?´ ?” ?ž˜ë³´ì´?Š” mode 1?‚¬?š©
 				topview_transform(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.topMode);
 				t_data->missionData.finishData.distEndLine = checkFront(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf);
-				/*ë¬´ì˜ë¯¸í•œ ê°’ì¸ ê²½ìš° ì•Œê³ ë¦¬ì¦˜ì— ë§žê²Œ steering ì§„í–‰*/
+				/*ë¬´ì˜ë¯¸í•œ ê°’ì¸ ê²½ìš° ?•Œê³ ë¦¬ì¦˜ì— ë§žê²Œ steering ì§„í–‰*/
 				if (t_data->missionData.finishData.distEndLine == -1000)
 				{
 					int steerVal = autoSteering(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->imgData.bwhiteLine);
@@ -298,19 +298,19 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					}
 					if (t_data->controlData.desireSpeedVal != t_data->controlData.beforeSpeedVal)
 					{
-						//ì´ì „ ì†ë„ì™€ ë‹¬ë¼ì¡Œì„ ë•Œë§Œ ì†ë„ê°’ ì¸ê°€.
+						//?´? „ ?†?„??? ?‹¬?¼ì¡Œì„ ?•Œë§? ?†?„ê°? ?¸ê°?.
 						DesireSpeed_Write_uart(t_data->controlData.desireSpeedVal);
 						t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
 					}
 				}
 				else if (t_data->missionData.finishData.distEndLine < 320)
-				{ /*ê±°ë¦¬ê°€ 40(360-40)ì´í•˜ë¡œ íƒì§€ëœ ê²½ìš° ì˜ìƒì²˜ë¦¬ ì¢…ë£Œ*/
+				{ /*ê±°ë¦¬ê°? 40(360-40)?´?•˜ë¡? ?ƒì§??œ ê²½ìš° ?˜?ƒì²˜ë¦¬ ì¢…ë£Œ*/
 					t_data->missionData.finishData.checkFront = false;
 				}
 			}
 		}
 
-		/* ê¸°ë³¸ ìƒíƒœì—ì„œ ì²˜ë¦¬ë˜ëŠ” ì˜ìƒì²˜ë¦¬ */
+		/* ê¸°ë³¸ ?ƒ?ƒœ?—?„œ ì²˜ë¦¬?˜?Š” ?˜?ƒì²˜ë¦¬ */
 		else
 		{
 
@@ -381,7 +381,7 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 					t_data->controlData.desireSpeedVal = auto_speedMapping(steerVal, BASIC_SPEED);
 					if (t_data->controlData.desireSpeedVal != t_data->controlData.beforeSpeedVal)
 					{
-						//ì´ì „ ì†ë„ì™€ ë‹¬ë¼ì¡Œì„ ë•Œë§Œ ì†ë„ê°’ ì¸ê°€.
+						//?´? „ ?†?„??? ?‹¬?¼ì¡Œì„ ?•Œë§? ?†?„ê°? ?¸ê°?.
 						DesireSpeed_Write_uart(t_data->controlData.desireSpeedVal);
 						t_data->controlData.beforeSpeedVal = t_data->controlData.desireSpeedVal;
 					}
@@ -393,14 +393,14 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 			}
 			//printf("after  auto \t: %d\n", timeCheck(&time));
 
-			/*checkWhiteLineFlagï¿½?? True?ï¿½ï¿½ ê²½ìš°, RoundAbout */
+			/*checkWhiteLineFlagï¿??? True?ï¿½ï¿½ ê²½ìš°, RoundAbout */
 		}
 
 		/********************************************************/
-		/*			ì˜ìƒì²˜ë¦¬ ì¢…ë£Œ								*/
+		/*			?˜?ƒì²˜ë¦¬ ì¢…ë£Œ								*/
 		/********************************************************/
 
-		/* ì˜ìƒì²˜ë¦¬í›„ ì˜¤ë²„ë ˆì´ë¡œ ì •ë³´ ë“±ë“± ì¶œë ¥.*/
+		/* ?˜?ƒì²˜ë¦¬?›„ ?˜¤ë²„ë ˆ?´ë¡? ? •ë³? ?“±?“± ì¶œë ¥.*/
 		// if (checking_stopline)
 		// {
 		// 	checking_stopline = false;
@@ -428,19 +428,19 @@ static void img_process(struct display *disp, struct buffer *cambuf, struct thr_
 		// 	overlayPrintAngle(srcbuf, VPE_OUTPUT_W, VPE_OUTPUT_H, srcbuf, t_data->controlData.steerVal);
 		// }
 		// printf("overlay \t: %d\n", timeCheck(&time));
-		/*		í˜„ìž¬ ì˜ìƒ .jpgíŒŒì¼ë¡œ ì €ìž¥		*/
+		/*		?˜„?ž¬ ?˜?ƒ .jpg?ŒŒ?¼ë¡? ????ž¥		*/
 		// if (t_data->imgData.dump_request)
 		// {
 		// 	opencv_imwrite(srcbuf);
 		// 	t_data->imgData.dump_request = false;
 		// }
-		/*		í˜„ìž¬ ì˜ìƒ .aviíŒŒì¼ë¡œ ë…¹í™”		*/
+		/*		?˜„?ž¬ ?˜?ƒ .avi?ŒŒ?¼ë¡? ?…¹?™”		*/
 		// if (t_data->imgData.bvideoRecord)
 		// {
 		// 	memcpy(t_data->img_data_buf, srcbuf, VPE_OUTPUT_IMG_SIZE);
 		// }
 
-		/* ì‹ í˜¸ë“± ê²€ì¶œí™”ë©´ì„ ìœ ì§€í•˜ê¸° ìœ„í•œ delay */
+		/* ?‹ ?˜¸?“± ê²?ì¶œí™”ë©´ì„ ?œ ì§??•˜ê¸? ?œ„?•œ delay */
 		if (delay_flag)
 		{
 			usleep(1700000); // 1700ms == 1.7s
@@ -512,12 +512,12 @@ void *image_process_thread(void *arg)
 		index = vpe_output_dqbuf(vpe);
 		capt = vpe->disp_bufs[index];
 		/********************************************************/
-		/* ì˜ìƒì²˜ë¦¬ ì‹œìž‘										*/
+		/* ?˜?ƒì²˜ë¦¬ ?‹œ?ž‘										*/
 		/********************************************************/
 		img_process(vpe->disp, capt, data, map1, map2);
 
 		/********************************************************/
-		/* ì˜ìƒì²˜ë¦¬ ì¢…ë£Œ										*/
+		/* ?˜?ƒì²˜ë¦¬ ì¢…ë£Œ										*/
 		/********************************************************/
 
 		if (disp_post_vid_buffer(vpe->disp, capt, 0, 0, vpe->dst.width, vpe->dst.height))
@@ -647,7 +647,7 @@ void *input_thread(void *arg)
 				buzzer(1, 0, buzzerPulseWidth_us);
 				data->imgData.bdebug = true;
 				data->imgData.bfilteringTest = true;
-				
+
 				printf("\t filtering Test ON\n");
 
 				printf("h_min, s_max, v_min = %d, %d, %d\ncanny = %d, %d\n", data->imgData.filtering_param.h,
@@ -657,7 +657,7 @@ void *input_thread(void *arg)
 					   data->imgData.filtering_param.canny2);
 
 				printf("\tfilteringTest() : func(line, canny)\t= ");
-				char func[10]; 
+				char func[10];
 				scanf("%s", func);
 
 				while (1)
@@ -706,12 +706,12 @@ void *input_thread(void *arg)
 							data->imgData.filtering_param.canny1 = canny1;
 							data->imgData.filtering_param.canny2 = canny2;
 						}
-						
-						printf("\nh_min, s_max, v_min = %d, %d, %d\n\tcanny = %d, %d\n\n",data->imgData.filtering_param.h,
-																		data->imgData.filtering_param.s,
-																		data->imgData.filtering_param.v,
-																		data->imgData.filtering_param.canny1,
-																		data->imgData.filtering_param.canny2);
+
+						printf("\nh_min, s_max, v_min = %d, %d, %d\n\tcanny = %d, %d\n\n", data->imgData.filtering_param.h,
+							   data->imgData.filtering_param.s,
+							   data->imgData.filtering_param.v,
+							   data->imgData.filtering_param.canny1,
+							   data->imgData.filtering_param.canny2);
 
 						cmd_ready = true;
 					}
@@ -951,8 +951,8 @@ void *input_thread(void *arg)
 // 		usleep(500000);
 // 	}
 // 	printf("\tvideo_record_thred() : ON\n");
-// 	// stì²´í¬ë¥¼ ì´ê³³ì—ì„œ í•˜ê³ , etì²´í¬ë¥¼ ë‘ ë²ˆì§¸ whileì— í•˜ì—¬ ë§¤ í”„ë ˆìž„ë§ˆë‹¤ delay_msë§Œí¼ ëˆ„ì‚°ì‹œí‚¤ì–´
-// 	// í”„ë ˆìž„ì´ ì°ížˆëŠ” ì‹œì ê³¼ ì˜ìƒì—ì„œì˜ í•´ë‹¹ ì‹œì ì„ ê·¼ì‚¬í•˜ë„ë¡ í•œë‹¤. (0.1ì´ˆ ì ˆëŒ€ê°’ ìº¡ì²˜ ëŒ€ì‹  ì˜ìƒì˜ ì „ì²´ê¸¸ì´ì˜ ë¹„ìœ¨ë¡œ)
+// 	// stì²´í¬ë¥? ?´ê³³ì—?„œ ?•˜ê³?, etì²´í¬ë¥? ?‘ ë²ˆì§¸ while?— ?•˜?—¬ ë§? ?”„? ˆ?ž„ë§ˆë‹¤ delay_msë§Œí¼ ?ˆ„?‚°?‹œ?‚¤?–´
+// 	// ?”„? ˆ?ž„?´ ì°ížˆ?Š” ?‹œ? ê³? ?˜?ƒ?—?„œ?˜ ?•´?‹¹ ?‹œ? ?„ ê·¼ì‚¬?•˜?„ë¡? ?•œ?‹¤. (0.1ì´? ? ˆ???ê°? ìº¡ì²˜ ????‹  ?˜?ƒ?˜ ? „ì²´ê¸¸?´?˜ ë¹„ìœ¨ë¡?)
 // 	gettimeofday(&st, NULL);
 // 	while (1)
 // 	{
@@ -971,7 +971,7 @@ void *input_thread(void *arg)
 // 		{
 // 			opencv_videowrite(data->img_data_buf);
 // 		}
-// 		while (1) //ì˜ìƒ ë…¹í™” ì‹±í¬ë¥¼ ë§žì¶°ì£¼ê¸° ìœ„í•œ delay
+// 		while (1) //?˜?ƒ ?…¹?™” ?‹±?¬ë¥? ë§žì¶°ì£¼ê¸° ?œ„?•œ delay
 // 		{
 // 			gettimeofday(&et, NULL);
 // 			recordTime_ms = ((et.tv_sec - st.tv_sec) * 1000) + ((int)et.tv_usec / 1000 - (int)st.tv_usec / 1000);
@@ -995,11 +995,11 @@ void *mission_thread(void *arg)
 	struct thr_data *data = (struct thr_data *)arg;
 	enum MissionState start = READY;
 	enum MissionState flyover = NONE;
-	enum MissionState priority = READY;
-	enum MissionState parking = READY;
+	enum MissionState priority = NONE;
+	enum MissionState parking = NONE;
 	enum MissionState roundabout = NONE;
-	enum MissionState tunnel = READY;
-	enum MissionState overtake = NONE;
+	enum MissionState tunnel = NONE;
+	enum MissionState overtake = READY;
 	enum MissionState signalLight = NONE;
 	enum MissionState finish = NONE;
 	data->missionData.ms[0] = start;
@@ -1011,7 +1011,7 @@ void *mission_thread(void *arg)
 	data->missionData.ms[6] = overtake;
 	data->missionData.ms[7] = signalLight;
 	data->missionData.ms[8] = finish;
-	//ê° ë¯¸ì…˜ì´ ìˆ˜í–‰ë˜ê³ ë‚˜ë©´ detectë¥¼ í•˜ì§€ ì•Šë„ë¡ ë³€ìˆ˜ì„¤ì •.
+	//ê°? ë¯¸ì…˜?´ ?ˆ˜?–‰?˜ê³ ë‚˜ë©? detectë¥? ?•˜ì§? ?•Š?„ë¡? ë³??ˆ˜?„¤? •.
 
 	while (1)
 	{
@@ -1044,9 +1044,9 @@ void *mission_thread(void *arg)
 		if (parking && parking != DONE)
 		{
 			// parking repeating test
-			
+
 			repeatParking(data);
-			
+
 			// parking reapeating test end
 			if (parkingFunc(data))
 			{
@@ -1278,6 +1278,7 @@ void *mission_thread(void *arg)
 				}
 				data->imgData.bmission = false;
 				data->imgData.bprintString = false;
+
 				overtake = DONE;
 				signalLight = READY;
 			}
@@ -1372,7 +1373,7 @@ int main(int argc, char **argv)
 	ptr_data = &tdata;
 	int disp_argc = 3;
 	int ret = 0;
-	char *disp_argv[] = {"dummy", "-s", "4:480x272", "\0"}; // ì¶”í›„ ï¿½??ï¿½?? ?ï¿½ï¿½ï¿½?? ?ï¿½ï¿½?ï¿½ï¿½ ?ï¿½ï¿½ ì²˜ë¦¬..
+	char *disp_argv[] = {"dummy", "-s", "4:480x272", "\0"}; // ì¶”í›„ ï¿???ï¿??? ?ï¿½ï¿½ï¿??? ?ï¿½ï¿½?ï¿½ï¿½ ?ï¿½ï¿½ ì²˜ë¦¬..
 
 	printf("------ main start ------\n");
 
@@ -1484,7 +1485,7 @@ int main(int argc, char **argv)
 	set_global_alpha(vpe->disp, vpe->disp->overlay_p.id);
 	set_pre_multiplied_alpha(vpe->disp, vpe->disp->overlay_p.id);
 	alloc_overlay_plane(vpe->disp, OVERLAY_DISP_FORCC, 0, 0, OVERLAY_DISP_W, OVERLAY_DISP_H);
-	// z-order, alpha, multiplied-alpha ?ï¿½ï¿½?ï¿½ï¿½ (overlayï¿½?? ?ï¿½ï¿½?ï¿½ï¿½ plane ï¿½?? ?ï¿½ï¿½?ï¿½ï¿½)
+	// z-order, alpha, multiplied-alpha ?ï¿½ï¿½?ï¿½ï¿½ (overlayï¿??? ?ï¿½ï¿½?ï¿½ï¿½ plane ï¿??? ?ï¿½ï¿½?ï¿½ï¿½)
 
 	//vpe->deint = 0;
 	vpe->translen = 1;

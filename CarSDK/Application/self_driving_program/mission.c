@@ -498,7 +498,9 @@ bool roundaboutFunc(struct thr_data *arg)
         data->imgData.bspeedControl = false;
 
         int speed = BASIC_SPEED;
-        int flag_END = 0;
+        //int flag_END = 0;
+        int encoderVal = 0;
+        int RAdistance;
 
         enum RoundaboutState state = WAIT_R;
         while (state != DONE_R)
@@ -538,27 +540,40 @@ bool roundaboutFunc(struct thr_data *arg)
             case ROUND_STOP:
                 if ((DistanceSensor_cm(4) <= 25) /*|| (DistanceSensor_cm(5) <= 6)*/)
                 {
-                    speed = BASIC_SPEED;
+                    speed = 80;
                     DesireSpeed_Write_uart(speed);
                     sprintf(data->imgData.missionString, "ROUND_GO_2");
                     printf("ROUND_GO_2\n");
 
-                    state = ROUND_GO_2;
+                    EncoderCounter_Write(0);
+                    state = ROUND_GO_2; 
                 }
                 break;
 
             case ROUND_GO_2:
+                encoderVal = Encoder_Read();
+                if (encoderVal != 65278)
+                {
+                    RAdistance = encoderVal;
+                    sprintf(data->imgData.missionString, "Round distance : %d", RAdistance);
+                    if (RAdistance >= 5500)
+                    {
+                        state = DONE_R;
+                        break;
+                    }
+                }
+                
                 if ((DistanceSensor_cm(4) <= 8) /* || (DistanceSensor_cm(5) <= 6)*/)
                 {
                     printf("speed up \n");
-                    if (speed < 75)
+                    if (speed < 90)
                         speed += 5;
                 }
                 else if ((DistanceSensor_cm(1) <= 8) /* || (DistanceSensor_cm(6) <= 6)*/)
                 {
                     DesireSpeed_Write_uart(0);
                     printf("stop and speed down \n");
-                    if (speed > 30)
+                    if (speed > 40)
                         speed -= 10;
                     usleep(1900000);
                     break;
@@ -567,12 +582,12 @@ bool roundaboutFunc(struct thr_data *arg)
 
                 //end
                 //if (data->controlData.steerVal - 1500 < 30)
-                if (abs(data->controlData.steerVal - 1500) < 80)
+                /*if (abs(data->controlData.steerVal - 1500) < 80)
                 {
-                    if (flag_END < 15)
+                    if (flag_END < 5)
                         flag_END++;
 
-                    if (flag_END == 15)
+                    if (flag_END == 5)
                     {
                         sprintf(data->imgData.missionString, "DONE_R");
                         printf("DONE_R");
@@ -584,8 +599,8 @@ bool roundaboutFunc(struct thr_data *arg)
                 {
                     if (flag_END > 0)
                         flag_END--;
-                }
-
+                }*/
+                
                 break;
 
             case DONE_R:
@@ -614,6 +629,7 @@ bool tunnelFunc(struct thr_data *arg)
     
     if (data->missionData.broundabout == false) 
     {
+        sprintf(data->imgData.missionString, "tunnel detecting...");
         if (DistanceSensor_cm(2) < 20 && DistanceSensor_cm(6) < 20)
         {
             data->imgData.bprintString = true;
